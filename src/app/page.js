@@ -2,7 +2,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import Footer from './components/Footer'; // 👈 이 줄을 추가합니다!
+
+// 👇 새로 만든 푸터 컴포넌트를 불러옵니다 (경로 수정 완료!)
+import Footer from './components/Footer';
 
 // === Supabase 연결 초기화 ===
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -30,12 +32,10 @@ function PagePlaceholder({ title }) {
 
 // === 3. 메인 홈 (대시보드) ===
 function HomeContent() {
-  // 🔥 Supabase에서 진짜 데이터를 가져와서 저장할 공간
   const [topRankers, setTopRankers] = useState([]);
 
   useEffect(() => {
     const fetchTopRankers = async () => {
-      // ladders 표에서 랭킹 순으로 상위 3명만 가져오기
       const { data, error } = await supabase.from('ladders').select('*').order('rank', { ascending: true }).limit(3);
       if (data) setTopRankers(data);
     };
@@ -67,10 +67,7 @@ function HomeContent() {
             <button className="text-xs text-sky-400 hover:text-sky-300">자세히 보기 &gt;</button>
           </div>
           <div className="flex-grow flex flex-col justify-center space-y-3">
-            {/* 데이터가 불러와지기 전 로딩 표시 */}
             {topRankers.length === 0 ? <p className="text-center text-gray-500 text-sm py-4">데이터베이스 연동 중...</p> : null}
-            
-            {/* DB에서 가져온 진짜 데이터 뿌리기 */}
             {topRankers.map((player) => (
               <div key={player.id} className="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg border border-gray-700/50 hover:border-yellow-500/30 transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
@@ -104,31 +101,12 @@ function HomeContent() {
   );
 }
 
-// === 4. 개요 ===
-function ClanOverview() {
-  return (
-    <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
-      <div className="relative bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-2xl p-8 sm:p-12 text-center group">
-         <div className="absolute inset-0 bg-gradient-to-b from-gray-700/40 to-transparent pointer-events-none"></div>
-         <h2 className="relative text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 mb-4 drop-shadow-lg transition-transform duration-500 group-hover:scale-105">최강의 스타크래프트 빠른무한 클랜, ByClan</h2>
-         <p className="relative text-gray-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">바이클랜은 스타크래프트 빠른무한(빨무)을 즐기는 유저들이 모인 명실상부 최고의 클랜입니다. 체계적인 래더 시스템과 끈끈한 커뮤니티를 바탕으로 함께 성장하며 즐거운 게임 문화를 만들어갑니다.</p>
-      </div>
-    </div>
-  );
-}
-
-// === 5. 공지사항 ===
-function NoticeBoard() {
-  return <PagePlaceholder title="공지사항 게시판" />;
-}
-
 // === 6. 랭킹 보드 (Supabase 연동 완료) ===
 function RankingBoard() {
   const [rankings, setRankings] = useState([]);
 
   useEffect(() => {
     const fetchRankings = async () => {
-      // DB에서 전체 랭킹 불러오기
       const { data } = await supabase.from('ladders').select('*').order('rank', { ascending: true });
       if (data) setRankings(data);
     };
@@ -184,15 +162,6 @@ function RankingBoard() {
   );
 }
 
-// (나머지 컴포넌트들은 길이 상 생략하지만 기존과 동일하게 작동합니다)
-function LadderSystem() { return <PagePlaceholder title="래더 대시보드" />; }
-function MatchRecord() { return <PagePlaceholder title="경기 기록" />; }
-function ClanTournament() { return <PagePlaceholder title="토너먼트" />; }
-function CommunityBoard() { return <PagePlaceholder title="커뮤니티" />; }
-function MediaGallery() { return <PagePlaceholder title="미디어 갤러리" />; }
-function PointDashboard() { return <PagePlaceholder title="포인트 대시보드" />; }
-function JoinProcess() { return <PagePlaceholder title="가입 신청" />; }
-
 // === 전체 앱 렌더링 ===
 function ByClanApp() {
   const [openMenuIndex, setOpenMenuIndex] = useState(null);
@@ -242,7 +211,7 @@ function ByClanApp() {
         {isMobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 w-full bg-gray-950/95 border-b border-gray-800 z-50 flex flex-col">
             {menuData.map((menu, index) => (
-              <div key={index} className="flex flex-col border-b border-gray-800/50">
+              <div className="flex flex-col border-b border-gray-800/50" key={index}>
                 <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className="px-6 py-4 flex justify-between text-gray-200">
                   {menu.title}
                 </button>
@@ -264,6 +233,8 @@ function ByClanApp() {
          activeView === '랭킹' ? <RankingBoard /> : 
          <PagePlaceholder title={activeView} />}
       </main>
+
+      {/* 👇 여기서 분리된 푸터를 사용합니다! */}
       <Footer />
     </div>
   );
@@ -291,14 +262,7 @@ export default function Home() {
       <div style={{ backgroundColor: '#0f172a', color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
         <h1 style={{ marginBottom: '20px', fontSize: '24px' }}>ByClan 개발 서버</h1>
         <form onSubmit={handleLogin} style={{ display: 'flex', gap: '10px' }}>
-          {/* 👇 여기가 수정되었습니다! (배경색 흰색, 테두리 추가) */}
-          <input 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            placeholder="비밀번호 입력" 
-            style={{ padding: '10px', borderRadius: '5px', backgroundColor: 'white', color: 'black', border: '1px solid #ccc' }} 
-          />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" style={{ padding: '10px', borderRadius: '5px', backgroundColor: 'white', color: 'black', border: '1px solid #ccc' }} />
           <button type="submit" style={{ padding: '10px 20px', borderRadius: '5px', backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' }}>입장</button>
         </form>
       </div>
