@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import Footer from './components/Footer'; // 👈 이 줄을 추가합니다!
 
 // === Supabase 연결 초기화 ===
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -191,14 +192,6 @@ function CommunityBoard() { return <PagePlaceholder title="커뮤니티" />; }
 function MediaGallery() { return <PagePlaceholder title="미디어 갤러리" />; }
 function PointDashboard() { return <PagePlaceholder title="포인트 대시보드" />; }
 function JoinProcess() { return <PagePlaceholder title="가입 신청" />; }
-
-function Footer() {
-  return (
-    <footer className="w-full bg-gray-950 border-t border-gray-800 mt-16 py-8 sm:py-12 px-4 relative z-10 text-center">
-      <p className="text-gray-500 text-sm">© 2026 ByClan. All rights reserved.</p>
-    </footer>
-  );
-}
 
 // === 전체 앱 렌더링 ===
 function ByClanApp() {
