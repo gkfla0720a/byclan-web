@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import RankingBoard from './components/RankingBoard';
+import NoticeBoard from './components/NoticeBoard'; // 👈 공지사항 컴포넌트 추가!
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -87,6 +88,7 @@ export default function Home() {
       <main className="flex-grow">
         {activeView === 'Home' ? <HomeContent /> : 
          activeView === '랭킹' ? <RankingBoard /> : 
+         activeView === '공지사항' ? <NoticeBoard /> :  /* 👈 클릭 시 공지사항 열리도록 추가! */
          <div className="p-20 text-center text-gray-500">{activeView} 페이지 준비 중...</div>}
       </main>
       <Footer />
