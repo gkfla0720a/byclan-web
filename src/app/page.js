@@ -35,7 +35,7 @@ function HomeContent({ navigateTo }) {
       </section>
 
       <section className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl cursor-pointer hover:border-gray-500 transition-colors" onClick={() => navigateTo('랭킹')}>
-        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">🏆 명 전당 (Top 3)</h3>
+        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">🏆 명예의 전당 (Top 3)</h3>
         <div className="space-y-4">
           {topRankers.map((player) => (
             <div key={player.id} className="flex items-center justify-between bg-gray-900/50 p-4 rounded-lg border border-gray-700">
