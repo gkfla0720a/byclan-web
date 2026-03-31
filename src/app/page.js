@@ -281,7 +281,7 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
 
-  // 👇 여기에 원하는 비밀번호를 설정하세요! (예: byclan77)
+  // 👇 여기에 원하는 비밀번호를 설정하세요!
   const CORRECT_PASSWORD = "1990"; 
 
   const handleLogin = (e) => {
@@ -298,8 +298,15 @@ export default function Home() {
       <div style={{ backgroundColor: '#0f172a', color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
         <h1 style={{ marginBottom: '20px', fontSize: '24px' }}>ByClan 개발 서버</h1>
         <form onSubmit={handleLogin} style={{ display: 'flex', gap: '10px' }}>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" style={{ padding: '10px', borderRadius: '5px', color: 'black' }} />
-          <button type="submit" style={{ padding: '10px 20px', borderRadius: '5px', backgroundColor: '#3b82f6', color: 'white' }}>입장</button>
+          {/* 👇 여기가 수정되었습니다! (배경색 흰색, 테두리 추가) */}
+          <input 
+            type="password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            placeholder="비밀번호 입력" 
+            style={{ padding: '10px', borderRadius: '5px', backgroundColor: 'white', color: 'black', border: '1px solid #ccc' }} 
+          />
+          <button type="submit" style={{ padding: '10px 20px', borderRadius: '5px', backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' }}>입장</button>
         </form>
       </div>
     );
