@@ -16,7 +16,8 @@ export default function Header({ navigateTo }) {
         <div className="hidden md:flex gap-6">
           <button onClick={() => navigateTo('랭킹')} className="text-gray-300 hover:text-white font-bold">랭킹</button>
           <button onClick={() => navigateTo('공지사항')} className="text-gray-300 hover:text-white font-bold">공지사항</button>
-          <button onClick={() => navigateTo('자유게시판')} className="text-gray-300 hover:text-white font-bold">자유게시판</button> {/* 👈 추가됨! */}
+          <button onClick={() => navigateTo('자유게시판')} className="text-gray-300 hover:text-white font-bold">자유게시판</button>
+          <button onClick={() => navigateTo('가입신청')} className="text-gray-300 hover:text-white font-bold">가입신청</button>
         </div>
 
         <div className="md:hidden">
@@ -28,7 +29,8 @@ export default function Header({ navigateTo }) {
         <div className="md:hidden bg-gray-900 border-b border-gray-800 flex flex-col p-4 gap-4">
           <button onClick={() => { navigateTo('랭킹'); setIsMobileMenuOpen(false); }} className="text-left text-gray-200 font-bold">랭킹</button>
           <button onClick={() => { navigateTo('공지사항'); setIsMobileMenuOpen(false); }} className="text-left text-gray-200 font-bold">공지사항</button>
-          <button onClick={() => { navigateTo('자유게시판'); setIsMobileMenuOpen(false); }} className="text-left text-gray-200 font-bold">자유게시판</button> {/* 👈 추가됨! */}
+          <button onClick={() => { navigateTo('자유게시판'); setIsMobileMenuOpen(false); }} className="text-left text-gray-200 font-bold">자유게시판</button>
+          <button onClick={() => { navigateTo('가입신청'); setIsMobileMenuOpen(false); }} className="text-left text-yellow-500 font-bold">가입신청</button>
         </div>
       )}
     </nav>
