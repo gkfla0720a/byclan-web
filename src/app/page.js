@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+
+import { supabase } from '@/supabase'; 
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -9,12 +10,6 @@ import RankingBoard from './components/RankingBoard';
 import NoticeBoard from './components/NoticeBoard';
 import CommunityBoard from './components/CommunityBoard';
 import JoinProcess from './components/JoinProcess';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// === 기존 시안의 미분리 컴포넌트들 ===
 
 function PagePlaceholder({ title }) {
   return (
