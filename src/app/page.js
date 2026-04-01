@@ -380,7 +380,7 @@ export default function Home() {
          activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트' ? <ClanTournament /> : 
          activeView === '포인트 상점' || activeView === '포인트 내역' ? <PointDashboard view={activeView} /> :
          activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
-             activeView === '관리자' ?
+          activeView === '관리자' ?
            <AdminMembers /> :
         <PagePlaceholder title={activeView} />}
       </main>
