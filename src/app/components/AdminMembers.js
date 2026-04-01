@@ -14,11 +14,11 @@ export default function AdminMembers() {
     checkAdminAndFetch();
   }, []);
 
-    const checkAdminAndFetch = async () => {
+      const checkAdminAndFetch = async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      console.log("1. 로그인 유저:", user?.id); // 로그인 확인
+      console.log("1. 로그인 유저:", user?.id); 
 
       if (user) {
         const { data: profile, error } = await supabase
@@ -27,12 +27,17 @@ export default function AdminMembers() {
           .eq('id', user.id)
           .single();
         
-        console.log("2. DB에서 가져온 프로필:", profile); // 여기서 데이터가 오는지 확인!
+        // JSON.stringify를 쓰면 공백이 포함되어 있는지 콘솔에서 확실히 볼 수 있습니다!
+        console.log("2. DB에서 가져온 프로필:", JSON.stringify(profile)); 
         console.log("3. 발생한 에러(있다면):", error);
 
-        if (profile?.role === 'admin') {
+        // 핵심: trim()을 추가하여 앞뒤 공백을 잘라내고 비교합니다.
+        if (profile?.role?.trim() === 'admin') {
+          console.log("관리자 권한 확인 성공!"); // 디버깅용
           setIsAdmin(true);
           fetchMembers();
+        } else {
+           console.log("관리자가 아닙니다. 현재 role:", profile?.role); // 디버깅용
         }
       }
     } catch (err) {
@@ -41,6 +46,7 @@ export default function AdminMembers() {
       setLoading(false);
     }
   };
+
 
 
   const fetchMembers = async () => {
