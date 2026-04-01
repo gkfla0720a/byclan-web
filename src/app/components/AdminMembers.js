@@ -5,13 +5,43 @@ import { supabase } from '@/supabase';
 
 export default function AdminMembers() {
   const [members, setMembers] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [myRole, setMyRole] = useState(null); // 내 현재 직급 저장
   const [loading, setLoading] = useState(true);
   
-  // 수정 상태 관리를 위한 state
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ nickname: '', role: '' });
   const [isSaving, setIsSaving] = useState(false);
+
+  // 직급별 권한 수치화 (숫자가 높을수록 상위 권한)
+  const powerLevel = {
+    master: 100,
+    admin: 80,
+    elite: 60,
+    member: 40,
+    rookie: 20,
+    visitor: 10,
+    expelled: 0 // 제명
+  };
+
+  const roleStyles = {
+    master: "bg-yellow-500 text-black border border-yellow-300",
+    admin: "bg-orange-600 text-white border border-orange-400",
+    elite: "bg-purple-600 text-white border border-purple-400",
+    member: "bg-blue-600 text-white border border-blue-400",
+    rookie: "bg-emerald-600 text-white border border-emerald-400",
+    visitor: "bg-gray-700 text-gray-300 border border-gray-500",
+    expelled: "bg-red-900 text-red-300 border border-red-700 line-through"
+  };
+
+  const roleLabels = {
+    master: "클랜 마스터",
+    admin: "운영진",
+    elite: "정예 클랜원",
+    member: "일반 클랜원",
+    rookie: "신입 클랜원",
+    visitor: "방문자",
+    expelled: "제명됨"
+  };
 
   useEffect(() => {
     checkAdminAndFetch();
@@ -29,10 +59,12 @@ export default function AdminMembers() {
           .eq('id', user.id)
           .single();
         
-        // 지난 대화에서 배운 안전한 비교 방식 (공백 제거 및 소문자화)
-        if (profile?.role?.trim().toLowerCase() === 'admin') {
-          setIsAdmin(true);
-          await fetchMembers(); // 관리자일 때만 멤버 목록 로드
+        const currentRole = profile?.role?.trim().toLowerCase();
+        
+        // 마스터 또는 운영진만 이 페이지 접근 가능
+        if (['master', 'admin'].includes(currentRole)) {
+          setMyRole(currentRole);
+          await fetchMembers();
         }
       }
     } catch (err) {
@@ -42,196 +74,122 @@ export default function AdminMembers() {
     }
   };
 
-  // 모든 회원 목록 가져오기 함수
   const fetchMembers = async () => {
     const { data, error } = await supabase
       .from('profiles')
       .select('id, nickname, role, created_at')
-      .order('created_at', { ascending: true }); // 가입일 순 정렬
+      .order('created_at', { ascending: true });
 
-    if (error) {
-      console.error("목록 불러오기 에러:", error);
-    } else {
-      setMembers(data);
-    }
+    if (!error) setMembers(data);
   };
 
-  // [수정] 버튼 클릭 시
   const handleEditClick = (member) => {
     setEditingId(member.id);
-    setEditForm({ nickname: member.nickname, role: member.role || 'member' });
+    setEditForm({ nickname: member.nickname, role: member.role || 'visitor' });
   };
 
-  // 수정 내용 입력 핸들러
-  const handleInputChange = (e) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
-  };
-
-  // [저장] 버튼 클릭 시 (Supabase DB 업데이트)
   const handleSaveClick = async (id) => {
     try {
       setIsSaving(true);
-      // RLS 정책(image_1) 덕분에 관리자만 이 업데이트가 가능합니다.
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          nickname: editForm.nickname, 
-          role: editForm.role 
-        })
+        .update({ nickname: editForm.nickname, role: editForm.role })
         .eq('id', id);
 
-      if (error) {
-        throw error;
-      }
-
-      alert('회원 정보가 성공적으로 수정되었습니다.');
-      setEditingId(null); // 수정 모드 종료
-      await fetchMembers(); // 목록 새로고침
+      if (error) throw error;
+      alert('상태가 정상적으로 업데이트되었습니다.');
+      setEditingId(null);
+      await fetchMembers();
     } catch (error) {
-      console.error('수정 실패:', error);
-      alert('수정에 실패했습니다: ' + error.message);
+      alert('수정 실패: ' + error.message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // 로딩 중 UI
-  if (loading) return (
-    <div className="text-center py-24 text-gray-500 animate-pulse font-mono">
-      [ SYSTEM: SECURE CONNECTION ESTABLISHING... ]
-    </div>
-  );
-  
-  // 관리자가 아닐 때 UI
-  if (!isAdmin) return (
-    <div className="text-center py-24 text-red-400 font-bold bg-gray-900 rounded-xl border border-red-900/50 m-4">
-      ⚠️ 접근 권한이 없습니다. 운영진 전용 페이지입니다.
-    </div>
-  );
+  if (loading) return <div className="text-center py-24 text-gray-500 font-mono">[ ACCESSING CLAN DATABASE... ]</div>;
+  if (!myRole) return <div className="text-center py-24 text-red-400 font-bold">⚠️ 접근 권한이 없습니다.</div>;
 
-  // === 메인 관리자 UI ===
   return (
     <div className="w-full max-w-6xl mx-auto py-8 px-4 animate-fade-in-down font-sans">
-      
-      {/* 헤더 영역 */}
       <div className="flex items-center justify-between mb-8 border-b border-gray-700 pb-5">
-        <div>
-          <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 drop-shadow-md">
-            ByClan 운영진 전용: 클랜원 관리
-          </h2>
-          <p className="text-gray-400 mt-1">클랜원의 역할(admin, member 등)을 부여하고 관리합니다.</p>
-        </div>
-        <div className="text-xs text-gray-600 font-mono bg-gray-800 px-3 py-1 rounded">
-          SECURE_ADMIN_PANEL_v1.0
-        </div>
+        <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">
+          ByClan 회원 등급 관리
+        </h2>
+        <span className="bg-gray-800 text-yellow-500 px-3 py-1 rounded border border-gray-600 text-sm font-bold">
+          내 직급: {roleLabels[myRole]}
+        </span>
       </div>
 
-      {/* 회원 목록 테이블 */}
       <div className="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl overflow-hidden">
         <table className="w-full text-left border-collapse">
-          {/* 테이블 헤더 - 메인 페이지 느낌의 Sky-Blue 색상 활용 */}
           <thead className="bg-gray-900/70 text-sky-300 text-sm border-b border-gray-700">
             <tr>
-              <th className="py-4 px-6 font-bold truncate">닉네임</th>
-              <th className="py-4 px-6 font-bold">고유 ID (UUID)</th>
-              <th className="py-4 px-6 font-bold">역할 (Role)</th>
-              <th className="py-4 px-6 font-bold hidden sm:table-cell">가입일</th>
+              <th className="py-4 px-6 font-bold">닉네임</th>
+              <th className="py-4 px-6 font-bold">현재 등급</th>
               <th className="py-4 px-6 font-bold text-center">관리</th>
             </tr>
           </thead>
           
-          {/* 테이블 바디 */}
           <tbody className="text-gray-100 text-sm divide-y divide-gray-700/50">
-            {members.map((member) => (
-              <tr key={member.id} className="hover:bg-gray-700/30 transition-colors">
-                
-                {/* 닉네임 (수정 모드 분기) */}
-                <td className="py-4 px-6 font-medium">
-                  {editingId === member.id ? (
-                    <input 
-                      type="text" 
-                      name="nickname"
-                      value={editForm.nickname} 
-                      onChange={handleInputChange}
-                      className="w-full p-2 rounded bg-gray-900 border border-gray-600 focus:border-yellow-500 focus:outline-none text-white"
-                    />
-                  ) : (
-                    member.nickname
-                  )}
-                </td>
+            {members.map((member) => {
+              // 핵심 로직: 내가 이 사람을 수정할 수 있는가?
+              // 1. 마스터는 본인 제외 모두 수정 가능 (마스터 양도 포함)
+              // 2. 운영진은 자신보다 낮은 등급(elite 이하)만 수정 가능
+              const canEdit = myRole === 'master' || (myRole === 'admin' && powerLevel[member.role] < powerLevel['admin']);
 
-                {/* ID - 너무 기니까 앞부분만 표시 */}
-                <td className="py-4 px-6 font-mono text-gray-500 text-xs">
-                  {member.id.substring(0, 8)}...
-                </td>
+              return (
+                <tr key={member.id} className="hover:bg-gray-700/30 transition-colors">
+                  <td className="py-4 px-6 font-medium">
+                    {editingId === member.id ? (
+                      <input 
+                        type="text" 
+                        value={editForm.nickname} 
+                        onChange={(e) => setEditForm({...editForm, nickname: e.target.value})}
+                        className="w-full p-2 rounded bg-gray-900 border border-gray-600 text-white"
+                      />
+                    ) : member.nickname}
+                  </td>
 
-                {/* 역할 (수정 모드 분기 및 배지 디자인) */}
-                <td className="py-4 px-6">
-                  {editingId === member.id ? (
-                    <select 
-                      name="role"
-                      value={editForm.role} 
-                      onChange={handleInputChange}
-                      className="w-full p-2 rounded bg-gray-900 border border-gray-600 focus:border-yellow-500 focus:outline-none text-white"
-                    >
-                      <option value="admin">admin (운영진)</option>
-                      <option value="member">member (정회원)</option>
-                      <option value="guest">guest (손님)</option>
-                    </select>
-                  ) : (
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      member.role === 'admin' ? 'bg-yellow-900 text-yellow-300 border border-yellow-700' :
-                      member.role === 'member' ? 'bg-sky-900 text-sky-300 border border-sky-700' :
-                      'bg-gray-700 text-gray-300'
-                    }`}>
-                      {member.role || 'member'}
-                    </span>
-                  )}
-                </td>
-
-                {/* 가입일 */}
-                <td className="py-4 px-6 text-gray-400 text-xs hidden sm:table-cell font-mono">
-                  {new Date(member.created_at).toLocaleDateString()}
-                </td>
-
-                {/* 관리 버튼 (수정 모드 분기) */}
-                <td className="py-4 px-6 text-center">
-                  {editingId === member.id ? (
-                    <div className="flex gap-2 justify-center">
-                      <button 
-                        onClick={() => handleSaveClick(member.id)} 
-                        disabled={isSaving}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded transition-colors disabled:opacity-50"
+                  <td className="py-4 px-6">
+                    {editingId === member.id ? (
+                      <select 
+                        value={editForm.role} 
+                        onChange={(e) => setEditForm({...editForm, role: e.target.value})}
+                        className="w-full p-2 rounded bg-gray-900 border border-gray-600 text-white"
                       >
-                        {isSaving ? '저장중..' : '저장'}
-                      </button>
-                      <button 
-                        onClick={() => setEditingId(null)} 
-                        className="px-3 py-1.5 bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold rounded transition-colors"
-                      >
-                        취소
-                      </button>
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={() => handleEditClick(member.id)} 
-                      className="px-3 py-1.5 border border-gray-600 text-gray-300 hover:border-yellow-500 hover:text-yellow-400 text-xs font-bold rounded transition-colors"
-                    >
-                      수정
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
+                        {/* 마스터는 모든 옵션 부여 가능, 운영진은 마스터/운영진 옵션 숨김 */}
+                        {Object.keys(roleLabels).map(roleKey => {
+                          if (myRole === 'admin' && powerLevel[roleKey] >= powerLevel['admin']) return null;
+                          return <option key={roleKey} value={roleKey}>{roleLabels[roleKey]}</option>
+                        })}
+                      </select>
+                    ) : (
+                      <span className={`px-3 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${roleStyles[member.role] || roleStyles.visitor}`}>
+                        {roleLabels[member.role] || "미지정"}
+                      </span>
+                    )}
+                  </td>
+
+                  <td className="py-4 px-6 text-center">
+                    {editingId === member.id ? (
+                      <div className="flex gap-2 justify-center">
+                        <button onClick={() => handleSaveClick(member.id)} disabled={isSaving} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded">저장</button>
+                        <button onClick={() => setEditingId(null)} className="px-3 py-1.5 bg-gray-600 text-white text-xs font-bold rounded">취소</button>
+                      </div>
+                    ) : (
+                      canEdit && (
+                        <button onClick={() => handleEditClick(member)} className="px-3 py-1.5 border border-gray-600 text-gray-300 hover:border-yellow-500 text-xs font-bold rounded">
+                          변경/제명
+                        </button>
+                      )
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-
-        {/* 멤버가 없을 때 표시 */}
-        {members.length === 0 && (
-          <div className="text-center py-16 text-gray-500 font-mono">
-            [ SYSTEM: NO MEMBERS FOUND IN DATABASE ]
-          </div>
-        )}
       </div>
     </div>
   );
