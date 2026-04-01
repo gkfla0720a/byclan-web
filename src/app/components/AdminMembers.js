@@ -14,38 +14,34 @@ export default function AdminMembers() {
     checkAdminAndFetch();
   }, []);
 
-  const checkAdminAndFetch = async () => {
+    const checkAdminAndFetch = async () => {
     try {
       setLoading(true);
-      // 1. 현재 세션 확인
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        throw new Error("로그인이 필요하거나 인증에 실패했습니다.");
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("1. 로그인 유저:", user?.id); // 로그인 확인
 
-      // 2. 프로필 및 권한 확인
-      const { data: profile, error: dbError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      if (user) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        console.log("2. DB에서 가져온 프로필:", profile); // 여기서 데이터가 오는지 확인!
+        console.log("3. 발생한 에러(있다면):", error);
 
-      if (dbError) throw dbError;
-
-      if (profile?.role === 'admin') {
-        setIsAdmin(true);
-        await fetchMembers();
-      } else {
-        throw new Error("관리자 권한이 없습니다. (현재 권한: " + (profile?.role || '없음') + ")");
+        if (profile?.role === 'admin') {
+          setIsAdmin(true);
+          fetchMembers();
+        }
       }
     } catch (err) {
-      console.error("관리자 확인 에러:", err);
-      setErrorMsg(err.message);
+      console.error("에러 발생:", err);
     } finally {
       setLoading(false);
     }
   };
+
 
   const fetchMembers = async () => {
     const { data, error } = await supabase
