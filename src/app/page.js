@@ -10,6 +10,7 @@ import RankingBoard from './components/RankingBoard';
 import NoticeBoard from './components/NoticeBoard';
 import CommunityBoard from './components/CommunityBoard';
 import JoinProcess from './components/JoinProcess';
+import AdminMembers from './components/AdminMembers'; 
 
 function PagePlaceholder({ title }) {
   return (
@@ -379,7 +380,9 @@ export default function Home() {
          activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트' ? <ClanTournament /> : 
          activeView === '포인트 상점' || activeView === '포인트 내역' ? <PointDashboard view={activeView} /> :
          activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
-         <PagePlaceholder title={activeView} />}
+             activeVeiw === '관리자' ?
+           <AdminMembers /> :
+        <PagePlaceholder title={activeView} />}
       </main>
       
       <Footer />
