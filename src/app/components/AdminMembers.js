@@ -79,7 +79,12 @@ export default function AdminMembers() {
 
   return (
     <div className="w-full max-w-5xl mx-auto py-8 px-4 animate-fade-in-down">
-       {/* 기존 관리자 UI 코드 */}
+       {/* 테스트용 문구 추가 */}
+       <h2 className="text-2xl font-bold text-yellow-400 mb-4">관리자 페이지에 오신 것을 환영합니다!</h2>
+       <p className="text-gray-300">권한 확인 로직이 완벽하게 작동하고 있습니다.</p>
+       
+       {/* 나중에 여기에 members 데이터를 이용해 표(Table)를 만들면 됩니다. */}
     </div>
   );
+
 }
