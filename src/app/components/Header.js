@@ -7,7 +7,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 원래 만드셨던 완벽한 로고 컴포넌트 복구
 function ByClanLogo() {
   const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repository/main/ByLogo.png";
   return (
@@ -23,14 +22,30 @@ export default function Header({ navigateTo }) {
   const [mobileAccordionIndex, setMobileAccordionIndex] = useState(null);
   const menuRefs = useRef([]); 
   const navRef = useRef(null);
+  
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null); // ✨ 유저 권한 상태 추가
 
   useEffect(() => {
-    const getUser = async () => {
+    const getUserData = async () => {
+      // 1. 현재 로그인 유저 가져오기
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+
+      if (user) {
+        // 2. DB(profiles 테이블)에서 해당 유저의 role 가져오기
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setRole(profile.role); // 'admin' 또는 'user' 저장
+        }
+      }
     };
-    getUser();
+    getUserData();
 
     function handleClickOutside(event) {
       if (navRef.current && !navRef.current.contains(event.target)) {
@@ -48,10 +63,11 @@ export default function Header({ navigateTo }) {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setRole(null); // 로그아웃 시 권한 초기화
     window.location.reload();
   };
 
-  // 기존 시안의 디테일한 메뉴 구조 복구
+  // 기존 메뉴 데이터
   const menuData = [
     { title: '클랜 소개', items: ['가입안내', '가입신청', '정회원 전환신청', '개요'] },
     { title: 'BY래더시스템', items: ['대시보드', '랭킹', '경기기록'] },
@@ -60,6 +76,11 @@ export default function Header({ navigateTo }) {
     { title: '커뮤니티', items: ['공지사항', '자유게시판', '클랜원 소식'] },
     { title: '포인트', items: ['포인트 상점', '포인트 내역'] }
   ];
+
+  // ✨ 관리자 메뉴 구성 (role이 admin일 때만 추가됨)
+  const fullMenuData = role === 'admin' 
+    ? [...menuData, { title: '👑 관리자', items: ['관리자'] }] 
+    : menuData;
 
   const getDropdownPlacement = (index) => {
     const menuItem = menuRefs.current[index];
@@ -84,10 +105,14 @@ export default function Header({ navigateTo }) {
           </h1>
         </div>
         
+        {/* 데스크톱 메뉴 영역: fullMenuData 사용 */}
         <ul className="hidden md:flex flex-wrap gap-x-6 items-center justify-end w-full">
-          {menuData.map((menu, index) => (
+          {fullMenuData.map((menu, index) => (
             <li key={index} className="relative" ref={(el) => menuRefs.current[index] = el}>
-              <button onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)} className="text-gray-300 hover:text-white transition-colors duration-200 hover:scale-105 text-sm font-semibold">
+              <button 
+                onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)} 
+                className={`transition-colors duration-200 hover:scale-105 text-sm font-semibold ${menu.title === '👑 관리자' ? 'text-red-400 hover:text-red-300' : 'text-gray-300 hover:text-white'}`}
+              >
                 {menu.title}
               </button>
               {openMenuIndex === index && (
@@ -102,7 +127,6 @@ export default function Header({ navigateTo }) {
             </li>
           ))}
           
-          {/* 디스코드 로그인 연동 (기존 디자인 톤앤매너 유지) */}
           <li className="ml-2">
             {user ? (
               <div className="flex items-center gap-2 bg-gray-900 px-3 py-1.5 rounded-full border border-gray-700">
@@ -129,6 +153,7 @@ export default function Header({ navigateTo }) {
         </div>
       </div>
 
+      {/* 모바일 메뉴 영역: fullMenuData 사용 */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-gray-950/95 backdrop-blur-xl border-b border-gray-800 z-50 flex flex-col max-h-[80vh] overflow-y-auto animate-fade-in-down">
           {user && (
@@ -140,9 +165,9 @@ export default function Header({ navigateTo }) {
               <button onClick={handleLogout} className="text-xs text-red-400">로그아웃</button>
             </div>
           )}
-          {menuData.map((menu, index) => (
+          {fullMenuData.map((menu, index) => (
             <div key={index} className="flex flex-col border-b border-gray-800/50">
-              <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className="px-6 py-4 flex justify-between items-center text-gray-200 font-bold hover:bg-gray-900 transition-colors">
+              <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className={`px-6 py-4 flex justify-between items-center font-bold hover:bg-gray-900 transition-colors ${menu.title === '👑 관리자' ? 'text-red-400' : 'text-gray-200'}`}>
                 {menu.title}
                 <span className="text-gray-500 text-xs">{mobileAccordionIndex === index ? '▲' : '▼'}</span>
               </button>
