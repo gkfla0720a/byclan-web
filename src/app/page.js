@@ -382,6 +382,11 @@ export default function Home() {
          activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
           activeView === '관리자' ?
            <AdminMembers /> :
+           // page.js 내부 라우팅 로직 예시
+           {activeView === '운영진게시판' ? (
+           // myRole이 master나 admin인지 체크하는 로직을 AdminBoard 컴포넌트 내부에 작성합니다 (AdminMembers와 동일한 방식)
+           <AdminBoard />
+           ) : ... }
         <PagePlaceholder title={activeView} />}
       </main>
       
