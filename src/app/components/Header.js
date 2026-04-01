@@ -24,25 +24,15 @@ export default function Header({ navigateTo }) {
   const navRef = useRef(null);
   
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null); // ✨ 유저 권한 상태 추가
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
     const getUserData = async () => {
-      // 1. 현재 로그인 유저 가져오기
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-
       if (user) {
-        // 2. DB(profiles 테이블)에서 해당 유저의 role 가져오기
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        
-        if (profile) {
-          setRole(profile.role); // 'admin' 또는 'user' 저장
-        }
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        if (profile) setRole(profile.role);
       }
     };
     getUserData();
@@ -63,11 +53,10 @@ export default function Header({ navigateTo }) {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    setRole(null); // 로그아웃 시 권한 초기화
+    setRole(null);
     window.location.reload();
   };
 
-  // 기존 메뉴 데이터
   const menuData = [
     { title: '클랜 소개', items: ['가입안내', '가입신청', '정회원 전환신청', '개요'] },
     { title: 'BY래더시스템', items: ['대시보드', '랭킹', '경기기록'] },
@@ -76,17 +65,6 @@ export default function Header({ navigateTo }) {
     { title: '커뮤니티', items: ['공지사항', '자유게시판', '클랜원 소식'] },
     { title: '포인트', items: ['포인트 상점', '포인트 내역'] }
   ];
-
-  // ✨ 관리자 메뉴 구성 (role이 admin일 때만 추가됨)
-  const fullMenuData = role === 'admin' 
-    ? [...menuData, { title: '👑 관리자', items: ['관리자'] }] 
-    : menuData;
-
-  const getDropdownPlacement = (index) => {
-    const menuItem = menuRefs.current[index];
-    if (!menuItem) return 'left-0';
-    return menuItem.getBoundingClientRect().left + 160 > window.innerWidth ? 'right-0' : 'left-0';
-  };
 
   const handleNav = (viewName) => {
     navigateTo(viewName);
@@ -105,18 +83,14 @@ export default function Header({ navigateTo }) {
           </h1>
         </div>
         
-        {/* 데스크톱 메뉴 영역: fullMenuData 사용 */}
         <ul className="hidden md:flex flex-wrap gap-x-6 items-center justify-end w-full">
-          {fullMenuData.map((menu, index) => (
+          {menuData.map((menu, index) => (
             <li key={index} className="relative" ref={(el) => menuRefs.current[index] = el}>
-              <button 
-                onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)} 
-                className={`transition-colors duration-200 hover:scale-105 text-sm font-semibold ${menu.title === '👑 관리자' ? 'text-red-400 hover:text-red-300' : 'text-gray-300 hover:text-white'}`}
-              >
+              <button onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)} className="text-gray-300 hover:text-white transition-colors duration-200 hover:scale-105 text-sm font-semibold">
                 {menu.title}
               </button>
               {openMenuIndex === index && (
-                <div className={`absolute top-full mt-4 w-48 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-lg shadow-2xl flex flex-col z-50 overflow-hidden ${getDropdownPlacement(index)}`}>
+                <div className="absolute top-full left-0 mt-4 w-48 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-lg shadow-2xl flex flex-col z-50 overflow-hidden">
                   {menu.items.map((subItem, subIndex) => (
                     <span key={subIndex} onClick={() => handleNav(subItem)} className="px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-yellow-500 cursor-pointer transition-colors border-b border-gray-800 last:border-none">
                       {subItem}
@@ -126,6 +100,15 @@ export default function Header({ navigateTo }) {
               )}
             </li>
           ))}
+
+          {/* ✨ 관리자 전용 버튼 (데스크톱) */}
+          {role === 'admin' && (
+            <li>
+              <button onClick={() => handleNav('관리자')} className="text-red-400 hover:text-red-300 transition-colors duration-200 hover:scale-105 text-sm font-bold border border-red-900/50 px-2 py-1 rounded bg-red-950/20">
+                👑 관리자
+              </button>
+            </li>
+          )}
           
           <li className="ml-2">
             {user ? (
@@ -142,18 +125,14 @@ export default function Header({ navigateTo }) {
           </li>
         </ul>
 
-        {/* 모바일 햄버거 버튼 영역 */}
         <div className="md:hidden flex items-center gap-3">
-          {!user && (
-            <button onClick={handleLogin} className="text-[#5865F2] text-xs font-bold border border-[#5865F2] px-2 py-1 rounded">Login</button>
-          )}
+          {!user && <button onClick={handleLogin} className="text-[#5865F2] text-xs font-bold border border-[#5865F2] px-2 py-1 rounded">Login</button>}
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-gray-300 hover:text-white p-2">
             {isMobileMenuOpen ? 'X' : '☰'}
           </button>
         </div>
       </div>
 
-      {/* 모바일 메뉴 영역: fullMenuData 사용 */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-gray-950/95 backdrop-blur-xl border-b border-gray-800 z-50 flex flex-col max-h-[80vh] overflow-y-auto animate-fade-in-down">
           {user && (
@@ -165,9 +144,10 @@ export default function Header({ navigateTo }) {
               <button onClick={handleLogout} className="text-xs text-red-400">로그아웃</button>
             </div>
           )}
-          {fullMenuData.map((menu, index) => (
+          
+          {menuData.map((menu, index) => (
             <div key={index} className="flex flex-col border-b border-gray-800/50">
-              <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className={`px-6 py-4 flex justify-between items-center font-bold hover:bg-gray-900 transition-colors ${menu.title === '👑 관리자' ? 'text-red-400' : 'text-gray-200'}`}>
+              <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className="px-6 py-4 flex justify-between items-center text-gray-200 font-bold hover:bg-gray-900 transition-colors">
                 {menu.title}
                 <span className="text-gray-500 text-xs">{mobileAccordionIndex === index ? '▲' : '▼'}</span>
               </button>
@@ -182,6 +162,13 @@ export default function Header({ navigateTo }) {
               )}
             </div>
           ))}
+
+          {/* ✨ 관리자 전용 메뉴 (모바일) */}
+          {role === 'admin' && (
+            <button onClick={() => handleNav('관리자')} className="px-6 py-4 text-left text-red-400 font-bold border-b border-gray-800/50 hover:bg-gray-900">
+              👑 관리자 모드
+            </button>
+          )}
         </div>
       )}
     </nav>
