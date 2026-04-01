@@ -385,7 +385,7 @@ export default function Home() {
            // page.js 내부 라우팅 로직 예시
            {activeView === '운영진게시판' ? (
            // myRole이 master나 admin인지 체크하는 로직을 AdminBoard 컴포넌트 내부에 작성합니다 (AdminMembers와 동일한 방식)
-           <AdminBoard />
+           //<AdminBoard />
            ) : ... }
         <PagePlaceholder title={activeView} />}
       </main>
