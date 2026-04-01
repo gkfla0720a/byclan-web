@@ -9,7 +9,7 @@ export default function JoinProcess() {
     race: 'Terran', 
     tier: '', 
     intro: '', 
-    phone: '' // ✅ 전화번호 상태 추가
+    phone: '' // ✅ 전화번호 상태 추가 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState(null);
