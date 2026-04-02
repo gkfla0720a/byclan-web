@@ -16,7 +16,19 @@ export default function MyProfile() {
   const [intro, setIntro] = useState('');
 
   const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
-  const [originalByID, setOriginalByID] = useState(''); // 기존 originalNickname 대체
+  const [originalByID, setOriginalByID] = useState('');
+
+  // ✨ 영문 등급을 한글로 예쁘게 바꿔주는 변환기
+  const roleLabels = {
+    master: "👑 클랜 마스터",
+    admin: "🛠️ 운영진",
+    elite: "⚔️ 정예 클랜원",
+    member: "🛡️ 일반 클랜원",
+    rookie: "🌱 신입 클랜원",
+    associate: "👀 준회원",
+    guest: "👤 방문자",
+    expelled: "🚫 제명됨"
+  };
 
   useEffect(() => {
     fetchProfileData();
@@ -40,10 +52,8 @@ export default function MyProfile() {
         setRace(profileData.race || '미지정');
         setIntro(profileData.intro || '');
         
-        // ✨ DB에 분리된 값들을 아주 깔끔하게 가져옵니다.
         setDiscordName(profileData.discord_name || user.user_metadata?.full_name || '알 수 없음');
         
-        // ✨ 클랜 닉네임은 이제 무조건 ByID 칸만 바라봅니다.
         const currentByID = profileData.ByID || '';
         
         if (currentByID.startsWith('By_')) {
@@ -56,7 +66,6 @@ export default function MyProfile() {
           setIsNicknameAvailable(false);
         }
 
-        // 래더 데이터 조회 (ladders 테이블의 nickname 칸과 비교)
         if (currentByID.startsWith('By_')) {
           const { data: ladder } = await supabase
             .from('ladders')
@@ -100,7 +109,6 @@ export default function MyProfile() {
     }
 
     try {
-      // ✨ 중복 확인도 이제 ByID 칸을 기준으로 검사합니다.
       const { count, error } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
@@ -137,7 +145,6 @@ export default function MyProfile() {
       setIsUpdating(true);
       const { error } = await supabase
         .from('profiles')
-        // ✨ 업데이트 할 때 ByID와 discord_name을 명확히 나눠서 저장합니다.
         .update({ 
           ByID: finalNickname,
           race: race,
@@ -159,6 +166,9 @@ export default function MyProfile() {
   if (loading) return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">LOADING PROFILE...</div>;
   if (!profile) return <div className="text-center py-24 text-red-400 font-bold">프로필을 불러올 수 없습니다.</div>;
 
+  // 현재 유저의 한글 등급 가져오기 (없으면 방문자 처리)
+  const userRoleLabel = roleLabels[profile.role?.trim().toLowerCase()] || "👤 방문자";
+
   return (
     <div className="w-full max-w-4xl mx-auto py-8 px-4 animate-fade-in-down font-sans">
       
@@ -169,9 +179,7 @@ export default function MyProfile() {
           </h2>
           <p className="text-gray-400 mt-1">내 정보를 관리하고 클랜 활동을 준비하세요.</p>
         </div>
-        <span className="px-4 py-1.5 bg-gray-800 border border-yellow-700/50 text-yellow-500 rounded-lg font-black uppercase tracking-widest text-sm shadow-lg">
-          등급: {profile.role || 'GUEST'}
-        </span>
+        {/* ✨ 기존에 우측 상단에 있던 영문 등급 뱃지는 깔끔하게 삭제했습니다. */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -214,6 +222,14 @@ export default function MyProfile() {
                isNicknameAvailable ? '✓ 사용 가능한 닉네임입니다.' : 
                '⚠ 중복 확인이 필요합니다.'}
             </p>
+          </div>
+
+          {/* ✨ 추가된 영역: 닉네임 바로 밑에 현재 등급 표시 */}
+          <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-700 flex items-center justify-between">
+            <span className="text-gray-400 text-sm font-bold">현재 클랜 등급</span>
+            <span className="text-yellow-400 font-black text-lg tracking-wide">
+              {userRoleLabel}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
