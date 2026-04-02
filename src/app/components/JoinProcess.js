@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 
 export default function JoinProcess({ view }) {
-  // 1. 상태 관리
   const [formData, setFormData] = useState({ 
     btag: '', race: 'Terran', tier: '', intro: '', phone: '' 
   });
@@ -13,7 +12,6 @@ export default function JoinProcess({ view }) {
   const [userRole, setUserRole] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 2. 유저 정보 및 직급 가져오기
   useEffect(() => {
     const fetchUserAndRole = async () => {
       try {
@@ -27,12 +25,11 @@ export default function JoinProcess({ view }) {
             .eq('id', user.id)
             .single();
           
-          // 🛡️ 에러 방어막: 데이터가 비어있어도 강제로 'associate' 처리
-          let safeRole = 'associate'; 
-          if (profile && profile.role) {
-             safeRole = profile.role; 
+          if (profile) {
+            // ✅ 강제 associate 할당(눈가림) 제거. 
+            // DB에 있는 값을 있는 그대로 가져옵니다. 단, Null 에러로 페이지가 뻗는 것만 방지(?.)
+            setUserRole(profile.role?.trim().toLowerCase());
           }
-          setUserRole(safeRole.trim().toLowerCase());
         }
       } catch (error) {
         console.error("유저 정보 로드 실패:", error);
@@ -43,13 +40,32 @@ export default function JoinProcess({ view }) {
     fetchUserAndRole();
   }, []);
 
-  // 🚨 바로 이 녀석입니다! 이 함수가 빠져서 에러가 났었습니다.
+  // ✅ 전화번호 하이픈 자동 완성 로직이 추가된 핸들러
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === 'phone') {
+      // 1. 사용자가 입력한 값에서 숫자만 추출
+      const onlyNums = value.replace(/[^0-9]/g, '');
+      let formattedPhone = '';
+
+      // 2. 길이에 따라 하이픈(-) 자동 삽입
+      if (onlyNums.length <= 3) {
+        formattedPhone = onlyNums;
+      } else if (onlyNums.length <= 7) {
+        formattedPhone = `${onlyNums.slice(0, 3)}-${onlyNums.slice(3)}`;
+      } else {
+        formattedPhone = `${onlyNums.slice(0, 3)}-${onlyNums.slice(3, 7)}-${onlyNums.slice(7, 11)}`;
+      }
+
+      setFormData(prev => ({ ...prev, [name]: formattedPhone }));
+      return; // 전화번호는 여기서 처리 끝
+    }
+
+    // 다른 입력칸들은 기존처럼 그대로 처리
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 3. 제출 처리 함수
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -63,8 +79,9 @@ export default function JoinProcess({ view }) {
       return;
     }
 
-    if (formData.phone.length < 10) {
-      alert('정확한 연락처(전화번호)를 입력해주세요.');
+    // 전화번호 길이 검증 (하이픈 포함 13자리: 010-0000-0000)
+    if (formData.phone.length < 13) {
+      alert('정확한 연락처 11자리를 입력해주세요.');
       return;
     }
 
@@ -95,7 +112,6 @@ export default function JoinProcess({ view }) {
     }
   };
 
-  // 4. 화면 렌더링 시작
   if (isLoading) {
     return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">로딩 중...</div>;
   }
@@ -164,7 +180,7 @@ export default function JoinProcess({ view }) {
             회원님은 이미 <strong>ByClan</strong>의 소속입니다.
           </p>
           <p className="text-gray-400">
-            현재 직급: <span className="text-sky-400 font-bold uppercase ml-1">{userRole}</span>
+            현재 직급: <span className="text-sky-400 font-bold uppercase ml-1">{userRole || '미지정'}</span>
           </p>
           <p className="text-gray-500 mt-6 text-sm">
             추가적인 가입 신청서를 제출하실 필요가 없습니다. 클랜 활동에 참여해 주세요!
@@ -209,9 +225,19 @@ export default function JoinProcess({ view }) {
           <input type="text" name="tier" placeholder="예: 래더 S / 2100점" required className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 text-white focus:outline-none focus:border-yellow-500 transition-colors" value={formData.tier} onChange={handleChange} />
         </div>
 
+        {/* ✅ 전화번호 입력칸 속성 변경: type="tel", maxLength 추가, placeholder 변경 */}
         <div>
           <label className="block text-gray-300 font-bold mb-2">연락처 (전화번호)</label>
-          <input type="text" name="phone" placeholder="예: 010-1234-5678 (하이픈 포함)" required className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 text-white focus:outline-none focus:border-yellow-500 transition-colors" value={formData.phone} onChange={handleChange} />
+          <input 
+            type="tel" 
+            name="phone" 
+            placeholder="숫자만 입력해 주세요" 
+            maxLength="13"
+            required 
+            className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 text-white focus:outline-none focus:border-yellow-500 transition-colors" 
+            value={formData.phone} 
+            onChange={handleChange} 
+          />
           <p className="text-xs text-gray-500 mt-2">※ 가입 테스트 일정 조율을 위해 정확히 입력해 주세요. 운영진 외에는 공개되지 않습니다.</p>
         </div>
 
