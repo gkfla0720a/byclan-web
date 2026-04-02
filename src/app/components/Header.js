@@ -47,7 +47,14 @@ export default function Header({ navigateTo }) {
   }, []);
 
   const handleLogin = async () => {
-    await supabase.auth.signInWithOAuth({ provider: 'discord' });
+    await supabase.auth.signInWithOAuth({ 
+      provider: 'discord',
+      options: {
+        queryParams: {
+          prompt: 'consent', // ✅ 핵심: 무조건 동의/계정 선택 화면을 강제로 띄움
+        },
+      },
+    });
   };
 
   const handleLogout = async () => {
