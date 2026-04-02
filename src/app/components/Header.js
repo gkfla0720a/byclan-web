@@ -102,7 +102,7 @@ export default function Header({ navigateTo }) {
           ))}
 
           {/* ✨ 관리자 전용 버튼 (데스크톱) */}
-          {role === 'admin' && (
+          {['master', 'admin'].includes(role) && (
             <li>
               <button onClick={() => handleNav('관리자')} className="text-red-400 hover:text-red-300 transition-colors duration-200 hover:scale-105 text-sm font-bold border border-red-900/50 px-2 py-1 rounded bg-red-950/20">
                 👑 관리자
@@ -164,7 +164,7 @@ export default function Header({ navigateTo }) {
           ))}
 
           {/* ✨ 관리자 전용 메뉴 (모바일) */}
-          {role === 'admin' && (
+          {['master', 'admin'].includes(role) && (
             <button onClick={() => handleNav('관리자')} className="px-6 py-4 text-left text-red-400 font-bold border-b border-gray-800/50 hover:bg-gray-900">
               👑 관리자 모드
             </button>

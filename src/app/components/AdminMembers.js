@@ -5,42 +5,34 @@ import { supabase } from '@/supabase';
 
 export default function AdminMembers() {
   const [members, setMembers] = useState([]);
-  const [myRole, setMyRole] = useState(null); // 내 현재 직급 저장
+  const [myRole, setMyRole] = useState(null);
+  const [myId, setMyId] = useState(null); // ✅ 내 고유 ID 저장용 상태 추가
   const [loading, setLoading] = useState(true);
   
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ nickname: '', role: '' });
   const [isSaving, setIsSaving] = useState(false);
 
-  // 직급별 권한 수치화 (숫자가 높을수록 상위 권한)
+// 1. 권한 레벨 추가 (신입 클랜원보다 낮은 15 정도 부여)
   const powerLevel = {
-    master: 100,
-    admin: 80,
-    elite: 60,
-    member: 40,
-    rookie: 20,
-    visitor: 10,
-    expelled: 0 // 제명
+    master: 100, admin: 80, elite: 60, member: 40, rookie: 20, associate: 15, guest: 10, expelled: 0
   };
 
+  // 2. 뱃지 스타일 추가 (준회원은 청록색 느낌)
   const roleStyles = {
     master: "bg-yellow-500 text-black border border-yellow-300",
     admin: "bg-orange-600 text-white border border-orange-400",
     elite: "bg-purple-600 text-white border border-purple-400",
     member: "bg-blue-600 text-white border border-blue-400",
     rookie: "bg-emerald-600 text-white border border-emerald-400",
-    visitor: "bg-gray-700 text-gray-300 border border-gray-500",
+    associate: "bg-teal-800 text-teal-300 border border-teal-600", // ✅ 추가됨
+    guest: "bg-gray-700 text-gray-300 border border-gray-500",
     expelled: "bg-red-900 text-red-300 border border-red-700 line-through"
   };
 
+  // 3. 한글 라벨 추가
   const roleLabels = {
-    master: "클랜 마스터",
-    admin: "운영진",
-    elite: "정예 클랜원",
-    member: "일반 클랜원",
-    rookie: "신입 클랜원",
-    visitor: "방문자",
-    expelled: "제명됨"
+    master: "클랜 마스터", admin: "운영진", elite: "정예 클랜원", member: "일반 클랜원", rookie: "신입 클랜원", associate: "준회원", guest: "방문자", expelled: "제명됨"
   };
 
   useEffect(() => {
@@ -53,6 +45,7 @@ export default function AdminMembers() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
+        setMyId(user.id); // 내 ID 저장
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -61,7 +54,6 @@ export default function AdminMembers() {
         
         const currentRole = profile?.role?.trim().toLowerCase();
         
-        // 마스터 또는 운영진만 이 페이지 접근 가능
         if (['master', 'admin'].includes(currentRole)) {
           setMyRole(currentRole);
           await fetchMembers();
@@ -85,12 +77,44 @@ export default function AdminMembers() {
 
   const handleEditClick = (member) => {
     setEditingId(member.id);
-    setEditForm({ nickname: member.nickname, role: member.role || 'visitor' });
+    setEditForm({ nickname: member.nickname, role: member.role || 'guest' });
   };
 
   const handleSaveClick = async (id) => {
     try {
       setIsSaving(true);
+
+      // ✅ [핵심 로직] 마스터 위임(Handover) 시퀀스
+      if (myRole === 'master' && editForm.role === 'master') {
+        const confirmHandover = window.confirm(
+          `⚠️ 경고: [${editForm.nickname}]님에게 클랜 마스터 권한을 위임하시겠습니까?\n이 작업이 완료되면 본인은 [운영진]으로 즉시 강등되며 되돌릴 수 없습니다.`
+        );
+        
+        if (!confirmHandover) {
+          setIsSaving(false);
+          return; // 취소하면 중단
+        }
+
+        // 1. 대상 유저를 마스터로 승급
+        const { error: targetError } = await supabase
+          .from('profiles')
+          .update({ nickname: editForm.nickname, role: 'master' })
+          .eq('id', id);
+        if (targetError) throw targetError;
+
+        // 2. 나 자신을 운영진(admin)으로 강등
+        const { error: selfError } = await supabase
+          .from('profiles')
+          .update({ role: 'admin' })
+          .eq('id', myId);
+        if (selfError) throw selfError;
+
+        alert('클랜 마스터 권한 위임이 완료되었습니다. 이용을 위해 페이지를 새로고침합니다.');
+        window.location.reload(); // 내 권한이 바뀌었으므로 새로고침
+        return;
+      }
+
+      // 일반적인 수정 로직
       const { error } = await supabase
         .from('profiles')
         .update({ nickname: editForm.nickname, role: editForm.role })
@@ -133,13 +157,14 @@ export default function AdminMembers() {
           
           <tbody className="text-gray-100 text-sm divide-y divide-gray-700/50">
             {members.map((member) => {
-              // 핵심 로직: 내가 이 사람을 수정할 수 있는가?
-              // 1. 마스터는 본인 제외 모두 수정 가능 (마스터 양도 포함)
-              // 2. 운영진은 자신보다 낮은 등급(elite 이하)만 수정 가능
-              const canEdit = myRole === 'master' || (myRole === 'admin' && powerLevel[member.role] < powerLevel['admin']);
+              // ✅ 본인 계정인지 확인
+              const isMe = member.id === myId;
+              
+              // ✅ 본인은 수정 불가. 다른 사람은 직급 비교 로직 통과 시 수정 가능
+              const canEdit = !isMe && (myRole === 'master' || (myRole === 'admin' && powerLevel[member.role] < powerLevel['admin']));
 
               return (
-                <tr key={member.id} className="hover:bg-gray-700/30 transition-colors">
+                <tr key={member.id} className={`transition-colors ${isMe ? 'bg-gray-700/20' : 'hover:bg-gray-700/30'}`}>
                   <td className="py-4 px-6 font-medium">
                     {editingId === member.id ? (
                       <input 
@@ -148,7 +173,12 @@ export default function AdminMembers() {
                         onChange={(e) => setEditForm({...editForm, nickname: e.target.value})}
                         className="w-full p-2 rounded bg-gray-900 border border-gray-600 text-white"
                       />
-                    ) : member.nickname}
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        {member.nickname}
+                        {isMe && <span className="text-[10px] bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full">나</span>}
+                      </div>
+                    )}
                   </td>
 
                   <td className="py-4 px-6">
@@ -158,14 +188,13 @@ export default function AdminMembers() {
                         onChange={(e) => setEditForm({...editForm, role: e.target.value})}
                         className="w-full p-2 rounded bg-gray-900 border border-gray-600 text-white"
                       >
-                        {/* 마스터는 모든 옵션 부여 가능, 운영진은 마스터/운영진 옵션 숨김 */}
                         {Object.keys(roleLabels).map(roleKey => {
                           if (myRole === 'admin' && powerLevel[roleKey] >= powerLevel['admin']) return null;
                           return <option key={roleKey} value={roleKey}>{roleLabels[roleKey]}</option>
                         })}
                       </select>
                     ) : (
-                      <span className={`px-3 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${roleStyles[member.role] || roleStyles.visitor}`}>
+                      <span className={`px-3 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${roleStyles[member.role] || roleStyles.guest}`}>
                         {roleLabels[member.role] || "미지정"}
                       </span>
                     )}
@@ -177,12 +206,17 @@ export default function AdminMembers() {
                         <button onClick={() => handleSaveClick(member.id)} disabled={isSaving} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded">저장</button>
                         <button onClick={() => setEditingId(null)} className="px-3 py-1.5 bg-gray-600 text-white text-xs font-bold rounded">취소</button>
                       </div>
+                    ) : isMe ? (
+                      // ✅ 본인 계정일 경우 관리 버튼 대신 안내 문구 표시
+                      <span className="text-xs text-gray-500 bg-gray-900 border border-gray-700 px-3 py-1.5 rounded cursor-not-allowed">
+                        본인(수정 불가)
+                      </span>
+                    ) : canEdit ? (
+                      <button onClick={() => handleEditClick(member)} className="px-3 py-1.5 border border-gray-600 text-gray-300 hover:border-yellow-500 text-xs font-bold rounded transition-colors">
+                        변경/제명
+                      </button>
                     ) : (
-                      canEdit && (
-                        <button onClick={() => handleEditClick(member)} className="px-3 py-1.5 border border-gray-600 text-gray-300 hover:border-yellow-500 text-xs font-bold rounded">
-                          변경/제명
-                        </button>
-                      )
+                      <span className="text-xs text-gray-600">-</span>
                     )}
                   </td>
                 </tr>
