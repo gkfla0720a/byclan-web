@@ -11,9 +11,13 @@ export default function MyProfile() {
   const [isUpdating, setIsUpdating] = useState(false);
 
   // 📝 수정 가능한 폼 상태
-  const [nickname, setNickname] = useState('');
+  const [clanNameInput, setClanNameInput] = useState(''); // 'By_'를 제외한 순수 입력값
   const [race, setRace] = useState('미지정');
   const [intro, setIntro] = useState('');
+
+  // ✅ 중복 확인 상태
+  const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
+  const [originalNickname, setOriginalNickname] = useState('');
 
   useEffect(() => {
     fetchProfileData();
@@ -21,12 +25,10 @@ export default function MyProfile() {
 
   const fetchProfileData = async () => {
     try {
-      // 1. 유저 인증 정보 가져오기 (이메일 획득용)
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setEmail(user.email);
 
-      // 2. 프로필 정보 가져오기
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -35,18 +37,29 @@ export default function MyProfile() {
 
       if (profileData) {
         setProfile(profileData);
-        setNickname(profileData.nickname || '');
         setRace(profileData.race || '미지정');
         setIntro(profileData.intro || '');
+        
+        // 초기 닉네임 세팅 로직: 'By_'로 시작하는 정식 닉네임일 때만 칸을 채움
+        const currentNick = profileData.nickname || '';
+        if (currentNick.startsWith('By_')) {
+          const pureName = currentNick.replace('By_', '');
+          setClanNameInput(pureName);
+          setOriginalNickname(currentNick);
+          setIsNicknameAvailable(true); // 본인 닉네임이므로 изначально 사용 가능 상태
+        } else {
+          // 디스코드 이름이 들어있거나, 아예 없으면 빈칸으로 둠
+          setClanNameInput('');
+          setOriginalNickname('');
+          setIsNicknameAvailable(false);
+        }
 
-        // 3. 래더 정보 가져오기 (닉네임 기반으로 조회)
-        if (profileData.nickname) {
+        if (currentNick.startsWith('By_')) {
           const { data: ladder } = await supabase
             .from('ladders')
             .select('*')
-            .eq('nickname', profileData.nickname)
+            .eq('nickname', currentNick)
             .single();
-          
           if (ladder) setLadderData(ladder);
         }
       }
@@ -57,19 +70,74 @@ export default function MyProfile() {
     }
   };
 
-  const handleUpdate = async () => {
-    // 🚨 By_ 닉네임 검증 로직
-    if (nickname.trim() !== '' && !nickname.startsWith('By_')) {
-      alert('클랜 닉네임은 반드시 "By_" 형식으로 시작해야 합니다. (예: By_Slayer)');
+  // 닉네임 입력 시 중복 확인 상태 초기화
+  const handleInputChange = (e) => {
+    // 띄어쓰기 입력 방지
+    const value = e.target.value.replace(/\s/g, '');
+    setClanNameInput(value);
+    
+    const fullNickname = `By_${value}`;
+    if (fullNickname === originalNickname) {
+      setIsNicknameAvailable(true); // 내 원래 닉네임으로 되돌리면 합격
+    } else {
+      setIsNicknameAvailable(false); // 글자가 바뀌면 다시 중복확인 필요
+    }
+  };
+
+  // ✅ 닉네임 중복 확인 로직
+  const checkDuplicate = async () => {
+    if (!clanNameInput.trim()) {
+      alert('닉네임을 입력해 주세요.');
       return;
     }
+
+    const fullNickname = `By_${clanNameInput}`;
+
+    if (fullNickname === originalNickname) {
+      alert('현재 사용 중인 본인의 닉네임입니다.');
+      setIsNicknameAvailable(true);
+      return;
+    }
+
+    try {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('nickname', fullNickname);
+
+      if (error) throw error;
+
+      if (count > 0) {
+        alert(`'${fullNickname}' 은(는) 이미 다른 클랜원이 사용 중입니다.\n다른 닉네임을 입력해 주세요.`);
+        setIsNicknameAvailable(false);
+      } else {
+        alert(`'${fullNickname}' 은(는) 사용 가능한 멋진 닉네임입니다!`);
+        setIsNicknameAvailable(true);
+      }
+    } catch (error) {
+      alert('중복 확인 중 오류가 발생했습니다: ' + error.message);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!clanNameInput.trim()) {
+      alert('클랜 닉네임을 입력해 주세요.');
+      return;
+    }
+    
+    if (!isNicknameAvailable) {
+      alert('닉네임 중복 확인을 먼저 완료해 주세요.');
+      return;
+    }
+
+    const finalNickname = `By_${clanNameInput}`;
 
     try {
       setIsUpdating(true);
       const { error } = await supabase
         .from('profiles')
         .update({ 
-          nickname: nickname.trim(),
+          nickname: finalNickname,
           race: race,
           intro: intro
         })
@@ -77,7 +145,7 @@ export default function MyProfile() {
 
       if (error) throw error;
       alert('프로필이 성공적으로 업데이트되었습니다.');
-      window.location.reload(); // 헤더 닉네임 등 동기화를 위해 새로고침
+      window.location.reload(); 
     } catch (error) {
       alert('프로필 업데이트 실패: ' + error.message);
     } finally {
@@ -117,13 +185,32 @@ export default function MyProfile() {
 
           <div>
             <label className="block text-gray-400 text-sm font-bold mb-2">1. By_ 클랜 닉네임</label>
-            <input 
-              type="text" 
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="예: By_Slayer (미입력 시 보류)"
-              className="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-600 text-white font-bold focus:border-yellow-500 focus:outline-none transition-colors"
-            />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-1 relative rounded-xl bg-gray-900 border border-gray-600 overflow-hidden focus-within:border-yellow-500 transition-colors">
+                <span className="flex items-center px-4 bg-gray-800 border-r border-gray-600 text-yellow-500 font-black">
+                  By_
+                </span>
+                <input 
+                  type="text" 
+                  value={clanNameInput}
+                  onChange={handleInputChange}
+                  placeholder="아이디 (띄어쓰기 불가)"
+                  className="w-full p-3.5 bg-transparent text-white font-bold focus:outline-none"
+                />
+              </div>
+              <button 
+                onClick={checkDuplicate}
+                className="whitespace-nowrap px-6 py-3.5 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-colors border border-gray-600"
+              >
+                중복 확인
+              </button>
+            </div>
+            {/* 상태 메시지 */}
+            <p className={`text-xs mt-2 font-bold ${clanNameInput.length === 0 ? 'text-gray-500' : isNicknameAvailable ? 'text-emerald-400' : 'text-red-400'}`}>
+              {clanNameInput.length === 0 ? '※ 사용할 닉네임을 입력 후 중복 확인을 눌러주세요.' : 
+               isNicknameAvailable ? '✓ 사용 가능한 닉네임입니다.' : 
+               '⚠ 중복 확인이 필요합니다.'}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -165,8 +252,11 @@ export default function MyProfile() {
 
           <button 
             onClick={handleUpdate}
-            disabled={isUpdating}
-            className="w-full py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-gray-900 font-black text-lg rounded-xl shadow-lg transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+            disabled={isUpdating || !isNicknameAvailable}
+            className={`w-full py-4 font-black text-lg rounded-xl shadow-lg transition-transform 
+              ${isNicknameAvailable && !isUpdating 
+                ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-gray-900 hover:scale-[1.02]' 
+                : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
           >
             {isUpdating ? '저장 중...' : '프로필 저장하기'}
           </button>
@@ -175,7 +265,6 @@ export default function MyProfile() {
         {/* 🔵 오른쪽 영역: 시스템 연동 읽기 전용 정보 */}
         <div className="space-y-6">
           
-          {/* 래더 시스템 정보 카드 */}
           <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">🏆</div>
             <h3 className="text-lg font-bold text-white border-b border-gray-700 pb-3 mb-4">래더 실적 요약</h3>
@@ -205,7 +294,6 @@ export default function MyProfile() {
             )}
           </div>
 
-          {/* 계정 보안 및 기타 정보 카드 */}
           <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl space-y-4">
             <h3 className="text-lg font-bold text-white border-b border-gray-700 pb-3 mb-4">계정 기본 정보</h3>
             
