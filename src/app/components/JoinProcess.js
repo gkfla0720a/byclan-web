@@ -227,7 +227,7 @@ export default function JoinProcess({ view }) {
           <input 
             type="tel" 
             name="phone" 
-            placeholder="숫자만 11자리 입력해 주세요 (예: 01012345678)" 
+            placeholder="(예: 01012345678)" 
             maxLength="13"
             required 
             className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 text-white focus:outline-none focus:border-yellow-500 transition-colors" 
