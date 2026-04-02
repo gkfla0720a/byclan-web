@@ -96,7 +96,7 @@ export default function JoinProcess({ view }) {
   }
 
   // ✅ 2) 로그인 완료, 하지만 준회원이 아닌 사람 (이미 소속된 정식 클랜원)
-  if (user && userRole !== 'associate') {
+  if (userRole !== 'associate') {
     return (
       <div className="w-full max-w-3xl mx-auto py-20 px-4 animate-fade-in-down text-center">
         <div className="bg-gray-800 p-10 rounded-xl border border-gray-700 shadow-xl">
@@ -116,7 +116,6 @@ export default function JoinProcess({ view }) {
   }
 
   // ✅ 3) 로그인 완료 & 준회원(associate)일 때만 아래의 가입 신청 폼이 렌더링됨
-  if (user && userRole == 'associate') {
     return (
       <div className="w-full max-w-3xl mx-auto py-8 px-4 animate-fade-in-down">
         <div className="text-center mb-8 border-b border-gray-700 pb-6">
@@ -172,5 +171,4 @@ export default function JoinProcess({ view }) {
         </form>
       </div>
     );
-  }
 }
