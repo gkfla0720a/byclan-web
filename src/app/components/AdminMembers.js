@@ -13,24 +13,24 @@ export default function AdminMembers() {
   const [editForm, setEditForm] = useState({ nickname: '', role: '' });
   const [isSaving, setIsSaving] = useState(false);
 
-// 1. 권한 레벨 추가 (신입 클랜원보다 낮은 15 정도 부여)
+// 1. 권한 레벨
   const powerLevel = {
     master: 100, admin: 80, elite: 60, member: 40, rookie: 20, associate: 15, guest: 10, expelled: 0
   };
 
-  // 2. 뱃지 스타일 추가 (준회원은 청록색 느낌)
+  // 2. 뱃지 스타일
   const roleStyles = {
     master: "bg-yellow-500 text-black border border-yellow-300",
     admin: "bg-orange-600 text-white border border-orange-400",
     elite: "bg-purple-600 text-white border border-purple-400",
     member: "bg-blue-600 text-white border border-blue-400",
     rookie: "bg-emerald-600 text-white border border-emerald-400",
-    associate: "bg-teal-800 text-teal-300 border border-teal-600", // ✅ 추가됨
+    associate: "bg-teal-800 text-teal-300 border border-teal-600",
     guest: "bg-gray-700 text-gray-300 border border-gray-500",
     expelled: "bg-red-900 text-red-300 border border-red-700 line-through"
   };
 
-  // 3. 한글 라벨 추가
+  // 3. 한글 라벨
   const roleLabels = {
     master: "클랜 마스터", admin: "운영진", elite: "정예 클랜원", member: "일반 클랜원", rookie: "신입 클랜원", associate: "준회원", guest: "방문자", expelled: "제명됨"
   };
