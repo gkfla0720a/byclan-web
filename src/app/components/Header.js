@@ -108,6 +108,15 @@ export default function Header({ navigateTo }) {
             </li>
           ))}
 
+          {/* ✨ 가입 심사 메뉴 (엘리트, 운영진, 마스터 전용) */}
+          {['master', 'admin', 'elite'].includes(role) && (
+            <li>
+              <button onClick={() => handleNav('가입 심사')} className="text-emerald-400 hover:text-emerald-300 transition-colors duration-200 text-sm font-bold border border-emerald-900/50 px-2 py-1 rounded bg-emerald-950/20">
+                ⚔️ 가입 심사
+              </button>
+            </li>
+          )}
+
           {/* ✨ 관리자 전용 버튼 (데스크톱) */}
           {['master', 'admin'].includes(role) && (
             <li>
@@ -170,6 +179,13 @@ export default function Header({ navigateTo }) {
             </div>
           ))}
 
+          {/* ✨ 가입 심사 메뉴 (모바일) */}
+          {['master', 'admin', 'elite'].includes(role) && (
+            <button onClick={() => handleNav('가입 심사')} className="px-6 py-4 text-left text-emerald-400 font-bold border-b border-gray-800/50 hover:bg-gray-900">
+              ⚔️ 가입 심사
+            </button>
+          )}
+          
           {/* ✨ 관리자 전용 메뉴 (모바일) */}
           {['master', 'admin'].includes(role) && (
             <button onClick={() => handleNav('관리자')} className="px-6 py-4 text-left text-red-400 font-bold border-b border-gray-800/50 hover:bg-gray-900">
