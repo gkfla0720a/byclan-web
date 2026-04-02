@@ -6,10 +6,7 @@ import { supabase } from '@/supabase';
 export default function MyProfile() {
   const [profile, setProfile] = useState(null);
   const [email, setEmail] = useState('');
-  
-  // ✨ 디스코드 이름을 담을 단일 State로 변경
   const [discordName, setDiscordName] = useState(''); 
-  
   const [ladderData, setLadderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -19,7 +16,7 @@ export default function MyProfile() {
   const [intro, setIntro] = useState('');
 
   const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
-  const [originalNickname, setOriginalNickname] = useState('');
+  const [originalByID, setOriginalByID] = useState(''); // 기존 originalNickname 대체
 
   useEffect(() => {
     fetchProfileData();
@@ -31,10 +28,6 @@ export default function MyProfile() {
       if (!user) return;
       
       setEmail(user.email);
-      
-      // ✨ [핵심 수정] 디스코드가 이름을 숨길 만한 모든 곳을 다 뒤져서 찾습니다.
-      const meta = user.user_metadata || {};
-      const sessionName = meta.custom_claims?.global_name || meta.name || meta.full_name || meta.preferred_username || '알 수 없음';
 
       const { data: profileData } = await supabase
         .from('profiles')
@@ -47,26 +40,28 @@ export default function MyProfile() {
         setRace(profileData.race || '미지정');
         setIntro(profileData.intro || '');
         
-        // ✨ DB에 저장된 값이 있으면 그걸 쓰고, 없으면 방금 샅샅이 뒤져서 찾은 세션 이름을 씁니다.
-        setDiscordName(profileData.discord_name || sessionName);
+        // ✨ DB에 분리된 값들을 아주 깔끔하게 가져옵니다.
+        setDiscordName(profileData.discord_name || user.user_metadata?.full_name || '알 수 없음');
         
-        const currentNick = profileData.nickname || '';
-        if (currentNick.startsWith('By_')) {
-          const pureName = currentNick.replace('By_', '');
-          setClanNameInput(pureName);
-          setOriginalNickname(currentNick);
-          setIsNicknameAvailable(true); 
+        // ✨ 클랜 닉네임은 이제 무조건 ByID 칸만 바라봅니다.
+        const currentByID = profileData.ByID || '';
+        
+        if (currentByID.startsWith('By_')) {
+          setClanNameInput(currentByID.replace('By_', ''));
+          setOriginalByID(currentByID);
+          setIsNicknameAvailable(true);
         } else {
           setClanNameInput('');
-          setOriginalNickname('');
+          setOriginalByID('');
           setIsNicknameAvailable(false);
         }
 
-        if (currentNick.startsWith('By_')) {
+        // 래더 데이터 조회 (ladders 테이블의 nickname 칸과 비교)
+        if (currentByID.startsWith('By_')) {
           const { data: ladder } = await supabase
             .from('ladders')
             .select('*')
-            .eq('nickname', currentNick)
+            .eq('nickname', currentByID)
             .single();
           if (ladder) setLadderData(ladder);
         }
@@ -83,7 +78,7 @@ export default function MyProfile() {
     setClanNameInput(value);
     
     const fullNickname = `By_${value}`;
-    if (fullNickname === originalNickname) {
+    if (fullNickname === originalByID) {
       setIsNicknameAvailable(true);
     } else {
       setIsNicknameAvailable(false);
@@ -98,17 +93,18 @@ export default function MyProfile() {
 
     const fullNickname = `By_${clanNameInput}`;
 
-    if (fullNickname === originalNickname) {
+    if (fullNickname === originalByID) {
       alert('현재 사용 중인 본인의 닉네임입니다.');
       setIsNicknameAvailable(true);
       return;
     }
 
     try {
+      // ✨ 중복 확인도 이제 ByID 칸을 기준으로 검사합니다.
       const { count, error } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .eq('nickname', fullNickname);
+        .eq('ByID', fullNickname);
 
       if (error) throw error;
 
@@ -141,11 +137,12 @@ export default function MyProfile() {
       setIsUpdating(true);
       const { error } = await supabase
         .from('profiles')
+        // ✨ 업데이트 할 때 ByID와 discord_name을 명확히 나눠서 저장합니다.
         .update({ 
-          nickname: finalNickname,
+          ByID: finalNickname,
           race: race,
           intro: intro,
-          discord_name: discordName // ✨ 화면에 표시된 디스코드 이름을 DB에도 확실하게 꽂아줍니다.
+          discord_name: discordName 
         })
         .eq('id', profile.id);
 
@@ -181,7 +178,7 @@ export default function MyProfile() {
         
         <div className="lg:col-span-2 bg-gray-800 rounded-2xl p-6 sm:p-8 border border-gray-700 shadow-xl space-y-6">
           
-          {!originalNickname.startsWith('By_') && (
+          {!originalByID.startsWith('By_') && (
             <div className="bg-sky-900/20 border border-sky-800 p-4 rounded-xl">
               <h3 className="text-sky-400 font-bold mb-1 flex items-center gap-2"><span>📢</span> 클랜 닉네임 설정 안내</h3>
               <p className="text-sky-200/80 text-sm leading-relaxed">
@@ -222,7 +219,6 @@ export default function MyProfile() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-gray-400 text-sm font-bold mb-2">2. 디스코드 닉네임 (고정)</label>
-              {/* ✨ 이제 변수 충돌 없이 무조건 찾은 이름을 표시합니다. */}
               <input 
                 type="text" 
                 value={discordName} 
