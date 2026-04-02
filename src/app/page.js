@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-
 import { supabase } from '@/supabase'; 
 
 import Header from './components/Header';
@@ -13,11 +12,11 @@ import CommunityBoard from './components/CommunityBoard';
 import JoinProcess from './components/JoinProcess';
 import AdminMembers from './components/AdminMembers';
 import ApplicationList from './components/ApplicationList';
-// ✨ 아래 3가지 파일의 import가 누락되어 에러가 났었습니다! 추가 완료!
 import AdminBoard from './components/AdminBoard'; 
 import MyProfile from './components/MyProfile';
 import NotificationCenter from './components/NotificationCenter';
 
+// --- [공통] 페이지 준비 중 플레이스홀더 ---
 function PagePlaceholder({ title }) {
   return (
     <div className="w-full max-w-5xl mx-auto bg-gray-800 p-10 rounded-xl border border-gray-700 shadow-2xl text-center animate-fade-in-down mt-10">
@@ -27,6 +26,7 @@ function PagePlaceholder({ title }) {
   );
 }
 
+// --- [클랜 소개] 개요 화면 ---
 function ClanOverview() {
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
@@ -57,98 +57,7 @@ function ClanOverview() {
   );
 }
 
-function MatchRecord() {
-  const matches = [
-    { id: 1, p1: 'By_Slayer', p1Race: 'T', p2: 'By_Zergling', p2Race: 'Z', winner: 1, map: '투혼', date: '2026.03.29 14:30' },
-    { id: 2, p1: 'By_Flash', p1Race: 'P', p2: 'By_Marine', p2Race: 'T', winner: 2, map: '폴리포이드', date: '2026.03.28 21:15' },
-    { id: 3, p1: 'By_Zealot', p1Race: 'P', p2: 'By_Slayer', p2Race: 'T', winner: 1, map: '서킷브레이커', date: '2026.03.28 19:00' },
-  ];
-  return (
-    <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono">
-      <div className="flex justify-between items-end mb-4 px-2 sm:px-0 border-b border-cyan-500/50 pb-2">
-        <h2 className="text-xl sm:text-2xl font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] tracking-widest">[ MATCH LOGS ]</h2>
-      </div>
-      <div className="flex flex-col gap-3">
-        {matches.map((match) => (
-          <div key={match.id} className="bg-[#0A1128] border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.1)] p-4 flex flex-col sm:flex-row justify-between items-center rounded-sm hover:border-cyan-400 transition-colors relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500/50"></div>
-            <div className="text-[10px] sm:text-xs text-cyan-600 mb-2 sm:mb-0 sm:absolute sm:left-1/2 sm:-translate-x-1/2 flex flex-col items-center">
-              <span>{match.date}</span>
-              <span className="text-cyan-400/70 border border-cyan-800 px-2 py-0.5 mt-1 bg-cyan-900/20">{match.map}</span>
-            </div>
-            <div className={`flex items-center gap-2 w-full sm:w-1/3 justify-end ${match.winner === 1 ? 'text-cyan-300 font-bold drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]' : 'text-gray-500'}`}>
-              <span className="text-sm sm:text-base">{match.p1}</span>
-              <span className={`text-xs px-1.5 py-0.5 rounded-sm border ${match.p1Race === 'T' ? 'border-blue-500 text-blue-400' : match.p1Race === 'Z' ? 'border-red-500 text-red-400' : 'border-yellow-500 text-yellow-400'} bg-gray-900`}>{match.p1Race}</span>
-            </div>
-            <div className="text-cyan-700 font-black text-sm my-2 sm:my-0 px-4">VS</div>
-            <div className={`flex items-center gap-2 w-full sm:w-1/3 justify-start ${match.winner === 2 ? 'text-cyan-300 font-bold drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]' : 'text-gray-500'}`}>
-              <span className={`text-xs px-1.5 py-0.5 rounded-sm border ${match.p2Race === 'T' ? 'border-blue-500 text-blue-400' : match.p2Race === 'Z' ? 'border-red-500 text-red-400' : 'border-yellow-500 text-yellow-400'} bg-gray-900`}>{match.p2Race}</span>
-              <span className="text-sm sm:text-base">{match.p2}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LadderSystem() {
-  return (
-    <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono space-y-6">
-      <div className="flex justify-between items-end mb-4 px-2 sm:px-0 border-b border-cyan-500/50 pb-2">
-        <h2 className="text-xl sm:text-2xl font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] tracking-widest uppercase">[ SYSTEM: LADDER RULES & REWARDS ]</h2>
-        <span className="text-cyan-600 text-xs sm:text-sm animate-pulse hidden sm:inline">SECURE CONNECTION //</span>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        <div className="bg-[#0A1128] p-6 sm:p-8 rounded-sm border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.15)] relative overflow-hidden group hover:border-cyan-400 transition-colors">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.03)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none"></div>
-          <h3 className="text-lg font-bold text-cyan-300 mb-4 flex items-center gap-2"><span className="text-cyan-500">{">>"}</span> MATCH DIRECTIVES</h3>
-          <ul className="space-y-4 text-sm sm:text-base text-cyan-100/80 relative z-10">
-            <li className="flex gap-2 items-start"><span className="text-cyan-500 mt-0.5">[{'>'}]</span> <span><strong>경기 방식:</strong> 1:1 빠른무한 단판승</span></li>
-            <li className="flex gap-2 items-start"><span className="text-cyan-500 mt-0.5">[{'>'}]</span> <span><strong>결과 보고:</strong> 승자가 디스코드에 리플레이 첨부 및 점수 기록</span></li>
-            <li className="flex gap-2 items-start"><span className="text-red-400 mt-0.5">[!]</span> <span className="text-red-200"><strong>경고:</strong> 비매너 행위 적발 시 포인트 전액 몰수</span></li>
-          </ul>
-        </div>
-        <div className="bg-[#0A1128] p-6 sm:p-8 rounded-sm border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)] relative overflow-hidden group hover:border-emerald-400 transition-colors">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none"></div>
-          <h3 className="text-lg font-bold text-emerald-300 mb-4 flex items-center gap-2"><span className="text-emerald-500">{">>"}</span> MMR CALCULATION</h3>
-          <div className="space-y-4 relative z-10">
-            <div className="flex justify-between items-center bg-emerald-950/40 p-4 rounded-sm border border-emerald-800/50">
-              <span className="text-emerald-100/80 font-semibold">VICTORY (승리)</span>
-              <span className="text-emerald-400 font-bold sm:text-lg drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]">+15 P ~ +25 P</span>
-            </div>
-            <div className="flex justify-between items-center bg-red-950/40 p-4 rounded-sm border border-red-800/50">
-              <span className="text-red-100/80 font-semibold">DEFEAT (패배)</span>
-              <span className="text-red-400 font-bold sm:text-lg drop-shadow-[0_0_5px_rgba(248,113,113,0.8)]">-10 P ~ -15 P</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="bg-[#050B14] p-6 sm:p-8 rounded-sm border border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.1)] relative overflow-hidden mt-6">
-         <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.05)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none"></div>
-         <h3 className="text-xl font-bold text-blue-400 mb-6 flex items-center gap-2 border-b border-blue-900/50 pb-3"><span className="animate-pulse">_</span> SEASON REWARDS</h3>
-         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
-           <div className="bg-blue-950/30 p-5 rounded-sm border border-yellow-500/50 text-center flex flex-col items-center shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]">
-             <span className="text-4xl mb-3 drop-shadow-[0_0_15px_rgba(234,179,8,0.8)]">🥇</span>
-             <span className="font-bold text-yellow-300 text-lg tracking-widest">CHAMPION</span>
-             <span className="text-yellow-100/80 text-sm mt-2 font-medium">상금 + 전용 '챔피언' 칭호</span>
-           </div>
-           <div className="bg-blue-950/30 p-5 rounded-sm border border-gray-400/50 text-center flex flex-col items-center shadow-[inset_0_0_20px_rgba(156,163,175,0.1)]">
-             <span className="text-4xl mb-3 drop-shadow-[0_0_15px_rgba(156,163,175,0.6)]">🥈</span>
-             <span className="font-bold text-gray-300 text-lg tracking-widest">RUNNER-UP</span>
-             <span className="text-gray-400 text-sm mt-2 font-medium">소정의 상품 + 우수 클랜원</span>
-           </div>
-           <div className="bg-blue-950/30 p-5 rounded-sm border border-amber-600/50 text-center flex flex-col items-center shadow-[inset_0_0_20px_rgba(217,119,6,0.1)]">
-             <span className="text-4xl mb-3 drop-shadow-[0_0_15px_rgba(217,119,6,0.8)]">🏅</span>
-             <span className="font-bold text-amber-500 text-lg tracking-widest">TOP 10</span>
-             <span className="text-amber-200/80 text-sm mt-2 font-medium">명예의 전당 영구 기록</span>
-           </div>
-         </div>
-      </div>
-    </div>
-  );
-}
-
+// --- [BSL/토너먼트] 대회 목록 화면 ---
 function ClanTournament() {
   const upcomingTournaments = [
     { id: 1, title: '제 5회 BSL (ByClan StarLeague)', status: '참가 접수중', date: '04.10 ~ 04.30', prize: '우승 30만 포인트' },
@@ -180,6 +89,7 @@ function ClanTournament() {
   );
 }
 
+// --- [미디어] 갤러리 화면 ---
 function MediaGallery() {
   const mediaItems = [
     { id: 1, type: '영상', title: 'BSL 시즌4 결승전 하이라이트', date: '2025.12.20', img: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=600&auto=format&fit=crop' },
@@ -209,68 +119,12 @@ function MediaGallery() {
   );
 }
 
-function PointDashboard({ view }) {
-  const shopItems = [
-    { id: 1, name: '디스코드 VVIP 역할 (30일)', price: 1000, icon: '👑' },
-    { id: 2, name: '닉네임 색상 변경권', price: 500, icon: '🎨' },
-    { id: 3, name: '치킨 세트 기프티콘', price: 5000, icon: '🍗' },
-    { id: 4, name: '스타벅스 아메리카노', price: 1500, icon: '☕' }
-  ];
-  return (
-    <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono">
-      <div className="flex justify-between items-end mb-6 px-2 sm:px-0 border-b border-cyan-500/50 pb-2">
-        <h2 className="text-xl sm:text-2xl font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] tracking-widest uppercase">
-          [ SYSTEM: {view === '포인트 상점' ? 'POINT SHOP' : 'POINT HISTORY'} ]
-        </h2>
-        <div className="flex items-center gap-2">
-          <span className="text-gray-400 text-xs sm:text-sm">MY POINTS:</span>
-          <span className="text-yellow-400 font-bold sm:text-lg">2,450 P</span>
-        </div>
-      </div>
-      {view === '포인트 상점' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {shopItems.map(item => (
-            <div key={item.id} className="bg-[#0A1128] border border-cyan-500/30 p-4 rounded-sm flex items-center justify-between hover:border-cyan-400 transition-colors group">
-              <div className="flex items-center gap-4">
-                <span className="text-3xl bg-cyan-900/30 p-2 rounded">{item.icon}</span>
-                <div>
-                  <h4 className="text-cyan-100 font-bold group-hover:text-cyan-400 transition-colors">{item.name}</h4>
-                  <span className="text-emerald-400 text-sm">{item.price} P</span>
-                </div>
-              </div>
-              <button className="px-4 py-1.5 border border-emerald-500 text-emerald-400 text-sm hover:bg-emerald-500 hover:text-[#0A1128] font-bold transition-colors">구매</button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-[#0A1128] border border-cyan-500/40 rounded-sm overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-cyan-900/40 text-cyan-300 text-sm border-b border-cyan-500/50">
-              <tr>
-                <th className="py-3 px-4">일시</th>
-                <th className="py-3 px-4">내용</th>
-                <th className="py-3 px-4 text-center">증감</th>
-                <th className="py-3 px-4 text-center hidden sm:table-cell">잔액</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-300 text-sm">
-              <tr className="border-b border-cyan-800/30"><td className="py-3 px-4">2026.03.29</td><td className="py-3 px-4">래더 매치 승리</td><td className="py-3 px-4 text-center text-emerald-400 font-bold">+25</td><td className="py-3 px-4 text-center hidden sm:table-cell">2,450</td></tr>
-              <tr className="border-b border-cyan-800/30"><td className="py-3 px-4">2026.03.25</td><td className="py-3 px-4">포인트 상점 이용</td><td className="py-3 px-4 text-center text-red-400 font-bold">-500</td><td className="py-3 px-4 text-center hidden sm:table-cell">2,425</td></tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// === 홈 화면 구성 (기존 HTML 디자인 + Supabase 연동) ===
+// --- [홈] 메인 대시보드 ---
 function HomeContent({ navigateTo }) {
   const [topRankers, setTopRankers] = useState([]);
 
   useEffect(() => {
     const fetchTopRankers = async () => {
-      // Supabase DB 연동 기능은 그대로 살려두었습니다.
       const { data } = await supabase.from('ladders').select('*').order('rank', { ascending: true }).limit(3);
       if (data) setTopRankers(data);
     };
@@ -285,7 +139,6 @@ function HomeContent({ navigateTo }) {
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 sm:space-y-8 animate-fade-in-down mt-4 sm:mt-8">
-      {/* 100% 원본 배너 디자인 복구 */}
       <section className="relative bg-gray-900 rounded-2xl overflow-hidden border border-gray-700 shadow-2xl h-64 sm:h-80 flex flex-col items-center justify-center text-center group">
          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-700"></div>
          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent"></div>
@@ -340,7 +193,7 @@ function HomeContent({ navigateTo }) {
   );
 }
 
-// === 메인 페이지 렌더링 영역 ===
+// === [메인 렌더링] ===
 export default function Home() {
   const [password, setPassword] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -350,41 +203,36 @@ export default function Home() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (password === CORRECT_PASSWORD) {
-      setIsAuthorized(true);
-    } else {
-      alert("비밀번호가 틀렸습니다!");
-    }
+    if (password === CORRECT_PASSWORD) setIsAuthorized(true);
+    else alert("비밀번호가 틀렸습니다!");
   };
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-gray-900 flex flex-col justify-center items-center text-white font-sans p-4">
+      <div className="min-h-screen bg-gray-900 flex flex-col justify-center items-center text-white p-4">
         <h1 className="text-3xl font-black mb-8 text-yellow-500">ByClan 개발 서버</h1>
         <form onSubmit={handleLogin} className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" className="flex-grow p-4 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:border-yellow-500 text-white" />
-          <button type="submit" className="p-4 bg-yellow-500 text-gray-900 font-bold rounded-xl hover:bg-yellow-400">입장</button>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" className="flex-grow p-4 rounded-xl bg-gray-800 border border-gray-700 text-white" />
+          <button type="submit" className="p-4 bg-yellow-500 text-gray-900 font-bold rounded-xl hover:bg-yellow-400 transition-colors">입장</button>
         </form>
       </div>
     );
   }
 
-  // 기존 HTML의 'ByClanHome' 렌더링 방식을 Next.js 라우팅(activeView)으로 그대로 매핑했습니다.
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-gray-200 font-semibold" style={{ fontFamily: "'Pretendard', sans-serif" }}>
       <Header navigateTo={setActiveView} />
       
       <main className="flex-grow w-full relative z-10 flex flex-col items-center justify-start px-2 sm:px-8 mb-10">
+        {/* ✨ activeView에 따른 화면 매핑 (정리 완료) */}
         {activeView === 'Home' ? <HomeContent navigateTo={setActiveView} /> : 
          activeView === '개요' ? <ClanOverview /> : 
          activeView === '가입안내' || activeView === '가입신청' || activeView === '정회원 전환신청' ? <JoinProcess view={activeView} /> :
          activeView === '공지사항' || activeView === 'BSL 공지사항' || activeView === '토너먼트 공지' ? <NoticeBoard /> : 
          activeView === '자유게시판' || activeView === '클랜원 소식' ? <CommunityBoard /> : 
-         activeView === '대시보드' ? <LadderDashboard /> : 
+         activeView === '대시보드' || activeView === 'BY래더시스템' ? <LadderDashboard /> : 
          activeView === '랭킹' || activeView === '시즌별 랭킹' ? <RankingBoard /> : 
-         activeView === '경기기록' ? <MatchRecord /> : 
          activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트' ? <ClanTournament /> : 
-         activeView === '포인트 상점' || activeView === '포인트 내역' ? <PointDashboard view={activeView} /> :
          activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
          activeView === '가입 심사' ? <ApplicationList /> :
          activeView === '관리자' ? <AdminMembers /> :
