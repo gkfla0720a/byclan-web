@@ -18,7 +18,7 @@ function formatPhone(value) {
 
 export default function JoinProcess({ view }) {
   const [formData, setFormData] = useState({ 
-    btag: '', race: 'Terran', tier: '', intro: '', phone: '' 
+    btag: '', race: 'Protoss', tier: '', intro: '', phone: '' 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState(null);
@@ -99,7 +99,7 @@ export default function JoinProcess({ view }) {
       if (error) throw error;
 
       alert('가입 신청이 성공적으로 접수되었습니다!\n정예 클랜원이 확인 후 연락드릴 예정입니다.');
-      setFormData({ btag: '', race: 'Terran', tier: '', intro: '', phone: '' });
+      setFormData({ btag: '', race: 'Protoss', tier: '', intro: '', phone: '' });
 
     } catch (error) {
       console.error('신청서 제출 오류:', error);
