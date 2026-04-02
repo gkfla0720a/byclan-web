@@ -6,7 +6,10 @@ import { supabase } from '@/supabase';
 export default function MyProfile() {
   const [profile, setProfile] = useState(null);
   const [email, setEmail] = useState('');
-  const [discordNameFallback, setDiscordNameFallback] = useState(''); // ✨ 디스코드 실시간 이름
+  
+  // ✨ 디스코드 이름을 담을 단일 State로 변경
+  const [discordName, setDiscordName] = useState(''); 
+  
   const [ladderData, setLadderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -28,8 +31,10 @@ export default function MyProfile() {
       if (!user) return;
       
       setEmail(user.email);
-      // ✨ DB에 이름이 없을 때를 대비해 로그인 세션에서 디스코드 이름을 챙겨둡니다.
-      setDiscordNameFallback(user.user_metadata?.full_name || '알 수 없음');
+      
+      // ✨ [핵심 수정] 디스코드가 이름을 숨길 만한 모든 곳을 다 뒤져서 찾습니다.
+      const meta = user.user_metadata || {};
+      const sessionName = meta.custom_claims?.global_name || meta.name || meta.full_name || meta.preferred_username || '알 수 없음';
 
       const { data: profileData } = await supabase
         .from('profiles')
@@ -41,6 +46,9 @@ export default function MyProfile() {
         setProfile(profileData);
         setRace(profileData.race || '미지정');
         setIntro(profileData.intro || '');
+        
+        // ✨ DB에 저장된 값이 있으면 그걸 쓰고, 없으면 방금 샅샅이 뒤져서 찾은 세션 이름을 씁니다.
+        setDiscordName(profileData.discord_name || sessionName);
         
         const currentNick = profileData.nickname || '';
         if (currentNick.startsWith('By_')) {
@@ -128,8 +136,6 @@ export default function MyProfile() {
     }
 
     const finalNickname = `By_${clanNameInput}`;
-    // ✨ 화면에 띄웠던 디스코드 진짜 이름을 DB에도 저장(데이터 자동 복구)
-    const actualDiscordName = profile.discord_name || discordNameFallback;
 
     try {
       setIsUpdating(true);
@@ -139,7 +145,7 @@ export default function MyProfile() {
           nickname: finalNickname,
           race: race,
           intro: intro,
-          discord_name: actualDiscordName 
+          discord_name: discordName // ✨ 화면에 표시된 디스코드 이름을 DB에도 확실하게 꽂아줍니다.
         })
         .eq('id', profile.id);
 
@@ -175,7 +181,6 @@ export default function MyProfile() {
         
         <div className="lg:col-span-2 bg-gray-800 rounded-2xl p-6 sm:p-8 border border-gray-700 shadow-xl space-y-6">
           
-          {/* ✨ 클랜 닉네임 설정 안내 (By_로 시작하지 않을 때만 보임!) */}
           {!originalNickname.startsWith('By_') && (
             <div className="bg-sky-900/20 border border-sky-800 p-4 rounded-xl">
               <h3 className="text-sky-400 font-bold mb-1 flex items-center gap-2"><span>📢</span> 클랜 닉네임 설정 안내</h3>
@@ -217,10 +222,10 @@ export default function MyProfile() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-gray-400 text-sm font-bold mb-2">2. 디스코드 닉네임 (고정)</label>
-              {/* ✨ DB가 비어있어도 로그인 세션에서 가져온 이름(Fallback)을 표시합니다. */}
+              {/* ✨ 이제 변수 충돌 없이 무조건 찾은 이름을 표시합니다. */}
               <input 
                 type="text" 
-                value={profile.discord_name || discordNameFallback} 
+                value={discordName} 
                 disabled 
                 className="w-full p-3.5 rounded-xl bg-gray-900/50 border border-gray-700 text-gray-500 cursor-not-allowed font-medium"
               />
