@@ -6,6 +6,7 @@ import { supabase } from '@/supabase';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
+import LadderDashboard from './components/LadderDashboard';
 import RankingBoard from './components/RankingBoard';
 import NoticeBoard from './components/NoticeBoard';
 import CommunityBoard from './components/CommunityBoard';
@@ -379,7 +380,7 @@ export default function Home() {
          activeView === '가입안내' || activeView === '가입신청' || activeView === '정회원 전환신청' ? <JoinProcess view={activeView} /> :
          activeView === '공지사항' || activeView === 'BSL 공지사항' || activeView === '토너먼트 공지' ? <NoticeBoard /> : 
          activeView === '자유게시판' || activeView === '클랜원 소식' ? <CommunityBoard /> : 
-         activeView === '대시보드' ? <LadderSystem /> : 
+         activeView === '대시보드' ? <LadderDashboard /> : 
          activeView === '랭킹' || activeView === '시즌별 랭킹' ? <RankingBoard /> : 
          activeView === '경기기록' ? <MatchRecord /> : 
          activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트' ? <ClanTournament /> : 
