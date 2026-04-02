@@ -12,6 +12,10 @@ import CommunityBoard from './components/CommunityBoard';
 import JoinProcess from './components/JoinProcess';
 import AdminMembers from './components/AdminMembers';
 import ApplicationList from './components/ApplicationList';
+// ✨ 아래 3가지 파일의 import가 누락되어 에러가 났었습니다! 추가 완료!
+import AdminBoard from './components/AdminBoard'; 
+import MyProfile from './components/MyProfile';
+import NotificationCenter from './components/NotificationCenter';
 
 function PagePlaceholder({ title }) {
   return (
@@ -381,15 +385,11 @@ export default function Home() {
          activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트' ? <ClanTournament /> : 
          activeView === '포인트 상점' || activeView === '포인트 내역' ? <PointDashboard view={activeView} /> :
          activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
-         activeView === '관리자' ? <AdminMembers /> :
-         activeView === '운영진게시판' ? <AdminBoard /> :
          activeView === '가입 심사' ? <ApplicationList /> :
          activeView === '관리자' ? <AdminMembers /> :
          activeView === '운영진게시판' ? <AdminBoard /> :
-         activeView === '프로필' ?
-           <MyProfile /> :
-         activeView === '알림' ?
-           <NotificationCenter /> :
+         activeView === '프로필' ? <MyProfile /> :
+         activeView === '알림' ? <NotificationCenter /> :
          <PagePlaceholder title={activeView} />}
       </main>
       <Footer />
