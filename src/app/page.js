@@ -10,7 +10,8 @@ import RankingBoard from './components/RankingBoard';
 import NoticeBoard from './components/NoticeBoard';
 import CommunityBoard from './components/CommunityBoard';
 import JoinProcess from './components/JoinProcess';
-import AdminMembers from './components/AdminMembers'; 
+import AdminMembers from './components/AdminMembers';
+import ApplicationList from './components/ApplicationList';
 
 function PagePlaceholder({ title }) {
   return (
@@ -380,15 +381,13 @@ export default function Home() {
          activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트' ? <ClanTournament /> : 
          activeView === '포인트 상점' || activeView === '포인트 내역' ? <PointDashboard view={activeView} /> :
          activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
-          activeView === '관리자' ?
-           <AdminMembers /> :
-           // page.js 내부 라우팅 로직 예시
-           activeView === '운영진게시판' ?
-           // myRole이 master나 admin인지 체크하는 로직을 AdminBoard 컴포넌트 내부에 작성합니다 (AdminMembers와 동일한 방식)
-           <AdminBoard /> :
-        <PagePlaceholder title={activeView} />}
+         activeView === '관리자' ? <AdminMembers /> :
+         activeView === '운영진게시판' ? <AdminBoard /> :
+         activeView === '가입 심사' ? <ApplicationList /> :
+         activeView === '관리자' ? <AdminMembers /> :
+         activeView === '운영진게시판' ? <AdminBoard /> :
+         <PagePlaceholder title={activeView} />}
       </main>
-      
       <Footer />
     </div>
   );
