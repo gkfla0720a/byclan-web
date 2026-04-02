@@ -6,16 +6,15 @@ import { supabase } from '@/supabase';
 export default function MyProfile() {
   const [profile, setProfile] = useState(null);
   const [email, setEmail] = useState('');
+  const [discordNameFallback, setDiscordNameFallback] = useState(''); // ✨ 디스코드 실시간 이름
   const [ladderData, setLadderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // 📝 수정 가능한 폼 상태
-  const [clanNameInput, setClanNameInput] = useState(''); // 'By_'를 제외한 순수 입력값
+  const [clanNameInput, setClanNameInput] = useState(''); 
   const [race, setRace] = useState('미지정');
   const [intro, setIntro] = useState('');
 
-  // ✅ 중복 확인 상태
   const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
   const [originalNickname, setOriginalNickname] = useState('');
 
@@ -27,7 +26,10 @@ export default function MyProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      
       setEmail(user.email);
+      // ✨ DB에 이름이 없을 때를 대비해 로그인 세션에서 디스코드 이름을 챙겨둡니다.
+      setDiscordNameFallback(user.user_metadata?.full_name || '알 수 없음');
 
       const { data: profileData } = await supabase
         .from('profiles')
@@ -40,15 +42,13 @@ export default function MyProfile() {
         setRace(profileData.race || '미지정');
         setIntro(profileData.intro || '');
         
-        // 초기 닉네임 세팅 로직: 'By_'로 시작하는 정식 닉네임일 때만 칸을 채움
         const currentNick = profileData.nickname || '';
         if (currentNick.startsWith('By_')) {
           const pureName = currentNick.replace('By_', '');
           setClanNameInput(pureName);
           setOriginalNickname(currentNick);
-          setIsNicknameAvailable(true); // 본인 닉네임이므로 изначально 사용 가능 상태
+          setIsNicknameAvailable(true); 
         } else {
-          // 디스코드 이름이 들어있거나, 아예 없으면 빈칸으로 둠
           setClanNameInput('');
           setOriginalNickname('');
           setIsNicknameAvailable(false);
@@ -70,21 +70,18 @@ export default function MyProfile() {
     }
   };
 
-  // 닉네임 입력 시 중복 확인 상태 초기화
   const handleInputChange = (e) => {
-    // 띄어쓰기 입력 방지
     const value = e.target.value.replace(/\s/g, '');
     setClanNameInput(value);
     
     const fullNickname = `By_${value}`;
     if (fullNickname === originalNickname) {
-      setIsNicknameAvailable(true); // 내 원래 닉네임으로 되돌리면 합격
+      setIsNicknameAvailable(true);
     } else {
-      setIsNicknameAvailable(false); // 글자가 바뀌면 다시 중복확인 필요
+      setIsNicknameAvailable(false);
     }
   };
 
-  // ✅ 닉네임 중복 확인 로직
   const checkDuplicate = async () => {
     if (!clanNameInput.trim()) {
       alert('닉네임을 입력해 주세요.');
@@ -131,6 +128,8 @@ export default function MyProfile() {
     }
 
     const finalNickname = `By_${clanNameInput}`;
+    // ✨ 화면에 띄웠던 디스코드 진짜 이름을 DB에도 저장(데이터 자동 복구)
+    const actualDiscordName = profile.discord_name || discordNameFallback;
 
     try {
       setIsUpdating(true);
@@ -139,7 +138,8 @@ export default function MyProfile() {
         .update({ 
           nickname: finalNickname,
           race: race,
-          intro: intro
+          intro: intro,
+          discord_name: actualDiscordName 
         })
         .eq('id', profile.id);
 
@@ -173,15 +173,17 @@ export default function MyProfile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* 🟡 왼쪽 영역: 수정 가능한 기본 정보 */}
         <div className="lg:col-span-2 bg-gray-800 rounded-2xl p-6 sm:p-8 border border-gray-700 shadow-xl space-y-6">
           
-          <div className="bg-sky-900/20 border border-sky-800 p-4 rounded-xl">
-            <h3 className="text-sky-400 font-bold mb-1 flex items-center gap-2"><span>📢</span> 클랜 닉네임 설정 안내</h3>
-            <p className="text-sky-200/80 text-sm leading-relaxed">
-              신입 클랜원에서 정회원으로 승급하거나 래더 시스템을 이용하려면 반드시 <strong className="text-yellow-400">By_</strong> 로 시작하는 닉네임을 설정해야 합니다. (미설정 시 랭킹보드 노출 불가)
-            </p>
-          </div>
+          {/* ✨ 클랜 닉네임 설정 안내 (By_로 시작하지 않을 때만 보임!) */}
+          {!originalNickname.startsWith('By_') && (
+            <div className="bg-sky-900/20 border border-sky-800 p-4 rounded-xl">
+              <h3 className="text-sky-400 font-bold mb-1 flex items-center gap-2"><span>📢</span> 클랜 닉네임 설정 안내</h3>
+              <p className="text-sky-200/80 text-sm leading-relaxed">
+                신입 클랜원에서 정회원으로 승급하거나 래더 시스템을 이용하려면 반드시 <strong className="text-yellow-400">By_</strong> 로 시작하는 닉네임을 설정해야 합니다. (미설정 시 랭킹보드 노출 불가)
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-gray-400 text-sm font-bold mb-2">1. By_ 클랜 닉네임</label>
@@ -205,7 +207,6 @@ export default function MyProfile() {
                 중복 확인
               </button>
             </div>
-            {/* 상태 메시지 */}
             <p className={`text-xs mt-2 font-bold ${clanNameInput.length === 0 ? 'text-gray-500' : isNicknameAvailable ? 'text-emerald-400' : 'text-red-400'}`}>
               {clanNameInput.length === 0 ? '※ 사용할 닉네임을 입력 후 중복 확인을 눌러주세요.' : 
                isNicknameAvailable ? '✓ 사용 가능한 닉네임입니다.' : 
@@ -216,9 +217,10 @@ export default function MyProfile() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-gray-400 text-sm font-bold mb-2">2. 디스코드 닉네임 (고정)</label>
+              {/* ✨ DB가 비어있어도 로그인 세션에서 가져온 이름(Fallback)을 표시합니다. */}
               <input 
                 type="text" 
-                value={profile.discord_name || '알 수 없음'} 
+                value={profile.discord_name || discordNameFallback} 
                 disabled 
                 className="w-full p-3.5 rounded-xl bg-gray-900/50 border border-gray-700 text-gray-500 cursor-not-allowed font-medium"
               />
@@ -262,7 +264,6 @@ export default function MyProfile() {
           </button>
         </div>
 
-        {/* 🔵 오른쪽 영역: 시스템 연동 읽기 전용 정보 */}
         <div className="space-y-6">
           
           <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl relative overflow-hidden">
