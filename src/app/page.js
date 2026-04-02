@@ -386,6 +386,10 @@ export default function Home() {
          activeView === '가입 심사' ? <ApplicationList /> :
          activeView === '관리자' ? <AdminMembers /> :
          activeView === '운영진게시판' ? <AdminBoard /> :
+         activeView === '프로필' ?
+           <MyProfile /> :
+         activeView === '알림' ?
+           <NotificationCenter /> :
          <PagePlaceholder title={activeView} />}
       </main>
       <Footer />

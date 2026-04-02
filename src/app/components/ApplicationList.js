@@ -113,6 +113,16 @@ export default function ApplicationList() {
         
         if (profileError) throw profileError;
       }
+      
+      const notiMessage = isPass 
+        ? "축하합니다! ByClan 가입 테스트에 합격하셨습니다. 이제 [신입 클랜원]으로 활동하실 수 있습니다!"
+        : "안타깝게도 이번 ByClan 가입 신청은 불합격되었습니다. 다음에 다시 도전해 주세요.";
+
+      await supabase.from('notifications').insert({
+        user_id: app.user_id,
+        title: isPass ? "🎉 가입 합격 알림" : "✉️ 가입 심사 결과",
+        message: notiMessage
+      });
 
       alert(`처리가 완료되었습니다. (${resultStatus})`);
       await fetchApplications(); // 처리 완료된 항목은 목록에서 사라짐 (status가 대기중이 아니므로)
