@@ -3,6 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 
+function formatPhone(value) {
+  //숫자가 아닌 것은 자르고 11개 까지만 출력
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length < 4) return digits;
+  if (digits.length < 8) {
+    // 010-1234 형식
+    return digits.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+  }
+  // 010-1234-5678 형식
+  return digits.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+}
+
 export default function JoinProcess({ view }) {
   const [formData, setFormData] = useState({ 
     btag: '', race: 'Terran', tier: '', intro: '', phone: '' 
@@ -26,8 +39,6 @@ export default function JoinProcess({ view }) {
             .single();
           
           if (profile) {
-            // ✅ 강제 associate 할당(눈가림) 제거. 
-            // DB에 있는 값을 있는 그대로 가져옵니다. 단, Null 에러로 페이지가 뻗는 것만 방지(?.)
             setUserRole(profile.role?.trim().toLowerCase());
           }
         }
@@ -40,30 +51,17 @@ export default function JoinProcess({ view }) {
     fetchUserAndRole();
   }, []);
 
-  // ✅ 전화번호 하이픈 자동 완성 로직이 추가된 핸들러
+  // ✅ 핸들러가 훨씬 짧고 우아해졌습니다!
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === 'phone') {
-      // 1. 사용자가 입력한 값에서 숫자만 추출
-      const onlyNums = value.replace(/[^0-9]/g, '');
-      let formattedPhone = '';
-
-      // 2. 길이에 따라 하이픈(-) 자동 삽입
-      if (onlyNums.length <= 3) {
-        formattedPhone = onlyNums;
-      } else if (onlyNums.length <= 7) {
-        formattedPhone = `${onlyNums.slice(0, 3)}-${onlyNums.slice(3)}`;
-      } else {
-        formattedPhone = `${onlyNums.slice(0, 3)}-${onlyNums.slice(3, 7)}-${onlyNums.slice(7, 11)}`;
-      }
-
-      setFormData(prev => ({ ...prev, [name]: formattedPhone }));
-      return; // 전화번호는 여기서 처리 끝
+      // 전화번호일 때만 포맷 함수를 거쳐서 저장
+      setFormData(prev => ({ ...prev, [name]: formatPhone(value) }));
+    } else {
+      // 나머지는 그냥 저장
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
-
-    // 다른 입력칸들은 기존처럼 그대로 처리
-    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -79,7 +77,6 @@ export default function JoinProcess({ view }) {
       return;
     }
 
-    // 전화번호 길이 검증 (하이픈 포함 13자리: 010-0000-0000)
     if (formData.phone.length < 13) {
       alert('정확한 연락처 11자리를 입력해주세요.');
       return;
@@ -225,13 +222,12 @@ export default function JoinProcess({ view }) {
           <input type="text" name="tier" placeholder="예: 래더 S / 2100점" required className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 text-white focus:outline-none focus:border-yellow-500 transition-colors" value={formData.tier} onChange={handleChange} />
         </div>
 
-        {/* ✅ 전화번호 입력칸 속성 변경: type="tel", maxLength 추가, placeholder 변경 */}
         <div>
           <label className="block text-gray-300 font-bold mb-2">연락처 (전화번호)</label>
           <input 
             type="tel" 
             name="phone" 
-            placeholder="숫자만 입력해 주세요" 
+            placeholder="숫자만 11자리 입력해 주세요 (예: 01012345678)" 
             maxLength="13"
             required 
             className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 text-white focus:outline-none focus:border-yellow-500 transition-colors" 
