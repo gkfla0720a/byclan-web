@@ -14,14 +14,35 @@ export default function JoinProcess({ view }) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null); // ✅ 유저의 직급(role) 저장용 상태 추가
+  const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
 
-  // 현재 로그인한 유저 정보 가져오기
+  // 현재 로그인한 유저 정보 및 직급 가져오기
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+    const fetchUserAndRole = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+
+        if (user) {
+          // profiles 테이블에서 role 가져오기
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (profile) {
+            setUserRole(profile.role.trim().toLowerCase());
+          }
+        }
+      } catch (error) {
+        console.error("유저 정보 로드 실패:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    fetchUser();
+    fetchUserAndRole();
   }, []);
 
   const handleChange = (e) => {
@@ -34,6 +55,12 @@ export default function JoinProcess({ view }) {
 
     if (!user) {
       alert('가입 신청을 하려면 로그인이 필요합니다. 우측 상단의 Discord 로그인 버튼을 클릭해주세요.');
+      return;
+    }
+
+    // ✅ 가입 제출 시 한번 더 차단
+    if (userRole !== 'guest') {
+      alert('이미 클랜에 가입된 회원은 신청서를 제출할 수 없습니다.');
       return;
     }
 
@@ -68,6 +95,10 @@ export default function JoinProcess({ view }) {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">로딩 중...</div>;
+  }
 
   // === 1. [가입 안내] 화면 ===
   if (view === '가입안내') {
@@ -107,6 +138,25 @@ export default function JoinProcess({ view }) {
   }
 
   // === 3. 기본 화면: [가입 신청] 폼 ===
+  
+  // ✅ 이미 가입된 클랜원(guest가 아닌 사람)에게 폼 대신 보여줄 화면
+  if (user && userRole !== 'guest') {
+    return (
+      <div className="w-full max-w-3xl mx-auto py-20 px-4 animate-fade-in-down text-center">
+        <div className="bg-gray-800 p-10 rounded-xl border border-gray-700 shadow-xl">
+          <h2 className="text-3xl font-black text-yellow-500 mb-4">가입 신청 완료 및 소속 확인</h2>
+          <p className="text-gray-300 text-lg mb-2">
+            안녕하세요! 회원님은 이미 <strong>ByClan</strong>의 소속입니다.
+          </p>
+          <p className="text-gray-400">
+            현재 직급: <span className="text-sky-400 font-bold uppercase ml-1">{userRole}</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // guest 이거나 비로그인 상태일 때 보여줄 폼
   return (
     <div className="w-full max-w-3xl mx-auto py-8 px-4 animate-fade-in-down">
       <div className="text-center mb-8 border-b border-gray-700 pb-6">
