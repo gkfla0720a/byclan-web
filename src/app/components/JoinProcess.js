@@ -116,6 +116,7 @@ export default function JoinProcess({ view }) {
   }
 
   // ✅ 3) 로그인 완료 & 준회원(associate)일 때만 아래의 가입 신청 폼이 렌더링됨
+  if (user && userRole == 'associate') {
   return (
     <div className="w-full max-w-3xl mx-auto py-8 px-4 animate-fade-in-down">
       <div className="text-center mb-8 border-b border-gray-700 pb-6">
@@ -170,5 +171,5 @@ export default function JoinProcess({ view }) {
         </button>
       </form>
     </div>
-  );
+  ); }
 }
