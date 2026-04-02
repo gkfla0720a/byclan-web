@@ -6,94 +6,71 @@ import { supabase } from '@/supabase';
 export default function LadderDashboard() {
   const [profile, setProfile] = useState(null);
   const [waitingUsers, setWaitingUsers] = useState([]);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [liveMatches, setLiveMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ... (기존 fetchData 및 Subscription 로직 동일) ...
-
-  // ⚖️ [핵심] 팀 밸런싱 알고리즘
-  // 선택된 인원들의 점수 합산 차이가 가장 적은 조합을 찾아냅니다.
-  const getBalancedTeams = (users) => {
-    const size = users.length / 2;
-    let bestDiff = Infinity;
-    let bestCombination = { teamA: [], teamB: [] };
-
-    // 조합 생성 및 밸런스 계산 (단순화된 알고리즘 예시)
-    // 6인 기준 모든 경우의 수 중 합계 점수 차이가 최소인 팀 선정
-    const combine = (start, combo) => {
-      if (combo.length === size) {
-        const teamA = combo;
-        const teamB = users.filter(u => !teamA.includes(u));
-        const sumA = teamA.reduce((sum, u) => sum + u.ladder_points, 0);
-        const sumB = teamB.reduce((sum, u) => sum + u.ladder_points, 0);
-        const diff = Math.abs(sumA - sumB);
-
-        if (diff < bestDiff) {
-          bestDiff = diff;
-          bestCombination = { teamA, teamB };
-        }
-        return;
-      }
-      for (let i = start; i < users.length; i++) {
-        combine(i + 1, [...combo, users[i]]);
-      }
-    };
-
-    combine(0, []);
-    return bestCombination;
-  };
-
-  // 🚀 전원 동의 시 매치 생성 및 자동 팀 배정
-  const createMatch = async () => {
-    if (isProcessing) return;
-    setIsProcessing(true);
-
+  const fetchAllData = useCallback(async () => {
     try {
-      // 1. 현재 대기 및 동의한 인원 확정
-      const participants = waitingUsers.filter(u => u.vote_to_start);
-      if (participants.length < 6 || participants.length % 2 !== 0) {
-        alert("인원수가 맞지 않거나 전원 동의가 이루어지지 않았습니다.");
-        return;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      // 2. 밸런스 알고리즘 돌리기
-      const { teamA, teamB } = getBalancedTeams(participants);
+      // 내 프로필 (ByID, discord_name 등 오타 대비 안전하게 가져오기)
+      const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (p) setProfile(p);
 
-      // 3. DB에 경기 생성
-      const { data: match, error: matchError } = await supabase
-        .from('ladder_matches')
-        .insert({
-          host_id: profile.id,
-          match_type: participants.length / 2,
-          team_a: teamA.map(u => u.id),
-          team_b: teamB.map(u => u.id),
-          status: '진행중'
-        })
-        .select()
-        .single();
+      // 대기열 (데이터가 없으면 빈 배열 [] 로 초기화해서 에러 방지)
+      const { data: q } = await supabase.from('profiles').select('*').eq('is_in_queue', true);
+      setWaitingUsers(q || []);
 
-      if (matchError) throw matchError;
+      // 진행 중 경기
+      const { data: m } = await supabase.from('ladder_matches').select('*, host:host_id(ByID)').eq('status', '진행중');
+      setLiveMatches(m || []);
 
-      // 4. 참여자들의 대기 상태 해제 및 알림 발송
-      const participantIds = participants.map(u => u.id);
-      await supabase.from('profiles').update({ is_in_queue: false, vote_to_start: false }).in('id', participantIds);
-      
-      // 5. 알림 테이블에 기록 (전장에 투입되었다는 알림)
-      await supabase.from('notifications').insert(
-        participantIds.map(id => ({
-          user_id: id,
-          title: "⚔️ 전장 투입 완료!",
-          message: `매치가 생성되었습니다. 팀 구성을 확인하고 게임을 시작하세요!`,
-          link_to: '경기기록'
-        }))
-      );
-
-      alert("매치가 성공적으로 생성되었습니다. 전장으로 이동합니다!");
     } catch (e) {
-      alert("매치 생성 실패: " + e.message);
+      console.error("데이터 동기화 실패:", e);
     } finally {
-      setIsProcessing(false);
+      setLoading(false);
     }
-  };
+  }, []);
 
-  // ... (UI 렌더링 영역 동일) ...
+  useEffect(() => {
+    fetchAllData();
+    const channel = supabase.channel('ladder-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchAllData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ladder_matches' }, fetchAllData)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchAllData]);
+
+  if (loading) return <div className="py-24 text-center text-cyan-500 font-mono animate-pulse">BOOTING...</div>;
+
+  // ✨ 안전 장치: profile이 없을 때를 대비한 기본값 설정
+  const qCount = waitingUsers?.length || 0;
+  const myID = profile?.ByID || profile?.nickname || "Unknown";
+
+  return (
+    <div className="w-full max-w-6xl mx-auto py-8 px-4 space-y-8 animate-fade-in">
+      <div className="bg-gray-800 border border-gray-700 p-8 rounded-2xl flex justify-between items-center shadow-2xl">
+         <div>
+            <p className="text-gray-500 text-xs font-bold mb-1">PLAYER</p>
+            <h3 className="text-2xl font-black text-white">{myID}</h3>
+         </div>
+         <div className="text-right">
+            <p className="text-gray-500 text-xs font-bold mb-1">TOTAL QUEUE</p>
+            <p className="text-3xl font-black text-cyan-400">{qCount}명</p>
+         </div>
+      </div>
+
+      <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl">
+        <h4 className="text-gray-400 font-bold mb-4">실시간 대기 명단</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {waitingUsers.map(user => (
+            <div key={user.id} className="p-3 rounded-xl bg-gray-800 border border-gray-700 text-center">
+              <p className="text-white font-bold">{user.ByID || "참가자"}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
