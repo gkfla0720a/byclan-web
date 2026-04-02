@@ -38,14 +38,14 @@ export default function Header({ navigateTo }) {
         // 프로필 정보 가져오기
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role, nickname, discord_name')
+          .select('role, ByID, discord_name')
           .eq('id', user.id)
           .single();
           
         if (profile) {
           setRole(profile.role);
           // By_ 닉네임이 있으면 1순위, 없으면 디스코드 이름, 다 없으면 user_metadata 풀네임
-          setNickname(profile.nickname || profile.discord_name || user.user_metadata?.full_name || '유저');
+          setNickname(profile.ByID || profile.discord_name || user.user_metadata?.full_name || '유저');
         }
 
         // 알림 개수 가져오기

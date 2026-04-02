@@ -52,7 +52,7 @@ export default function ApplicationList() {
       .from('applications')
       .select(`
         *,
-        tester:tester_id(nickname)
+        tester:tester_id(ByID)
       `)
       .eq('status', '대기중')
       .order('created_at', { ascending: true }); // 오래된 순
