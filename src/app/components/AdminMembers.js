@@ -28,7 +28,7 @@ export default function AdminMembers() {
     if (!error) { alert("등급 변경 완료!"); fetchData(); }
   };
 
-  if (loading) return <div className="py-20 text-center text-gray-500 font-mono animate-pulse">OPTIMIZING DATA...</div>;
+  if (loading) return <div className="py-20 text-center text-gray-500 font-mono animate-pulse">OPTIMIZING...</div>;
 
   return (
     <div className="w-full max-w-4xl mx-auto py-8 px-4 animate-fade-in">

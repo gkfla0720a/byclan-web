@@ -29,19 +29,18 @@ export default function LadderDashboard() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchAllData]);
 
-  // 🚀 래더 입장/취소 로직 (닉네임 체크 추가)
+  // 🚀 래더 입장/취소 시 닉네임 체크
   const toggleQueue = async () => {
-    // 1. 닉네임 설정 여부 확인
+    // 1. By_ 닉네임이 있는지 먼저 확인
     const hasValidNickname = profile?.ByID && profile.ByID.startsWith('By_');
 
     if (!profile?.is_in_queue && !hasValidNickname) {
-      alert("⚠️ 래더 매칭을 시작하려면 먼저 프로필 설정에서 'By_'로 시작하는 닉네임을 설정해주세요!");
-      return; // 함수 종료 (DB 업데이트 안 함)
+      alert("⚠️ 먼저 프로필 설정에서 'By_'로 시작하는 닉네임을 설정해주세요!");
+      return; // 닉네임이 없으면 여기서 중단
     }
 
     const newState = !profile.is_in_queue;
-    setProfile({ ...profile, is_in_queue: newState }); // 화면 즉시 반영
-    
+    setProfile({ ...profile, is_in_queue: newState });
     await supabase.from('profiles').update({ is_in_queue: newState }).eq('id', profile.id);
   };
 
@@ -56,14 +55,12 @@ export default function LadderDashboard() {
             {profile?.ByID || '닉네임 미설정'}
           </h3>
           {(!profile?.ByID || !profile.ByID.startsWith('By_')) && (
-            <p className="text-[10px] text-yellow-500 animate-pulse">※ 프로필에서 닉네임을 먼저 설정해주세요.</p>
+            <p className="text-[10px] text-yellow-500 animate-pulse font-bold">※ 닉네임 설정 후 이용 가능합니다.</p>
           )}
         </div>
         <button 
           onClick={toggleQueue}
-          className={`px-8 py-4 rounded-xl font-black transition-all transform active:scale-95 ${
-            profile?.is_in_queue ? 'bg-red-600' : 'bg-cyan-600'
-          }`}
+          className={`px-8 py-4 rounded-xl font-black transition-all transform active:scale-95 ${profile?.is_in_queue ? 'bg-red-600' : 'bg-cyan-600'}`}
         >
           {profile?.is_in_queue ? '대기 취소' : '래더 입장'}
         </button>
