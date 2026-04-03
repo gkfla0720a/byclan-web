@@ -16,6 +16,7 @@ import ApplicationList from './components/ApplicationList';
 import AdminBoard from './components/AdminBoard'; 
 import MyProfile from './components/MyProfile';
 import NotificationCenter from './components/NotificationCenter';
+import DevConsole from './components/DevConsole';
 
 // --- [공통] 페이지 준비 중 플레이스홀더 ---
 function PagePlaceholder({ title }) {
@@ -164,19 +165,20 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [activeView, setActiveView] = useState('Home');
-  
-  // ⚔️ 래더 시스템용 상태: 진행 중인 경기 ID
   const [activeMatchId, setActiveMatchId] = useState(null);
+  const [profile, setProfile] = useState(null); 
 
   const CORRECT_PASSWORD = "1990"; 
 
-  // 페이지 진입 시 내가 참여 중인 경기가 있는지 수시로 체크 (새로고침 대응)
   useEffect(() => {
     if (!isAuthorized) return;
     
-    const checkActiveMatch = async () => {
+    const initializeData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      setProfile(p);
 
       const { data: m } = await supabase.from('ladder_matches')
         .select('id').eq('status', '진행중')
@@ -184,7 +186,7 @@ export default function Home() {
       
       if (m) setActiveMatchId(m.id);
     };
-    checkActiveMatch();
+    initializeData();
   }, [isAuthorized]);
 
   const handleLogin = (e) => {
@@ -197,7 +199,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col justify-center items-center text-white p-4">
         <h1 className="text-3xl font-black mb-8 text-yellow-500">ByClan 개발 서버</h1>
-        <form onSubmit={handleLogin} className="flex flex-col sm:flex-row gap-4 w-full max-sm">
+        <form onSubmit={handleLogin} className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" className="flex-grow p-4 rounded-xl bg-gray-800 border border-gray-700 text-white" />
           <button type="submit" className="p-4 bg-yellow-500 text-gray-900 font-bold rounded-xl hover:bg-yellow-400">입장</button>
         </form>
@@ -205,20 +207,28 @@ export default function Home() {
     );
   }
 
+  // --- [권한 로직 통합] ---
+  const userRole = profile?.role?.trim().toLowerCase();
+  
+  // 개발자(developer)는 모든 운영진/정예 권한을 상속받습니다.
+  const isAdminOrHigher = ['developer', 'master', 'admin'].includes(userRole);
+  const isEliteOrHigher = ['developer', 'master', 'admin', 'elite'].includes(userRole);
+  const isDeveloper = userRole === 'developer';
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a0c] text-gray-200 font-semibold" style={{ fontFamily: "'Pretendard', sans-serif" }}>
       <Header navigateTo={setActiveView} />
       
       <main className="flex-grow w-full relative z-10 flex flex-col items-center justify-start px-2 sm:px-8 mb-10">
         
-        {/* ✨ activeView 매핑 로직 */}
+        {/* 🗺️ activeView 매핑 (개발자 슈퍼 유저 권한 적용) */}
         {activeView === 'Home' ? <HomeContent navigateTo={setActiveView} /> : 
          activeView === '개요' ? <ClanOverview /> : 
          activeView === '가입안내' || activeView === '가입신청' || activeView === '정회원 전환신청' ? <JoinProcess view={activeView} /> :
          activeView === '공지사항' || activeView === 'BSL 공지사항' || activeView === '토너먼트 공지' ? <NoticeBoard /> : 
          activeView === '자유게시판' || activeView === '클랜원 소식' ? <CommunityBoard /> : 
 
-         /* ⚔️ 래더 시스템 통합 영역 */
+         /* ⚔️ 래더 시스템 매핑 */
          (activeView === '대시보드' || activeView === 'BY래더시스템') ? (
            !activeMatchId ? (
              <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
@@ -230,10 +240,21 @@ export default function Home() {
          activeView === '랭킹' || activeView === '시즌별 랭킹' ? <RankingBoard /> : 
          activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트' ? <ClanTournament /> : 
          activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
-         activeView === '가입 심사' ? <ApplicationList /> :
-         activeView === '관리자' ? <AdminMembers /> :
-         activeView === '운영진게시판' ? <AdminBoard /> :
-         activeView === '프로필' ? <MyProfile /> :
+
+         /* 👑 운영 관리 영역 (개발자 포함 모든 운영진 가능) */
+         (activeView === '가입 심사' || activeView === '관리자' || activeView === '운영진게시판') ? (
+           (isAdminOrHigher || (activeView === '가입 심사' && isEliteOrHigher)) ? (
+             activeView === '가입 심사' ? <ApplicationList /> :
+             activeView === '관리자' ? <AdminMembers /> : <AdminBoard />
+           ) : <PagePlaceholder title="인가된 운영진 전용 메뉴입니다." />
+         ) :
+
+         /* ⚙️ 시스템 개발 영역 (오직 개발자만 가능) */
+         activeView === '개발자' ? (
+           isDeveloper ? <DevConsole navigateTo={setActiveView} /> : <PagePlaceholder title="ACCESS DENIED (Developer Only)" />
+         ) :
+
+         activeView === '프로필' ? <MyProfile navigateTo={setActiveView} /> :
          activeView === '알림' ? <NotificationCenter /> :
          <PagePlaceholder title={activeView} />}
       </main>
