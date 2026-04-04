@@ -2,33 +2,74 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
+import { SkeletonLoader, ErrorMessage, EmptyState } from '../components/UIStates';
+import { MatchStatus, ActivityLog } from '../components/HomeSections';
 
 function HomeContent({ navigateTo }) {
   const [topRankers, setTopRankers] = useState([]);
+  const [recentNotices, setRecentNotices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // 랭킹 데이터 가져오기
+      const { data: rankData, error: rankError } = await supabase
+        .from('ladders')
+        .select('*')
+        .order('rank', { ascending: true })
+        .limit(3);
+      
+      if (rankError) throw rankError;
+
+      // 공지사항 데이터 가져오기
+      const { data: noticeData, error: noticeError } = await supabase
+        .from('admin_posts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      if (noticeError) throw noticeError;
+
+      // 데이터가 없을 경우 기본값 설정
+      const notices = noticeData && noticeData.length > 0 
+        ? noticeData.map(notice => ({
+            id: notice.id,
+            type: '공지',
+            title: notice.title,
+            date: new Date(notice.created_at).toLocaleDateString('ko-KR', { 
+              month: '2-digit', 
+              day: '2-digit' 
+            }).replace(/\./g, '.')
+          }))
+        : [
+            { id: 1, type: '안내', title: '바이클랜에 오신 것을 환영합니다!', date: '04.04' },
+            { id: 2, type: '공지', title: '클랜 활동이 활발하게 진행 중입니다', date: '04.04' }
+          ];
+
+      if (rankData) setTopRankers(rankData);
+      setRecentNotices(notices);
+      
+    } catch (error) {
+      console.error('홈 데이터 로딩 실패:', error);
+      setError('데이터 로딩 중 오류가 발생했습니다.');
+      
+      // 에러 시 기본값 설정
+      setRecentNotices([
+        { id: 1, type: '안내', title: '바이클랜에 오신 것을 환영합니다!', date: '04.04' },
+        { id: 2, type: '공지', title: '클랜 활동이 활발하게 진행 중입니다', date: '04.04' }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTopRankers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('ladders')
-          .select('*')
-          .order('rank', { ascending: true })
-          .limit(3);
-        
-        if (error) throw error;
-        if (data) setTopRankers(data);
-      } catch (error) {
-        console.error('랭킹 데이터 로딩 실패:', error);
-      }
-    };
-    
-    fetchTopRankers();
+    fetchData();
   }, []);
-
-  const recentNotices = [
-    { id: 1, type: '필독', title: '바이클랜 2026년 상반기 통합 랭킹전 안내', date: '03.28' },
-    { id: 2, type: '공지', title: '신규 클랜원 가입 조건 및 테스트 안내', date: '03.25' },
-  ];
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 sm:space-y-8 animate-fade-in-down mt-4 sm:mt-8">
@@ -43,25 +84,74 @@ function HomeContent({ navigateTo }) {
         <section className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl cursor-pointer" onClick={() => navigateTo('랭킹')}>
           <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">🏆 명예의 전당</h3>
           <div className="space-y-3">
-            {topRankers.map((p) => (
-              <div key={p.rank} className="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
-                <span className="text-gray-200 font-semibold">{p.rank}위 {p.name}</span>
-                <span className="font-bold text-sky-400">{p.points} P</span>
-              </div>
-            ))}
+            {loading ? (
+              <SkeletonLoader count={3} />
+            ) : topRankers.length === 0 ? (
+              <EmptyState message="아직 랭킹 데이터가 없습니다" icon="🏆" />
+            ) : (
+              topRankers.map((p) => (
+                <div key={p.rank} className="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
+                  <span className="text-gray-200 font-semibold">{p.rank}위 {p.name}</span>
+                  <span className="font-bold text-sky-400">{p.points} P</span>
+                </div>
+              ))
+            )}
           </div>
         </section>
         <section className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl cursor-pointer" onClick={() => navigateTo('공지사항')}>
-          <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">📢 최근 소식</h3>
+          <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">📢 최신 소식</h3>
           <div className="space-y-3">
-            {recentNotices.map((n) => (
-              <div key={n.id} className="flex items-center justify-between text-sm">
-                <span className="text-gray-300 truncate">{n.title}</span>
-                <span className="text-gray-500 text-xs ml-2">{n.date}</span>
-              </div>
-            ))}
+            {loading ? (
+              <SkeletonLoader count={3} />
+            ) : recentNotices.length === 0 ? (
+              <EmptyState message="새로운 소식이 없습니다" icon="📢" />
+            ) : (
+              recentNotices.map((n) => (
+                <div key={n.id} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-300 truncate">{n.title}</span>
+                  <span className="text-gray-500 text-xs ml-2">{n.date}</span>
+                </div>
+              ))
+            )}
           </div>
         </section>
+      </div>
+
+      {/* 새로운 섹션들 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <MatchStatus navigateTo={navigateTo} />
+        <ActivityLog />
+      </div>
+
+      {/* 빠른 접근 버튼 */}
+      <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
+        <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">🚀 빠른 접근</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button 
+            onClick={() => navigateTo('가입신청')}
+            className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm font-medium transition-colors"
+          >
+            📝 가입 신청
+          </button>
+          <button 
+            onClick={() => navigateTo('대시보드')}
+            className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm font-medium transition-colors"
+          >
+            ⚔️ 매치 참여
+          </button>
+          <button 
+            onClick={() => navigateTo('자유게시판')}
+            className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm font-medium transition-colors"
+          >
+            💬 커뮤니티
+          </button>
+          <button 
+            onClick={() => navigateTo('랭킹')}
+            className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm font-medium transition-colors"
+          >
+            🏆 랭킹 보기
+          </button>
+        </div>
       </div>
     </div>
   );
