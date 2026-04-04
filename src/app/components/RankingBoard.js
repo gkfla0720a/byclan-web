@@ -43,7 +43,7 @@ export default function RankingBoard() {
                 </td>
                 <td className="py-3 px-4 font-medium text-cyan-50">
                   <div className="flex flex-col sm:flex-row gap-1 sm:items-center">
-                    <span className="text-sm sm:text-base tracking-wide">{player.nickname}</span>  {/* ✅ 수정3 */}
+                    <span className="text-sm sm:text-base tracking-wide">{player.ByID || player.discord_name}</span>  {/* ✅ 수정3 */}
                     <span className="text-[10px] text-cyan-600 sm:hidden">[{player.race}]</span>
                   </div>
                 </td>

@@ -19,7 +19,8 @@ export default function CommunityBoard() {
       .select(`
         *,
         profiles (
-          nickname
+          discord_name,
+          ByID
         )
       `)
       .order('created_at', { ascending: false });
@@ -140,13 +141,13 @@ const handleSubmit = async () => {
                 <span className="text-gray-200 font-medium group-hover:text-yellow-400 transition-colors">{post.title}</span>
                 {/* 모바일 뷰 */}
                 <span className="text-xs text-gray-500 sm:hidden">
-                  {/* profiles에서 nickname을 꺼내오고, 없으면 '알 수 없음' 처리 */}
-                  {post.profiles?.nickname || '알 수 없음'} | {formatDate(post.created_at)} | 조회 {post.views || 0}
+                  {/* profiles에서 ByID를 꺼내오고, 없으면 discord_name으로 처리 */}
+                  {post.profiles?.ByID || post.profiles?.discord_name || '알 수 없음'} | {formatDate(post.created_at)} | 조회 {post.views || 0}
                 </span>
               </div>
               {/* PC/태블릿 뷰 */}
               <div className="hidden sm:flex items-center gap-4 text-sm text-gray-400">
-                <span className="w-24 text-center truncate">{post.profiles?.nickname || '알 수 없음'}</span>
+                <span className="w-24 text-center truncate">{post.profiles?.ByID || post.profiles?.discord_name || '알 수 없음'}</span>
                 <span className="w-16 text-center">{formatDate(post.created_at)}</span>
                 <span className="w-12 text-center text-xs">👀 {post.views || 0}</span>
               </div>
