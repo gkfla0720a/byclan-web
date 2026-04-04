@@ -1,0 +1,28 @@
+ByClan OAuth handoff note (2026-04-04)
+
+Done today
+1) Discord OAuth redirect uses current origin + /auth/callback.
+2) Auth callback page exchanges PKCE code and then hard-redirects to /.
+3) useAuth switched to getSession + onAuthStateChange for stable session restoration.
+4) Build verified successfully.
+
+Important files
+- src/app/components/Header.js
+- src/app/auth/callback/page.js
+- src/app/hooks/useAuth.js
+
+Before next test
+1) Supabase Auth URL config must include:
+   - http://localhost:3000/*
+   - https://*.app.github.dev/*
+2) Discord provider in Supabase should be enabled and healthy.
+3) Test flow:
+   - open Codespaces URL
+   - enter dev password 1990
+   - click Discord login
+   - confirm callback returns to /auth/callback then / with signed-in state
+
+If issue persists, collect
+1) Full callback URL shown in browser address bar
+2) First 10 console lines after callback
+3) Whether Supabase session exists in browser storage
