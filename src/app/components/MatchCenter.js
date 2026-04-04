@@ -24,9 +24,9 @@ export default function MatchCenter({ matchId, onExit }) {
     if (!m) return;
     setMatch(m);
 
-    const teamLetter = m.team_a.includes(user.id) ? 'A' : 'B';
+    const teamLetter = (m.team_a_ids || []).includes(user.id) ? 'A' : 'B';
     setMyTeam(teamLetter);
-    setTeamMembers(m.profiles.filter(p => (teamLetter === 'A' ? m.team_a : m.team_b).includes(p.id)));
+    setTeamMembers((m.profiles || []).filter(p => (teamLetter === 'A' ? (m.team_a_ids || []) : (m.team_b_ids || [])).includes(p.id)));
 
     const activeSet = m.match_sets?.find(s => s.status !== '완료') || m.match_sets?.[m.match_sets.length - 1];
     setCurrentSet(activeSet);
