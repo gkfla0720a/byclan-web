@@ -11,10 +11,10 @@ export const PROJECT_INFO = {
   lastUpdate: "2026-04-04"
 };
 
-// === 주요 파일 구조 ===
+// === 주요 파일 구조 (개선됨) ===
 export const FILE_STRUCTURE = {
   main: {
-    "src/app/page.js": "메인 페이지 - 라우팅, 권한 관리 (264줄)",
+    "src/app/page.js": "메인 페이지 - 라우팅, 권한 관리 (126줄로 감소)",
     "src/app/layout.js": "전체 레이아웃",
     "src/supabase.js": "데이터베이스 연결"
   },
@@ -26,6 +26,16 @@ export const FILE_STRUCTURE = {
     "MyProfile.js": "프로필 관리 (13KB)",
     "AdminBoard.js": "관리자 게시판 (9KB)",
     "MatchCenter.js": "매치 센터 (9KB)"
+  },
+  pages: {
+    "HomeContent.js": "홈 컨텐츠 (분리됨)",
+    "ClanOverview.js": "클랜 소개 (분리됨)",
+    "ClanTournament.js": "토너먼트 (분리됨)",
+    "MediaGallery.js": "미디어 갤러리 (분리됨)",
+    "PagePlaceholder.js": "페이지 플레이스홀더 (분리됨)"
+  },
+  hooks: {
+    "useAuth.js": "인증 관리 훅 (새로 추가)"
   }
 };
 
@@ -65,14 +75,19 @@ export const CURRENT_STATUS = {
   phase: "개발 서버 테스트 단계",
   security: "임시 비밀번호 보호 (1990)",
   features: {
-    completed: ["기본 라우팅", "권한 시스템", "래더 기본 구조"],
+    completed: ["기본 라우팅", "권한 시스템", "래더 기본 구조", "컴포넌트 분리 완료"],
     inProgress: ["매치 시스템", "베팅 기능"],
     planned: ["알림 시스템", "포인트 로그"]
   },
+  improvements: [
+    "✅ 성능: 264줄 → 126줄로 감소",
+    "✅ 구조: 컴포넌트 분리 완료",
+    "✅ 에러: try-catch 추가됨",
+    "⚠️ 보안: 환경변수 분리 필요"
+  ],
   issues: [
-    "보안: 비밀번호 하드코딩",
-    "성능: 거대한 단일 파일",
-    "에러 핸들링 부족"
+    "보안: 비밀번호 환경변수로 분리 필요",
+    "권한 시스템: 역할별 접근 제어 명확화 필요"
   ]
 };
 
