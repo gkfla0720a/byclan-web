@@ -116,9 +116,19 @@ export default function Header({ navigateTo }) {
         {/* 로고 & 타이틀 */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => handleNav('Home')}>
           <ByClanLogo />
-          <h1 className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-500 to-yellow-600 drop-shadow-md">
+          {/* 👇 Footer와 완벽하게 동일한 황금빛 그라데이션 및 그림자 적용! */}
+          <span 
+            className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-110"
+            style={{
+              background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              filter: "drop-shadow(0px 1px 0px rgba(200, 162, 102, 0.6)) drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.9))",
+              textShadow: "0px 1px 1px rgba(200, 162, 102, 0.4), 0px 1px 0px rgba(0, 0, 0, 0.3)"
+            }}
+          >
             ByClan
-          </h1>
+          </span>
         </div>
         
         {/* 데스크톱 메뉴 */}

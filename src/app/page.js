@@ -108,7 +108,7 @@ export default function Home() {
             테스트 결과를 기다려주세요.
           </p>
           <div className="text-sm text-gray-400">
-            신청 현황은 '가입 신청' 메뉴에서 확인할 수 있습니다.
+            신청 현황은 &apos;가입 신청&apos; 메뉴에서 확인할 수 있습니다.
           </div>
         </div>
       </div>

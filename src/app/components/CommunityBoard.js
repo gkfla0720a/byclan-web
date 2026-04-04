@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase'; // 경로는 길드장님 환경에 맞게 유지
 
 export default function CommunityBoard() {
@@ -12,7 +12,7 @@ export default function CommunityBoard() {
   const [posts, setPosts] = useState([]);
 
   // ⭐ 2. 페이지가 열릴 때 DB에서 글을 가져오는 함수
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     // 💡 select() 안을 보세요! posts의 모든 것(*)과 profiles의 username을 같이 가져옵니다.
     const { data, error } = await supabase
       .from('posts')
@@ -30,7 +30,7 @@ export default function CommunityBoard() {
     } else {
       setPosts(data);
     }
-  };
+  }, []);
 
   // 날짜 변환 함수 (예: 2026-04-01T... -> 04.01)
   const formatDate = (dateString) => {
@@ -43,8 +43,11 @@ export default function CommunityBoard() {
 
   // ⭐ 3. 컴포넌트가 처음 화면에 나타날 때 (Mount) 한 번만 fetchPosts 실행
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    const loadPosts = async () => {
+      await fetchPosts();
+    };
+    void loadPosts();
+  }, [fetchPosts]);
 
   // 글쓰기 완료 함수 (기존 코드 유지하되, 맨 밑에 성공 시 새로고침 기능 추가)
 const handleSubmit = async () => {

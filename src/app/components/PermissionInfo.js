@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ROLE_PERMISSIONS, PermissionChecker } from '../utils/permissions';
+import { ROLE_PERMISSIONS, PermissionChecker as PermissionUtilsChecker } from '../utils/permissions';
 
 // 권한 정보 표시 컴포넌트
 export function PermissionInfo({ userRole, compact = false }) {
@@ -132,7 +132,7 @@ export function PermissionChecker({ userRole }) {
       
       <div className="space-y-3">
         {testPermissions.map((permission) => {
-          const hasPermission = PermissionChecker.hasPermission(userRole, permission);
+          const hasPermission = PermissionUtilsChecker.hasPermission(userRole, permission);
           
           return (
             <div key={permission} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg">

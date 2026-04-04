@@ -5,16 +5,8 @@ import { saveDevSettings, loadDevSettings } from '../utils/permissions';
 
 // 사이버틱 개발자 설정 컴포넌트
 export default function DevSettingsPanel() {
-  const [settings, setSettings] = useState({
-    canReviewApplications: false,
-    canManageMembers: false,
-    canDelegateMaster: false
-  });
+  const [settings, setSettings] = useState(() => loadDevSettings());
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    setSettings(loadDevSettings());
-  }, []);
 
   const handleToggle = (key) => {
     const newSettings = { ...settings, [key]: !settings[key] };

@@ -8,24 +8,24 @@ export default function NotificationCenter() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchNotifications();
+    const loadNotifications = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        setNotifications(data || []);
+
+        // 페이지 접속 시 모든 알림 읽음 처리
+        await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id);
+      }
+      setLoading(false);
+    };
+
+    void loadNotifications();
   }, []);
-
-  const fetchNotifications = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      setNotifications(data || []);
-
-      // 페이지 접속 시 모든 알림 읽음 처리
-      await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id);
-    }
-    setLoading(false);
-  };
 
   if (loading) return <div className="text-center py-20 text-gray-500">LOADING NOTIFICATIONS...</div>;
 

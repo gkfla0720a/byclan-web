@@ -35,7 +35,10 @@ export default function MatchCenter({ matchId, onExit }) {
   }, [matchId]);
 
   useEffect(() => {
-    fetchMatchData();
+    const loadMatchData = async () => {
+      await fetchMatchData();
+    };
+    void loadMatchData();
     const channel = supabase.channel(`m-${matchId}`).on('postgres_changes', { event: '*', schema: 'public' }, fetchMatchData).subscribe();
     const timer = setInterval(() => setBetTimer(p => (p > 0 ? p - 1 : 0)), 1000);
     return () => { supabase.removeChannel(channel); clearInterval(timer); };
