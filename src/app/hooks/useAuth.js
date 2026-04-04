@@ -33,7 +33,7 @@ export function useAuth() {
         if (profileError) {
           // 프로필이 없으면 방문자 상태 (기본 프로필 생성)
           if (profileError.code === 'PGRST116') {
-            await supabase
+            const { error: insertError } = await supabase
               .from('profiles')
               .insert({
                 id: authUser.id,
@@ -48,7 +48,20 @@ export function useAuth() {
                 vote_to_start: false
               });
             
-            setNeedsSetup(false); // 방문자는 별도 설정 불필요
+            if (insertError) {
+              console.error('프로필 생성 실패:', insertError);
+              throw insertError;
+            }
+            
+            // 생성된 프로필 다시 로드
+            const { data: newProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', authUser.id)
+              .single();
+            
+            setProfile(newProfile);
+            setNeedsSetup(false);
             return;
           }
           throw profileError;
@@ -70,17 +83,36 @@ export function useAuth() {
         
         setNeedsSetup(false); // 기타 역할은 설정 불필요
 
-        const { data: m, error: matchError } = await supabase
-          .from('ladder_matches')
-          .select('id')
-          .eq('status', '진행중')
-          .or(`team_a.cs.${authUser.id},team_b.cs.${authUser.id}`)
-          .maybeSingle();
-        
-        if (matchError) throw matchError;
-        if (m) setActiveMatchId(m.id);
+        // 래더 매치 확인은 정식 멤버만
+        if (['associate', 'elite', 'admin', 'master', 'developer'].includes(p.role)) {
+          try {
+            const { data: m, error: matchError } = await supabase
+              .from('ladder_matches')
+              .select('id')
+              .eq('status', '진행중')
+              .contains('team_a_ids', [authUser.id])
+              .or(`team_b_ids.cs.{${authUser.id}}`)
+              .maybeSingle();
+            
+            if (matchError) {
+              console.log('래더 매치 확인 실패 (정상):', matchError.message);
+            } else if (m) {
+              setActiveMatchId(m.id);
+            }
+          } catch (matchError) {
+            console.log('래더 매치 확인 중 오류:', matchError.message);
+          }
+        }
       } catch (error) {
-        console.error('인증 데이터 초기화 실패:', error);
+        // 인증 관련 오류는 정상적인 상황일 수 있음
+        if (error.message.includes('Auth session missing') || 
+            error.message.includes('column ladder_matches.team_a') ||
+            error.message.includes('malformed array literal') ||
+            error.message.includes('22P02')) {
+          console.log('인증 초기화 상태:', error.message);
+        } else {
+          console.error('인증 데이터 초기화 실패:', error);
+        }
       }
     };
     

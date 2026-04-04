@@ -162,8 +162,8 @@ export default function ApplicationList() {
 
   if (loading) return <div className="text-center py-24 text-gray-500 font-mono">[ FETCHING APPLICATIONS... ]</div>;
   
-  if (!myProfile || powerLevel[myProfile.role] < powerLevel['elite']) {
-    return <div className="text-center py-24 text-red-400 font-bold">⚠️ 접근 권한이 없습니다. 정예 클랜원 이상 전용입니다.</div>;
+  if (!myProfile || !PermissionChecker.hasPermission(myProfile.role, 'member.approve')) {
+    return <div className="text-center py-24 text-red-400 font-bold">⚠️ 접근 권한이 없습니다. 가입 심사 권한이 필요합니다.</div>;
   }
 
   return (

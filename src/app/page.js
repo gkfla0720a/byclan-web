@@ -126,7 +126,8 @@ export default function Home() {
         {/* 🗺️ activeView 매핑 (개발자 슈퍼 유저 권한 적용) */}
         {activeView === 'Home' ? <HomeContent navigateTo={setActiveView} /> : 
          activeView === '개요' ? <ClanOverview /> : 
-         activeView === '가입안내' || activeView === '가입신청' || activeView === '정회원 전환신청' ? <JoinProcess view={activeView} /> :
+         activeView === '가입안내' || activeView === '가입신청' ? <PagePlaceholder title="가입 신청은 방문자 환영 페이지에서 가능합니다." /> :
+         activeView === '정회원 전환신청' ? <PagePlaceholder title="정회원 전환 신청은 신입 길드원만 가능합니다." /> :
          activeView === '공지사항' || activeView === 'BSL 공지사항' || activeView === '토너먼트 공지' ? <NoticeBoard /> : 
          activeView === '자유게시판' || activeView === '클랜원 소식' ? <CommunityBoard /> : 
 
