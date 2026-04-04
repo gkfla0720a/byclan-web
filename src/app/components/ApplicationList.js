@@ -52,15 +52,15 @@ export default function ApplicationList() {
 
   const fetchApplications = async () => {
     // ✨ 탭에 따라 불러올 상태('대기중' or '합격/불합격')를 다르게 설정
-    const queryStatus = activeTab === 'pending' ? '대기중' : '대기중';
+    const queryStatus = activeTab === 'pending' ? '대기중' : null;
 
     let query = supabase
       .from('applications')
       // ✨ tester_id와 user_id에서 ByID와 discord_name을 정확히 가져옵니다.
       .select(`
         *,
-        tester:tester_id(ByID, discord_name),
-        applicant:user_id(ByID, discord_name)
+        tester_id,
+        user_id
       `);
 
     if (activeTab === 'pending') {
