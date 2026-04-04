@@ -2,9 +2,13 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// 본인의 Supabase 프로젝트 URL과 API 키를 문자열 안에 넣으세요.
-const supabaseUrl = 'https://mmsmedvdwmisewngmuka.supabase.co';
-const supabaseKey = 'sb_publishable_wOeB902mJJwOtWNa9nmyFA_KaaaHfeK';
+// 환경 변수에서 Supabase 설정을 가져옵니다
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase environment variables');
+}
 
 // 여기서 딱 한 번만 Supabase를 초기화(생성)합니다.
 export const supabase = createClient(supabaseUrl, supabaseKey);
