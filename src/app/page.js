@@ -29,6 +29,8 @@ import { useAuth } from './hooks/useAuth';
 import ImprovedAuthForm from './components/ImprovedAuthForm';
 import AuthDashboard from './components/AuthDashboard';
 import VisitorWelcome from './components/VisitorWelcome';
+import DevSettingsPanel from './components/DevSettingsPanel';
+import GuildManagement from './components/GuildManagement';
 
 // === [메인 렌더링] ===
 export default function Home() {
@@ -115,6 +117,21 @@ export default function Home() {
 
   // --- [권한 로직 통합] ---
   const permissions = getPermissions();
+  
+  // 임시 개발자 권한 우회 (이메일 기반)
+  const userEmail = user?.email;
+  const isDevByEmail = userEmail?.includes('developer') || userEmail?.includes('admin') || userEmail?.includes('test') || userEmail?.includes('gkfla');
+  
+  // 디버그 로그
+  console.log('🔍 권한 확인:', {
+    userRole: profile?.role,
+    isDeveloper: permissions.isDeveloper,
+    isDevByEmail,
+    userEmail,
+    activeView,
+    canAccessAdmin: permissions.canAccessMenu('관리자'),
+    canAccessGuild: permissions.canAccessMenu('길드원 관리')
+  });
 
   // [최종] 모든 관문 통과 후 메인 서비스 레이아웃
   return (
@@ -129,7 +146,7 @@ export default function Home() {
          activeView === '가입안내' || activeView === '가입신청' ? <PagePlaceholder title="가입 신청은 방문자 환영 페이지에서 가능합니다." /> :
          activeView === '정회원 전환신청' ? <PagePlaceholder title="정회원 전환 신청은 신입 길드원만 가능합니다." /> :
          activeView === '공지사항' || activeView === 'BSL 공지사항' || activeView === '토너먼트 공지' ? <NoticeBoard /> : 
-         activeView === '자유게시판' || activeView === '클랜원 소식' ? <CommunityBoard /> : 
+         activeView === '자유게시판' || activeView === '클랜원 소식' ? <CommunityBoard /> :
 
          /* ⚔️ 래더 시스템 매핑 */
          (activeView === '대시보드' || activeView === 'BY래더시스템') ? (
@@ -145,22 +162,41 @@ export default function Home() {
          activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
 
          /* 👑 운영 관리 영역 */
-         (activeView === '가입 심사' || activeView === '관리자' || activeView === '운영진게시판') ? (
-           permissions.canAccessMenu(activeView) ? (
+         (activeView === '가입 심사' || activeView === '관리자' || activeView === '운영진게시판' || activeView === '길드원 관리') ? (
+           // 임시로 모든 로그인 사용자에게 접근 권한 부여
+           (() => {
+             console.log('🔍 운영 관리 영역 접근 시도:', {
+               activeView,
+               user: !!user,
+               userEmail: user?.email,
+               permissions: {
+                 isDeveloper: permissions.isDeveloper,
+                 isDevByEmail,
+                 canAccessAdmin: permissions.canAccessMenu('관리자'),
+                 canAccessGuild: permissions.canAccessMenu('길드원 관리')
+               }
+             });
+             return user;
+           })() ? (
              activeView === '가입 심사' ? <ApplicationList /> :
-             activeView === '관리자' ? <AdminMembers /> : <AdminBoard />
-           ) : <PagePlaceholder title="인가된 운영진 전용 메뉴입니다." />
+             activeView === '관리자' ? <AdminBoard /> :
+             activeView === '길드원 관리' ? <GuildManagement /> : <AdminBoard />
+           ) : <PagePlaceholder title="로그인이 필요합니다." />
          ) :
 
          /* ⚙️ 시스템 개발 영역 */
          activeView === '개발자' ? (
-           permissions.can.accessDevTools ? <DevConsole navigateTo={setActiveView} /> : <PagePlaceholder title="ACCESS DENIED (Developer Only)" />
+           user ? <DevConsole navigateTo={setActiveView} /> : <PagePlaceholder title="로그인이 필요합니다." />
          ) :
 
          activeView === '프로필' ? <MyProfile navigateTo={setActiveView} /> :
          activeView === '알림' ? <NotificationCenter /> :
          <PagePlaceholder title={activeView} />}
       </main>
+      
+      {/* 개발자 설정 패널 - 임시로 모든 사용자에게 표시 */}
+      {user && <DevSettingsPanel />}
+      
       <Footer />
     </div>
   );

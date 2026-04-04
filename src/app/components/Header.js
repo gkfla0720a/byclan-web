@@ -36,6 +36,15 @@ export default function Header({ navigateTo }) {
   const isDevOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);
   const isAdminOrHigher = ['developer', 'master', 'admin'].includes(currentRole);
 
+  // 디버그 로그
+  console.log('🔍 Header 권한 확인:', {
+    role,
+    currentRole,
+    isDeveloper,
+    isDevOrHigher,
+    isAdminOrHigher
+  });
+
   useEffect(() => {
     const getUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();

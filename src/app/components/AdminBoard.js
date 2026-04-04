@@ -26,7 +26,7 @@ export default function AdminBoard() {
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, nickname, role')
+          .select('id, ByID, discord_name, role')
           .eq('id', user.id)
           .single();
         
@@ -54,7 +54,7 @@ export default function AdminBoard() {
         title, 
         content, 
         created_at,
-        profiles:author_id ( nickname, role ) 
+        profiles:author_id ( ByID, discord_name, role ) 
       `)
       .order('created_at', { ascending: false }); 
 
@@ -206,7 +206,7 @@ export default function AdminBoard() {
                 {roleLabels[post.profiles?.role] || "알 수 없음"}
               </span>
               <span className="font-semibold text-gray-200 text-sm">
-                작성자: {post.profiles?.nickname || "알 수 없는 요원"}
+                작성자: {post.profiles?.ByID || post.profiles?.discord_name || "알 수 없는 요원"}
               </span>
             </div>
           </div>

@@ -1,6 +1,32 @@
 // 권한 시스템 명확화
 // ByClan 클랜 역할별 접근 제어 정의
 
+// 개발자 설정 (localStorage에 저장)
+export const DEV_SETTINGS = {
+  canReviewApplications: true,  // 기본값: 가입심사 가능
+  canManageMembers: true,      // 기본값: 멤버 관리 가능
+  canDelegateMaster: true      // 기본값: 마스터 위임 가능
+};
+
+// 개발자 설정 로드
+export const loadDevSettings = () => {
+  try {
+    const saved = localStorage.getItem('byclan_dev_settings');
+    return saved ? { ...DEV_SETTINGS, ...JSON.parse(saved) } : DEV_SETTINGS;
+  } catch {
+    return DEV_SETTINGS;
+  }
+};
+
+// 개발자 설정 저장
+export const saveDevSettings = (settings) => {
+  try {
+    localStorage.setItem('byclan_dev_settings', JSON.stringify(settings));
+  } catch (error) {
+    console.error('개발자 설정 저장 실패:', error);
+  }
+};
+
 export const ROLE_PERMISSIONS = {
   // 개발자 - 시스템 관리
   developer: {
@@ -12,7 +38,10 @@ export const ROLE_PERMISSIONS = {
       'database.modify',   // 데이터베이스 수정
       'code.deploy',       // 코드 배포
       'user.manage_all',   // 모든 유저 관리
-      'clan.admin_all'     // 클랜 전체 관리
+      'clan.admin_all',    // 클랜 전체 관리
+      'member.approve',    // 가입 심사
+      'member.manage',     // 멤버 관리
+      'master.delegate'    // 마스터 위임
     ],
     color: '#FF6B6B',
     icon: '👨‍💻'
@@ -133,10 +162,32 @@ export const ROLE_PERMISSIONS = {
 
 // 권한 체크 함수들
 export const PermissionChecker = {
-  // 특정 권한이 있는지 확인
+  // 특정 권한이 있는지 확인 (개발자 설정 적용)
   hasPermission: (userRole, permission) => {
     const role = ROLE_PERMISSIONS[userRole];
-    return role ? role.permissions.includes(permission) : false;
+    if (!role) return false;
+    
+    // 개발자인 경우 추가 설정 확인
+    if (userRole === 'developer') {
+      const devSettings = loadDevSettings();
+      
+      // 가입심사 권한 확인
+      if (permission === 'member.approve' && !devSettings.canReviewApplications) {
+        return false;
+      }
+      
+      // 멤버 관리 권한 확인
+      if (permission === 'member.manage' && !devSettings.canManageMembers) {
+        return false;
+      }
+      
+      // 마스터 위임 권한 확인
+      if (permission === 'master.delegate' && !devSettings.canDelegateMaster) {
+        return false;
+      }
+    }
+    
+    return role.permissions.includes(permission);
   },
 
   // 레벨 비교
@@ -168,6 +219,7 @@ export const PermissionChecker = {
       '관리자': ['developer', 'master', 'admin'],
       '가입 심사': ['developer', 'master', 'admin', 'elite'],
       '운영진게시판': ['developer', 'master', 'admin'],
+      '길드원 관리': ['developer', 'master', 'admin'],
       '대시보드': ['rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '랭킹': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '공지사항': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],

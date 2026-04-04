@@ -30,9 +30,18 @@ export function useAuth() {
           .eq('id', authUser.id)
           .single();
         
+        // 디버그 로그
+        console.log('🔍 프로필 로딩 시도:', {
+          userId: authUser.id,
+          profileData: p,
+          profileError,
+          errorCode: profileError?.code
+        });
+        
         if (profileError) {
           // 프로필이 없으면 방문자 상태 (기본 프로필 생성)
           if (profileError.code === 'PGRST116') {
+            console.log('📝 프로필 없음 - visitor 생성 중...');
             const { error: insertError } = await supabase
               .from('profiles')
               .insert({
@@ -53,6 +62,8 @@ export function useAuth() {
               throw insertError;
             }
             
+            console.log('✅ visitor 프로필 생성 성공');
+            
             // 생성된 프로필 다시 로드
             const { data: newProfile } = await supabase
               .from('profiles')
@@ -67,6 +78,7 @@ export function useAuth() {
           throw profileError;
         }
         
+        console.log('✅ 프로필 로드 성공:', p);
         setProfile(p);
         
         // 방문자인지 확인
@@ -129,8 +141,20 @@ export function useAuth() {
   };
 
   const getPermissions = () => {
-    const userRole = profile?.role?.trim().toLowerCase();
+    const profileRole = profile?.role;
+    const userRole = profileRole?.trim().toLowerCase();
     const roleInfo = ROLE_PERMISSIONS[userRole];
+    
+    // 디버그 로그
+    console.log('🔍 권한 계산:', {
+      profile,              // 전체 profile 상태 확인
+      profileRole,
+      userRole,
+      roleInfo,
+      isDeveloper: userRole === 'developer',
+      availableRoles: Object.keys(ROLE_PERMISSIONS),
+      profileData: profile   // profileData와 profile가 같은지 확인
+    });
     
     return {
       // 기본 권한 그룹
@@ -157,7 +181,11 @@ export function useAuth() {
       },
       
       // 메뉴 접근 권한
-      canAccessMenu: (menuPath) => PermissionChecker.canAccessMenu(userRole, menuPath),
+      canAccessMenu: (menuPath) => {
+        const result = PermissionChecker.canAccessMenu(userRole, menuPath);
+        console.log('🔍 메뉴 접근 권한:', { userRole, menuPath, result });
+        return result;
+      },
       
       // 권한 레벨 비교
       hasLevel: (requiredLevel) => PermissionChecker.hasLevel(userRole, requiredLevel)
