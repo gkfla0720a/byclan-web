@@ -17,6 +17,7 @@ import AdminBoard from './components/AdminBoard';
 import MyProfile from './components/MyProfile';
 import NotificationCenter from './components/NotificationCenter';
 import DevConsole from './components/DevConsole';
+import AuthForm from './components/AuthForm'; // ✨ 새로 추가된 인증 폼
 
 // --- [공통] 페이지 준비 중 플레이스홀더 ---
 function PagePlaceholder({ title }) {
@@ -163,46 +164,74 @@ function HomeContent({ navigateTo }) {
 // === [메인 렌더링] ===
 export default function Home() {
   const [password, setPassword] = useState('');
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false); // 게이트 비밀번호 인증
+  const [session, setSession] = useState(null); // Supabase 로그인 세션
+  const [profile, setProfile] = useState(null); // 유저 권한 정보
   const [activeView, setActiveView] = useState('Home');
   const [activeMatchId, setActiveMatchId] = useState(null);
-  const [profile, setProfile] = useState(null); 
 
   const CORRECT_PASSWORD = "1990"; 
 
+  // 1. 세션 모니터링 및 데이터 로드
   useEffect(() => {
-    if (!isAuthorized) return;
+    // 현재 세션 가져오기
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchUserData(session.user.id);
+    });
+
+    // 로그인 상태 변화 감지
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) fetchUserData(session.user.id);
+      else setProfile(null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserData = async (userId) => {
+    // 프로필 정보 로드
+    const { data: p } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    setProfile(p);
+
+    // 진행 중인 래더 경기 확인
+    const { data: m } = await supabase.from('ladder_matches')
+      .select('id').eq('status', '진행중')
+      .or(`team_a.cs.{${userId}},team_b.cs.{${userId}}`).maybeSingle();
     
-    const initializeData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    if (m) setActiveMatchId(m.id);
+  };
 
-      const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      setProfile(p);
-
-      const { data: m } = await supabase.from('ladder_matches')
-        .select('id').eq('status', '진행중')
-        .or(`team_a.cs.{${user.id}},team_b.cs.{${user.id}}`).maybeSingle();
-      
-      if (m) setActiveMatchId(m.id);
-    };
-    initializeData();
-  }, [isAuthorized]);
-
-  const handleLogin = (e) => {
+  const handleGateLogin = (e) => {
     e.preventDefault();
     if (password === CORRECT_PASSWORD) setIsAuthorized(true);
     else alert("비밀번호가 틀렸습니다!");
   };
 
+  // [관문 1] 개발 서버 비밀번호가 통과되지 않은 경우
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col justify-center items-center text-white p-4">
-        <h1 className="text-3xl font-black mb-8 text-yellow-500">ByClan 개발 서버</h1>
-        <form onSubmit={handleLogin} className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" className="flex-grow p-4 rounded-xl bg-gray-800 border border-gray-700 text-white" />
-          <button type="submit" className="p-4 bg-yellow-500 text-gray-900 font-bold rounded-xl hover:bg-yellow-400">입장</button>
+        <h1 className="text-3xl font-black mb-8 text-yellow-500 italic uppercase">ByClan Dev Gate</h1>
+        <form onSubmit={handleGateLogin} className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="GATE PASSWORD" 
+            className="flex-grow p-4 rounded-xl bg-gray-800 border border-gray-700 text-white font-mono text-center outline-none focus:border-yellow-500" />
+          <button type="submit" className="p-4 bg-yellow-500 text-gray-900 font-bold rounded-xl hover:bg-yellow-400 transition-all uppercase tracking-widest">Enter</button>
         </form>
+      </div>
+    );
+  }
+
+  // [관문 2] 로그인이 되어있지 않은 경우
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0c] flex flex-col justify-center items-center p-4">
+        <div className="mb-10 text-center">
+          <h1 className="text-5xl font-black text-white italic tracking-tighter">BYCLAN <span className="text-yellow-500">NET</span></h1>
+          <p className="text-gray-500 text-xs mt-2 uppercase tracking-widest font-bold">Please sign-in to access the clan system</p>
+        </div>
+        <AuthForm />
       </div>
     );
   }
@@ -215,6 +244,7 @@ export default function Home() {
   const isEliteOrHigher = ['developer', 'master', 'admin', 'elite'].includes(userRole);
   const isDeveloper = userRole === 'developer';
 
+  // [최종] 모든 관문 통과 후 메인 서비스 레이아웃
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a0c] text-gray-200 font-semibold" style={{ fontFamily: "'Pretendard', sans-serif" }}>
       <Header navigateTo={setActiveView} />
