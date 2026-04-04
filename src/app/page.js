@@ -178,9 +178,22 @@ export default function Home() {
              });
              return user;
            })() ? (
-             activeView === '가입 심사' ? <ApplicationList /> :
-             activeView === '관리자' ? <AdminBoard /> :
-             activeView === '길드원 관리' ? <GuildManagement /> : <AdminBoard />
+             (() => {
+               console.log('📌 렌더링 선택:', { activeView });
+               if (activeView === '가입 심사') {
+                 console.log('📌 ApplicationList 렌더링');
+                 return <ApplicationList />;
+               } else if (activeView === '관리자') {
+                 console.log('📌 AdminBoard 렌더링');
+                 return <AdminBoard />;
+               } else if (activeView === '길드원 관리') {
+                 console.log('📌 GuildManagement 렌더링');
+                 return <GuildManagement />;
+               } else {
+                 console.log('📌 기본(AdminBoard) 렌더링');
+                 return <AdminBoard />;
+               }
+             })()
            ) : <PagePlaceholder title="로그인이 필요합니다." />
          ) :
 

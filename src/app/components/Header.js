@@ -1,11 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from '@/supabase';
 
 function ByClanLogo() {
   const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repository/main/ByLogo.png";

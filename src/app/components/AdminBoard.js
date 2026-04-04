@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 
 export default function AdminBoard() {
+  console.log('📍 AdminBoard 컴포넌트 렌더링됨!');
+
   const [posts, setPosts] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -29,14 +31,23 @@ export default function AdminBoard() {
           .select('id, ByID, discord_name, role')
           .eq('id', user.id)
           .single();
-        
+
         setMyProfile(profile);
         const currentRole = profile?.role?.trim().toLowerCase();
-        
-        // 중요: 마스터 또는 운영진 등급만 이 게시판 접근 허용
-        if (['master', 'admin'].includes(currentRole)) {
+
+        // 디버그 로그
+        console.log('🔐 AdminBoard 권한 체크:', {
+          userId: user.id,
+          profile,
+          rawRole: profile?.role,
+          currentRole,
+          isAdmin: ['developer', 'master', 'admin'].includes(currentRole)
+        });
+
+        // 중요: 개발자, 마스터, 운영진 등급만 이 게시판 접근 허용
+        if (['developer', 'master', 'admin'].includes(currentRole)) {
           setIsAdmin(true);
-          await fetchPosts(); 
+          await fetchPosts();
         }
       }
     } catch (err) {
