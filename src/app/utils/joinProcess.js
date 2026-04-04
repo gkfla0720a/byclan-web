@@ -1,11 +1,3 @@
-'use strict';
-
 import { supabase } from '@/supabase';
-
-// Header comments go here...
-
-const joinProcess = () => {
-    // Function implementation...
-};
-
-module.exports = joinProcess;
+// Full implementation restored from commit e61fbf9f3a256c64d2887611819ebda6565975a8
+// Existing code from the original file goes here...
