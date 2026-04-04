@@ -31,21 +31,18 @@ A: 보안(하드코딩), 성능(단일 파일), 에러 핸들링 부족
 ## 🚀 긴급 수정 시
 
 ### 현재 보안 상태
-- 개발 서버: 비밀번호 "1990"
+- 개발 서버: 비밀번호 "1990" // 개발 공사 중 임시 비밀번호
 - Supabase: 공개 키 사용 중
 - 권한: 개발자가 모든 권한 보유
 
-### 빠른 해결책
-```bash
-# 보안 강화
-export DEV_PASSWORD="새로운비밀번호"
+
 
 # 권한 확인
 console.log(['developer', 'master', 'admin'].includes(role));
 ```
 
 ## 📞 연락처
-- 개발자: halim0720
+- 개발자: halim0720gkfla0720a@gmail.com
 - 데이터베이스: Supabase
 - 백업: GitHub
 
