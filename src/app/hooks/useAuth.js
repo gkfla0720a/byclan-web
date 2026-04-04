@@ -12,109 +12,108 @@ export function useAuth() {
 
   const CORRECT_PASSWORD = process.env.DEV_ACCESS_PASSWORD || "1990";
 
+  const loadUserData = async (authUser) => {
+    if (!authUser) return;
+
+    setUser(authUser);
+
+    const { data: p, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authUser.id)
+      .single();
+
+    // 디버그 로그
+    console.log('🔍 프로필 로딩 시도:', {
+      userId: authUser.id,
+      profileData: p,
+      profileError,
+      errorCode: profileError?.code
+    });
+
+    if (profileError) {
+      // 프로필이 없으면 방문자 상태 (기본 프로필 생성)
+      if (profileError.code === 'PGRST116') {
+        console.log('📝 프로필 없음 - visitor 생성 중...');
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authUser.id,
+            discord_name: authUser.email?.split('@')[0] || 'User',
+            ByID: `By_${authUser.email?.split('@')[0] || 'User'}`,
+            role: 'visitor',
+            points: 0,
+            race: 'Terran',
+            intro: '클랜 방문자',
+            ladder_points: 1000,
+            is_in_queue: false,
+            vote_to_start: false
+          });
+
+        if (insertError) {
+          console.error('프로필 생성 실패:', insertError);
+          throw insertError;
+        }
+
+        console.log('✅ visitor 프로필 생성 성공');
+
+        // 생성된 프로필 다시 로드
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .single();
+
+        setProfile(newProfile);
+        setNeedsSetup(false);
+        return;
+      }
+      throw profileError;
+    }
+
+    console.log('✅ 프로필 로드 성공:', p);
+    setProfile(p);
+
+    // 방문자/신규 가입자 처리
+    if (p.role === 'visitor' || p.role === 'applicant') {
+      setNeedsSetup(false);
+      return;
+    }
+
+    setNeedsSetup(false);
+
+    // 래더 매치 확인은 정식 멤버만
+    if (['associate', 'elite', 'admin', 'master', 'developer'].includes(p.role)) {
+      try {
+        const { data: m, error: matchError } = await supabase
+          .from('ladder_matches')
+          .select('id')
+          .eq('status', '진행중')
+          .contains('team_a_ids', [authUser.id])
+          .or(`team_b_ids.cs.{${authUser.id}}`)
+          .maybeSingle();
+
+        if (matchError) {
+          console.log('래더 매치 확인 실패 (정상):', matchError.message);
+        } else if (m) {
+          setActiveMatchId(m.id);
+        }
+      } catch (matchError) {
+        console.log('래더 매치 확인 중 오류:', matchError.message);
+      }
+    }
+  };
+
   useEffect(() => {
     if (!isAuthorized) return;
     
     const initializeData = async () => {
       try {
-        const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
-        
-        if (!authUser) return;
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session?.user) return;
 
-        setUser(authUser);
-
-        const { data: p, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .single();
-        
-        // 디버그 로그
-        console.log('🔍 프로필 로딩 시도:', {
-          userId: authUser.id,
-          profileData: p,
-          profileError,
-          errorCode: profileError?.code
-        });
-        
-        if (profileError) {
-          // 프로필이 없으면 방문자 상태 (기본 프로필 생성)
-          if (profileError.code === 'PGRST116') {
-            console.log('📝 프로필 없음 - visitor 생성 중...');
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: authUser.id,
-                discord_name: authUser.email?.split('@')[0] || 'User',
-                ByID: `By_${authUser.email?.split('@')[0] || 'User'}`,
-                role: 'visitor', // 방문자 역할로 시작
-                points: 0,
-                race: 'Terran',
-                intro: '클랜 방문자',
-                ladder_points: 1000,
-                is_in_queue: false,
-                vote_to_start: false
-              });
-            
-            if (insertError) {
-              console.error('프로필 생성 실패:', insertError);
-              throw insertError;
-            }
-            
-            console.log('✅ visitor 프로필 생성 성공');
-            
-            // 생성된 프로필 다시 로드
-            const { data: newProfile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', authUser.id)
-              .single();
-            
-            setProfile(newProfile);
-            setNeedsSetup(false);
-            return;
-          }
-          throw profileError;
-        }
-        
-        console.log('✅ 프로필 로드 성공:', p);
-        setProfile(p);
-        
-        // 방문자인지 확인
-        if (p.role === 'visitor') {
-          setNeedsSetup(false);
-          return;
-        }
-        
-        // 신규 가입자인지 확인
-        if (p.role === 'applicant') {
-          setNeedsSetup(false);
-          return;
-        }
-        
-        setNeedsSetup(false); // 기타 역할은 설정 불필요
-
-        // 래더 매치 확인은 정식 멤버만
-        if (['associate', 'elite', 'admin', 'master', 'developer'].includes(p.role)) {
-          try {
-            const { data: m, error: matchError } = await supabase
-              .from('ladder_matches')
-              .select('id')
-              .eq('status', '진행중')
-              .contains('team_a_ids', [authUser.id])
-              .or(`team_b_ids.cs.{${authUser.id}}`)
-              .maybeSingle();
-            
-            if (matchError) {
-              console.log('래더 매치 확인 실패 (정상):', matchError.message);
-            } else if (m) {
-              setActiveMatchId(m.id);
-            }
-          } catch (matchError) {
-            console.log('래더 매치 확인 중 오류:', matchError.message);
-          }
-        }
+        await loadUserData(session.user);
       } catch (error) {
         // 인증 관련 오류는 정상적인 상황일 수 있음
         if (error.message.includes('Auth session missing') || 
@@ -129,6 +128,27 @@ export function useAuth() {
     };
     
     initializeData();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setProfile(null);
+        setActiveMatchId(null);
+        return;
+      }
+
+      if (session?.user) {
+        try {
+          await loadUserData(session.user);
+        } catch (error) {
+          console.error('인증 상태 갱신 실패:', error);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [isAuthorized]);
 
   const handleLogin = (e) => {

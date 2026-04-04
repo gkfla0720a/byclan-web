@@ -192,16 +192,11 @@ export default function Header({ navigateTo }) {
               </>
             ) : (
               <button onClick={() => {
-                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                const redirectUrl = isLocalhost 
-                  ? 'http://localhost:3000' 
-                  : 'https://byclan-web.vercel.app';
-                
+                const redirectTo = `${window.location.origin}/auth/callback`;
+                console.log('[Discord Login] redirectTo:', redirectTo);
                 supabase.auth.signInWithOAuth({ 
                   provider: 'discord',
-                  options: {
-                    redirectTo: redirectUrl
-                  }
+                  options: { redirectTo }
                 });
               }} className="px-4 py-1.5 border border-[#5865F2] rounded text-[#5865F2] font-bold text-sm">Discord Login</button>
             )}

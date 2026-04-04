@@ -10,8 +10,23 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // PKCE 흐름: URL에 code 쿼리 파라미터가 있으면 코드 교환
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error('Code exchange error:', error);
+            router.push('/?error=auth_callback_error');
+            return;
+          }
+          window.location.replace('/');
+          return;
+        }
+
+        // Implicit 흐름: hash에 access_token이 있으면 세션 확인
         const { data, error } = await supabase.auth.getSession();
-        
         if (error) {
           console.error('Auth callback error:', error);
           router.push('/?error=auth_callback_error');
@@ -19,10 +34,8 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          // 로그인 성공 시 메인 페이지로 리디렉션
-          router.push('/');
+          window.location.replace('/');
         } else {
-          // 세션이 없으면 로그인 페이지로
           router.push('/?error=no_session');
         }
       } catch (err) {
