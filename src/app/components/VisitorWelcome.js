@@ -1,0 +1,339 @@
+'use client';
+
+import React, { useState } from 'react';
+import { supabase } from '@/supabase';
+import { useApplicationProcess } from '../utils/joinProcess';
+import { ErrorMessage, SkeletonLoader } from './UIStates';
+
+// 전화번호 자동 포맷팅 함수 (기존 JoinProcess.js에서 가져옴)
+function formatPhone(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length < 4) return digits;
+  if (digits.length < 8) {
+    return digits.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+  }
+  return digits.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+}
+
+// 방문자용 환영 페이지
+export default function VisitorWelcome({ user, onApplicationSubmit }) {
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  const { submitApplication } = useApplicationProcess();
+
+  const handleApplicationSubmit = async (applicationData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await submitApplication(user.id, applicationData);
+      
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          onApplicationSubmit();
+        }, 2000);
+      } else {
+        setError(result.error);
+      }
+    } catch (error) {
+      setError('가입 신청 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0c] flex flex-col justify-center items-center p-4">
+        <div className="bg-green-900/20 border border-green-700/50 rounded-xl p-8 max-w-md text-center">
+          <div className="text-6xl mb-4">✅</div>
+          <h2 className="text-2xl font-bold text-green-400 mb-2">가입 신청 완료!</h2>
+          <p className="text-gray-300 mb-4">
+            신청서가 제출되었습니다. 테스트 대기 중입니다.
+          </p>
+          <div className="text-sm text-gray-400">
+            잠시 후 자동으로 페이지가 이동합니다...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0c] flex flex-col justify-center items-center p-4">
+      <div className="mb-10 text-center">
+        <h1 className="text-5xl font-black text-white italic tracking-tighter">
+          BYCLAN <span className="text-yellow-500">NET</span>
+        </h1>
+        <p className="text-gray-500 text-xs mt-2 uppercase tracking-widest font-bold">
+          스타크래프트 빠른무한 클랜에 오신 것을 환영합니다!
+        </p>
+      </div>
+
+      <div className="w-full max-w-2xl space-y-6">
+        {/* 환영 메시지 */}
+        <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-2xl text-center">
+          <div className="text-6xl mb-4">👋</div>
+          <h2 className="text-3xl font-bold text-white mb-4">
+            환영합니다, {user?.email?.split('@')[0]}님!
+          </h2>
+          <p className="text-gray-300 mb-6">
+            ByClan 클랜에 방문하신 것을 환영합니다.<br/>
+            클랜 가입을 통해 더 많은 콘텐츠를 즐겨보세요!
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => setShowApplicationForm(true)}
+              className="px-6 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors"
+            >
+              📝 클랜 가입 신청하기
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              🏠 홈으로
+            </button>
+          </div>
+        </div>
+
+        {/* 클랜 소개 */}
+        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+          <h3 className="text-xl font-bold text-white mb-4">🎮 ByClan 클랜 소개</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-900/50 p-4 rounded-lg">
+              <h4 className="text-yellow-500 font-medium mb-2">🏆 래더 시스템</h4>
+              <p className="text-gray-300 text-sm">
+                실시간 랭킹 경쟁, 매치 시스템, 포인트 제도
+              </p>
+            </div>
+            <div className="bg-gray-900/50 p-4 rounded-lg">
+              <h4 className="text-yellow-500 font-medium mb-2">🎯 토너먼트</h4>
+              <p className="text-gray-300 text-sm">
+                정기 토너먼트, 특별 이벤트, 상품 제공
+              </p>
+            </div>
+            <div className="bg-gray-900/50 p-4 rounded-lg">
+              <h4 className="text-yellow-500 font-medium mb-2">💬 커뮤니티</h4>
+              <p className="text-gray-300 text-sm">
+                자유 게시판, 전략 공유, 정보 교류
+              </p>
+            </div>
+            <div className="bg-gray-900/50 p-4 rounded-lg">
+              <h4 className="text-yellow-500 font-medium mb-2">🎮 Discord</h4>
+              <p className="text-gray-300 text-sm">
+                실시간 소통, 음성 채널, 클랜 채널
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 가입 절차 안내 */}
+        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+          <h3 className="text-xl font-bold text-white mb-4">📋 가입 절차</h3>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-gray-900 font-bold text-sm">1</div>
+              <div className="flex-1">
+                <div className="text-white font-medium">가입 신청</div>
+                <div className="text-gray-400 text-sm">기본 정보 제출</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-gray-900 font-bold text-sm">2</div>
+              <div className="flex-1">
+                <div className="text-white font-medium">테스트 진행</div>
+                <div className="text-gray-400 text-sm">실력 테스트 및 면접</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-gray-900 font-bold text-sm">3</div>
+              <div className="flex-1">
+                <div className="text-white font-medium">신입 길드원</div>
+                <div className="text-gray-400 text-sm">Discord 연동 및 2주 활동</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
+              <div className="flex-1">
+                <div className="text-white font-medium">정식 길드원</div>
+                <div className="text-gray-400 text-sm">모든 클랜 활동 참여 가능</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 가입 신청 폼 */}
+      {showApplicationForm && (
+        <ApplicationForm
+          user={user}
+          onSubmit={handleApplicationSubmit}
+          onCancel={() => setShowApplicationForm(false)}
+          loading={loading}
+          error={error}
+        />
+      )}
+    </div>
+  );
+}
+
+// 가입 신청 폼 컴포넌트
+function ApplicationForm({ user, onSubmit, onCancel, loading, error }) {
+  const [formData, setFormData] = useState({
+    btag: '',
+    race: 'Terran',
+    tier: 'Bronze',
+    intro: '',
+    motivation: '',
+    playtime: '',
+    phone: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <h3 className="text-2xl font-bold text-white mb-6">📝 클랜 가입 신청서</h3>
+        
+        {error && <ErrorMessage message={error} />}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-300 text-sm font-medium mb-2">
+                배틀태그 *
+              </label>
+              <input
+                type="text"
+                value={formData.btag}
+                onChange={(e) => setFormData(prev => ({ ...prev, btag: e.target.value }))}
+                placeholder="예: ByName#1234"
+                className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-300 text-sm font-medium mb-2">
+                주력 종족 *
+              </label>
+              <select
+                value={formData.race}
+                onChange={(e) => setFormData(prev => ({ ...prev, race: e.target.value }))}
+                className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500"
+              >
+                <option value="Terran">테란</option>
+                <option value="Protoss">프로토스</option>
+                <option value="Zerg">저그</option>
+                <option value="Random">랜덤</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-gray-300 text-sm font-medium mb-2">
+                현재 티어 *
+              </label>
+              <select
+                value={formData.tier}
+                onChange={(e) => setFormData(prev => ({ ...prev, tier: e.target.value }))}
+                className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500"
+              >
+                <option value="Bronze">브론즈</option>
+                <option value="Silver">실버</option>
+                <option value="Gold">골드</option>
+                <option value="Platinum">플래티넘</option>
+                <option value="Diamond">다이아몬드</option>
+                <option value="Master">마스터</option>
+                <option value="Grandmaster">그랜드마스터</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-gray-300 text-sm font-medium mb-2">
+                연락처 *
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhone(e.target.value) }))}
+                placeholder="010-0000-0000"
+                className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-300 text-sm font-medium mb-2">
+              자기소개 *
+            </label>
+            <textarea
+              value={formData.intro}
+              onChange={(e) => setFormData(prev => ({ ...prev, intro: e.target.value }))}
+              placeholder="스타크래프트를 시작한 계기, 주력 전략 등 자유롭게 소개해주세요."
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500 resize-none"
+              rows={3}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-300 text-sm font-medium mb-2">
+              클랜 가입 동기 *
+            </label>
+            <textarea
+              value={formData.motivation}
+              onChange={(e) => setFormData(prev => ({ ...prev, motivation: e.target.value }))}
+              placeholder="ByClan 클랜에 가입하려는 이유와 클랜 활동 계획을 알려주세요."
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500 resize-none"
+              rows={3}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-300 text-sm font-medium mb-2">
+              주 활동 시간대 *
+            </label>
+            <input
+              type="text"
+              value={formData.playtime}
+              onChange={(e) => setFormData(prev => ({ ...prev, playtime: e.target.value }))}
+              placeholder="예: 평일 저녁 7시~11시, 주말 자유"
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end space-x-4 pt-4">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={loading}
+              className="px-6 py-2 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-2 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors disabled:opacity-50"
+            >
+              {loading ? '제출 중...' : '신청서 제출'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

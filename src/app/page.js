@@ -10,7 +10,6 @@ import MatchCenter from './components/MatchCenter';
 import RankingBoard from './components/RankingBoard';
 import NoticeBoard from './components/NoticeBoard';
 import CommunityBoard from './components/CommunityBoard';
-import JoinProcess from './components/JoinProcess';
 import AdminMembers from './components/AdminMembers';
 import ApplicationList from './components/ApplicationList';
 import AdminBoard from './components/AdminBoard'; 
@@ -27,6 +26,9 @@ import PagePlaceholder from './pages/PagePlaceholder';
 
 // 훅들
 import { useAuth } from './hooks/useAuth';
+import ImprovedAuthForm from './components/ImprovedAuthForm';
+import AuthDashboard from './components/AuthDashboard';
+import VisitorWelcome from './components/VisitorWelcome';
 
 // === [메인 렌더링] ===
 export default function Home() {
@@ -39,8 +41,12 @@ export default function Home() {
     profile,
     activeMatchId,
     setActiveMatchId,
+    user,
+    needsSetup,
     handleLogin,
-    getPermissions
+    getPermissions,
+    handleAuthSuccess,
+    handleSetupComplete
   } = useAuth();
 
   // [관문 1] 개발 서버 비밀번호가 통과되지 않은 경우
@@ -62,8 +68,53 @@ export default function Home() {
     );
   }
 
+  // [관문 2] 로그인이 필요한 경우
+  if (isAuthorized && !user) {
+    return <ImprovedAuthForm onSuccess={handleAuthSuccess} />;
+  }
+
+  // [관문 3] 프로필 설정이 필요한 경우
+  if (isAuthorized && user && needsSetup) {
+    return <AuthDashboard user={user} onSetupComplete={handleSetupComplete} />;
+  }
+
+  // [관문 4] 방문자 상태인 경우
+  if (isAuthorized && user && profile && profile.role === 'visitor') {
+    return <VisitorWelcome user={user} onApplicationSubmit={() => {
+      // 가입 신청 후 프로필 다시 로드
+      const reloadProfile = async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        if (data) setProfile(data);
+      };
+      reloadProfile();
+    }} />;
+  }
+
+  // [관문 5] 신규 가입자 상태인 경우
+  if (isAuthorized && user && profile && profile.role === 'applicant') {
+    return (
+      <div className="min-h-screen bg-[#0a0a0c] flex flex-col justify-center items-center p-4">
+        <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-2xl max-w-md text-center">
+          <div className="text-6xl mb-4">⏳</div>
+          <h2 className="text-2xl font-bold text-yellow-400 mb-2">테스트 대기 중</h2>
+          <p className="text-gray-300 mb-4">
+            가입 신청이 접수되었습니다.<br/>
+            테스트 결과를 기다려주세요.
+          </p>
+          <div className="text-sm text-gray-400">
+            신청 현황은 '가입 신청' 메뉴에서 확인할 수 있습니다.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // --- [권한 로직 통합] ---
-  const { isAdminOrHigher, isEliteOrHigher, isDeveloper } = getPermissions();
+  const permissions = getPermissions();
 
   // [최종] 모든 관문 통과 후 메인 서비스 레이아웃
   return (
@@ -92,17 +143,17 @@ export default function Home() {
          activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트' ? <ClanTournament /> : 
          activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
 
-         /* 👑 운영 관리 영역 (개발자 포함 모든 운영진 가능) */
+         /* 👑 운영 관리 영역 */
          (activeView === '가입 심사' || activeView === '관리자' || activeView === '운영진게시판') ? (
-           (isAdminOrHigher || (activeView === '가입 심사' && isEliteOrHigher)) ? (
+           permissions.canAccessMenu(activeView) ? (
              activeView === '가입 심사' ? <ApplicationList /> :
              activeView === '관리자' ? <AdminMembers /> : <AdminBoard />
            ) : <PagePlaceholder title="인가된 운영진 전용 메뉴입니다." />
          ) :
 
-         /* ⚙️ 시스템 개발 영역 (오직 개발자만 가능) */
+         /* ⚙️ 시스템 개발 영역 */
          activeView === '개발자' ? (
-           isDeveloper ? <DevConsole navigateTo={setActiveView} /> : <PagePlaceholder title="ACCESS DENIED (Developer Only)" />
+           permissions.can.accessDevTools ? <DevConsole navigateTo={setActiveView} /> : <PagePlaceholder title="ACCESS DENIED (Developer Only)" />
          ) :
 
          activeView === '프로필' ? <MyProfile navigateTo={setActiveView} /> :

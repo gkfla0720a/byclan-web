@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
+import { PermissionChecker } from '../utils/permissions';
+import { useApplicationProcess } from '../utils/joinProcess';
 
 export default function ApplicationList() {
   const [applications, setApplications] = useState([]);
@@ -15,7 +17,7 @@ export default function ApplicationList() {
   // ✨ 피드백 팝업창 상태 관리
   const [modalData, setModalData] = useState({ isOpen: false, app: null, status: '', feedback: '' });
 
-  const powerLevel = { master: 100, admin: 80, elite: 60, member: 40, rookie: 20, associate: 15, guest: 10, expelled: 0 };
+  const { processTestResult } = useApplicationProcess();
 
   useEffect(() => {
     checkAuthAndFetch();
@@ -38,7 +40,8 @@ export default function ApplicationList() {
           const currentRole = profile.role.trim().toLowerCase();
           setMyProfile({ ...profile, role: currentRole });
           
-          if (powerLevel[currentRole] >= powerLevel['elite']) {
+          // 새로운 권한 시스템으로 변경
+          if (PermissionChecker.hasPermission(currentRole, 'member.approve')) {
             await fetchApplications();
           }
         }
