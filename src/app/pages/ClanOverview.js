@@ -167,7 +167,7 @@ function ClanOverview() {
           </ul>
         </div>
       </div>
-       
+
       {/* 길드원 리스트 추가 */}
       <GuildMemberList />
     </div>

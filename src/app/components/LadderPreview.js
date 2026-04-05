@@ -11,6 +11,11 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
     { id: 4, name: 'By_ProtosStar', tier: 'Diamond', pts: 2080, race: '프' },
     { id: 5, name: 'By_TerranAce', tier: 'Platinum', pts: 1920, race: '테' },
   ];
+  const accessMessage = requiresDiscordLink
+    ? '현재 설정상 래더 참여 전 Discord 연동이 필요합니다.'
+    : isGuest
+      ? '래더 참여는 로그인 후 클랜원 등급 이상이어야 합니다.'
+      : '래더 참여는 클랜원(준회원 이상) 등급이 필요합니다.';
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-6 px-2">
@@ -23,13 +28,7 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
         <p className="text-gray-300 mb-1 text-sm">
           스타크래프트 빠른무한 3v3 · 4v4 내전 래더 — 실시간 매칭 & 포인트 베팅
         </p>
-          <p className="text-gray-500 text-xs mb-4">
-            {requiresDiscordLink
-              ? '현재 설정상 래더 참여 전 Discord 연동이 필요합니다.'
-              : isGuest
-                ? '래더 참여는 로그인 후 클랜원 등급 이상이어야 합니다.'
-                : '래더 참여는 클랜원(준회원 이상) 등급이 필요합니다.'}
-          </p>
+          <p className="text-gray-500 text-xs mb-4">{accessMessage}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             {requiresDiscordLink ? (
               <>

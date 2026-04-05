@@ -99,10 +99,15 @@ export function useAuth() {
     let nextProfile = p;
 
     if (isDiscordProvider && (!p.discord_id || !p.discord_name)) {
-      const updates = {
-        ...(p.discord_name ? {} : { discord_name: discordName }),
-        ...(p.discord_id ? {} : { discord_id: discordId })
-      };
+      const updates = {};
+
+      if (!p.discord_name) {
+        updates.discord_name = discordName;
+      }
+
+      if (!p.discord_id) {
+        updates.discord_id = discordId;
+      }
 
       if (Object.keys(updates).length > 0) {
         const { data: updatedProfile, error: updateError } = await supabase
