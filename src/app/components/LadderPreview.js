@@ -21,7 +21,7 @@ export default function LadderPreview({ navigateTo, isGuest }) {
           ByClan 래더 시스템
         </h2>
         <p className="text-gray-300 mb-1 text-sm">
-          스타크래프트 빠른무한 3v3 · 4v4 내전 래더 — 실시간 매칭 & 포인트 베팅
+          스타크래프트 빠른무한 3v3 · 4v4 · 5v5 내전 래더 — 실시간 대기열 & 포인트 베팅
         </p>
         <p className="text-gray-500 text-xs mb-4">
           {isGuest
@@ -97,9 +97,23 @@ export default function LadderPreview({ navigateTo, isGuest }) {
       {/* 래더 시스템 소개 */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { icon: '🏆', title: '랭킹 시스템', desc: '승리마다 래더 점수 획득. 티어별 분류로 실력에 맞는 상대와 매칭됩니다.' },
-          { icon: '💰', title: '포인트 베팅', desc: '경기 시작 후 5분간 A팀/B팀에 베팅 가능. 포인트를 불려보세요.' },
-          { icon: '🎮', title: '3v3 · 4v4 내전', desc: '팀 밸런스 우선 매칭. 종족 선택, 세트 진행, 경기 기록 자동 저장.' },
+          { icon: '🏆', title: '랭킹 시스템', desc: '승리마다 래더 점수 획득. 티어별 분류로 실력에 맞는 상대와 대결합니다. (Bronze~Master)' },
+          { icon: '💰', title: '포인트 베팅', desc: '경기 시작 후 5분간 A팀/B팀에 베팅 가능. 100·500·1000·5000·10000 포인트 단위. 자신의 팀엔 베팅 불가.' },
+          { icon: '🎮', title: '3v3 · 4v4 · 5v5 래더', desc: '3v3/4v4는 BO5 (3선승), 5v5는 BO7 (4선승). 1v1·2v2는 일반게임. 팀 밸런스 200P 이내 자동 조정.' },
+        ].map((item) => (
+          <div key={item.title} className="p-4 rounded-xl cyber-card">
+            <div className="text-2xl mb-2">{item.icon}</div>
+            <h4 className="font-bold text-sm text-cyan-400 mb-1">{item.title}</h4>
+            <p className="text-gray-500 text-xs">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* 매치 시스템 추가 소개 */}
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          { icon: '⚡', title: '실시간 대기열', desc: '매칭 최대 대기 20분. 대기열에 있는 모든 플레이어를 실시간으로 볼 수 있습니다. 인원이 모이면 매치 시작 제안 버튼 활성화.' },
+          { icon: '🎯', title: '종족 선택 시스템', desc: '각 세트마다 전 세트 패배팀이 종족 조합을 선택합니다: 프프프/프프테/프프저/프저테/대포(랜덤). 전략적 선택이 승부를 가릅니다.' },
         ].map((item) => (
           <div key={item.title} className="p-4 rounded-xl cyber-card">
             <div className="text-2xl mb-2">{item.icon}</div>
