@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { ROLE_PERMISSIONS } from '../utils/permissions';
+import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
 
 // 길드원 리스트 컴포넌트
 function GuildMemberList() {
@@ -16,13 +17,13 @@ function GuildMemberList() {
   const fetchMembers = async () => {
     try {
       console.log('🔍 길드원 목록 조회 시작...');
-      const { data, error } = await supabase
+      const { data, error } = await filterVisibleTestAccounts(supabase
         .from('profiles')
         .select('*')
         .neq('role', 'visitor')
         .neq('role', 'applicant')
         .neq('role', 'expelled')
-        .order('ladder_points', { ascending: false });
+        .order('ladder_points', { ascending: false }));
 
       console.log('🔍 길드원 목록 결과:', { data, error });
       
@@ -74,7 +75,7 @@ function GuildMemberList() {
               <div className="flex items-center gap-3 mb-3">
                 <div className="text-3xl">{getRoleIcon(member.role)}</div>
                 <div className="flex-1">
-                  <div className="text-white font-bold text-lg">{member.ByID}</div>
+                  <div className="text-white font-bold text-lg flex items-center gap-2">{member.ByID}{isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}</div>
                   <div className="text-gray-400 text-sm">{member.discord_name}</div>
                 </div>
                 <div className="text-2xl font-bold text-cyan-400">

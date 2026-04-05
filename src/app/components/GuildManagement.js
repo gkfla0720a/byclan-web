@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
+import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
 
 // 사이버틱 길드원 관리 컴포넌트
 export default function GuildManagement() {
@@ -18,11 +19,11 @@ export default function GuildManagement() {
 
   const fetchMembers = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await filterVisibleTestAccounts(supabase
         .from('profiles')
         .select('*')
         .neq('role', 'visitor')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }));
 
       if (error) throw error;
       setMembers(data || []);
@@ -140,7 +141,7 @@ export default function GuildManagement() {
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{getRoleIcon(member.role)}</span>
                       <div>
-                        <div className="text-white font-medium">{member.ByID}</div>
+                        <div className="text-white font-medium flex items-center gap-2">{member.ByID}{isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}</div>
                         <div className="text-gray-400 text-sm">{member.discord_name}</div>
                       </div>
                     </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
+import { isMarkedTestAccount } from '@/app/utils/testData';
 
 export default function MyProfile({ navigateTo }) {
   const [profile, setProfile] = useState(null);
@@ -167,6 +168,7 @@ export default function MyProfile({ navigateTo }) {
       <div className="mb-8 border-b border-gray-700 pb-4">
         <h2 className="text-3xl font-black text-white">내 프로필 설정</h2>
         <p className="text-yellow-500 font-bold mt-1 tracking-tight">{userRoleLabel} 모드로 접속 중</p>
+        {isMarkedTestAccount(profile) && <p className="text-xs text-amber-300 mt-2">TEST ACCOUNT: 개발자 콘솔에서 언제든지 on/off 할 수 있는 테스트 계정입니다.</p>}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

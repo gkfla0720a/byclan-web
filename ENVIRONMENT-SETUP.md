@@ -6,6 +6,29 @@
 - npm 10 이상 권장
 - 의존성 설치: `npm install`
 
+## 테스트 데이터 주입
+
+`test1`부터 `test10`까지 프로필, 래더 랭킹, 게시글, 신청서, 알림, 매치 데이터를 넣으려면 아래처럼 실행하세요.
+
+SQL Editor에 바로 붙여넣을 버전은 `TEST-DATA-SEED.sql` 파일에 있습니다.
+
+`TEST-DATA-SEED.sql` 맨 아래에는 아래 용도의 점검용 쿼리도 같이 들어 있습니다.
+
+- `system_settings` 상태 확인
+- `test1`~`test10` 프로필/래더/게시글/신청서/알림/매치 반영 여부 확인
+- 테스트 계정별 Discord 우회 적용 상태 확인
+- 전체 테스트 데이터 숨김/복구용 update 예시
+
+`.env.local`에 `SUPABASE_SERVICE_ROLE_KEY`를 추가한 뒤:
+
+```bash
+npm run seed:test-data
+```
+
+스크립트 파일은 `seed-test-data.cjs`이며, 동일한 ID로 `upsert`하므로 다시 실행해도 테스트 데이터가 갱신됩니다.
+
+`auth.users` 생성 전략은 `AUTH-TEST-ACCOUNT-STRATEGY.md` 문서에 정리했습니다. 핵심은 `auth.users`에 직접 SQL insert 하지 말고, Supabase Dashboard 또는 Service Role 기반 Admin API를 사용해 계정을 만든 뒤 현재 시드와 동일한 UUID로 `profiles`를 맞추는 방식입니다.
+
 Next.js 16과 Tailwind 4 조합에서는 오래된 Node 버전이나 불완전한 `node_modules` 상태에서 빌드가 실패할 수 있습니다.
 
 `Error: Cannot find native binding`

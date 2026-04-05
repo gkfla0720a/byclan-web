@@ -2,16 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase'; // ✅ 수정1
+import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
 
 export default function RankingBoard() {
   const [rankings, setRankings] = useState([]);
 
   useEffect(() => {
     const fetchRankings = async () => {
-      const { data } = await supabase
+      const { data } = await filterVisibleTestData(supabase
         .from('ladders')
         .select('*')
-        .order('ladders_points', { ascending: false }); // ✅ 수정2
+        .order('ladders_points', { ascending: false })); // ✅ 수정2
       if (data) setRankings(data);
     };
     fetchRankings();
@@ -44,6 +45,7 @@ export default function RankingBoard() {
                 <td className="py-3 px-4 font-medium text-cyan-50">
                   <div className="flex flex-col sm:flex-row gap-1 sm:items-center">
                     <span className="text-sm sm:text-base tracking-wide">{player.ByID || player.discord_name}</span>  {/* ✅ 수정3 */}
+                    {isMarkedTestData(player) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
                     <span className="text-[10px] text-cyan-600 sm:hidden">[{player.race}]</span>
                   </div>
                 </td>

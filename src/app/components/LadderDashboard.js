@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
+import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
 
 // ── 상수 ─────────────────────────────────────────────────────────────
 const MATCH_TYPES = {
@@ -260,11 +261,11 @@ export default function LadderDashboard({ onMatchEnter }) {
         .from('ladders').select('*').eq('user_id', authUser.id).maybeSingle();
       if (stats) setMyStats(stats);
 
-      const { data: queue } = await supabase
+      const { data: queue } = await filterVisibleTestAccounts(supabase
         .from('profiles')
         .select('id, ByID, discord_name, race, ladder_points, role, is_in_queue, queue_joined_at')
         .eq('is_in_queue', true)
-        .order('queue_joined_at', { ascending: true });
+        .order('queue_joined_at', { ascending: true }));
       const qPlayers = queue || [];
       setQueuePlayers(qPlayers);
 
@@ -277,12 +278,12 @@ export default function LadderDashboard({ onMatchEnter }) {
       }
       lastQueueKeyRef.current = newKey;
 
-      const { data: ongoing } = await supabase
+      const { data: ongoing } = await filterVisibleTestData(supabase
         .from('ladder_matches')
         .select('*, profiles(*)')
         .in('status', ['진행중', '제안중'])
         .order('created_at', { ascending: false })
-        .limit(8);
+        .limit(8));
       setOngoingMatches(ongoing || []);
 
       // 내가 포함된 제안 확인

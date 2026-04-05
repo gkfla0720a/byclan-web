@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase'; // 경로는 길드장님 환경에 맞게 유지
+import { filterVisibleTestData } from '@/app/utils/testData';
 
 export default function CommunityBoard() {
   const [isWriting, setIsWriting] = useState(false);
@@ -14,7 +15,7 @@ export default function CommunityBoard() {
   // ⭐ 2. 페이지가 열릴 때 DB에서 글을 가져오는 함수
   const fetchPosts = useCallback(async () => {
     // 💡 select() 안을 보세요! posts의 모든 것(*)과 profiles의 username을 같이 가져옵니다.
-    const { data, error } = await supabase
+    const { data, error } = await filterVisibleTestData(supabase
       .from('posts')
       .select(`
         *,
@@ -23,7 +24,7 @@ export default function CommunityBoard() {
           ByID
         )
       `)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false }));
 
     if (error) {
       console.error("데이터 불러오기 에러:", error);

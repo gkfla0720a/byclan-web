@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS, loadDevSettings } from '../utils/permissions';
+import {
+  TEST_ACCOUNT_SETTING_EVENT,
+  TEST_ACCOUNT_SETTING_KEY,
+  shouldBypassDiscordForTestAccount,
+} from '../utils/testData';
 
 function getDiscordIdentity(authUser) {
   const identities = authUser?.identities || [];
@@ -33,11 +38,36 @@ export function useAuth() {
   const [user, setUser] = useState(null);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [testAccountsEnabled, setTestAccountsEnabled] = useState(true);
   const [password, setPassword] = useState('');
   const [isAuthorizedState, setIsAuthorizedState] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('byclan_home_gate') === 'authorized';
   });
+
+  const loadServerSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('key, value_bool')
+        .eq('key', TEST_ACCOUNT_SETTING_KEY)
+        .maybeSingle();
+
+      if (error) {
+        const message = `${error.message || ''} ${error.details || ''}`.toLowerCase();
+        if (error.code !== '42P01' && !message.includes('does not exist')) {
+          console.error('시스템 설정 로드 실패:', error);
+        }
+        setTestAccountsEnabled(true);
+        return;
+      }
+
+      setTestAccountsEnabled(data?.value_bool !== false);
+    } catch (error) {
+      console.error('시스템 설정 초기화 실패:', error);
+      setTestAccountsEnabled(true);
+    }
+  };
 
   const loadUserData = async (authUser) => {
     if (!authUser) {
@@ -157,6 +187,7 @@ export function useAuth() {
   useEffect(() => {
     const initializeData = async () => {
       try {
+        await loadServerSettings();
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           await loadUserData(session.user);
@@ -170,6 +201,14 @@ export function useAuth() {
     };
 
     initializeData();
+
+    const handleTestAccountSettingChanged = (event) => {
+      setTestAccountsEnabled(event?.detail !== false);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener(TEST_ACCOUNT_SETTING_EVENT, handleTestAccountSettingChanged);
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
@@ -188,6 +227,9 @@ export function useAuth() {
     });
 
     return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(TEST_ACCOUNT_SETTING_EVENT, handleTestAccountSettingChanged);
+      }
       subscription.unsubscribe();
     };
   }, []);
@@ -198,9 +240,11 @@ export function useAuth() {
     const roleInfo = ROLE_PERMISSIONS[userRole];
     const devSettings = loadDevSettings();
     const baseLadderPermission = PermissionChecker.hasPermission(userRole, 'ladder.play');
+    const discordBypassAllowed = shouldBypassDiscordForTestAccount(profile, testAccountsEnabled);
     const requiresDiscordLink = Boolean(
       baseLadderPermission &&
       devSettings.requireDiscordForLadder &&
+      !discordBypassAllowed &&
       !profile?.discord_id
     );
 
@@ -221,7 +265,8 @@ export function useAuth() {
         accessDevTools: PermissionChecker.hasPermission(userRole, 'system.admin'),
         moderateLadder: PermissionChecker.hasPermission(userRole, 'ladder.admin'),
         playLadder: baseLadderPermission && !requiresDiscordLink,
-        requiresDiscordLink
+        requiresDiscordLink,
+        discordBypassAllowed
       },
       canAccessMenu: (menuPath) => PermissionChecker.canAccessMenu(userRole, menuPath),
       hasLevel: (requiredLevel) => PermissionChecker.hasLevel(userRole, requiredLevel)

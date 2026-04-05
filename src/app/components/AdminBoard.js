@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
+import { filterVisibleTestData } from '@/app/utils/testData';
 
 export default function AdminBoard() {
   console.log('📍 AdminBoard 컴포넌트 렌더링됨!');
@@ -58,7 +59,7 @@ export default function AdminBoard() {
   };
 
   const fetchPosts = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await filterVisibleTestData(supabase
       .from('admin_posts')
       .select(`
         id, 
@@ -67,7 +68,7 @@ export default function AdminBoard() {
         created_at,
         profiles:author_id ( ByID, discord_name, role ) 
       `)
-      .order('created_at', { ascending: false }); 
+      .order('created_at', { ascending: false })); 
 
     if (error) {
       console.error("목록 불러오기 에러:", error);

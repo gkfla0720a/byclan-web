@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { SkeletonLoader, ErrorMessage, EmptyState } from '../components/UIStates';
 import { MatchStatus, ActivityLog } from '../components/HomeSections';
+import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
 
 function HomeContent({ navigateTo }) {
   const [topRankers, setTopRankers] = useState([]);
@@ -14,17 +15,17 @@ function HomeContent({ navigateTo }) {
     try {
       setLoading(true);
 
-      const { data: rankData } = await supabase
+      const { data: rankData } = await filterVisibleTestData(supabase
         .from('ladders')
         .select('*')
         .order('rank', { ascending: true })
-        .limit(3);
+        .limit(3));
 
-      const { data: noticeData } = await supabase
+      const { data: noticeData } = await filterVisibleTestData(supabase
         .from('admin_posts')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(3);
+        .limit(3));
 
       const notices = noticeData && noticeData.length > 0
         ? noticeData.map(n => ({
@@ -138,6 +139,7 @@ function HomeContent({ navigateTo }) {
                <div key={p.rank} className="flex items-center justify-between bg-gray-900/60 px-3 py-2 rounded-lg border border-gray-800/60">
                  <span className="text-gray-200 font-semibold text-sm">
                    <span className="text-yellow-500 mr-1">{p.rank}위</span> {p.name}
+                   {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
                  </span>
                  <span className="font-bold text-cyan-400 text-sm">{p.points} P</span>
                </div>

@@ -10,7 +10,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:test-data": "node seed-test-data.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",

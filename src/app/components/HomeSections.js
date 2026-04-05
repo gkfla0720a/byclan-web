@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from './UIStates';
+import { filterVisibleTestData } from '@/app/utils/testData';
 
 // 매치 현황 컴포넌트
 function MatchStatus({ navigateTo }) {
@@ -10,12 +11,12 @@ function MatchStatus({ navigateTo }) {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await filterVisibleTestData(supabase
           .from('ladder_matches')
           .select('*')
           .in('status', ['모집중', '진행중'])
           .order('created_at', { ascending: false })
-          .limit(3);
+          .limit(3));
 
         if (error) throw error;
         setMatches(data || []);
@@ -81,16 +82,16 @@ function ActivityLog() {
       try {
         // 최신 게시글과 가입 신청을 가져옴
         const [postsResult, applicationsResult] = await Promise.all([
-          supabase
+          filterVisibleTestData(supabase
             .from('posts')
             .select('title, created_at')
             .order('created_at', { ascending: false })
-            .limit(3),
-          supabase
+            .limit(3)),
+          filterVisibleTestData(supabase
             .from('applications')
             .select('discord_name, status, created_at')
             .order('created_at', { ascending: false })
-            .limit(3)
+            .limit(3))
         ]);
 
         const activities = [

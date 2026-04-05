@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker } from '../utils/permissions';
+import { filterVisibleTestData } from '@/app/utils/testData';
 
 export default function ApplicationList() {
   const [applications, setApplications] = useState([]);
@@ -55,14 +56,14 @@ export default function ApplicationList() {
     // ✨ 탭에 따라 불러올 상태('대기중' or '합격/불합격')를 다르게 설정
     const queryStatus = activeTab === 'pending' ? '대기중' : null;
 
-    let query = supabase
+    let query = filterVisibleTestData(supabase
       .from('applications')
       // ✨ tester_id와 user_id에서 ByID와 discord_name을 정확히 가져옵니다.
       .select(`
         *,
         tester_id,
         user_id
-      `);
+      `));
 
     if (activeTab === 'pending') {
       query = query.eq('status', '대기중').order('created_at', { ascending: true });
