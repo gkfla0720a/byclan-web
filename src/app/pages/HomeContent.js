@@ -144,8 +144,8 @@ function HomeContent({ navigateTo }) {
           <div className="space-y-2">
             {loading ? <SkeletonLoader count={3} /> :
              topRankers.length === 0 ? <EmptyState message="아직 랭킹 데이터가 없습니다" icon="🏆" /> :
-             topRankers.map((p) => (
-               <div key={p.rank} className="flex items-center justify-between bg-gray-900/60 px-3 py-2 rounded-lg border border-gray-800/60">
+             topRankers.map((p, index) => (
+               <div key={`${p.rank ?? 'no-rank'}-${p.name ?? p.ByID ?? p.discord_name ?? index}`} className="flex items-center justify-between bg-gray-900/60 px-3 py-2 rounded-lg border border-gray-800/60">
                  <span className="text-gray-200 font-semibold text-sm">
                    <span className="text-yellow-500 mr-1">{p.rank}위</span> {p.name}
                    {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
@@ -167,8 +167,8 @@ function HomeContent({ navigateTo }) {
           <div className="space-y-2">
             {loading ? <SkeletonLoader count={3} /> :
              recentNotices.length === 0 ? <EmptyState message="새로운 소식이 없습니다" icon="📢" /> :
-             recentNotices.map((n) => (
-               <div key={n.id} className="flex items-center justify-between text-sm py-1 border-b border-gray-800/40 last:border-none">
+             recentNotices.map((n, index) => (
+               <div key={`${n.id ?? 'notice'}-${n.type ?? 'type'}-${n.title ?? 'title'}-${index}`} className="flex items-center justify-between text-sm py-1 border-b border-gray-800/40 last:border-none">
                  <span className="text-gray-300 truncate">{n.title}</span>
                  <span className="text-gray-600 text-xs ml-2 shrink-0">{n.date}</span>
                </div>
