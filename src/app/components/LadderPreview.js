@@ -21,7 +21,7 @@ export default function LadderPreview({ navigateTo, isGuest }) {
           ByClan 래더 시스템
         </h2>
         <p className="text-gray-300 mb-1 text-sm">
-          스타크래프트 빠른무한 3v3 · 4v4 내전 래더 — 실시간 매칭 &amp; 포인트 베팅
+          스타크래프트 빠른무한 3v3 · 4v4 내전 래더 — 실시간 매칭 & 포인트 베팅
         </p>
         <p className="text-gray-500 text-xs mb-4">
           {isGuest

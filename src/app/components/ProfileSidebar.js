@@ -95,7 +95,9 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
       >
         {/* 아바타 / 유저 */}
         <div className="flex flex-col items-center gap-1.5 pb-2 border-b border-gray-800">
-          <div className="w-12 h-12 rounded-full bg-cyan-900/30 border border-cyan-700/30 flex items-center justify-center text-xl">
+          <div className="w-12 h-12 rounded-full bg-cyan-900/30 border border-cyan-700/30 flex items-center justify-center text-xl"
+          aria-label={`종족: ${profile.race || '알 수 없음'}`}
+        >
             {profile.race === 'Terran' ? '🔧' : profile.race === 'Protoss' ? '✨' : profile.race === 'Zerg' ? '🦠' : '🎮'}
           </div>
           <span className="font-black text-sm text-cyan-400 truncate max-w-full" style={{ textShadow: '0 0 8px rgba(0,212,255,0.4)' }}>

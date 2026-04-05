@@ -163,12 +163,13 @@ function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
         {/* 아이디 필드 (가입 시만) */}
         {isSignUp && (
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-1">
+            <label htmlFor="clan-user-id" className="block text-gray-300 text-sm font-medium mb-1">
               클랜 아이디 <span className="text-gray-500 text-xs">(영문 필수, 숫자 조합 선택, 3~20자)</span>
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500 font-bold text-sm pointer-events-none">By_</span>
               <input
+                id="clan-user-id"
                 type="text"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
@@ -229,8 +230,9 @@ function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
             <div className="max-h-32 overflow-y-auto rounded-lg bg-gray-900/60 border border-gray-700 p-3 text-xs text-gray-400 whitespace-pre-line leading-relaxed">
               {TERMS_OF_SERVICE}
             </div>
-            <label className="flex items-start gap-2 cursor-pointer">
+            <label htmlFor="tos-accept" className="flex items-start gap-2 cursor-pointer">
               <input
+                id="tos-accept"
                 type="checkbox"
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
