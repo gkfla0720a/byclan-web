@@ -38,6 +38,7 @@ export function useAuth() {
   const [user, setUser] = useState(null);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
   const [testAccountsEnabled, setTestAccountsEnabled] = useState(true);
   const [password, setPassword] = useState('');
   const [isAuthorizedState, setIsAuthorizedState] = useState(false);
@@ -295,12 +296,22 @@ export function useAuth() {
     setNeedsSetup(false);
     if (user) {
       const loadProfile = async () => {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        if (data) setProfile(data);
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          if (error) {
+            console.error('프로필 로드 실패 (설정 완료 후):', error);
+            setAuthError('프로필을 불러오는 데 실패했습니다.');
+            return;
+          }
+          if (data) setProfile(data);
+        } catch (error) {
+          console.error('프로필 로드 중 오류 발생:', error);
+          setAuthError('프로필을 불러오는 데 실패했습니다.');
+        }
       };
       loadProfile();
     }
@@ -321,12 +332,22 @@ export function useAuth() {
 
   const reloadProfile = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    if (data) setProfile(data);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (error) {
+        console.error('프로필 재로드 실패:', error);
+        setAuthError('프로필을 새로고침하는 데 실패했습니다.');
+        return;
+      }
+      if (data) setProfile(data);
+    } catch (error) {
+      console.error('프로필 재로드 중 오류 발생:', error);
+      setAuthError('프로필을 새로고침하는 데 실패했습니다.');
+    }
   };
 
   return {
@@ -346,6 +367,8 @@ export function useAuth() {
     needsSetup,
     setNeedsSetup,
     authLoading,
+    authError,
+    setAuthError,
     getPermissions,
     handleAuthSuccess,
     handleSetupComplete,
