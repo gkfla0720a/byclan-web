@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
+import { ROLE_PERMISSIONS } from '../utils/permissions';
 
 export default function AdminBoard({ navigateTo }) {
   console.log('📍 AdminBoard 컴포넌트 렌더링됨!');
@@ -108,22 +109,12 @@ export default function AdminBoard({ navigateTo }) {
     }
   };
 
-  // ✅ 누락되었던 전체 직급별 색상과 라벨을 모두 추가했습니다.
-  const roleStyles = {
-    master: "bg-yellow-500 text-black border border-yellow-300",
-    admin: "bg-orange-600 text-white border border-orange-400",
-    elite: "bg-purple-600 text-white border border-purple-400",
-    member: "bg-blue-600 text-white border border-blue-400",
-    rookie: "bg-emerald-600 text-white border border-emerald-400",
-    associate: "bg-teal-800 text-teal-300 border border-teal-600",
-    guest: "bg-gray-700 text-gray-300 border border-gray-500",
-    expelled: "bg-red-900 text-red-300 border border-red-700 line-through"
+  const fallbackRoleMeta = {
+    guest: { name: '방문자', color: '#9CA3AF' },
+    expelled: { name: '제명', color: '#F87171' },
   };
 
-  const roleLabels = { 
-    master: "클랜 마스터", admin: "운영진", elite: "정예", 
-    member: "일반 클랜원", rookie: "신입", associate: "테스트신청자", guest: "방문자", expelled: "제명" 
-  };
+  const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || fallbackRoleMeta[role] || { name: role || '알 수 없음', color: '#9CA3AF' };
 
   if (loading) return (
     <div className="text-center py-24 text-gray-500 animate-pulse font-mono">
@@ -223,9 +214,15 @@ export default function AdminBoard({ navigateTo }) {
             </p>
 
             <div className="flex items-center gap-3 pt-5 border-t border-gray-700/50 mt-auto bg-gray-900/40 p-3 rounded-lg">
-              {/* ✅ roleStyles.guest가 정상적으로 적용되도록 수정 완료 */}
-              <span className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter ${roleStyles[post.profiles?.role] || roleStyles.guest}`}>
-                {roleLabels[post.profiles?.role] || "알 수 없음"}
+              <span
+                className="px-3 py-1 rounded-md text-[10px] font-black tracking-tight"
+                style={{
+                  backgroundColor: `${getRoleMeta(post.profiles?.role).color}22`,
+                  color: getRoleMeta(post.profiles?.role).color,
+                  border: `1px solid ${getRoleMeta(post.profiles?.role).color}55`,
+                }}
+              >
+                {getRoleMeta(post.profiles?.role).name}
               </span>
               <span className="font-semibold text-gray-200 text-sm">
                 작성자: {post.profiles?.ByID || post.profiles?.discord_name || "알 수 없는 요원"}

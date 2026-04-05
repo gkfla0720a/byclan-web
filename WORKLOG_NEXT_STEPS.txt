@@ -1,3 +1,109 @@
+ByClan session wrap-up note (2026-04-05)
+
+Completed in this phase
+1) Environment/build/runtime stabilization
+- Fixed build/setup issues and restored stable local dev/build flow.
+- Verified production build success with npm run build.
+
+2) Supabase seed/data hardening
+- Hardened TEST-DATA-SEED.sql and related seed paths against schema drift.
+- Added safer backfill/default handling for profiles and related tables.
+- Improved compatibility for running SQL directly in Supabase SQL Editor.
+
+3) Frontend realism and fallback cleanup
+- Reduced dummy/mock content across home, notices, profile/sidebar, media, community, ladder preview, and activity surfaces.
+- Added safer fallback behavior for missing Supabase env/config and auth/session edge cases.
+- Fixed hydration/localStorage-related home gate issues.
+
+4) Profile/tier consistency
+- Backfilled missing profile values.
+- Stabilized wins/losses, win-rate, tier display, and Challenger-related thresholds.
+- Updated profile surfaces to tolerate missing DB columns.
+
+5) Join/application flow restructuring
+- Consolidated visitor join flow around VisitorWelcome.
+- Split and then streamlined 가입안내 / 가입신청 behavior.
+- Added role-aware states for visitor, applicant, rookie, member and above.
+- Improved applicant notification access and pending-state guidance.
+
+6) Clan overview/member directory redesign
+- Reworked clan overview/member presentation from card-heavy layout toward grouped list/table UX.
+- Added a dedicated 클랜원 page/menu.
+- Structured streamer/BJ metadata using explicit fields instead of heuristic text parsing.
+- Added streamer platform/url support and clickable links.
+
+7) Visual refresh
+- Brightened the overall design and pushed tables/panels/menus toward a cleaner neon-tech style.
+- Converted clan member display to a spreadsheet-like table layout.
+- Normalized ladder score wording to MMR and 점.
+
+8) Role terminology and visibility fixes
+- Renamed associate display from 준회원 to 테스트신청자.
+- Formalized member as 일반 클랜원.
+- Excluded associate/test applicants from the public clan member directory.
+- Included member role consistently in member-facing surfaces so accounts like test7/test8 are no longer omitted.
+
+9) Admin/member management improvements
+- Added member.manage permission to admin.
+- Added inline role-management dropdowns on the clan member list for authorized roles.
+- Added navigation from the admin board into member management.
+- Fixed GuildManagement role dropdown behavior.
+- Kept developer role immutable in management flows.
+
+10) Security and privileged-action hardening
+- Added MATCH-BETS-RLS.sql to enable RLS on public.match_bets and restrict access to the authenticated owner.
+- Updated GuildManagement so master delegation now requires recent step-up verification before execution.
+- Supported two delegation verification paths in the client flow: password re-check and email OTP verification.
+- Removed direct master promotion from the normal role-change dropdown to avoid bypassing the delegation flow.
+- Standardized role/title rendering to use ROLE_PERMISSIONS as the single source of truth in active management/admin surfaces.
+
+Important files touched recently
+- src/app/utils/permissions.js
+- src/app/components/GuildManagement.js
+- src/app/components/AdminBoard.js
+- src/app/pages/ClanMembers.js
+- src/app/page.js
+- src/app/components/ProfileSidebar.js
+- src/app/components/VisitorWelcome.js
+- src/app/components/MyProfile.js
+- MATCH-BETS-RLS.sql
+
+Recommended next work
+1) Validate the new master delegation flow with real accounts.
+- Test both password re-auth and email OTP re-auth.
+- Confirm only the intended current account can complete verification.
+- Confirm session continuity after re-auth is acceptable in actual operation.
+
+2) Consider moving privileged role changes behind a server-side RPC or Edge Function.
+- Current client flow improves UX/security gating, but final authority is still DB-policy dependent.
+- A server-side verified action would be the stronger long-term model for master delegation and high-risk role changes.
+
+3) Apply MATCH-BETS-RLS.sql in Supabase SQL Editor if not already executed.
+- Re-test betting create/read behavior after enabling RLS.
+- Add update/delete policies only if the product truly needs them.
+
+4) Audit remaining legacy admin/member components for consistency.
+- AdminMembers.js is still present in the repo and may contain older hardcoded role labels if reused later.
+- If that component will remain, align it with ROLE_PERMISSIONS too.
+
+5) Add regression tests or at least a repeatable checklist for role-sensitive flows.
+- Developer immutability
+- Master delegation re-auth requirement
+- Associate visibility exclusion from clan member directory
+- Member visibility inclusion across directory/profile/sidebar surfaces
+
+6) Consider DB/RLS hardening for profiles role updates.
+- If role mutation is currently too open, add stricter policies or RPC-based updates so client-side restrictions cannot be bypassed externally.
+
+7) Clean up and document SQL/tooling assets.
+- Group seed/backfill/migration/security SQL files by purpose.
+- Add a short index document describing which SQL file is for seed, backfill, migration, and RLS/security fixes.
+
+Current known caution
+1) The new master delegation guard is implemented in the app flow, but true protection still depends on Supabase-side authorization design.
+2) Email OTP re-auth requires the current account email flow to be correctly configured in Supabase Auth.
+3) Some older unused components may still contain stale label mappings even though active screens were aligned.
+
 ByClan OAuth handoff note (2026-04-04)
 
 Test data SQL hardening note (2026-04-05)

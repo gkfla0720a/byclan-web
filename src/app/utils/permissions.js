@@ -56,6 +56,7 @@ export const ROLE_PERMISSIONS = {
     permissions: [
       'clan.admin',        // 클랜 관리
       'member.manage',     // 멤버 관리
+      'master.delegate',   // 마스터 위임
       'tournament.create',  // 토너먼트 생성
       'ladder.admin',      // 래더 관리
       'announcement.post',  // 공지사항 게시
