@@ -19,11 +19,13 @@ const PROPOSAL_CONSENT_SECONDS = 40;
 const COOLDOWN_STEPS = [0, 10, 30, 180];
 
 const TIER_COLORS = {
+  Challenger: 'text-rose-400',
   Master: 'text-purple-400', Diamond: 'text-blue-400', Platinum: 'text-cyan-400',
   Gold: 'text-yellow-400', Silver: 'text-gray-400', Bronze: 'text-orange-700',
 };
 
 function getTier(pts) {
+  if (pts >= 2400) return 'Challenger';
   if (pts >= 2200) return 'Master';
   if (pts >= 1900) return 'Diamond';
   if (pts >= 1600) return 'Platinum';

@@ -5,6 +5,7 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestAccounts } from '@/app/utils/testData';
 
 const TIER_COLORS = {
+  Challenger: 'text-rose-400',
   Bronze: 'text-orange-700',
   Silver: 'text-gray-400',
   Gold: 'text-yellow-400',
@@ -21,6 +22,7 @@ const RACE_LABELS = {
 };
 
 function getTier(points) {
+  if (points >= 2400) return 'Challenger';
   if (points >= 2200) return 'Master';
   if (points >= 1900) return 'Diamond';
   if (points >= 1600) return 'Platinum';
@@ -50,7 +52,7 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
         const { data, error } = await filterVisibleTestAccounts(
           supabase
             .from('profiles')
-            .select('id, ByID, discord_name, role, race, ladder_points, wins, losses, points')
+            .select('id, ByID, discord_name, role, race, ladder_points, points')
             .in('role', ['associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
             .order('ladder_points', { ascending: false })
             .limit(1)
@@ -76,7 +78,9 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
           byId: spotlightProfile.ByID || spotlightProfile.discord_name || 'ByClan Member',
           points: spotlightProfile.ladder_points ?? 1000,
           tier: getTier(spotlightProfile.ladder_points || 1000),
-          winRate: getWinRate(spotlightProfile.wins, spotlightProfile.losses),
+          winRate: spotlightProfile.wins !== undefined || spotlightProfile.losses !== undefined
+            ? getWinRate(spotlightProfile.wins, spotlightProfile.losses)
+            : '집계 중',
           race: RACE_LABELS[spotlightProfile.race] || spotlightProfile.race || '미등록',
         }
       : null;

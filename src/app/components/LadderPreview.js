@@ -5,6 +5,7 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
 
 function getTier(points) {
+  if (points >= 2400) return 'Challenger';
   if (points >= 2200) return 'Master';
   if (points >= 1900) return 'Diamond';
   if (points >= 1600) return 'Platinum';
