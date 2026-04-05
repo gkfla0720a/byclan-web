@@ -26,7 +26,7 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
           ByClan 래더 시스템
         </h2>
         <p className="text-gray-300 mb-1 text-sm">
-          스타크래프트 빠른무한 3v3 · 4v4 내전 래더 — 실시간 매칭 & 포인트 베팅
+          스타크래프트 빠른무한 3v3 · 4v4 · 5v5 내전 래더 — 실시간 대기열 & 포인트 베팅
         </p>
           <p className="text-gray-500 text-xs mb-4">{accessMessage}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -112,10 +112,24 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
 
       {/* 래더 시스템 소개 */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
+        {[
           { icon: '🏆', title: '랭킹 시스템', desc: '주력 콘텐츠는 레더 경쟁입니다. 승패와 점수, 티어가 프로필과 랭킹에 반영됩니다.' },
           { icon: '💰', title: '포인트 베팅', desc: '경기 시작 후 5분간 관전 유저도 팀별 포인트 베팅에 참여할 수 있습니다.' },
           { icon: '🎮', title: '대기열 공개', desc: '대기 중이 아니어도 항상 대기열을 볼 수 있고, 팀 밸런스 중심으로 매치를 제안합니다.' },
+        ].map((item) => (
+          <div key={item.title} className="p-4 rounded-xl cyber-card">
+            <div className="text-2xl mb-2">{item.icon}</div>
+            <h4 className="font-bold text-sm text-cyan-400 mb-1">{item.title}</h4>
+            <p className="text-gray-500 text-xs">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* 매치 시스템 추가 소개 */}
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          { icon: '⚡', title: '실시간 대기열', desc: '매칭 최대 대기 20분. 대기열에 있는 모든 플레이어를 실시간으로 볼 수 있습니다. 인원이 모이면 매치 시작 제안 버튼 활성화.' },
+          { icon: '🎯', title: '종족 선택 시스템', desc: '각 세트마다 전 세트 패배팀이 종족 조합을 선택합니다: 프프프/프프테/프프저/프저테/대포(랜덤). 전략적 선택이 승부를 가릅니다.' },
         ].map((item) => (
           <div key={item.title} className="p-4 rounded-xl cyber-card">
             <div className="text-2xl mb-2">{item.icon}</div>
