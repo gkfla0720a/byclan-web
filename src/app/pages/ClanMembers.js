@@ -47,6 +47,7 @@ function applyDemoStreamers(memberList) {
 export default function ClanMembers() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentRole, setCurrentRole] = useState(null);
   const [updatingMemberId, setUpdatingMemberId] = useState(null);
 
@@ -104,6 +105,7 @@ export default function ClanMembers() {
         );
       } catch (error) {
         console.error('클랜원 목록 로드 실패:', error);
+        setError(error);
         setMembers([]);
       } finally {
         setLoading(false);
@@ -282,7 +284,8 @@ export default function ClanMembers() {
         ))}
       </div>
 
-      {members.length === 0 && <div className="text-center py-12 text-gray-500">클랜원이 없습니다.</div>}
+      {!loading && error && <div className="text-center py-12 text-red-400">클랜원 목록을 불러오지 못했습니다. 잠시 후 새로고침 해주세요.</div>}
+      {!loading && !error && members.length === 0 && <div className="text-center py-12 text-gray-500">클랜원이 없습니다.</div>}
     </div>
   );
 }

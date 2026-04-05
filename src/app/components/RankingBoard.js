@@ -6,14 +6,24 @@ import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
 
 export default function RankingBoard() {
   const [rankings, setRankings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchRankings = async () => {
-      const { data } = await filterVisibleTestData(supabase
-        .from('ladders')
-        .select('*')
-        .order('ladders_points', { ascending: false })); // ✅ 수정2
-      if (data) setRankings(data);
+      try {
+        const { data, error: fetchError } = await filterVisibleTestData(supabase
+          .from('ladders')
+          .select('*')
+          .order('ladders_points', { ascending: false })); // ✅ 수정2
+        if (fetchError) throw fetchError;
+        setRankings(data || []);
+      } catch (err) {
+        console.error('랭킹 로드 실패:', err);
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchRankings();
   }, []);
@@ -41,8 +51,12 @@ export default function RankingBoard() {
             </tr>
           </thead>
           <tbody>
-            {rankings.length === 0 ? (
-              <tr><td colSpan="6" className="text-center py-8 text-cyan-600">DB 데이터를 불러오는 중입니다...</td></tr>
+            {loading ? (
+              <tr><td colSpan="6" className="text-center py-8 text-cyan-600 animate-pulse">DB 데이터를 불러오는 중입니다...</td></tr>
+            ) : error ? (
+              <tr><td colSpan="6" className="text-center py-8 text-red-400">랭킹 데이터를 불러오지 못했습니다. 잠시 후 새로고침 해주세요.</td></tr>
+            ) : rankings.length === 0 ? (
+              <tr><td colSpan="6" className="text-center py-8 text-cyan-600">등록된 랭킹 데이터가 없습니다.</td></tr>
             ) : null}
             {rankings.map((player, index) => (  // ✅ index 추가
               <tr key={player.id} className="border-b border-cyan-800/50 hover:bg-cyan-900/30 transition-colors">
