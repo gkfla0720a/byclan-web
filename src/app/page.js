@@ -196,22 +196,7 @@ export default function Home() {
       };
       reload();
     }} />;
-    if (activeView === '가입신청') {
-      if (!user) {
-        return (
-          <div className="w-full max-w-5xl mx-auto mt-8 text-center">
-            <div className="cyber-card p-8 rounded-xl inline-block">
-              <div className="text-4xl mb-4">🔐</div>
-              <p className="text-gray-300 mb-4">가입 신청은 로그인 후 이용 가능합니다.</p>
-              <button onClick={() => setShowAuthModal(true)} className="px-6 py-2.5 rounded-lg font-bold btn-neon text-sm">
-                로그인 / 회원가입
-              </button>
-            </div>
-          </div>
-        );
-      }
-      return <VisitorWelcome user={user} profile={profile} mode="apply" navigateTo={navigateTo} onApplicationSubmit={() => {}} />;
-    }
+    if (activeView === '가입신청') return <VisitorWelcome user={user} profile={profile} mode="guide" navigateTo={navigateTo} onApplicationSubmit={() => {}} />;
     if (activeView === '정회원 전환신청') return <PagePlaceholder title="정회원 전환 신청은 신입 길드원만 가능합니다." />;
     if (activeView === '공지사항' || activeView === 'BSL 공지사항' || activeView === '토너먼트 공지') return <NoticeBoard />;
     if (activeView === '자유게시판' || activeView === '클랜원 소식') return <CommunityBoard />;
@@ -272,7 +257,7 @@ export default function Home() {
   };
 
   // 사이드바가 필요한 뷰
-  const sidebarViews = ['Home', '개요', '가입안내', '가입신청', '공지사항', 'BSL 공지사항', '토너먼트 공지', '자유게시판', '클랜원 소식', '랭킹', '시즌별 랭킹', '대시보드', 'BY래더시스템', 'BSL 경기일정 및 결과', '진행중인 토너먼트', '경기 영상', '사진 갤러리'];
+  const sidebarViews = ['Home', '개요', '가입안내', '공지사항', 'BSL 공지사항', '토너먼트 공지', '자유게시판', '클랜원 소식', '랭킹', '시즌별 랭킹', '대시보드', 'BY래더시스템', 'BSL 경기일정 및 결과', '진행중인 토너먼트', '경기 영상', '사진 갤러리'];
   const showSidebar = sidebarViews.includes(activeView);
 
   return (

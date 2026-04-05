@@ -138,10 +138,10 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
             </>
           ) : (
             <button
-              onClick={() => navigateTo('가입신청')}
+              onClick={() => navigateTo('가입안내')}
               className="px-6 py-2.5 rounded-lg font-bold text-sm btn-neon"
             >
-              가입 신청하기
+              가입 안내 보기
             </button>
           )}
         </div>

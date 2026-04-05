@@ -142,10 +142,10 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
             </button>
           ) : (
             <button
-              onClick={() => navigateTo('가입신청')}
+              onClick={() => navigateTo('가입안내')}
               className="mt-2 w-full py-2 rounded-lg text-xs font-bold btn-neon"
             >
-              가입 신청
+              가입 안내
             </button>
           )}
         </div>

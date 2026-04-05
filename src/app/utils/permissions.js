@@ -227,8 +227,8 @@ export const PermissionChecker = {
       '자유게시판': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '프로필': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '알림': ['rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '가입신청': ['visitor', 'associate'], // 방문자/준회원 가입 신청 가능
-      '가입안내': ['visitor', 'associate', 'applicant'], // 방문자, 준회원, 신규 가입자
+      '가입신청': ['visitor'], // 직접 메뉴 진입은 사용하지 않지만 호환성 유지
+      '가입안내': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '정회원 전환신청': ['rookie'] // 신입 길드원만 정회원 신청
     };
 
