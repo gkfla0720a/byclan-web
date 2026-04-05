@@ -31,6 +31,21 @@ export function isRetryableError(error) {
 }
 
 /**
+ * Returns true when a PostgREST error is caused by a missing or undefined
+ * foreign-key relationship (PGRST200) or a missing column (42703).
+ * Use this to decide whether to retry a query without the problematic JOIN.
+ *
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+export function isRelationshipError(error) {
+  if (!error) return false;
+  if (error?.code === 'PGRST200' || error?.code === '42703') return true;
+  const msg = ((error?.message ?? '') + ' ' + (error?.details ?? '')).toLowerCase();
+  return msg.includes('relationship') || msg.includes('does not exist');
+}
+
+/**
  * Runs `fn` up to `maxAttempts` times with exponential back-off.
  * Non-retryable errors (401, 403, …) are thrown immediately.
  *

@@ -5,6 +5,7 @@ import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { ROLE_PERMISSIONS } from '../utils/permissions';
 import { useNavigate } from '../hooks/useNavigate';
+import { isRelationshipError } from '../utils/retry';
 
 export default function AdminBoard() {
   const navigateTo = useNavigate();
@@ -75,6 +76,17 @@ export default function AdminBoard() {
 
     if (error) {
       console.error("목록 불러오기 에러:", error);
+      if (isRelationshipError(error)) {
+        const { data: fallbackData, error: fallbackError } = await filterVisibleTestData(supabase
+          .from('admin_posts')
+          .select('id, title, content, created_at')
+          .order('created_at', { ascending: false }));
+        if (fallbackError) {
+          console.error("목록 폴백 쿼리 에러:", fallbackError);
+        } else {
+          setPosts(fallbackData || []);
+        }
+      }
     } else {
       setPosts(data);
     }

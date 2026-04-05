@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { EmptyState, SkeletonLoader } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
+import { isRelationshipError } from '@/app/utils/retry';
 
 export default function NoticeBoard() {
   const [notices, setNotices] = useState([]);
@@ -25,7 +26,34 @@ export default function NoticeBoard() {
             .order('created_at', { ascending: false })
         );
 
-        if (error) throw error;
+        if (error) {
+          // Retry without the JOIN if the FK relationship isn't defined in the database
+          if (isRelationshipError(error)) {
+            const { data: fallbackData, error: fallbackError } = await filterVisibleTestData(
+              supabase
+                .from('admin_posts')
+                .select('id, title, content, created_at')
+                .order('created_at', { ascending: false })
+            );
+
+            if (fallbackError) throw fallbackError;
+
+            setNotices(
+              (fallbackData || []).map((notice, index) => ({
+                id: notice.id || `notice-${index}`,
+                type: index === 0 ? '필독' : '공지',
+                title: notice.title,
+                author: '운영진',
+                date: notice.created_at
+                  ? new Date(notice.created_at).toLocaleDateString('ko-KR')
+                  : '-',
+              }))
+            );
+            return;
+          }
+
+          throw error;
+        }
 
         setNotices(
           (data || []).map((notice, index) => ({

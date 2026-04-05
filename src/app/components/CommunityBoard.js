@@ -11,6 +11,7 @@ export default function CommunityBoard() {
   
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   const fetchPosts = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -20,25 +21,28 @@ export default function CommunityBoard() {
     }
 
     setLoading(true);
+    setFetchError(null);
 
-    const { data, error } = await filterVisibleTestData(supabase
-      .from('posts')
-      .select(`
-        *,
-        profiles (
-          discord_name,
-          ByID
-        )
-      `)
-      .order('created_at', { ascending: false }));
+    try {
+      const { data, error } = await filterVisibleTestData(supabase
+        .from('posts')
+        .select('id, title, content, user_id, author_name, views, created_at')
+        .order('created_at', { ascending: false }));
 
-    if (error) {
-      console.error("데이터 불러오기 에러:", error);
-    } else {
-      setPosts(data || []);
+      if (error) {
+        console.error("데이터 불러오기 에러:", error);
+        setFetchError(error);
+        setPosts([]);
+      } else {
+        setPosts(data || []);
+      }
+    } catch (err) {
+      console.error("게시글 로딩 중 예외 발생:", err);
+      setFetchError(err);
+      setPosts([]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, []);
 
   // 날짜 변환 함수 (예: 2026-04-01T... -> 04.01)
@@ -141,6 +145,10 @@ export default function CommunityBoard() {
           </div>
         ) : loading ? (
           <div className="p-8 text-center text-gray-500">게시글을 불러오는 중입니다...</div>
+        ) : fetchError ? (
+          <div className="p-8 text-center text-red-400">
+            게시글을 불러오지 못했습니다. 잠시 후 새로고침 해주세요.
+          </div>
         ) : posts.length === 0 ? (
           <div className="p-8 text-center text-gray-400">
             아직 등록된 글이 없습니다. 첫 글을 남겨서 오늘 클랜 분위기를 시작해보세요.
@@ -152,11 +160,11 @@ export default function CommunityBoard() {
               <div className="flex flex-col gap-1 mb-2 sm:mb-0">
                 <span className="text-gray-200 font-medium group-hover:text-yellow-400 transition-colors">{post.title}</span>
                 <span className="text-xs text-gray-500 sm:hidden">
-                  {post.profiles?.ByID || post.profiles?.discord_name || '알 수 없음'} | {formatDate(post.created_at)} | 조회 {post.views || 0}
+                  {post.author_name || '알 수 없음'} | {formatDate(post.created_at)} | 조회 {post.views || 0}
                 </span>
               </div>
               <div className="hidden sm:flex items-center gap-4 text-sm text-gray-400">
-                <span className="w-24 text-center truncate">{post.profiles?.ByID || post.profiles?.discord_name || '알 수 없음'}</span>
+                <span className="w-24 text-center truncate">{post.author_name || '알 수 없음'}</span>
                 <span className="w-16 text-center">{formatDate(post.created_at)}</span>
                 <span className="w-12 text-center text-xs">👀 {post.views || 0}</span>
               </div>
