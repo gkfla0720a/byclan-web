@@ -188,7 +188,7 @@ export default function Home() {
 
     // 공개 페이지들
     if (activeView === '개요') return <ClanOverview />;
-    if (activeView === '가입안내') return <VisitorWelcome user={user} onApplicationSubmit={() => {
+    if (activeView === '가입안내') return <VisitorWelcome user={user} profile={profile} mode="guide" navigateTo={navigateTo} onApplicationSubmit={() => {
       const reload = async () => {
         if (!user) return;
         const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
@@ -210,7 +210,7 @@ export default function Home() {
           </div>
         );
       }
-      return <VisitorWelcome user={user} onApplicationSubmit={() => {}} />;
+      return <VisitorWelcome user={user} profile={profile} mode="apply" navigateTo={navigateTo} onApplicationSubmit={() => {}} />;
     }
     if (activeView === '정회원 전환신청') return <PagePlaceholder title="정회원 전환 신청은 신입 길드원만 가능합니다." />;
     if (activeView === '공지사항' || activeView === 'BSL 공지사항' || activeView === '토너먼트 공지') return <NoticeBoard />;

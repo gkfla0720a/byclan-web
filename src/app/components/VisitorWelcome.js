@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
-import { ErrorMessage, SkeletonLoader } from './UIStates';
+import { ErrorMessage } from './UIStates';
 
 // 전화번호 자동 포맷팅 함수
 function formatPhone(value) {
@@ -51,11 +51,14 @@ async function submitApplication(userId, applicationData) {
 }
 
 // 방문자용 환영 페이지
-export default function VisitorWelcome({ user, onApplicationSubmit }) {
-  const [showApplicationForm, setShowApplicationForm] = useState(false);
+export default function VisitorWelcome({ user, profile, mode = 'guide', navigateTo, onApplicationSubmit }) {
+  const [showApplicationForm, setShowApplicationForm] = useState(mode === 'apply');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  const displayName = profile?.ByID || (user?.email ? `By_${user.email.split('@')[0]}` : 'By_Visitor');
+  const isGuideMode = mode === 'guide';
 
   const handleApplicationSubmit = async (applicationData) => {
     setLoading(true);
@@ -112,22 +115,32 @@ export default function VisitorWelcome({ user, onApplicationSubmit }) {
         <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-2xl text-center">
           <div className="text-6xl mb-4">👋</div>
           <h2 className="text-3xl font-bold text-white mb-4">
-            환영합니다, {user?.email?.split('@')[0]}님!
+            환영합니다, {displayName}님!
           </h2>
           <p className="text-gray-300 mb-6">
-            ByClan 클랜에 방문하신 것을 환영합니다.<br/>
-            클랜 가입을 통해 더 많은 콘텐츠를 즐겨보세요!
+            {isGuideMode
+              ? 'ByClan 클랜의 운영 방식과 가입 절차를 먼저 확인해보세요. 준비가 되면 가입 신청으로 바로 이어갈 수 있습니다.'
+              : '가입 신청 전 마지막으로 안내를 확인한 뒤 신청서를 작성해주세요. 제출 후에는 테스트 대기 상태로 전환됩니다.'}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {isGuideMode ? (
+              <button
+                onClick={() => navigateTo?.('가입신청')}
+                className="px-6 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors"
+              >
+                📝 가입 신청으로 이동
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowApplicationForm(true)}
+                className="px-6 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors"
+              >
+                📝 신청서 작성하기
+              </button>
+            )}
             <button
-              onClick={() => setShowApplicationForm(true)}
-              className="px-6 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors"
-            >
-              📝 클랜 가입 신청하기
-            </button>
-            <button
-              onClick={() => window.location.reload()}
+              onClick={() => navigateTo?.('Home')}
               className="px-6 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-colors"
             >
               🏠 홈으로
@@ -200,10 +213,30 @@ export default function VisitorWelcome({ user, onApplicationSubmit }) {
             </div>
           </div>
         </div>
+
+        {isGuideMode ? (
+          <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h3 className="text-xl font-bold text-white mb-4">🧭 가입 전에 확인할 내용</h3>
+            <div className="space-y-3 text-sm text-gray-300 leading-relaxed">
+              <p>ByClan은 래더 참여, 공지 확인, 커뮤니티 활동이 꾸준한 유저를 선호합니다.</p>
+              <p>가입 신청 전에는 주력 종족, 활동 시간, 간단한 자기소개를 미리 정리해두면 심사가 더 빨라집니다.</p>
+              <p>테스트 합격 후에는 Discord 연동과 기본 클랜 활동을 통해 정식 멤버 단계로 올라가게 됩니다.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h3 className="text-xl font-bold text-white mb-4">🗂️ 신청 전 체크리스트</h3>
+            <div className="space-y-3 text-sm text-gray-300 leading-relaxed">
+              <p>배틀태그, 주 활동 시간, 연락 가능한 번호를 정확하게 적어주세요.</p>
+              <p>자기소개와 가입 동기는 운영진이 실제로 읽고 심사에 참고합니다. 간단해도 실제 플레이 스타일이 드러나는 편이 좋습니다.</p>
+              <p>신청 후에는 프로필 권한이 `applicant`로 바뀌며, 심사 결과는 알림과 운영진 처리 내역으로 반영됩니다.</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 가입 신청 폼 */}
-      {showApplicationForm && (
+      {!isGuideMode && showApplicationForm && (
         <ApplicationForm
           user={user}
           onSubmit={handleApplicationSubmit}
