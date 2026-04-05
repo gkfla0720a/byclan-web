@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
+import { useNavigate } from '../hooks/useNavigate';
 
 function formatRelativeTime(dateString) {
   if (!dateString) return '';
@@ -24,7 +25,8 @@ function formatRelativeTime(dateString) {
 }
 
 // 매치 현황 컴포넌트
-function MatchStatus({ navigateTo }) {
+function MatchStatus() {
+  const navigateTo = useNavigate();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
 

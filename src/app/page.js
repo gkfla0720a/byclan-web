@@ -9,9 +9,7 @@ import HomeGate from './components/HomeGate';
 import ProfileSidebar from './components/ProfileSidebar';
 import AuthDashboard from './components/AuthDashboard';
 import DevSettingsPanel from './components/DevSettingsPanel';
-import VisitorWelcome from './components/VisitorWelcome';
 import HomeContent from './pages/HomeContent';
-import { supabase } from '@/supabase';
 import { useAuthContext } from './context/AuthContext';
 
 export default function Home() {
@@ -19,11 +17,11 @@ export default function Home() {
   const {
     user,
     profile,
-    setProfile,
     needsSetup,
     authLoading,
     getPermissions,
     handleSetupComplete,
+    reloadProfile,
   } = useAuthContext();
 
   const permissions = getPermissions();
@@ -71,12 +69,6 @@ export default function Home() {
       </HomeGate>
     );
   }
-
-  const handleApplicationSubmit = async () => {
-    if (!user) return;
-    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-    if (data) setProfile(data);
-  };
 
   return (
     <HomeGate>

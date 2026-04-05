@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ImprovedAuthForm from '../components/ImprovedAuthForm';
 import { useAuthContext } from '../context/AuthContext';
@@ -9,9 +9,13 @@ export default function LoginPage() {
   const router = useRouter();
   const { user, handleAuthSuccess } = useAuthContext();
 
-  // 이미 로그인된 경우 홈으로 이동
+  useEffect(() => {
+    if (user) {
+      router.replace('/');
+    }
+  }, [user, router]);
+
   if (user) {
-    router.replace('/');
     return null;
   }
 

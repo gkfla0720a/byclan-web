@@ -319,6 +319,16 @@ export function useAuth() {
     }
   };
 
+  const reloadProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    if (data) setProfile(data);
+  };
+
   return {
     // Password gate fields for homepage security gate
     password,
@@ -338,6 +348,7 @@ export function useAuth() {
     authLoading,
     getPermissions,
     handleAuthSuccess,
-    handleSetupComplete
+    handleSetupComplete,
+    reloadProfile,
   };
 }

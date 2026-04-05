@@ -175,7 +175,7 @@ function HomeContent() {
 
       {/* 매치 상태 + 활동 로그 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <MatchStatus navigateTo={navigateTo} />
+        <MatchStatus />
         <ActivityLog />
       </div>
 

@@ -46,7 +46,9 @@ export function useNavigate() {
     if (path) {
       router.push(path);
     } else {
-      // 매핑에 없는 뷰명은 그대로 동적 경로로 처리
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`[useNavigate] Unmapped view name: "${viewName}". Add it to VIEW_TO_PATH in hooks/useNavigate.js.`);
+      }
       router.push(`/${encodeURIComponent(viewName)}`);
     }
   };
