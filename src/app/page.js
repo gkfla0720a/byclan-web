@@ -40,6 +40,10 @@ export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   
   const {
+    password,
+    setPassword,
+    isAuthorized,
+    setIsAuthorized,
     profile,
     setProfile,
     activeMatchId,
@@ -51,6 +55,56 @@ export default function Home() {
     handleAuthSuccess,
     handleSetupComplete
   } = useAuth();
+
+  const handlePasswordGateSubmit = (e) => {
+    e.preventDefault();
+
+    if (password === '1990') {
+      setIsAuthorized(true);
+      setPassword('');
+      return;
+    }
+
+    alert('초기 접속 비밀번호가 올바르지 않습니다.');
+    setPassword('');
+  };
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-[#06060a] flex items-center justify-center px-4">
+        <div className="w-full max-w-md cyber-card rounded-2xl p-8 text-center">
+          <div className="text-5xl mb-4">🛡️</div>
+          <h1 className="text-2xl font-black text-cyan-400 mb-3" style={{ textShadow: '0 0 12px rgba(0,212,255,0.35)' }}>
+            ByClan 초기 접속 인증
+          </h1>
+          <p className="text-sm text-gray-400 leading-relaxed mb-6">
+            홈페이지 최초 진입 시 보안 비밀번호가 필요합니다.<br />
+            인증 후에는 로그인 없이도 홈, 개요, 가입 안내를 둘러볼 수 있습니다.
+          </p>
+          <form onSubmit={handlePasswordGateSubmit} className="space-y-3">
+            <input
+              type="password"
+              inputMode="numeric"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="초기 비밀번호 입력"
+              className="w-full rounded-xl border border-cyan-500/30 bg-[#0d0d14] px-4 py-3 text-center text-white outline-none focus:border-cyan-400"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="w-full rounded-xl py-3 font-black btn-neon text-sm"
+            >
+              ENTER BYCLAN
+            </button>
+          </form>
+          <p className="mt-4 text-[11px] text-gray-600">
+            인증 후 방문자 권한으로 둘러보기만 가능하며, 래더 시스템은 별도 권한이 필요합니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // navigateTo 래퍼: '로그인' 뷰는 모달로 처리
   const navigateTo = (view) => {
@@ -111,6 +165,7 @@ export default function Home() {
   const isVisitor = user && profile && profile.role === 'visitor';
   // 래더 플레이 가능 여부
   const canPlayLadder = permissions.can?.playLadder;
+  const requiresDiscordLink = permissions.can?.requiresDiscordLink;
 
   // 래더 뷰 접근 제어
   const isLadderView = activeView === '대시보드' || activeView === 'BY래더시스템';
@@ -156,7 +211,13 @@ export default function Home() {
     // 래더 시스템 (권한 없으면 미리보기)
     if (isLadderView) {
       if (!canPlayLadder) {
-        return <LadderPreview navigateTo={navigateTo} isGuest={isGuest || isVisitor} />;
+        return (
+          <LadderPreview
+            navigateTo={navigateTo}
+            isGuest={isGuest || isVisitor}
+            requiresDiscordLink={requiresDiscordLink}
+          />
+        );
       }
       return !activeMatchId
         ? <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
@@ -225,7 +286,7 @@ export default function Home() {
       </main>
       
       {/* 개발자 설정 패널 */}
-      {user && <DevSettingsPanel />}
+      {permissions.isDeveloper && <DevSettingsPanel />}
       
       <Footer />
     </div>
