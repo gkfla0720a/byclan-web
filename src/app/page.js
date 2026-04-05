@@ -92,7 +92,8 @@ export default function Home() {
               autoFocus
             />
             <button
-              type="submit"
+              type="button"
+              onClick={handlePasswordGateSubmit}
               className="w-full rounded-xl py-3 font-black btn-neon text-sm"
             >
               ENTER BYCLAN
