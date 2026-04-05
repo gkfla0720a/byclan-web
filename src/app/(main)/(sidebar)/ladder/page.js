@@ -5,6 +5,7 @@ import LadderDashboard from '../../../components/LadderDashboard';
 import MatchCenter from '../../../components/MatchCenter';
 import LadderPreview from '../../../components/LadderPreview';
 import { useAuthContext } from '../../../context/AuthContext';
+import { SectionErrorBoundary } from '../../../components/ErrorBoundary';
 
 export default function LadderPage() {
   const { profile, user, activeMatchId, setActiveMatchId, getPermissions } = useAuthContext();
@@ -17,14 +18,20 @@ export default function LadderPage() {
 
   if (!canPlayLadder) {
     return (
-      <LadderPreview
-        isGuest={isGuest || isVisitor}
-        requiresDiscordLink={requiresDiscordLink}
-      />
+      <SectionErrorBoundary name="래더 프리뷰">
+        <LadderPreview
+          isGuest={isGuest || isVisitor}
+          requiresDiscordLink={requiresDiscordLink}
+        />
+      </SectionErrorBoundary>
     );
   }
 
-  return !activeMatchId
-    ? <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
-    : <MatchCenter matchId={activeMatchId} onExit={() => setActiveMatchId(null)} />;
+  return (
+    <SectionErrorBoundary name="래더">
+      {!activeMatchId
+        ? <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
+        : <MatchCenter matchId={activeMatchId} onExit={() => setActiveMatchId(null)} />}
+    </SectionErrorBoundary>
+  );
 }

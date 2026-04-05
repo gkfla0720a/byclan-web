@@ -1,6 +1,8 @@
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ToastProvider } from "./context/ToastContext";
+import ToastContainer from "./components/ToastContainer";
 
 export const metadata = {
   title: "ByClan NET – 스타크래프트 빠른무한 클랜",
@@ -15,7 +17,10 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col bg-[#06060a] text-gray-200">
         <ErrorBoundary>
-          <AuthProvider>{children}</AuthProvider>
+          <ToastProvider>
+            <AuthProvider>{children}</AuthProvider>
+            <ToastContainer />
+          </ToastProvider>
         </ErrorBoundary>
       </body>
     </html>
