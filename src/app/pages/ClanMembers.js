@@ -8,8 +8,10 @@ import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/test
 const ROLE_SECTIONS = [
   { key: 'leadership', title: '운영진', roles: ['developer', 'master', 'admin'] },
   { key: 'elite', title: '정예 길드원', roles: ['elite'] },
-  { key: 'members', title: '길드원', roles: ['associate', 'rookie'] },
+  { key: 'members', title: '길드원', roles: ['member', 'rookie'] },
 ];
+
+const VISIBLE_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie'];
 
 function normalizeUrl(url) {
   if (!url) return '';
@@ -66,14 +68,18 @@ export default function ClanMembers() {
             );
 
             if (fallbackResult.error) throw fallbackResult.error;
-            setMembers(applyDemoStreamers(fallbackResult.data || []));
+            setMembers(
+              applyDemoStreamers((fallbackResult.data || []).filter((member) => VISIBLE_MEMBER_ROLES.includes(member.role)))
+            );
             return;
           }
 
           throw primaryResult.error;
         }
 
-        setMembers(applyDemoStreamers(primaryResult.data || []));
+        setMembers(
+          applyDemoStreamers((primaryResult.data || []).filter((member) => VISIBLE_MEMBER_ROLES.includes(member.role)))
+        );
       } catch (error) {
         console.error('클랜원 목록 로드 실패:', error);
         setMembers([]);

@@ -226,7 +226,8 @@ export default function GuildManagement() {
                   className="w-full p-2 bg-gray-800 border border-gray-700 rounded text-white"
                   defaultValue={actionModal.member.role}
                 >
-                  <option value="associate">일반 길드원</option>
+                  <option value="associate">테스트신청자</option>
+                  <option value="member">일반 클랜원</option>
                   <option value="elite">정예 길드원</option>
                   <option value="admin">관리자</option>
                   <option value="master">마스터</option>

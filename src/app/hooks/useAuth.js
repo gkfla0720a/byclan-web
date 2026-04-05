@@ -162,7 +162,7 @@ export function useAuth() {
     setNeedsSetup(false);
 
     // 진행 중인 래더 매치 확인 (정식 멤버만)
-    if (['associate', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
+    if (['member', 'associate', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
       try {
         const { data: m, error: matchError } = await supabase
           .from('ladder_matches')

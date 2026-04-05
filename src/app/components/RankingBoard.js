@@ -28,11 +28,18 @@ export default function RankingBoard() {
         <span className="text-cyan-600 text-xs sm:text-sm animate-pulse">SUPABASE CONNECTED //</span>
       </div>
       
-      {/* 테이블 동일 */}
       <div className="bg-[#0A1128] border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.15)] rounded-sm overflow-hidden relative">
-        {/* ... 헤더 동일 ... */}
-        <table className="w-full text-left border-collapse relative z-10">
-          <thead>{/* 헤더 동일 */}</thead>
+        <table className="w-full text-left border-collapse relative z-10 table-fixed">
+          <thead>
+            <tr className="border-b border-cyan-500/40 bg-cyan-950/10 text-cyan-300 text-xs uppercase tracking-widest">
+              <th className="py-3 px-4 text-center w-[12%]">순위</th>
+              <th className="py-3 px-4 w-[28%]">플레이어</th>
+              <th className="py-3 px-4 text-center w-[14%]">종족</th>
+              <th className="py-3 px-4 text-center w-[16%]">MMR</th>
+              <th className="py-3 px-4 text-center w-[16%]">전적</th>
+              <th className="py-3 px-4 text-center w-[14%]">승률</th>
+            </tr>
+          </thead>
           <tbody>
             {rankings.length === 0 ? (
               <tr><td colSpan="6" className="text-center py-8 text-cyan-600">DB 데이터를 불러오는 중입니다...</td></tr>

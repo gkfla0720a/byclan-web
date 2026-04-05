@@ -53,7 +53,7 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
           supabase
             .from('profiles')
             .select('id, ByID, discord_name, role, race, ladder_points, points, wins, losses')
-            .in('role', ['associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
+            .in('role', ['member', 'associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
             .order('ladder_points', { ascending: false })
             .limit(1)
         );
@@ -65,7 +65,7 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
               supabase
                 .from('profiles')
                 .select('id, ByID, discord_name, role, race, ladder_points, points')
-                .in('role', ['associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
+                .in('role', ['member', 'associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
                 .order('ladder_points', { ascending: false })
                 .limit(1)
             );
@@ -89,7 +89,7 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
   }, []);
 
   const isActiveMember =
-    profile && ['associate', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
+    profile && ['member', 'associate', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 
   if (!user || !profile || !isActiveMember) {
     const previewProfile = spotlightProfile

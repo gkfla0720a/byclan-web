@@ -122,7 +122,7 @@ export default function AdminBoard() {
 
   const roleLabels = { 
     master: "클랜 마스터", admin: "운영진", elite: "정예", 
-    member: "일반", rookie: "신입", associate: "준회원", guest: "방문자", expelled: "제명" 
+    member: "일반 클랜원", rookie: "신입", associate: "테스트신청자", guest: "방문자", expelled: "제명" 
   };
 
   if (loading) return (

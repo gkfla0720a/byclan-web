@@ -91,7 +91,7 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
     ? '현재 설정상 래더 참여 전 Discord 연동이 필요합니다.'
     : isGuest
       ? '래더 참여는 로그인 후 클랜원 등급 이상이어야 합니다.'
-      : '래더 참여는 클랜원(준회원 이상) 등급이 필요합니다.';
+      : '래더 참여는 클랜원(일반 클랜원 이상) 등급이 필요합니다.';
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-6 px-2">
@@ -171,7 +171,7 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
                 </div>
                 <div className="flex items-center gap-4 text-xs">
                   <span className="text-purple-400">{p.tier}</span>
-                  <span className="text-yellow-400 font-bold">{p.pts} P</span>
+                  <span className="text-yellow-400 font-bold">MMR {p.pts}점</span>
                 </div>
               </div>
             ))}
@@ -193,7 +193,7 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
       {/* 래더 시스템 소개 */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { icon: '🏆', title: '랭킹 시스템', desc: '주력 콘텐츠는 레더 경쟁입니다. 승패와 점수, 티어가 프로필과 랭킹에 반영됩니다.' },
+          { icon: '🏆', title: '랭킹 시스템', desc: '주력 콘텐츠는 레더 경쟁입니다. 승패와 MMR, 티어가 프로필과 랭킹에 반영됩니다.' },
           { icon: '💰', title: '포인트 베팅', desc: '경기 시작 후 5분간 관전 유저도 팀별 포인트 베팅에 참여할 수 있습니다.' },
           { icon: '🎮', title: '대기열 공개', desc: '대기 중이 아니어도 항상 대기열을 볼 수 있고, 팀 밸런스 중심으로 매치를 제안합니다.' },
         ].map((item) => (

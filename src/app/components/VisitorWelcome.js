@@ -8,7 +8,8 @@ const ROLE_LABELS = {
   visitor: '방문자',
   applicant: '가입 신청자',
   rookie: '신입 길드원',
-  associate: '준회원',
+  member: '일반 클랜원',
+  associate: '테스트신청자',
   elite: '정예 멤버',
   admin: '운영진',
   master: '마스터',
@@ -316,7 +317,7 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', navigate
   const displayName = profile?.ByID || (user?.email ? `By_${user.email.split('@')[0]}` : 'By_Visitor');
   const currentRole = profile?.role?.trim?.().toLowerCase?.() || 'guest';
   const isApplied = currentRole === 'applicant';
-  const isRookieOrHigher = ['rookie', 'associate', 'elite', 'admin', 'master', 'developer'].includes(currentRole);
+  const isRookieOrHigher = ['rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'].includes(currentRole);
   const canApply = Boolean(user && currentRole === 'visitor');
   const roleLabel = ROLE_LABELS[currentRole] || '클랜 유저';
   const introText = profile?.intro?.trim?.() || '클랜 활동을 이어가고 있는 멤버입니다.';

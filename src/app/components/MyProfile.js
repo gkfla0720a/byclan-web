@@ -27,7 +27,7 @@ export default function MyProfile({ navigateTo }) {
     elite: "⚔️ 정예 클랜원",
     member: "🛡️ 일반 클랜원",
     rookie: "🌱 신입 클랜원",
-    associate: "👀 준회원",
+    associate: "👀 테스트신청자",
     guest: "👤 방문자"
   };
 

@@ -123,18 +123,18 @@ function ConsentPopup({ proposal, myUserId, onAccept, onReject }) {
                     <div key={p.id} className="text-xs text-gray-300 truncate flex items-center gap-1 mb-1">
                       <span className="text-cyan-600 w-4 text-center">{getRaceIcon(p.race)}</span>
                       <span className="flex-1 truncate">{p.ByID || p.discord_name}</span>
-                      <span className="text-yellow-500 text-[10px]">{p.ladder_points || 1000}</span>
+                      <span className="text-yellow-500 text-[10px]">{p.ladder_points || 1000}점</span>
                     </div>
                   ))}
                   <div className={`text-center text-[10px] mt-1 font-bold ${team === 'A' ? 'text-blue-400' : 'text-red-400'}`}>
-                    평균 {Math.round(team === 'A' ? proposal.avgA : proposal.avgB)}P
+                    평균 MMR {Math.round(team === 'A' ? proposal.avgA : proposal.avgB)}점
                   </div>
                 </div>
               ))}
             </div>
             <div className={`text-center text-xs mb-5 ${proposal.diff > BALANCE_THRESHOLD ? 'text-yellow-400' : 'text-green-400'}`}>
-              팀 점수 차이: {Math.round(proposal.diff)}P
-              {proposal.diff > BALANCE_THRESHOLD && ' ⚠️ 200P 초과 — 불균형 주의'}
+              팀 MMR 차이: {Math.round(proposal.diff)}점
+              {proposal.diff > BALANCE_THRESHOLD && ' ⚠️ 200점 초과 — 불균형 주의'}
             </div>
             <p className="text-center text-xs text-gray-500 mb-6">
               {isProposer ? '상대방의 동의를 기다리고 있습니다...' : '매치 시작에 동의하시겠습니까?'}
@@ -206,7 +206,7 @@ function TwoMatchSuggestion({ players, onSelectMatch }) {
                 <div className="text-blue-400">A: {t.teamA.map(p => p.ByID || p.discord_name).join(', ')}</div>
                 <div className="text-red-400">B: {t.teamB.map(p => p.ByID || p.discord_name).join(', ')}</div>
                 <div className={diff > BALANCE_THRESHOLD ? 'text-yellow-400' : 'text-green-400'}>
-                  차이: {Math.round(diff)}P {diff > BALANCE_THRESHOLD ? '⚠️' : '✓'}
+                  차이: {Math.round(diff)}점 {diff > BALANCE_THRESHOLD ? '⚠️' : '✓'}
                 </div>
               </div>
             )}
@@ -375,7 +375,7 @@ export default function LadderDashboard({ onMatchEnter }) {
 
     if (diff > BALANCE_THRESHOLD) {
       const ok = window.confirm(
-        `⚠️ 팀 점수 차이 ${Math.round(diff)}P — 200P 초과입니다.\n불균형 매치입니다. 계속 진행하시겠습니까?`
+        `⚠️ 팀 MMR 차이 ${Math.round(diff)}점 — 200점 초과입니다.\n불균형 매치입니다. 계속 진행하시겠습니까?`
       );
       if (!ok) return;
     }
@@ -482,7 +482,7 @@ export default function LadderDashboard({ onMatchEnter }) {
               5대5는 공식 권장 포맷이 아닙니다.<br />
               모든 참가자의 동의가 필요하며 진행에 어려움이 있을 수 있습니다.<br /><br />
               경기 형식: BO7 (4선승제)<br />
-              래더 점수에 영향을 미칩니다.
+              MMR에 영향을 미칩니다.
             </p>
             <div className="flex gap-3">
               <button
@@ -531,9 +531,9 @@ export default function LadderDashboard({ onMatchEnter }) {
               <p className="text-cyan-300 font-bold">{myProfile?.race || '-'}</p>
             </div>
             <div>
-              <p className="text-gray-500 text-[10px] uppercase tracking-wider">래더 포인트</p>
+              <p className="text-gray-500 text-[10px] uppercase tracking-wider">MMR</p>
               <p className="text-yellow-400 font-bold text-xl drop-shadow-[0_0_5px_rgba(234,179,8,0.6)]">
-                {myProfile?.ladder_points ?? myStats?.ladders_points ?? 1000} P
+                {myProfile?.ladder_points ?? myStats?.ladders_points ?? 1000}점
               </p>
             </div>
             <div>
@@ -620,7 +620,7 @@ export default function LadderDashboard({ onMatchEnter }) {
                   </div>
                   <div className="flex items-center gap-4 text-xs">
                     <span className={`font-bold ${TIER_COLORS[tier]}`}>{tier}</span>
-                    <span className="text-yellow-400 font-bold">{p.ladder_points || 1000} P</span>
+                    <span className="text-yellow-400 font-bold">{p.ladder_points || 1000}점</span>
                     <span className="text-gray-600 hidden sm:inline">{queueMinutes}분</span>
                   </div>
                 </div>
@@ -664,31 +664,31 @@ export default function LadderDashboard({ onMatchEnter }) {
             </p>
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <p className="text-blue-400 text-xs font-bold mb-2">TEAM A — 평균 {Math.round(avgA)}P</p>
+                <p className="text-blue-400 text-xs font-bold mb-2">TEAM A — 평균 MMR {Math.round(avgA)}점</p>
                 <div className="space-y-1">
                   {teams.teamA.map(p => (
                     <div key={p.id} className="text-xs text-gray-300 flex items-center gap-2">
                       <span className="text-cyan-600 w-4">{getRaceIcon(p.race)}</span>
                       <span className="flex-1 truncate">{getDisplayName(p)}</span>
-                      <span className="text-yellow-400">{p.ladder_points || 1000}</span>
+                      <span className="text-yellow-400">{p.ladder_points || 1000}점</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div className="text-center px-3">
                 <div className={`font-black text-2xl ${balanceDiff > BALANCE_THRESHOLD ? 'text-yellow-400' : 'text-green-400'}`}>
-                  {Math.round(balanceDiff)}P
+                  {Math.round(balanceDiff)}점
                 </div>
-                <div className="text-gray-600 text-[10px]">차이</div>
+                <div className="text-gray-600 text-[10px]">MMR 차이</div>
               </div>
               <div className="flex-1 text-right">
-                <p className="text-red-400 text-xs font-bold mb-2">TEAM B — 평균 {Math.round(avgB)}P</p>
+                <p className="text-red-400 text-xs font-bold mb-2">TEAM B — 평균 MMR {Math.round(avgB)}점</p>
                 <div className="space-y-1">
                   {teams.teamB.map(p => (
                     <div key={p.id} className="text-xs text-gray-300 flex items-center gap-2 flex-row-reverse">
                       <span className="text-cyan-600 w-4">{getRaceIcon(p.race)}</span>
                       <span className="flex-1 truncate text-right">{getDisplayName(p)}</span>
-                      <span className="text-yellow-400">{p.ladder_points || 1000}</span>
+                      <span className="text-yellow-400">{p.ladder_points || 1000}점</span>
                     </div>
                   ))}
                 </div>

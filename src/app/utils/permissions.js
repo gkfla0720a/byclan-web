@@ -97,10 +97,10 @@ export const ROLE_PERMISSIONS = {
     icon: '⭐'
   },
 
-  // 일반 길드원 - 정식 멤버
+  // 테스트 신청자 - 정식 클랜원 전 단계
   associate: {
-    name: '준회원',
-    description: '회원가입 직후 기본 등급',
+    name: '테스트신청자',
+    description: '테스트 신청 전후 확인용 등급',
     level: 50,
     permissions: [
       'match.join',        // 매치 참여
@@ -111,6 +111,22 @@ export const ROLE_PERMISSIONS = {
     ],
     color: '#95E1D3',
     icon: '🎮'
+  },
+
+  // 일반 길드원 - 정식 멤버
+  member: {
+    name: '일반 클랜원',
+    description: '정식 일반 클랜원',
+    level: 50,
+    permissions: [
+      'match.join',
+      'ladder.play',
+      'community.post',
+      'profile.edit',
+      'tournament.join'
+    ],
+    color: '#60A5FA',
+    icon: '🛡️'
   },
 
   // 신입 길드원 - 신규 멤버
@@ -207,7 +223,7 @@ export const PermissionChecker = {
       case 'senior':
         return ['developer', 'master', 'admin', 'elite'].includes(userRole);
       case 'members':
-        return ['associate', 'elite', 'admin', 'master', 'developer'].includes(userRole);
+        return ['member', 'associate', 'elite', 'admin', 'master', 'developer'].includes(userRole);
       default:
         return false;
     }
@@ -221,15 +237,15 @@ export const PermissionChecker = {
       '가입 심사': ['developer', 'master', 'admin', 'elite'],
       '운영진게시판': ['developer', 'master', 'admin'],
       '길드원 관리': ['developer', 'master', 'admin'],
-      '대시보드': ['rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '랭킹': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '공지사항': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '자유게시판': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '프로필': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '알림': ['applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '대시보드': ['rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '랭킹': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '공지사항': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '자유게시판': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '프로필': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '알림': ['applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
       '가입신청': ['visitor'], // 직접 메뉴 진입은 사용하지 않지만 호환성 유지
-      '가입안내': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '클랜원': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '가입안내': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '클랜원': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
       '정회원 전환신청': ['rookie'] // 신입 길드원만 정회원 신청
     };
 
