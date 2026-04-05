@@ -96,6 +96,32 @@ function HomeContent({ navigateTo }) {
         </div>
       </section>
 
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          {
+            title: '클랜 성향',
+            icon: '🌐',
+            desc: 'ByClan은 스타크래프트 빠른무한 유저가 꾸준히 접속해 경쟁하고 교류하는 레더 중심 클랜입니다.'
+          },
+          {
+            title: '관전 재미',
+            icon: '⚡',
+            desc: '경기 구경, 최근 변화가 큰 플레이어 체크, 포인트 베팅까지 방문자도 분위기를 빠르게 파악할 수 있습니다.'
+          },
+          {
+            title: '가입 동선',
+            icon: '📝',
+            desc: '로그인 없이 개요와 가입 절차를 먼저 보고, 필요할 때만 회원가입·가입신청으로 이어지도록 구성했습니다.'
+          },
+        ].map((item) => (
+          <div key={item.title} className="cyber-card p-5 rounded-xl">
+            <div className="text-2xl mb-2">{item.icon}</div>
+            <h3 className="text-cyan-400 font-bold text-sm mb-2">{item.title}</h3>
+            <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>
+          </div>
+        ))}
+      </section>
+
       {/* 랭킹 + 소식 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <section
@@ -152,7 +178,7 @@ function HomeContent({ navigateTo }) {
         <h3 className="text-base font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2">🚀 빠른 접근</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: '📝', label: '가입 신청', view: '가입신청' },
+            { icon: '📖', label: '가입 안내', view: '가입안내' },
             { icon: '⚔️', label: '매치 참여', view: '대시보드' },
             { icon: '💬', label: '커뮤니티', view: '자유게시판' },
             { icon: '🏆', label: '랭킹 보기', view: '랭킹' },
