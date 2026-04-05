@@ -8,7 +8,7 @@ function getDiscordIdentity(authUser) {
   const isDiscordProvider =
     authUser?.app_metadata?.provider === 'discord' ||
     authUser?.user_metadata?.provider === 'discord' ||
-    Boolean(discordIdentity);
+    !!discordIdentity;
 
   return {
     isDiscordProvider,
