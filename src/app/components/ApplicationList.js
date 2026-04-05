@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker } from '../utils/permissions';
-import { useApplicationProcess } from '../utils/joinProcess';
 
 export default function ApplicationList() {
   const [applications, setApplications] = useState([]);
@@ -17,8 +16,7 @@ export default function ApplicationList() {
   // ✨ 피드백 팝업창 상태 관리
   const [modalData, setModalData] = useState({ isOpen: false, app: null, status: '', feedback: '' });
 
-  const { processTestResult } = useApplicationProcess();
-
+  
   useEffect(() => {
     checkAuthAndFetch();
   }, [activeTab]); // 탭이 바뀔 때마다 데이터를 새로 불러옵니다.

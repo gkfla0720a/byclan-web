@@ -3,17 +3,19 @@ import { supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 
 export function useAuth() {
-  const [password, setPassword] = useState('');
-  const [isAuthorized, setIsAuthorized] = useState(false);
   const [profile, setProfile] = useState(null);
   const [activeMatchId, setActiveMatchId] = useState(null);
   const [user, setUser] = useState(null);
   const [needsSetup, setNeedsSetup] = useState(false);
-
-  const CORRECT_PASSWORD = process.env.DEV_ACCESS_PASSWORD || "1990";
+  const [authLoading, setAuthLoading] = useState(true);
 
   const loadUserData = async (authUser) => {
-    if (!authUser) return;
+    if (!authUser) {
+      setUser(null);
+      setProfile(null);
+      setAuthLoading(false);
+      return;
+    }
 
     setUser(authUser);
 
@@ -23,18 +25,9 @@ export function useAuth() {
       .eq('id', authUser.id)
       .single();
 
-    // 디버그 로그
-    console.log('🔍 프로필 로딩 시도:', {
-      userId: authUser.id,
-      profileData: p,
-      profileError,
-      errorCode: profileError?.code
-    });
-
     if (profileError) {
-      // 프로필이 없으면 방문자 상태 (기본 프로필 생성)
       if (profileError.code === 'PGRST116') {
-        console.log('📝 프로필 없음 - visitor 생성 중...');
+        // 프로필 없음 – visitor 기본 프로필 생성
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -52,12 +45,10 @@ export function useAuth() {
 
         if (insertError) {
           console.error('프로필 생성 실패:', insertError);
+          setAuthLoading(false);
           throw insertError;
         }
 
-        console.log('✅ visitor 프로필 생성 성공');
-
-        // 생성된 프로필 다시 로드
         const { data: newProfile } = await supabase
           .from('profiles')
           .select('*')
@@ -66,23 +57,24 @@ export function useAuth() {
 
         setProfile(newProfile);
         setNeedsSetup(false);
+        setAuthLoading(false);
         return;
       }
+      setAuthLoading(false);
       throw profileError;
     }
 
-    console.log('✅ 프로필 로드 성공:', p);
     setProfile(p);
 
-    // 방문자/신규 가입자 처리
     if (p.role === 'visitor' || p.role === 'applicant') {
       setNeedsSetup(false);
+      setAuthLoading(false);
       return;
     }
 
     setNeedsSetup(false);
 
-    // 래더 매치 확인은 정식 멤버만
+    // 진행 중인 래더 매치 확인 (정식 멤버만)
     if (['associate', 'elite', 'admin', 'master', 'developer'].includes(p.role)) {
       try {
         const { data: m, error: matchError } = await supabase
@@ -93,40 +85,31 @@ export function useAuth() {
           .or(`team_b_ids.cs.{${authUser.id}}`)
           .maybeSingle();
 
-        if (matchError) {
-          console.log('래더 매치 확인 실패 (정상):', matchError.message);
-        } else if (m) {
+        if (!matchError && m) {
           setActiveMatchId(m.id);
         }
-      } catch (matchError) {
-        console.log('래더 매치 확인 중 오류:', matchError.message);
+      } catch {
+        // 래더 매치 확인 실패는 무시
       }
     }
+    setAuthLoading(false);
   };
 
   useEffect(() => {
-    if (!isAuthorized) return;
-    
     const initializeData = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        if (!session?.user) return;
-
-        await loadUserData(session.user);
-      } catch (error) {
-        // 인증 관련 오류는 정상적인 상황일 수 있음
-        if (error.message.includes('Auth session missing') || 
-            error.message.includes('column ladder_matches.team_a') ||
-            error.message.includes('malformed array literal') ||
-            error.message.includes('22P02')) {
-          console.log('인증 초기화 상태:', error.message);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await loadUserData(session.user);
         } else {
-          console.error('인증 데이터 초기화 실패:', error);
+          setAuthLoading(false);
         }
+      } catch (error) {
+        console.error('인증 초기화 실패:', error);
+        setAuthLoading(false);
       }
     };
-    
+
     initializeData();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -136,7 +119,6 @@ export function useAuth() {
         setActiveMatchId(null);
         return;
       }
-
       if (session?.user) {
         try {
           await loadUserData(session.user);
@@ -149,45 +131,20 @@ export function useAuth() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [isAuthorized]);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (password === CORRECT_PASSWORD) {
-      setIsAuthorized(true);
-    } else {
-      alert("비밀번호가 틀렸습니다!");
-    }
-  };
+  }, []);
 
   const getPermissions = () => {
     const profileRole = profile?.role;
     const userRole = profileRole?.trim().toLowerCase();
     const roleInfo = ROLE_PERMISSIONS[userRole];
-    
-    // 디버그 로그
-    console.log('🔍 권한 계산:', {
-      profile,              // 전체 profile 상태 확인
-      profileRole,
-      userRole,
-      roleInfo,
-      isDeveloper: userRole === 'developer',
-      availableRoles: Object.keys(ROLE_PERMISSIONS),
-      profileData: profile   // profileData와 profile가 같은지 확인
-    });
-    
+
     return {
-      // 기본 권한 그룹
       isDeveloper: userRole === 'developer',
       isManagement: PermissionChecker.isInGroup(userRole, 'management'),
       isSenior: PermissionChecker.isInGroup(userRole, 'senior'),
       isMember: PermissionChecker.isInGroup(userRole, 'members'),
-      
-      // 레벨 기반 권한
       level: roleInfo?.level || 0,
       roleInfo: roleInfo || null,
-      
-      // 특정 권한 확인 함수들
       can: {
         manageUsers: PermissionChecker.hasPermission(userRole, 'user.manage_all'),
         manageClan: PermissionChecker.hasPermission(userRole, 'clan.admin'),
@@ -199,27 +156,17 @@ export function useAuth() {
         moderateLadder: PermissionChecker.hasPermission(userRole, 'ladder.admin'),
         playLadder: PermissionChecker.hasPermission(userRole, 'ladder.play')
       },
-      
-      // 메뉴 접근 권한
-      canAccessMenu: (menuPath) => {
-        const result = PermissionChecker.canAccessMenu(userRole, menuPath);
-        console.log('🔍 메뉴 접근 권한:', { userRole, menuPath, result });
-        return result;
-      },
-      
-      // 권한 레벨 비교
+      canAccessMenu: (menuPath) => PermissionChecker.canAccessMenu(userRole, menuPath),
       hasLevel: (requiredLevel) => PermissionChecker.hasLevel(userRole, requiredLevel)
     };
   };
 
   const handleAuthSuccess = (authUser) => {
     setUser(authUser);
-    // 프로필 확인은 useEffect에서 자동으로 처리됨
   };
 
   const handleSetupComplete = () => {
     setNeedsSetup(false);
-    // 프로필 다시 로드
     if (user) {
       const loadProfile = async () => {
         const { data } = await supabase
@@ -234,10 +181,12 @@ export function useAuth() {
   };
 
   return {
-    password,
-    setPassword,
-    isAuthorized,
-    setIsAuthorized,
+    // Legacy password gate fields kept for backward compatibility but always true
+    password: '',
+    setPassword: () => {},
+    isAuthorized: true,
+    setIsAuthorized: () => {},
+    // ─────────────────────────────────────────────
     profile,
     setProfile,
     activeMatchId,
@@ -246,7 +195,7 @@ export function useAuth() {
     setUser,
     needsSetup,
     setNeedsSetup,
-    handleLogin,
+    authLoading,
     getPermissions,
     handleAuthSuccess,
     handleSetupComplete

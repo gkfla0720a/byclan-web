@@ -16,6 +16,8 @@ import AdminBoard from './components/AdminBoard';
 import MyProfile from './components/MyProfile';
 import NotificationCenter from './components/NotificationCenter';
 import DevConsole from './components/DevConsole';
+import LadderPreview from './components/LadderPreview';
+import ProfileSidebar from './components/ProfileSidebar';
 
 // 페이지 컴포넌트들
 import HomeContent from './pages/HomeContent';
@@ -35,179 +37,194 @@ import GuildManagement from './components/GuildManagement';
 // === [메인 렌더링] ===
 export default function Home() {
   const [activeView, setActiveView] = useState('Home');
+  const [showAuthModal, setShowAuthModal] = useState(false);
   
   const {
-    password,
-    setPassword,
-    isAuthorized,
     profile,
+    setProfile,
     activeMatchId,
     setActiveMatchId,
     user,
     needsSetup,
-    handleLogin,
+    authLoading,
     getPermissions,
     handleAuthSuccess,
     handleSetupComplete
   } = useAuth();
 
-  // [관문 1] 개발 서버 비밀번호가 통과되지 않은 경우
-  if (!isAuthorized) {
+  // navigateTo 래퍼: '로그인' 뷰는 모달로 처리
+  const navigateTo = (view) => {
+    if (view === '로그인') {
+      setShowAuthModal(true);
+      return;
+    }
+    setActiveView(view);
+    setShowAuthModal(false);
+  };
+
+  // 로그인 모달 표시
+  if (showAuthModal && !user) {
     return (
-      <div className="min-h-screen bg-gray-900 flex flex-col justify-center items-center text-white p-4">
-        <h1 className="text-3xl font-black mb-8 text-yellow-500">ByClan 개발 서버</h1>
-        <form onSubmit={handleLogin} className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-          <input 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            placeholder="비밀번호 입력" 
-            className="flex-grow p-4 rounded-xl bg-gray-800 border border-gray-700 text-white" 
-          />
-          <button type="submit" className="p-4 bg-yellow-500 text-gray-900 font-bold rounded-xl hover:bg-yellow-400">입장</button>
-        </form>
+      <div className="min-h-screen bg-[#06060a] flex flex-col justify-center items-center p-4 relative z-10">
+        <ImprovedAuthForm onSuccess={(u) => { handleAuthSuccess(u); setShowAuthModal(false); }} />
+        <button
+          onClick={() => setShowAuthModal(false)}
+          className="mt-4 text-gray-500 hover:text-gray-300 text-sm underline"
+        >
+          ← 돌아가기
+        </button>
       </div>
     );
   }
 
-  // [관문 2] 로그인이 필요한 경우
-  if (isAuthorized && !user) {
-    return <ImprovedAuthForm onSuccess={handleAuthSuccess} />;
-  }
-
-  // [관문 3] 프로필 설정이 필요한 경우
-  if (isAuthorized && user && needsSetup) {
+  // 프로필 설정이 필요한 경우 (신규 가입)
+  if (!authLoading && user && needsSetup) {
     return <AuthDashboard user={user} onSetupComplete={handleSetupComplete} />;
   }
 
-  // [관문 4] 방문자 상태인 경우
-  if (isAuthorized && user && profile && profile.role === 'visitor') {
-    return <VisitorWelcome user={user} onApplicationSubmit={() => {
-      // 가입 신청 후 프로필 다시 로드
-      const reloadProfile = async () => {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        if (data) setProfile(data);
-      };
-      reloadProfile();
-    }} />;
-  }
-
-  // [관문 5] 신규 가입자 상태인 경우
-  if (isAuthorized && user && profile && profile.role === 'applicant') {
+  // 신청 대기 중인 경우 (applicant)
+  if (!authLoading && user && profile && profile.role === 'applicant') {
     return (
-      <div className="min-h-screen bg-[#0a0a0c] flex flex-col justify-center items-center p-4">
-        <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-2xl max-w-md text-center">
-          <div className="text-6xl mb-4">⏳</div>
-          <h2 className="text-2xl font-bold text-yellow-400 mb-2">테스트 대기 중</h2>
-          <p className="text-gray-300 mb-4">
-            가입 신청이 접수되었습니다.<br/>
-            테스트 결과를 기다려주세요.
-          </p>
-          <div className="text-sm text-gray-400">
-            신청 현황은 &apos;가입 신청&apos; 메뉴에서 확인할 수 있습니다.
+      <div className="min-h-screen bg-[#06060a] flex flex-col">
+        <Header navigateTo={navigateTo} />
+        <main className="flex-grow flex flex-col justify-center items-center p-4 relative z-10">
+          <div className="cyber-card p-8 rounded-xl max-w-md w-full text-center">
+            <div className="text-6xl mb-4">⏳</div>
+            <h2 className="text-2xl font-bold text-yellow-400 mb-2">테스트 대기 중</h2>
+            <p className="text-gray-300 mb-4">
+              가입 신청이 접수되었습니다.<br/>
+              테스트 결과를 기다려주세요.
+            </p>
+            <div className="text-sm text-gray-400">
+              신청 현황은 &apos;가입 신청&apos; 메뉴에서 확인할 수 있습니다.
+            </div>
           </div>
-        </div>
+        </main>
+        <Footer />
       </div>
     );
   }
 
-  // --- [권한 로직 통합] ---
+  // --- [권한 로직] ---
   const permissions = getPermissions();
-  
-  // 임시 개발자 권한 우회 (이메일 기반)
-  const userEmail = user?.email;
-  const isDevByEmail = userEmail?.includes('developer') || userEmail?.includes('admin') || userEmail?.includes('test') || userEmail?.includes('gkfla');
-  
-  // 디버그 로그
-  console.log('🔍 권한 확인:', {
-    userRole: profile?.role,
-    isDeveloper: permissions.isDeveloper,
-    isDevByEmail,
-    userEmail,
-    activeView,
-    canAccessAdmin: permissions.canAccessMenu('관리자'),
-    canAccessGuild: permissions.canAccessMenu('길드원 관리')
-  });
+  const isGuest = !user;
+  const isVisitor = user && profile && profile.role === 'visitor';
+  // 래더 플레이 가능 여부
+  const canPlayLadder = permissions.can?.playLadder;
 
-  // [최종] 모든 관문 통과 후 메인 서비스 레이아웃
+  // 래더 뷰 접근 제어
+  const isLadderView = activeView === '대시보드' || activeView === 'BY래더시스템';
+
+  // 현재 뷰 렌더링 결정
+  const renderContent = () => {
+    // 홈
+    if (activeView === 'Home') return <HomeContent navigateTo={navigateTo} />;
+
+    // 공개 페이지들
+    if (activeView === '개요') return <ClanOverview />;
+    if (activeView === '가입안내') return <VisitorWelcome user={user} onApplicationSubmit={() => {
+      const reload = async () => {
+        if (!user) return;
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        if (data) setProfile(data);
+      };
+      reload();
+    }} />;
+    if (activeView === '가입신청') {
+      if (!user) {
+        return (
+          <div className="w-full max-w-5xl mx-auto mt-8 text-center">
+            <div className="cyber-card p-8 rounded-xl inline-block">
+              <div className="text-4xl mb-4">🔐</div>
+              <p className="text-gray-300 mb-4">가입 신청은 로그인 후 이용 가능합니다.</p>
+              <button onClick={() => setShowAuthModal(true)} className="px-6 py-2.5 rounded-lg font-bold btn-neon text-sm">
+                로그인 / 회원가입
+              </button>
+            </div>
+          </div>
+        );
+      }
+      return <VisitorWelcome user={user} onApplicationSubmit={() => {}} />;
+    }
+    if (activeView === '정회원 전환신청') return <PagePlaceholder title="정회원 전환 신청은 신입 길드원만 가능합니다." />;
+    if (activeView === '공지사항' || activeView === 'BSL 공지사항' || activeView === '토너먼트 공지') return <NoticeBoard />;
+    if (activeView === '자유게시판' || activeView === '클랜원 소식') return <CommunityBoard />;
+    if (activeView === '랭킹' || activeView === '시즌별 랭킹') return <RankingBoard />;
+    if (activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트') return <ClanTournament />;
+    if (activeView === '경기 영상' || activeView === '사진 갤러리') return <MediaGallery />;
+
+    // 래더 시스템 (권한 없으면 미리보기)
+    if (isLadderView) {
+      if (!canPlayLadder) {
+        return <LadderPreview navigateTo={navigateTo} isGuest={isGuest || isVisitor} />;
+      }
+      return !activeMatchId
+        ? <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
+        : <MatchCenter matchId={activeMatchId} onExit={() => setActiveMatchId(null)} />;
+    }
+
+    // 운영 관리 영역
+    if (activeView === '가입 심사' || activeView === '관리자' || activeView === '운영진게시판' || activeView === '길드원 관리') {
+      if (!user) return <PagePlaceholder title="로그인이 필요합니다." />;
+      if (activeView === '가입 심사') return <ApplicationList />;
+      if (activeView === '관리자') return <AdminBoard />;
+      if (activeView === '길드원 관리') return <GuildManagement />;
+      return <AdminBoard />;
+    }
+
+    // 개발자 콘솔
+    if (activeView === '개발자') {
+      return user ? <DevConsole navigateTo={navigateTo} /> : <PagePlaceholder title="로그인이 필요합니다." />;
+    }
+
+    // 프로필 / 알림
+    if (activeView === '프로필') {
+      if (!user) {
+        return (
+          <div className="w-full max-w-5xl mx-auto mt-8 text-center">
+            <div className="cyber-card p-8 rounded-xl inline-block">
+              <div className="text-4xl mb-4">👤</div>
+              <p className="text-gray-300 mb-4">프로필은 로그인 후 이용 가능합니다.</p>
+              <button onClick={() => setShowAuthModal(true)} className="px-6 py-2.5 rounded-lg font-bold btn-neon text-sm">
+                로그인
+              </button>
+            </div>
+          </div>
+        );
+      }
+      return <MyProfile navigateTo={navigateTo} />;
+    }
+    if (activeView === '알림') return user ? <NotificationCenter /> : <PagePlaceholder title="로그인이 필요합니다." />;
+
+    return <PagePlaceholder title={activeView} />;
+  };
+
+  // 사이드바가 필요한 뷰
+  const sidebarViews = ['Home', '개요', '가입안내', '가입신청', '공지사항', 'BSL 공지사항', '토너먼트 공지', '자유게시판', '클랜원 소식', '랭킹', '시즌별 랭킹', '대시보드', 'BY래더시스템', 'BSL 경기일정 및 결과', '진행중인 토너먼트', '경기 영상', '사진 갤러리'];
+  const showSidebar = sidebarViews.includes(activeView);
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a0c] text-gray-200 font-semibold" style={{ fontFamily: "'Pretendard', sans-serif" }}>
-      <Header navigateTo={setActiveView} />
+    <div className="min-h-screen flex flex-col bg-[#06060a] text-gray-200 font-semibold relative" style={{ fontFamily: "'Pretendard', sans-serif" }}>
+      <Header navigateTo={navigateTo} />
       
-      <main className="flex-grow w-full relative z-10 flex flex-col items-center justify-start px-2 sm:px-8 mb-10">
-        
-        {/* 🗺️ activeView 매핑 (개발자 슈퍼 유저 권한 적용) */}
-        {activeView === 'Home' ? <HomeContent navigateTo={setActiveView} /> : 
-         activeView === '개요' ? <ClanOverview /> : 
-         activeView === '가입안내' || activeView === '가입신청' ? <PagePlaceholder title="가입 신청은 방문자 환영 페이지에서 가능합니다." /> :
-         activeView === '정회원 전환신청' ? <PagePlaceholder title="정회원 전환 신청은 신입 길드원만 가능합니다." /> :
-         activeView === '공지사항' || activeView === 'BSL 공지사항' || activeView === '토너먼트 공지' ? <NoticeBoard /> : 
-         activeView === '자유게시판' || activeView === '클랜원 소식' ? <CommunityBoard /> :
-
-         /* ⚔️ 래더 시스템 매핑 */
-         (activeView === '대시보드' || activeView === 'BY래더시스템') ? (
-           !activeMatchId ? (
-             <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
-           ) : (
-             <MatchCenter matchId={activeMatchId} onExit={() => setActiveMatchId(null)} />
-           )
-         ) : 
-
-         activeView === '랭킹' || activeView === '시즌별 랭킹' ? <RankingBoard /> : 
-         activeView === 'BSL 경기일정 및 결과' || activeView === '진행중인 토너먼트' ? <ClanTournament /> : 
-         activeView === '경기 영상' || activeView === '사진 갤러리' ? <MediaGallery /> : 
-
-         /* 👑 운영 관리 영역 */
-         (activeView === '가입 심사' || activeView === '관리자' || activeView === '운영진게시판' || activeView === '길드원 관리') ? (
-           // 임시로 모든 로그인 사용자에게 접근 권한 부여
-           (() => {
-             console.log('🔍 운영 관리 영역 접근 시도:', {
-               activeView,
-               user: !!user,
-               userEmail: user?.email,
-               permissions: {
-                 isDeveloper: permissions.isDeveloper,
-                 isDevByEmail,
-                 canAccessAdmin: permissions.canAccessMenu('관리자'),
-                 canAccessGuild: permissions.canAccessMenu('길드원 관리')
-               }
-             });
-             return user;
-           })() ? (
-             (() => {
-               console.log('📌 렌더링 선택:', { activeView });
-               if (activeView === '가입 심사') {
-                 console.log('📌 ApplicationList 렌더링');
-                 return <ApplicationList />;
-               } else if (activeView === '관리자') {
-                 console.log('📌 AdminBoard 렌더링');
-                 return <AdminBoard />;
-               } else if (activeView === '길드원 관리') {
-                 console.log('📌 GuildManagement 렌더링');
-                 return <GuildManagement />;
-               } else {
-                 console.log('📌 기본(AdminBoard) 렌더링');
-                 return <AdminBoard />;
-               }
-             })()
-           ) : <PagePlaceholder title="로그인이 필요합니다." />
-         ) :
-
-         /* ⚙️ 시스템 개발 영역 */
-         activeView === '개발자' ? (
-           user ? <DevConsole navigateTo={setActiveView} /> : <PagePlaceholder title="로그인이 필요합니다." />
-         ) :
-
-         activeView === '프로필' ? <MyProfile navigateTo={setActiveView} /> :
-         activeView === '알림' ? <NotificationCenter /> :
-         <PagePlaceholder title={activeView} />}
+      <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
+        {showSidebar ? (
+          <div className="w-full flex gap-4 mt-4">
+            {/* 좌측 프로필 사이드바 */}
+            <ProfileSidebar profile={profile} user={user} navigateTo={navigateTo} />
+            {/* 메인 콘텐츠 */}
+            <div className="flex-1 min-w-0">
+              {renderContent()}
+            </div>
+          </div>
+        ) : (
+          <div className="w-full">
+            {renderContent()}
+          </div>
+        )}
       </main>
       
-      {/* 개발자 설정 패널 - 임시로 모든 사용자에게 표시 */}
+      {/* 개발자 설정 패널 */}
       {user && <DevSettingsPanel />}
       
       <Footer />
