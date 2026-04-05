@@ -37,7 +37,7 @@ function DiscordLinkPanel({ user, onLinked }) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
-          redirectTo: `${window.location.origin}/auth/discord-link`,
+          redirectTo: `${window.location.origin}/auth/callback`,
           scopes: 'identify guilds'
         }
       });
@@ -109,7 +109,7 @@ function DiscordLinkPanel({ user, onLinked }) {
                 <span className="text-gray-400 text-xl">🔗</span>
                 <div>
                   <div className="text-gray-300 font-medium">Discord 미연동</div>
-                  <div className="text-gray-500 text-sm">연동 시 특별 혜택 제공</div>
+                  <div className="text-gray-500 text-sm">래더 참여 조건일 수 있으니 미리 확인하세요</div>
                 </div>
               </div>
               <button
