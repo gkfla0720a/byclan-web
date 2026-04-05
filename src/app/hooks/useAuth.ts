@@ -273,6 +273,15 @@ export function useAuth(): UseAuthReturn {
     }
   }, []);
 
+  // Grants HomeGate access for authenticated users so that board, ranking,
+  // and member sections are visible without re-entering the password.
+  const ensureHomeGateAuthorized = () => {
+    if (window.sessionStorage.getItem('byclan_home_gate') !== 'authorized') {
+      window.sessionStorage.setItem('byclan_home_gate', 'authorized');
+      setIsAuthorizedState(true);
+    }
+  };
+
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -284,6 +293,10 @@ export function useAuth(): UseAuthReturn {
         await loadServerSettings();
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
+          // Logged-in users automatically pass the HomeGate so they are not
+          // shown the password prompt when opening the site in a new tab while
+          // already authenticated.
+          ensureHomeGateAuthorized();
           await loadUserData(session.user as unknown as Record<string, unknown>);
         } else {
           setAuthLoading(false);
@@ -312,6 +325,9 @@ export function useAuth(): UseAuthReturn {
         return;
       }
       if (session?.user) {
+        // Auto-pass the HomeGate for users who sign in so that board,
+        // ranking, and member sections become immediately visible.
+        ensureHomeGateAuthorized();
         try {
           await loadUserData(session.user as unknown as Record<string, unknown>);
         } catch (error) {
