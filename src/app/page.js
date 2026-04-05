@@ -60,7 +60,7 @@ export default function Home() {
 
   if (!homeGateReady) {
     return (
-      <div className="min-h-screen bg-[#06060a] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-transparent flex items-center justify-center px-4">
         <div className="w-full max-w-md cyber-card rounded-2xl p-8 text-center">
           <div className="text-gray-500 text-sm">ByClan 로딩 중...</div>
         </div>
@@ -83,7 +83,7 @@ export default function Home() {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-[#06060a] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-transparent flex items-center justify-center px-4">
         <div className="w-full max-w-md cyber-card rounded-2xl p-8 text-center">
           <div className="text-5xl mb-4">🛡️</div>
           <h1 className="text-2xl font-black text-cyan-400 mb-3" style={{ textShadow: '0 0 12px rgba(0,212,255,0.35)' }}>
@@ -131,7 +131,7 @@ export default function Home() {
   // 로그인 모달 표시
   if (showAuthModal && !user) {
     return (
-      <div className="min-h-screen bg-[#06060a] flex flex-col justify-center items-center p-4 relative z-10">
+      <div className="min-h-screen bg-transparent flex flex-col justify-center items-center p-4 relative z-10">
         <ImprovedAuthForm onSuccess={(u) => { handleAuthSuccess(u); setShowAuthModal(false); }} />
         <button
           onClick={() => setShowAuthModal(false)}
@@ -151,7 +151,7 @@ export default function Home() {
   // 신청 대기 중인 경우 (applicant)
   if (!authLoading && user && profile && profile.role === 'applicant') {
     return (
-      <div className="min-h-screen bg-[#06060a] flex flex-col">
+      <div className="min-h-screen bg-transparent flex flex-col">
         <Header navigateTo={navigateTo} />
         <main className="flex-grow flex flex-col justify-center items-center p-4 relative z-10">
           <div className="cyber-card p-8 rounded-xl max-w-md w-full text-center">

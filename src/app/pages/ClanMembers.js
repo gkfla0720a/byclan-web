@@ -17,6 +17,24 @@ function normalizeUrl(url) {
   return `https://${url}`;
 }
 
+function applyDemoStreamers(memberList) {
+  if (memberList.some((member) => member.is_streamer)) {
+    return memberList;
+  }
+
+  return memberList.map((member, index) => {
+    if (index > 2) return member;
+
+    return {
+      ...member,
+      is_streamer: true,
+      streamer_platform: 'SOOP',
+      streamer_url: 'https://www.sooplive.co.kr',
+      demo_streamer: true,
+    };
+  });
+}
+
 export default function ClanMembers() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,14 +66,14 @@ export default function ClanMembers() {
             );
 
             if (fallbackResult.error) throw fallbackResult.error;
-            setMembers(fallbackResult.data || []);
+            setMembers(applyDemoStreamers(fallbackResult.data || []));
             return;
           }
 
           throw primaryResult.error;
         }
 
-        setMembers(primaryResult.data || []);
+        setMembers(applyDemoStreamers(primaryResult.data || []));
       } catch (error) {
         console.error('클랜원 목록 로드 실패:', error);
         setMembers([]);
@@ -83,13 +101,13 @@ export default function ClanMembers() {
 
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
-      <div className="relative bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-2xl p-8 sm:p-12 text-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-700/40 to-transparent pointer-events-none" />
-        <h2 className="relative text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-cyan-400 to-blue-500 mb-4 drop-shadow-lg">
+      <div className="relative neon-panel rounded-3xl overflow-hidden p-8 sm:p-12 text-center">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_38%)] pointer-events-none" />
+        <h2 className="relative text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 via-cyan-300 to-blue-400 mb-4 drop-shadow-lg">
           클랜원 명단
         </h2>
-        <p className="relative text-gray-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-          현재 활동 중인 ByClan 멤버를 직책별로 정리했습니다.
+        <p className="relative text-slate-200 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+          기계적인 패널 감성과 네온 라인 톤으로, 현재 활동 중인 ByClan 멤버를 직책별 표 형식으로 정리했습니다.
         </p>
       </div>
 
@@ -101,58 +119,76 @@ export default function ClanMembers() {
 
       <div className="space-y-6">
         {groupedMembers.map((section) => (
-          <section key={section.key} className="rounded-xl border border-gray-700 bg-gray-900/30 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 bg-gray-900/60">
-              <h4 className="text-lg font-bold text-white">{section.title}</h4>
-              <span className="text-sm text-gray-400">{section.members.length}명</span>
+          <section key={section.key} className="neon-panel rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-cyan-400/15 bg-slate-950/60">
+              <h4 className="text-lg font-bold text-white tracking-wide">{section.title}</h4>
+              <span className="text-sm text-cyan-200/80">{section.members.length}명</span>
             </div>
 
-            <div className="divide-y divide-gray-800">
-              {section.members.map((member) => {
-                const roleMeta = getRoleMeta(member.role);
-                const streamerUrl = normalizeUrl(member.streamer_url);
+            <div className="overflow-x-auto">
+              <table className="neon-table min-w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-3 text-left font-bold">닉네임</th>
+                    <th className="px-4 py-3 text-left font-bold">디스코드</th>
+                    <th className="px-4 py-3 text-left font-bold">직책</th>
+                    <th className="px-4 py-3 text-left font-bold">종족</th>
+                    <th className="px-4 py-3 text-left font-bold">포인트</th>
+                    <th className="px-4 py-3 text-left font-bold">BJ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {section.members.map((member) => {
+                    const roleMeta = getRoleMeta(member.role);
+                    const streamerUrl = normalizeUrl(member.streamer_url);
 
-                return (
-                  <div key={member.id} className="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className="text-2xl shrink-0">{roleMeta.icon}</div>
-                      <div className="min-w-0">
-                        <div className="text-white font-bold flex items-center gap-2 flex-wrap">
-                          <span className="truncate">{member.ByID || member.discord_name || '이름 없음'}</span>
-                          {isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
-                          {member.is_streamer && <span className="text-[10px] text-pink-300 border border-pink-500/40 px-1.5 py-0.5 rounded">{member.streamer_platform || 'STREAMER'}</span>}
-                        </div>
-                        <div className="text-sm text-gray-400 truncate">{member.discord_name || '디스코드명 미등록'}</div>
-                        {member.is_streamer && streamerUrl && (
-                          <a
-                            href={streamerUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-pink-300 hover:text-pink-200 underline break-all"
+                    return (
+                      <tr key={member.id} className="hover:bg-cyan-400/4 transition-colors">
+                        <td className="px-4 py-3 text-white font-semibold">
+                          <div className="flex items-center gap-2">
+                            <span>{member.ByID || member.discord_name || '이름 없음'}</span>
+                            {isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-300">{member.discord_name || '-'}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold"
+                            style={{
+                              backgroundColor: `${roleMeta.color}18`,
+                              color: roleMeta.color,
+                              border: `1px solid ${roleMeta.color}45`,
+                            }}
                           >
-                            {streamerUrl}
-                          </a>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                      <span
-                        className="px-2 py-1 rounded-full text-xs font-bold"
-                        style={{
-                          backgroundColor: `${roleMeta.color}20`,
-                          color: roleMeta.color,
-                          border: `1px solid ${roleMeta.color}50`,
-                        }}
-                      >
-                        {roleMeta.name}
-                      </span>
-                      <span className="text-sm font-bold text-cyan-400">{member.ladder_points || 1000}P</span>
-                      <span className="text-xs text-gray-500">{member.race || 'Terran'}</span>
-                    </div>
-                  </div>
-                );
-              })}
+                            {roleMeta.name}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-300">{member.race || 'Terran'}</td>
+                        <td className="px-4 py-3 text-cyan-300 font-bold">{member.ladder_points || 1000}P</td>
+                        <td className="px-4 py-3 text-slate-200">
+                          {member.is_streamer ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-pink-300 font-semibold">BJ</span>
+                              <a
+                                href={streamerUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-pink-400/35 bg-pink-400/10 text-pink-200 hover:bg-pink-400/20 hover:text-white transition-colors"
+                                title={`${member.streamer_platform || 'SOOP'} 링크 열기`}
+                              >
+                                ▶
+                              </a>
+                              {member.demo_streamer && <span className="text-[10px] text-slate-400">임시</span>}
+                            </div>
+                          ) : (
+                            <span className="text-slate-500">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </section>
         ))}
@@ -165,8 +201,8 @@ export default function ClanMembers() {
 
 function StatCard({ label, value, accent }) {
   return (
-    <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-4">
-      <div className="text-xs text-gray-500 uppercase tracking-widest">{label}</div>
+    <div className="neon-panel rounded-2xl p-4">
+      <div className="text-xs text-cyan-100/55 uppercase tracking-[0.25em]">{label}</div>
       <div className={`mt-2 text-3xl font-black ${accent}`}>{value}</div>
     </div>
   );

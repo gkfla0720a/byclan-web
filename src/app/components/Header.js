@@ -116,7 +116,7 @@ export default function Header({ navigateTo }) {
   };
 
   return (
-    <nav ref={navRef} className="bg-gray-950 border-b border-gray-800 relative z-50">
+    <nav ref={navRef} className="relative z-50 border-b border-cyan-400/20 bg-slate-950/70 backdrop-blur-2xl shadow-[0_12px_40px_rgba(15,23,42,0.35)]">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         
         {/* 로고 & 타이틀 */}
@@ -138,16 +138,19 @@ export default function Header({ navigateTo }) {
         </div>
         
         {/* 데스크톱 메뉴 */}
-        <ul className="hidden md:flex flex-wrap gap-x-6 items-center justify-end w-full">
+        <ul className="hidden md:flex flex-wrap gap-x-4 items-center justify-end w-full">
           {menuData.map((menu, index) => (
             <li key={index} className="relative">
-              <button onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)} className="text-gray-300 hover:text-white transition-colors text-sm font-semibold">
+              <button
+                onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)}
+                className="rounded-full border border-cyan-400/15 bg-slate-900/55 px-4 py-2 text-sm font-semibold text-slate-200 transition-all hover:border-cyan-300/45 hover:bg-cyan-400/8 hover:text-cyan-100 hover:shadow-[0_0_18px_rgba(34,211,238,0.12)]"
+              >
                 {menu.title}
               </button>
               {openMenuIndex === index && (
-                <div className="absolute top-full left-0 mt-4 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col z-50 overflow-hidden">
+                <div className="absolute top-full left-0 mt-4 w-52 rounded-2xl border border-cyan-400/20 bg-slate-950/94 shadow-[0_20px_50px_rgba(8,15,26,0.55)] flex flex-col z-50 overflow-hidden backdrop-blur-xl">
                   {menu.items.map((subItem, subIndex) => (
-                    <span key={subIndex} onClick={() => handleNav(subItem)} className="px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-yellow-500 cursor-pointer transition-colors border-b border-gray-800 last:border-none">
+                    <span key={subIndex} onClick={() => handleNav(subItem)} className="px-4 py-3 text-sm text-slate-200 hover:bg-cyan-400/8 hover:text-cyan-200 cursor-pointer transition-colors border-b border-cyan-400/10 last:border-none">
                       {subItem}
                     </span>
                   ))}
@@ -159,7 +162,7 @@ export default function Header({ navigateTo }) {
           {/* 🛡️ 가입 심사 버튼 (개발자, 마스터, 어드민, 엘리트) */}
           {isDevOrHigher && (
             <li>
-              <button onClick={() => handleNav('가입 심사')} className="text-emerald-400 hover:text-emerald-300 text-sm font-bold border border-emerald-900/50 px-3 py-1 rounded bg-emerald-950/20 transition-all">
+              <button onClick={() => handleNav('가입 심사')} className="text-emerald-300 hover:text-emerald-200 text-sm font-bold border border-emerald-400/25 px-3 py-2 rounded-full bg-emerald-950/20 shadow-[0_0_14px_rgba(16,185,129,0.12)] transition-all">
                 ⚔️ 가입 심사
               </button>
             </li>
@@ -168,7 +171,7 @@ export default function Header({ navigateTo }) {
           {/* 👑 관리자 버튼 (개발자, 마스터, 어드민) */}
           {isAdminOrHigher && (
             <li>
-              <button onClick={() => handleNav('관리자')} className="text-red-400 hover:text-red-300 text-sm font-bold border border-red-900/50 px-3 py-1 rounded bg-red-950/20 transition-all">
+              <button onClick={() => handleNav('관리자')} className="text-rose-300 hover:text-rose-200 text-sm font-bold border border-rose-400/25 px-3 py-2 rounded-full bg-rose-950/20 shadow-[0_0_14px_rgba(244,63,94,0.12)] transition-all">
                 👑 관리자
               </button>
             </li>
@@ -177,7 +180,7 @@ export default function Header({ navigateTo }) {
           {/* 🛠️ 개발자 전용 버튼 (오직 개발자만!) */}
           {isDeveloper && (
             <li>
-              <button onClick={() => handleNav('개발자')} className="text-cyan-400 hover:text-cyan-300 text-sm font-bold border border-cyan-900/50 px-3 py-1 rounded bg-cyan-950/20 shadow-[0_0_10px_rgba(34,211,238,0.1)] transition-all">
+              <button onClick={() => handleNav('개발자')} className="text-cyan-200 hover:text-white text-sm font-bold border border-cyan-300/35 px-3 py-2 rounded-full bg-cyan-950/25 shadow-[0_0_18px_rgba(34,211,238,0.15)] transition-all">
                 🛠️ 개발자
               </button>
             </li>
@@ -186,13 +189,13 @@ export default function Header({ navigateTo }) {
           <li className="ml-2 flex items-center gap-3">
             {user ? (
               <>
-                <button onClick={() => handleNav('알림')} className="relative p-1 text-gray-400 hover:text-yellow-400 transition-all">
+                <button onClick={() => handleNav('알림')} className="relative p-1 text-slate-300 hover:text-cyan-200 transition-all">
                   <span className="text-lg">🔔</span>
                   {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
                 </button>
-                <button onClick={() => handleNav('프로필')} className="p-1 text-gray-400 hover:text-yellow-400 transition-all"><span className="text-lg">👤</span></button>
-                <div className="flex items-center gap-2 bg-gray-900 px-3 py-1.5 rounded-full border border-gray-700">
-                  <span className="text-xs font-bold text-gray-200">{nickname}</span>
+                <button onClick={() => handleNav('프로필')} className="p-1 text-slate-300 hover:text-cyan-200 transition-all"><span className="text-lg">👤</span></button>
+                <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-full border border-cyan-400/15 shadow-[0_0_18px_rgba(34,211,238,0.08)]">
+                  <span className="text-xs font-bold text-slate-100">{nickname}</span>
                   <button onClick={handleLogout} className="text-[10px] text-red-500 font-black ml-1">OUT</button>
                 </div>
               </>
@@ -208,14 +211,14 @@ export default function Header({ navigateTo }) {
                   provider: 'discord',
                   options: { redirectTo }
                 });
-              }} className="px-4 py-1.5 border border-[#5865F2] rounded text-[#5865F2] font-bold text-sm">Discord Login</button>
+              }} className="px-4 py-2 border border-cyan-300/35 rounded-full text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(88,101,242,0.12)] font-bold text-sm">Discord Login</button>
             )}
           </li>
         </ul>
 
         {/* 모바일 햄버거 메뉴 */}
         <div className="md:hidden flex items-center gap-3">
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-gray-300 hover:text-white p-2 text-xl">
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-slate-200 hover:text-cyan-200 p-2 text-xl border border-cyan-400/15 rounded-xl bg-slate-950/60">
             {isMobileMenuOpen ? '✕' : '☰'}
           </button>
         </div>
@@ -223,19 +226,19 @@ export default function Header({ navigateTo }) {
 
       {/* 모바일 전용 오버레이 */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-gray-950/98 backdrop-blur-xl border-b border-gray-800 z-50 flex flex-col max-h-[85vh] overflow-y-auto animate-fade-in-down shadow-2xl">
+        <div className="md:hidden absolute top-full left-0 w-full bg-slate-950/95 backdrop-blur-2xl border-b border-cyan-400/15 z-50 flex flex-col max-h-[85vh] overflow-y-auto animate-fade-in-down shadow-[0_24px_60px_rgba(8,15,26,0.55)]">
           {user && (
-            <div className="px-6 py-5 border-b border-gray-800 bg-gray-900/30 flex flex-col gap-4">
+            <div className="px-6 py-5 border-b border-cyan-400/10 bg-slate-900/35 flex flex-col gap-4">
               <div className="flex justify-between items-center">
-                <span className="font-black text-yellow-500 text-sm">{nickname}</span>
-                <button onClick={handleLogout} className="text-[10px] text-red-400 font-black bg-red-950/30 px-3 py-2 rounded-lg border border-red-900/30">LOGOUT</button>
+                <span className="font-black text-cyan-200 text-sm">{nickname}</span>
+                <button onClick={handleLogout} className="text-[10px] text-red-300 font-black bg-red-950/30 px-3 py-2 rounded-lg border border-red-400/20">LOGOUT</button>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleNav('알림')} className="flex-1 bg-gray-900 p-3 rounded-xl border border-gray-800 text-xs font-bold text-gray-300 flex justify-center items-center gap-2">
+                <button onClick={() => handleNav('알림')} className="flex-1 bg-slate-950/70 p-3 rounded-xl border border-cyan-400/10 text-xs font-bold text-slate-200 flex justify-center items-center gap-2">
                   <span>🔔 알림</span>
                   {unreadCount > 0 && <span className="bg-red-600 text-[9px] px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
                 </button>
-                <button onClick={() => handleNav('프로필')} className="flex-1 bg-gray-900 p-3 rounded-xl border border-gray-800 text-gray-300 font-bold text-xs flex justify-center items-center gap-2">
+                <button onClick={() => handleNav('프로필')} className="flex-1 bg-slate-950/70 p-3 rounded-xl border border-cyan-400/10 text-slate-200 font-bold text-xs flex justify-center items-center gap-2">
                   <span>👤 프로필</span>
                 </button>
               </div>
@@ -243,15 +246,15 @@ export default function Header({ navigateTo }) {
           )}
           
           {menuData.map((menu, index) => (
-            <div key={index} className="flex flex-col border-b border-gray-800/30">
-              <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className="px-6 py-4 flex justify-between items-center text-gray-200 font-black text-sm">
+            <div key={index} className="flex flex-col border-b border-cyan-400/10">
+              <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className="px-6 py-4 flex justify-between items-center text-slate-100 font-black text-sm">
                 {menu.title}
-                <span className="text-[10px]">{mobileAccordionIndex === index ? '▲' : '▼'}</span>
+                <span className="text-[10px] text-cyan-300">{mobileAccordionIndex === index ? '▲' : '▼'}</span>
               </button>
               {mobileAccordionIndex === index && (
-                <div className="flex flex-col bg-black/20 py-2">
+                <div className="flex flex-col bg-cyan-400/4 py-2">
                   {menu.items.map((sub, i) => (
-                    <span key={i} onClick={() => handleNav(sub)} className="px-10 py-3.5 text-xs text-gray-400 font-bold hover:text-yellow-500">{sub}</span>
+                    <span key={i} onClick={() => handleNav(sub)} className="px-10 py-3.5 text-xs text-slate-300 font-bold hover:text-cyan-200">{sub}</span>
                   ))}
                 </div>
               )}
@@ -260,17 +263,17 @@ export default function Header({ navigateTo }) {
 
           {/* 모바일 가입 심사 */}
           {isDevOrHigher && (
-            <button onClick={() => handleNav('가입 심사')} className="px-6 py-5 text-left text-emerald-400 font-black text-sm border-b border-gray-800/30 bg-emerald-950/5 transition-all">⚔️ 가입 심사 관리</button>
+            <button onClick={() => handleNav('가입 심사')} className="px-6 py-5 text-left text-emerald-300 font-black text-sm border-b border-cyan-400/10 bg-emerald-950/5 transition-all">⚔️ 가입 심사 관리</button>
           )}
           
           {/* 모바일 관리자 */}
           {isAdminOrHigher && (
-            <button onClick={() => handleNav('관리자')} className="px-6 py-5 text-left text-red-400 font-black text-sm border-b border-gray-800/30 bg-red-950/5 transition-all">👑 관리자 모드</button>
+            <button onClick={() => handleNav('관리자')} className="px-6 py-5 text-left text-rose-300 font-black text-sm border-b border-cyan-400/10 bg-red-950/5 transition-all">👑 관리자 모드</button>
           )}
 
           {/* 모바일 개발자 (오직 개발자만!) */}
           {isDeveloper && (
-            <button onClick={() => handleNav('개발자')} className="px-6 py-5 text-left text-cyan-400 font-black text-sm border-b border-gray-800/30 bg-cyan-950/10 transition-all underline decoration-cyan-900 underline-offset-8">🛠️ 시스템 개발자 콘솔</button>
+            <button onClick={() => handleNav('개발자')} className="px-6 py-5 text-left text-cyan-200 font-black text-sm border-b border-cyan-400/10 bg-cyan-950/10 transition-all underline decoration-cyan-400/40 underline-offset-8">🛠️ 시스템 개발자 콘솔</button>
           )}
         </div>
       )}

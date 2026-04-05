@@ -57,16 +57,16 @@ function HomeContent({ navigateTo }) {
   return (
     <div className="w-full space-y-5 animate-fade-in-down">
       {/* 히어로 배너 */}
-      <section className="relative rounded-2xl overflow-hidden border border-cyan-900/40 h-56 sm:h-72 flex flex-col items-center justify-center text-center scanline">
+      <section className="relative rounded-3xl overflow-hidden border border-cyan-300/20 bg-slate-950/40 h-56 sm:h-72 flex flex-col items-center justify-center text-center scanline shadow-[0_20px_60px_rgba(8,15,26,0.32)] backdrop-blur-sm">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#06060a]/40 to-[#06060a]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-cyan-300/5 via-slate-950/35 to-slate-950/75" />
         {/* 사이버 그리드 오버레이 */}
         <div className="absolute inset-0" style={{
           backgroundImage: 'linear-gradient(rgba(0,212,255,0.04) 1px,transparent 1px), linear-gradient(90deg,rgba(0,212,255,0.04) 1px,transparent 1px)',
           backgroundSize: '30px 30px'
         }} />
         <div className="relative z-10 px-4">
-          <p className="text-cyan-500 text-xs tracking-[0.3em] uppercase mb-2 font-bold animate-flicker">
+          <p className="text-cyan-300 text-xs tracking-[0.3em] uppercase mb-2 font-bold animate-flicker">
             StarCraft Clan Network
           </p>
           <h2 className="text-3xl sm:text-5xl font-black text-white mb-4 tracking-tight">
@@ -91,7 +91,7 @@ function HomeContent({ navigateTo }) {
             </button>
             <button
               onClick={() => navigateTo('대시보드')}
-              className="px-5 py-2 rounded-lg font-bold text-sm bg-yellow-500/10 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/20 transition-all"
+              className="px-5 py-2 rounded-lg font-bold text-sm bg-cyan-400/10 border border-cyan-300/30 text-cyan-200 hover:bg-cyan-400/18 transition-all shadow-[0_0_18px_rgba(34,211,238,0.08)]"
             >
               ⚔️ 래더 시스템
             </button>
@@ -117,10 +117,10 @@ function HomeContent({ navigateTo }) {
             desc: '로그인 없이 개요와 가입 절차를 먼저 보고, 필요할 때만 회원가입·가입신청으로 이어지도록 구성했습니다.'
           },
         ].map((item) => (
-          <div key={item.title} className="cyber-card p-5 rounded-xl">
+          <div key={item.title} className="neon-panel p-5 rounded-2xl">
             <div className="text-2xl mb-2">{item.icon}</div>
-            <h3 className="text-cyan-400 font-bold text-sm mb-2">{item.title}</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>
+            <h3 className="text-cyan-300 font-bold text-sm mb-2">{item.title}</h3>
+            <p className="text-xs text-slate-300/85 leading-relaxed">{item.desc}</p>
           </div>
         ))}
       </section>
@@ -128,18 +128,18 @@ function HomeContent({ navigateTo }) {
       {/* 랭킹 + 소식 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <section
-          className="cyber-card p-5 rounded-xl cursor-pointer"
+          className="neon-panel p-5 rounded-2xl cursor-pointer"
           onClick={() => navigateTo('랭킹')}
         >
-          <h3 className="text-base font-bold text-cyan-400 mb-3 border-b border-gray-800 pb-2 flex items-center gap-2">
+          <h3 className="text-base font-bold text-cyan-300 mb-3 border-b border-cyan-400/10 pb-2 flex items-center gap-2">
             🏆 <span>명예의 전당</span>
           </h3>
           <div className="space-y-2">
             {loading ? <SkeletonLoader count={3} /> :
              topRankers.length === 0 ? <EmptyState message="아직 랭킹 데이터가 없습니다" icon="🏆" /> :
              topRankers.map((p, index) => (
-               <div key={`${p.rank ?? 'no-rank'}-${p.name ?? p.ByID ?? p.discord_name ?? index}`} className="flex items-center justify-between bg-gray-900/60 px-3 py-2 rounded-lg border border-gray-800/60">
-                 <span className="text-gray-200 font-semibold text-sm">
+               <div key={`${p.rank ?? 'no-rank'}-${p.name ?? p.ByID ?? p.discord_name ?? index}`} className="flex items-center justify-between bg-slate-950/55 px-3 py-2 rounded-lg border border-cyan-400/10">
+                 <span className="text-slate-100 font-semibold text-sm">
                    <span className="text-yellow-500 mr-1">{p.rank}위</span> {p.name}
                    {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
                  </span>
@@ -151,19 +151,19 @@ function HomeContent({ navigateTo }) {
         </section>
 
         <section
-          className="cyber-card p-5 rounded-xl cursor-pointer"
+          className="neon-panel p-5 rounded-2xl cursor-pointer"
           onClick={() => navigateTo('공지사항')}
         >
-          <h3 className="text-base font-bold text-cyan-400 mb-3 border-b border-gray-800 pb-2 flex items-center gap-2">
+          <h3 className="text-base font-bold text-cyan-300 mb-3 border-b border-cyan-400/10 pb-2 flex items-center gap-2">
             📢 <span>최신 소식</span>
           </h3>
           <div className="space-y-2">
             {loading ? <SkeletonLoader count={3} /> :
              recentNotices.length === 0 ? <EmptyState message="새로운 소식이 없습니다" icon="📢" /> :
              recentNotices.map((n, index) => (
-               <div key={`${n.id ?? 'notice'}-${n.type ?? 'type'}-${n.title ?? 'title'}-${index}`} className="flex items-center justify-between text-sm py-1 border-b border-gray-800/40 last:border-none">
-                 <span className="text-gray-300 truncate">{n.title}</span>
-                 <span className="text-gray-600 text-xs ml-2 shrink-0">{n.date}</span>
+               <div key={`${n.id ?? 'notice'}-${n.type ?? 'type'}-${n.title ?? 'title'}-${index}`} className="flex items-center justify-between text-sm py-1 border-b border-cyan-400/8 last:border-none">
+                 <span className="text-slate-200 truncate">{n.title}</span>
+                 <span className="text-slate-400 text-xs ml-2 shrink-0">{n.date}</span>
                </div>
              ))
             }
@@ -178,8 +178,8 @@ function HomeContent({ navigateTo }) {
       </div>
 
       {/* 빠른 접근 */}
-      <div className="cyber-card p-5 rounded-xl">
-        <h3 className="text-base font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2">🚀 빠른 접근</h3>
+      <div className="neon-panel p-5 rounded-2xl">
+        <h3 className="text-base font-bold text-cyan-300 mb-4 border-b border-cyan-400/10 pb-2">🚀 빠른 접근</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { icon: '📖', label: '가입 안내', view: '가입안내' },
@@ -190,7 +190,7 @@ function HomeContent({ navigateTo }) {
             <button
               key={view}
               onClick={() => navigateTo(view)}
-              className="p-3 rounded-lg text-sm font-bold text-gray-300 border border-gray-800 bg-gray-900/40 hover:border-cyan-700/50 hover:text-cyan-400 transition-all"
+              className="p-3 rounded-lg text-sm font-bold text-slate-200 border border-cyan-400/10 bg-slate-950/45 hover:border-cyan-300/40 hover:text-cyan-200 transition-all"
             >
               {icon} {label}
             </button>
