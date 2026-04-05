@@ -63,7 +63,7 @@ export function useAuth() {
           .from('profiles')
           .insert({
             id: authUser.id,
-            discord_name: discordName,
+            discord_name: isDiscordProvider ? discordName : null,
             discord_id: isDiscordProvider ? discordId : null,
             ByID: `By_${authUser.email?.split('@')[0] || discordName || 'User'}`,
             role: 'visitor',
@@ -254,7 +254,7 @@ export function useAuth() {
   };
 
   return {
-    // Legacy password gate fields restored for homepage security gate
+    // Password gate fields for homepage security gate
     password,
     setPassword,
     isAuthorized: isAuthorizedState,
