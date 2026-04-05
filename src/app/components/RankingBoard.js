@@ -23,7 +23,7 @@ export default function RankingBoard() {
       {/* 헤더 동일 */}
       <div className="flex justify-between items-end mb-4 px-2 sm:px-0 border-b border-cyan-500/50 pb-2">
         <h2 className="text-xl sm:text-2xl font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] tracking-widest">
-          [ SYSTEM: LADDER RANKING ]
+          [ SYSTEM: LADDER MMR RANKING ]
         </h2>
         <span className="text-cyan-600 text-xs sm:text-sm animate-pulse">SUPABASE CONNECTED //</span>
       </div>
@@ -51,7 +51,7 @@ export default function RankingBoard() {
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-cyan-400 hidden sm:table-cell">{player.race}</td>
                 <td className="py-3 px-4 text-center font-bold text-cyan-300 text-sm sm:text-base drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
-                  {player.ladders_points}  {/* ✅ 수정4 */}
+                  {player.ladders_points}점  {/* ✅ 수정4 */}
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-gray-400 hidden md:table-cell">
                   <span className="text-emerald-400">{player.win}W</span> / <span className="text-red-400">{player.lose}L</span>  {/* ✅ 수정5 */}

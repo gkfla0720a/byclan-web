@@ -143,7 +143,7 @@ function HomeContent({ navigateTo }) {
                    <span className="text-yellow-500 mr-1">{p.rank}위</span> {p.name}
                    {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
                  </span>
-                 <span className="font-bold text-cyan-400 text-sm">{p.points} P</span>
+                 <span className="font-bold text-cyan-400 text-sm">MMR {p.points}점</span>
                </div>
              ))
             }

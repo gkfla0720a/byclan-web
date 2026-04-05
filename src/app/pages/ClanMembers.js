@@ -101,14 +101,11 @@ export default function ClanMembers() {
 
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
-      <div className="relative neon-panel rounded-3xl overflow-hidden p-8 sm:p-12 text-center">
+      <div className="relative neon-panel rounded-3xl overflow-hidden px-6 py-4 sm:px-8 sm:py-5 text-center">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_38%)] pointer-events-none" />
-        <h2 className="relative text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 via-cyan-300 to-blue-400 mb-4 drop-shadow-lg">
+        <h2 className="relative text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 via-cyan-300 to-blue-400 drop-shadow-lg">
           클랜원 명단
         </h2>
-        <p className="relative text-slate-200 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-          기계적인 패널 감성과 네온 라인 톤으로, 현재 활동 중인 ByClan 멤버를 직책별 표 형식으로 정리했습니다.
-        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -126,14 +123,22 @@ export default function ClanMembers() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="neon-table min-w-full text-sm">
+              <table className="neon-table min-w-full table-fixed text-sm">
+                <colgroup>
+                  <col className="w-[22%]" />
+                  <col className="w-[24%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[12%]" />
+                </colgroup>
                 <thead>
                   <tr>
                     <th className="px-4 py-3 text-left font-bold">닉네임</th>
                     <th className="px-4 py-3 text-left font-bold">디스코드</th>
                     <th className="px-4 py-3 text-left font-bold">직책</th>
                     <th className="px-4 py-3 text-left font-bold">종족</th>
-                    <th className="px-4 py-3 text-left font-bold">포인트</th>
+                    <th className="px-4 py-3 text-left font-bold">MMR</th>
                     <th className="px-4 py-3 text-left font-bold">BJ</th>
                   </tr>
                 </thead>
@@ -144,14 +149,14 @@ export default function ClanMembers() {
 
                     return (
                       <tr key={member.id} className="hover:bg-cyan-400/4 transition-colors">
-                        <td className="px-4 py-3 text-white font-semibold">
+                        <td className="px-4 py-3 text-white font-semibold align-middle">
                           <div className="flex items-center gap-2">
-                            <span>{member.ByID || member.discord_name || '이름 없음'}</span>
+                            <span className="truncate">{member.ByID || member.discord_name || '이름 없음'}</span>
                             {isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-300">{member.discord_name || '-'}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-slate-300 truncate align-middle">{member.discord_name || '-'}</td>
+                        <td className="px-4 py-3 align-middle">
                           <span
                             className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold"
                             style={{
@@ -163,9 +168,9 @@ export default function ClanMembers() {
                             {roleMeta.name}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-slate-300">{member.race || 'Terran'}</td>
-                        <td className="px-4 py-3 text-cyan-300 font-bold">{member.ladder_points || 1000}P</td>
-                        <td className="px-4 py-3 text-slate-200">
+                          <td className="px-4 py-3 text-slate-300 align-middle">{member.race || 'Terran'}</td>
+                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.ladder_points || 1000}점</td>
+                          <td className="px-4 py-3 text-slate-200 align-middle">
                           {member.is_streamer ? (
                             <div className="flex items-center gap-2">
                               <span className="text-pink-300 font-semibold">BJ</span>

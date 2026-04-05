@@ -117,7 +117,7 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
           <div className="space-y-1.5 mt-1">
             {[
               { label: 'ByID', placeholder: previewProfile?.byId || '프로필 준비 중' },
-              { label: '점수', placeholder: previewProfile ? `${previewProfile.points} P` : '데이터 연결 대기' },
+              { label: 'MMR', placeholder: previewProfile ? `${previewProfile.points}점` : '데이터 연결 대기' },
               { label: '티어', placeholder: previewProfile?.tier || '미정' },
               { label: '승률', placeholder: previewProfile?.winRate || '집계 전' },
               { label: '주종', placeholder: previewProfile?.race || '미등록' },
@@ -130,7 +130,7 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
           </div>
           {previewProfile && (
             <div className="text-[10px] text-gray-600 border-t border-gray-800 pt-2">
-              최근 래더 포인트 상위 멤버 기준 미리보기
+              최근 MMR 상위 멤버 기준 미리보기
             </div>
           )}
           {!user ? (
@@ -180,9 +180,9 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
         {/* 스탯 */}
         <div className="space-y-2 text-xs">
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">점수</span>
+            <span className="text-gray-500">MMR</span>
             <span className="font-black text-yellow-400 text-sm" style={{ textShadow: '0 0 6px rgba(245,158,11,0.5)' }}>
-              {profile.ladder_points ?? 1000} P
+              {profile.ladder_points ?? 1000}점
             </span>
           </div>
           <div className="flex justify-between items-center">
