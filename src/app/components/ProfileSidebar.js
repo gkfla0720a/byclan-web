@@ -49,17 +49,36 @@ export default function ProfileSidebar({ profile, user, navigateTo }) {
       }
 
       try {
-        const { data, error } = await filterVisibleTestAccounts(
+        const primaryResult = await filterVisibleTestAccounts(
           supabase
             .from('profiles')
-            .select('id, ByID, discord_name, role, race, ladder_points, points')
+            .select('id, ByID, discord_name, role, race, ladder_points, points, wins, losses')
             .in('role', ['associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
             .order('ladder_points', { ascending: false })
             .limit(1)
         );
 
-        if (error) throw error;
-        setSpotlightProfile(data?.[0] || null);
+        if (primaryResult.error) {
+          const message = `${primaryResult.error.message || ''} ${primaryResult.error.details || ''}`.toLowerCase();
+          if (primaryResult.error.code === '42703' || message.includes('does not exist')) {
+            const fallbackResult = await filterVisibleTestAccounts(
+              supabase
+                .from('profiles')
+                .select('id, ByID, discord_name, role, race, ladder_points, points')
+                .in('role', ['associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
+                .order('ladder_points', { ascending: false })
+                .limit(1)
+            );
+
+            if (fallbackResult.error) throw fallbackResult.error;
+            setSpotlightProfile(fallbackResult.data?.[0] || null);
+            return;
+          }
+
+          throw primaryResult.error;
+        }
+
+        setSpotlightProfile(primaryResult.data?.[0] || null);
       } catch (error) {
         console.error('사이드바 대표 멤버 로딩 실패:', error);
         setSpotlightProfile(null);

@@ -184,7 +184,11 @@ export function useAuth() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsAuthorizedState(window.localStorage.getItem('byclan_home_gate') === 'authorized');
+      const sessionAuthorized = window.sessionStorage.getItem('byclan_home_gate') === 'authorized';
+      if (!sessionAuthorized) {
+        window.localStorage.removeItem('byclan_home_gate');
+      }
+      setIsAuthorizedState(sessionAuthorized);
       setHomeGateReady(true);
     }
   }, []);
@@ -306,8 +310,10 @@ export function useAuth() {
     setIsAuthorizedState(value);
     if (typeof window !== 'undefined') {
       if (value) {
-        window.localStorage.setItem('byclan_home_gate', 'authorized');
+        window.sessionStorage.setItem('byclan_home_gate', 'authorized');
+        window.localStorage.removeItem('byclan_home_gate');
       } else {
+        window.sessionStorage.removeItem('byclan_home_gate');
         window.localStorage.removeItem('byclan_home_gate');
       }
     }
