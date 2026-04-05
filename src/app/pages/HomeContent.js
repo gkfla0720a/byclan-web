@@ -27,9 +27,12 @@ function HomeContent() {
       }
 
       const { data: rankData } = await filterVisibleTestData(supabase
-        .from('ladders')
-        .select('*')
-        .order('rank', { ascending: true })
+        .from('profiles')
+        .select('id, ByID, discord_name, ladder_points')
+        .neq('role', 'visitor')
+        .neq('role', 'applicant')
+        .neq('role', 'expelled')
+        .order('ladder_points', { ascending: false })
         .limit(3));
 
       const { data: noticeData } = await filterVisibleTestData(supabase
@@ -140,12 +143,12 @@ function HomeContent() {
             {loading ? <SkeletonLoader count={3} /> :
              topRankers.length === 0 ? <EmptyState message="아직 랭킹 데이터가 없습니다" icon="🏆" /> :
              topRankers.map((p, index) => (
-               <div key={`${p.rank ?? 'no-rank'}-${p.name ?? p.ByID ?? p.discord_name ?? index}`} className="flex items-center justify-between bg-slate-950/55 px-3 py-2 rounded-lg border border-cyan-400/10">
+               <div key={`${p.id ?? index}`} className="flex items-center justify-between bg-slate-950/55 px-3 py-2 rounded-lg border border-cyan-400/10">
                  <span className="text-slate-100 font-semibold text-sm">
-                   <span className="text-yellow-500 mr-1">{p.rank}위</span> {p.name}
+                   <span className="text-yellow-500 mr-1">{index + 1}위</span> {p.ByID || p.discord_name}
                    {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
                  </span>
-                 <span className="font-bold text-cyan-400 text-sm">MMR {p.points}점</span>
+                 <span className="font-bold text-cyan-400 text-sm">MMR {p.ladder_points}점</span>
                </div>
              ))
             }

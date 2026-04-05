@@ -19,11 +19,17 @@ export const TEST_ACCOUNT_NAMES = [
 ];
 
 export function filterVisibleTestAccounts(query) {
-  return query.or(TEST_ACCOUNT_FILTER);
+  // NOTE: Filtering requires `is_test_account` and `is_test_account_active` columns
+  // in the profiles table. Until those columns are added to the DB, this function
+  // is intentionally a no-op so that queries are not broken by missing columns.
+  return query;
 }
 
 export function filterVisibleTestData(query) {
-  return query.or(TEST_DATA_FILTER);
+  // NOTE: Filtering requires `is_test_data` and `is_test_data_active` columns in
+  // the relevant tables. Until those columns are added to the DB, this function
+  // is intentionally a no-op so that queries are not broken by missing columns.
+  return query;
 }
 
 export function isMarkedTestAccount(record) {
