@@ -117,12 +117,12 @@ function ActivityLog() {
         const [postsResult, noticesResult, applicationsResult, matchesResult] = await Promise.all([
           filterVisibleTestData(supabase
             .from('posts')
-            .select('id, title, created_at, profiles: user_id ( ByID, discord_name )')
+            .select('id, title, author_name, created_at')
             .order('created_at', { ascending: false })
             .limit(3)),
           filterVisibleTestData(supabase
             .from('admin_posts')
-            .select('id, title, created_at, profiles: author_id ( ByID, discord_name )')
+            .select('id, title, created_at')
             .order('created_at', { ascending: false })
             .limit(2)),
           filterVisibleTestData(supabase
@@ -141,7 +141,7 @@ function ActivityLog() {
           ...(postsResult.data || []).map(post => ({
             id: `post-${post.id}`,
             type: '게시글',
-            message: `${post.profiles?.ByID || post.profiles?.discord_name || '클랜원'}님이 '${post.title}' 글을 남겼습니다.`,
+            message: `${post.author_name || '클랜원'}님이 '${post.title}' 글을 남겼습니다.`,
             time: formatRelativeTime(post.created_at),
             createdAt: post.created_at,
             icon: '📝'
@@ -149,7 +149,7 @@ function ActivityLog() {
           ...(noticesResult.data || []).map(notice => ({
             id: `notice-${notice.id}`,
             type: '공지',
-            message: `${notice.profiles?.ByID || notice.profiles?.discord_name || '운영진'}님이 '${notice.title}' 공지를 등록했습니다.`,
+            message: `운영진님이 '${notice.title}' 공지를 등록했습니다.`,
             time: formatRelativeTime(notice.created_at),
             createdAt: notice.created_at,
             icon: '📢'

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
+import { isRelationshipError } from '../utils/retry';
 
 export default function AdminBoard() {
   const [posts, setPosts] = useState([]);
@@ -57,7 +58,22 @@ export default function AdminBoard() {
       `)
       .order('created_at', { ascending: false }); 
 
-    if (!error) setPosts(data);
+    if (error) {
+      console.error("목록 불러오기 에러:", error);
+      if (isRelationshipError(error)) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('admin_posts')
+          .select('id, title, content, created_at')
+          .order('created_at', { ascending: false });
+        if (fallbackError) {
+          console.error("목록 폴백 쿼리 에러:", fallbackError);
+        } else {
+          setPosts(fallbackData || []);
+        }
+      }
+    } else {
+      setPosts(data);
+    }
   };
 
   const handleCreatePost = async (e) => {

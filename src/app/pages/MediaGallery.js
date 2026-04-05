@@ -36,14 +36,14 @@ function MediaGallery() {
           filterVisibleTestData(
             supabase
               .from('admin_posts')
-              .select('id, title, created_at, profiles: author_id ( ByID, discord_name )')
+              .select('id, title, created_at')
               .order('created_at', { ascending: false })
               .limit(2)
           ),
           filterVisibleTestData(
             supabase
               .from('posts')
-              .select('id, title, created_at, profiles: user_id ( ByID, discord_name )')
+              .select('id, title, author_name, created_at')
               .order('created_at', { ascending: false })
               .limit(2)
           ),
@@ -61,7 +61,7 @@ function MediaGallery() {
             id: `notice-${item.id}`,
             type: '공지',
             title: item.title,
-            subtitle: `${item.profiles?.ByID || item.profiles?.discord_name || '운영진'}님이 등록한 공지`,
+            subtitle: '운영진님이 등록한 공지',
             date: item.created_at,
             img: MEDIA_BACKGROUNDS.공지,
           })),
@@ -69,7 +69,7 @@ function MediaGallery() {
             id: `post-${item.id}`,
             type: '게시글',
             title: item.title,
-            subtitle: `${item.profiles?.ByID || item.profiles?.discord_name || '클랜원'}님이 남긴 글`,
+            subtitle: `${item.author_name || '클랜원'}님이 남긴 글`,
             date: item.created_at,
             img: MEDIA_BACKGROUNDS.게시글,
           })),
