@@ -43,6 +43,7 @@ export default function Home() {
     password,
     setPassword,
     isAuthorized,
+    homeGateReady,
     setIsAuthorized,
     profile,
     setProfile,
@@ -55,6 +56,16 @@ export default function Home() {
     handleAuthSuccess,
     handleSetupComplete
   } = useAuth();
+
+  if (!homeGateReady) {
+    return (
+      <div className="min-h-screen bg-[#06060a] flex items-center justify-center px-4">
+        <div className="w-full max-w-md cyber-card rounded-2xl p-8 text-center">
+          <div className="text-gray-500 text-sm">ByClan 로딩 중...</div>
+        </div>
+      </div>
+    );
+  }
 
   const handlePasswordGateSubmit = (e) => {
     e.preventDefault();

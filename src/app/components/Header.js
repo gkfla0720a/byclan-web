@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { supabase } from '@/supabase';
+import { isSupabaseConfigured, supabase } from '@/supabase';
 
 function ByClanLogo() {
   const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repository/main/ByLogo.png";
@@ -43,6 +43,14 @@ export default function Header({ navigateTo }) {
 
   useEffect(() => {
     const getUserData = async () => {
+      if (!isSupabaseConfigured) {
+        setUser(null);
+        setRole(null);
+        setNickname('');
+        setUnreadCount(0);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       if (user) {
@@ -67,6 +75,12 @@ export default function Header({ navigateTo }) {
       }
     };
     getUserData();
+
+    if (!isSupabaseConfigured) {
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) getUserData();
@@ -192,6 +206,10 @@ export default function Header({ navigateTo }) {
               </>
             ) : (
               <button onClick={() => {
+                if (!isSupabaseConfigured) {
+                  alert('Supabase 환경변수가 설정되지 않아 로그인 기능을 사용할 수 없습니다.');
+                  return;
+                }
                 const redirectTo = `${window.location.origin}/auth/callback`;
                 console.log('[Discord Login] redirectTo:', redirectTo);
                 supabase.auth.signInWithOAuth({ 

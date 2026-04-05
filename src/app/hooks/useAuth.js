@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/supabase';
+import { isSupabaseConfigured, supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS, loadDevSettings } from '../utils/permissions';
 import {
   TEST_ACCOUNT_SETTING_EVENT,
@@ -40,10 +40,8 @@ export function useAuth() {
   const [authLoading, setAuthLoading] = useState(true);
   const [testAccountsEnabled, setTestAccountsEnabled] = useState(true);
   const [password, setPassword] = useState('');
-  const [isAuthorizedState, setIsAuthorizedState] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem('byclan_home_gate') === 'authorized';
-  });
+  const [isAuthorizedState, setIsAuthorizedState] = useState(false);
+  const [homeGateReady, setHomeGateReady] = useState(false);
 
   const loadServerSettings = async () => {
     try {
@@ -185,8 +183,20 @@ export function useAuth() {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsAuthorizedState(window.localStorage.getItem('byclan_home_gate') === 'authorized');
+      setHomeGateReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
     const initializeData = async () => {
       try {
+        if (!isSupabaseConfigured) {
+          setAuthLoading(false);
+          return;
+        }
+
         await loadServerSettings();
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
@@ -308,6 +318,7 @@ export function useAuth() {
     password,
     setPassword,
     isAuthorized: isAuthorizedState,
+    homeGateReady,
     setIsAuthorized,
     // ─────────────────────────────────────────────
     profile,

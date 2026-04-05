@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/supabase';
+import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
@@ -10,6 +10,12 @@ function MatchStatus({ navigateTo }) {
 
   useEffect(() => {
     const fetchMatches = async () => {
+      if (!isSupabaseConfigured) {
+        setMatches([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         const { data, error } = await filterVisibleTestData(supabase
           .from('ladder_matches')
@@ -79,6 +85,12 @@ function ActivityLog() {
 
   useEffect(() => {
     const fetchActivities = async () => {
+      if (!isSupabaseConfigured) {
+        setActivities([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         // 최신 게시글과 가입 신청을 가져옴
         const [postsResult, applicationsResult] = await Promise.all([

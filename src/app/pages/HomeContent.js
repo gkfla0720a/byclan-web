@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/supabase';
+import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, ErrorMessage, EmptyState } from '../components/UIStates';
 import { MatchStatus, ActivityLog } from '../components/HomeSections';
 import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
@@ -14,6 +14,15 @@ function HomeContent({ navigateTo }) {
   const fetchData = async () => {
     try {
       setLoading(true);
+
+      if (!isSupabaseConfigured) {
+        setTopRankers([]);
+        setRecentNotices([
+          { id: 1, type: '안내', title: 'Supabase 환경변수가 설정되지 않았습니다.', date: 'ENV' },
+          { id: 2, type: '안내', title: '데이터 연결 후 최신 소식이 표시됩니다.', date: 'ENV' }
+        ]);
+        return;
+      }
 
       const { data: rankData } = await filterVisibleTestData(supabase
         .from('ladders')
