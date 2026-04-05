@@ -1,6 +1,31 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
-import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
+import { PermissionChecker, ROLE_PERMISSIONS, loadDevSettings } from '../utils/permissions';
+
+function getDiscordIdentity(authUser) {
+  const identities = authUser?.identities || [];
+  const discordIdentity = identities.find((identity) => identity.provider === 'discord');
+  const isDiscordProvider =
+    authUser?.app_metadata?.provider === 'discord' ||
+    authUser?.user_metadata?.provider === 'discord' ||
+    Boolean(discordIdentity);
+
+  return {
+    isDiscordProvider,
+    discordId:
+      authUser?.user_metadata?.provider_id ||
+      authUser?.user_metadata?.sub ||
+      discordIdentity?.identity_id ||
+      discordIdentity?.id ||
+      null,
+    discordName:
+      authUser?.user_metadata?.preferred_username ||
+      authUser?.user_metadata?.full_name ||
+      authUser?.user_metadata?.name ||
+      authUser?.email?.split('@')[0] ||
+      'User'
+  };
+}
 
 export function useAuth() {
   const [profile, setProfile] = useState(null);
@@ -8,6 +33,11 @@ export function useAuth() {
   const [user, setUser] = useState(null);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [password, setPassword] = useState('');
+  const [isAuthorizedState, setIsAuthorizedState] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('byclan_home_gate') === 'authorized';
+  });
 
   const loadUserData = async (authUser) => {
     if (!authUser) {
@@ -18,6 +48,7 @@ export function useAuth() {
     }
 
     setUser(authUser);
+    const { isDiscordProvider, discordId, discordName } = getDiscordIdentity(authUser);
 
     const { data: p, error: profileError } = await supabase
       .from('profiles')
@@ -32,8 +63,9 @@ export function useAuth() {
           .from('profiles')
           .insert({
             id: authUser.id,
-            discord_name: authUser.email?.split('@')[0] || 'User',
-            ByID: `By_${authUser.email?.split('@')[0] || 'User'}`,
+            discord_name: discordName,
+            discord_id: isDiscordProvider ? discordId : null,
+            ByID: `By_${authUser.email?.split('@')[0] || discordName || 'User'}`,
             role: 'visitor',
             points: 0,
             race: 'Terran',
@@ -64,9 +96,31 @@ export function useAuth() {
       throw profileError;
     }
 
-    setProfile(p);
+    let nextProfile = p;
 
-    if (p.role === 'visitor' || p.role === 'applicant') {
+    if (isDiscordProvider && (!p.discord_id || !p.discord_name)) {
+      const updates = {
+        ...(p.discord_name ? {} : { discord_name: discordName }),
+        ...(p.discord_id ? {} : { discord_id: discordId })
+      };
+
+      if (Object.keys(updates).length > 0) {
+        const { data: updatedProfile, error: updateError } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', authUser.id)
+          .select('*')
+          .single();
+
+        if (!updateError && updatedProfile) {
+          nextProfile = updatedProfile;
+        }
+      }
+    }
+
+    setProfile(nextProfile);
+
+    if (nextProfile.role === 'visitor' || nextProfile.role === 'applicant') {
       setNeedsSetup(false);
       setAuthLoading(false);
       return;
@@ -75,7 +129,7 @@ export function useAuth() {
     setNeedsSetup(false);
 
     // 진행 중인 래더 매치 확인 (정식 멤버만)
-    if (['associate', 'elite', 'admin', 'master', 'developer'].includes(p.role)) {
+    if (['associate', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
       try {
         const { data: m, error: matchError } = await supabase
           .from('ladder_matches')
@@ -137,6 +191,13 @@ export function useAuth() {
     const profileRole = profile?.role;
     const userRole = profileRole?.trim().toLowerCase();
     const roleInfo = ROLE_PERMISSIONS[userRole];
+    const devSettings = loadDevSettings();
+    const baseLadderPermission = PermissionChecker.hasPermission(userRole, 'ladder.play');
+    const requiresDiscordLink = Boolean(
+      baseLadderPermission &&
+      devSettings.requireDiscordForLadder &&
+      !profile?.discord_id
+    );
 
     return {
       isDeveloper: userRole === 'developer',
@@ -154,7 +215,8 @@ export function useAuth() {
         postAnnouncements: PermissionChecker.hasPermission(userRole, 'announcement.post'),
         accessDevTools: PermissionChecker.hasPermission(userRole, 'system.admin'),
         moderateLadder: PermissionChecker.hasPermission(userRole, 'ladder.admin'),
-        playLadder: PermissionChecker.hasPermission(userRole, 'ladder.play')
+        playLadder: baseLadderPermission && !requiresDiscordLink,
+        requiresDiscordLink
       },
       canAccessMenu: (menuPath) => PermissionChecker.canAccessMenu(userRole, menuPath),
       hasLevel: (requiredLevel) => PermissionChecker.hasLevel(userRole, requiredLevel)
@@ -180,12 +242,23 @@ export function useAuth() {
     }
   };
 
+  const setIsAuthorized = (value) => {
+    setIsAuthorizedState(value);
+    if (typeof window !== 'undefined') {
+      if (value) {
+        window.localStorage.setItem('byclan_home_gate', 'authorized');
+      } else {
+        window.localStorage.removeItem('byclan_home_gate');
+      }
+    }
+  };
+
   return {
-    // Legacy password gate fields kept for backward compatibility but always true
-    password: '',
-    setPassword: () => {},
-    isAuthorized: true,
-    setIsAuthorized: () => {},
+    // Legacy password gate fields restored for homepage security gate
+    password,
+    setPassword,
+    isAuthorized: isAuthorizedState,
+    setIsAuthorized,
     // ─────────────────────────────────────────────
     profile,
     setProfile,

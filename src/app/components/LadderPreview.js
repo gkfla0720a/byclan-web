@@ -3,7 +3,7 @@
 import React from 'react';
 
 // 래더 미리보기 – 비회원/권한 없는 사용자에게 표시
-export default function LadderPreview({ navigateTo, isGuest }) {
+export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink }) {
   const mockQueue = [
     { id: 1, name: 'By_StarPlayer', tier: 'Diamond', pts: 2150, race: '프' },
     { id: 2, name: 'By_NightHawk', tier: 'Platinum', pts: 1850, race: '테' },
@@ -23,16 +23,33 @@ export default function LadderPreview({ navigateTo, isGuest }) {
         <p className="text-gray-300 mb-1 text-sm">
           스타크래프트 빠른무한 3v3 · 4v4 내전 래더 — 실시간 매칭 & 포인트 베팅
         </p>
-        <p className="text-gray-500 text-xs mb-4">
-          {isGuest
-            ? '래더 참여는 로그인 후 클랜원 등급 이상이어야 합니다.'
-            : '래더 참여는 클랜원(준회원 이상) 등급이 필요합니다.'}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          {isGuest ? (
-            <>
-              <button
-                onClick={() => navigateTo('로그인')}
+          <p className="text-gray-500 text-xs mb-4">
+            {requiresDiscordLink
+              ? '현재 설정상 래더 참여 전 Discord 연동이 필요합니다.'
+              : isGuest
+                ? '래더 참여는 로그인 후 클랜원 등급 이상이어야 합니다.'
+                : '래더 참여는 클랜원(준회원 이상) 등급이 필요합니다.'}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {requiresDiscordLink ? (
+              <>
+                <button
+                  onClick={() => navigateTo('프로필')}
+                  className="px-6 py-2.5 rounded-lg font-bold text-sm btn-neon"
+                >
+                  내 상태 확인
+                </button>
+                <button
+                  onClick={() => navigateTo('가입안내')}
+                  className="px-6 py-2.5 rounded-lg font-bold text-sm bg-indigo-500/10 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/20 transition-all"
+                >
+                  Discord 안내 보기
+                </button>
+              </>
+            ) : isGuest ? (
+              <>
+                <button
+                  onClick={() => navigateTo('로그인')}
                 className="px-6 py-2.5 rounded-lg font-bold text-sm btn-neon"
               >
                 로그인하기
@@ -96,10 +113,10 @@ export default function LadderPreview({ navigateTo, isGuest }) {
 
       {/* 래더 시스템 소개 */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { icon: '🏆', title: '랭킹 시스템', desc: '승리마다 래더 점수 획득. 티어별 분류로 실력에 맞는 상대와 매칭됩니다.' },
-          { icon: '💰', title: '포인트 베팅', desc: '경기 시작 후 5분간 A팀/B팀에 베팅 가능. 포인트를 불려보세요.' },
-          { icon: '🎮', title: '3v3 · 4v4 내전', desc: '팀 밸런스 우선 매칭. 종족 선택, 세트 진행, 경기 기록 자동 저장.' },
+          {[
+          { icon: '🏆', title: '랭킹 시스템', desc: '주력 콘텐츠는 레더 경쟁입니다. 승패와 점수, 티어가 프로필과 랭킹에 반영됩니다.' },
+          { icon: '💰', title: '포인트 베팅', desc: '경기 시작 후 5분간 관전 유저도 팀별 포인트 베팅에 참여할 수 있습니다.' },
+          { icon: '🎮', title: '대기열 공개', desc: '대기 중이 아니어도 항상 대기열을 볼 수 있고, 팀 밸런스 중심으로 매치를 제안합니다.' },
         ].map((item) => (
           <div key={item.title} className="p-4 rounded-xl cyber-card">
             <div className="text-2xl mb-2">{item.icon}</div>

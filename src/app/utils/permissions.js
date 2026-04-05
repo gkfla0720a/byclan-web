@@ -99,8 +99,8 @@ export const ROLE_PERMISSIONS = {
 
   // 일반 길드원 - 정식 멤버
   associate: {
-    name: '일반 길드원',
-    description: '클랜 정식 멤버',
+    name: '준회원',
+    description: '회원가입 직후 기본 등급',
     level: 50,
     permissions: [
       'match.join',        // 매치 참여
@@ -227,8 +227,8 @@ export const PermissionChecker = {
       '자유게시판': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '프로필': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '알림': ['rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '가입신청': ['visitor'], // 방문자만 가입 신청 가능
-      '가입안내': ['visitor', 'applicant'], // 방문자, 신규 가입자
+      '가입신청': ['visitor', 'associate'], // 방문자/준회원 가입 신청 가능
+      '가입안내': ['visitor', 'associate', 'applicant'], // 방문자, 준회원, 신규 가입자
       '정회원 전환신청': ['rookie'] // 신입 길드원만 정회원 신청
     };
 

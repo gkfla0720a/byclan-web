@@ -148,7 +148,26 @@ function ClanOverview() {
             <p className="text-gray-400 text-sm">자체 래더 및 내전</p>
          </div>
       </div>
-      
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+          <h3 className="text-lg font-bold text-cyan-400 mb-3">클랜 핵심 재미</h3>
+          <ul className="space-y-2 text-sm text-gray-300 leading-relaxed">
+            <li>• 주 목적은 기존 유저들이 지속적으로 접속해 레더에서 경쟁하는 것입니다.</li>
+            <li>• 관전과 포인트 베팅, 최근 변화가 큰 플레이어 확인도 중요한 재미 요소입니다.</li>
+            <li>• 로그인 전에도 홈, 개요, 가입 절차, 래더 미리보기를 통해 분위기를 확인할 수 있습니다.</li>
+          </ul>
+        </div>
+        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+          <h3 className="text-lg font-bold text-cyan-400 mb-3">가입 후 흐름</h3>
+          <ul className="space-y-2 text-sm text-gray-300 leading-relaxed">
+            <li>• 회원가입 시 영문 기반 ByID, 영문+숫자 8자 이상 비밀번호, 약관 동의가 필요합니다.</li>
+            <li>• 가입 직후에는 준회원으로 시작하며 가입신청서를 작성할 수 있습니다.</li>
+            <li>• 정상적인 레더 참여 전에는 Discord 연동이 요구될 수 있으며, 개발자 설정에서 예외 적용이 가능합니다.</li>
+          </ul>
+        </div>
+      </div>
+       
       {/* 길드원 리스트 추가 */}
       <GuildMemberList />
     </div>
