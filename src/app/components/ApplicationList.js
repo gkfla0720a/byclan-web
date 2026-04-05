@@ -244,6 +244,27 @@ export default function ApplicationList() {
                 </div>
               </div>
 
+              {(app.is_streamer || app.streamer_platform || app.streamer_url) && (
+                <div className="mb-6 bg-gray-900 p-3 rounded-lg border border-gray-700">
+                  <p className="text-xs text-gray-500 mb-1">방송 정보</p>
+                  <div className="text-sm text-gray-300 flex flex-col gap-1">
+                    <span>플랫폼: {app.streamer_platform || '미기재'}</span>
+                    {app.streamer_url ? (
+                      <a
+                        href={/^https?:\/\//i.test(app.streamer_url) ? app.streamer_url : `https://${app.streamer_url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-cyan-300 underline break-all hover:text-cyan-200"
+                      >
+                        {app.streamer_url}
+                      </a>
+                    ) : (
+                      <span className="text-gray-500">URL 미기재</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* ✨ 기록실 탭: 심사 피드백 결과 출력 */}
               {activeTab === 'completed' && (
                 <div className="mt-4 p-4 bg-gray-950 border border-gray-800 rounded-lg">

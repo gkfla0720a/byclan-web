@@ -15,6 +15,14 @@ const ROLE_LABELS = {
   developer: '개발자',
 };
 
+const STREAMER_PLATFORMS = ['SOOP', 'YouTube', '치지직', 'Twitch', 'AfreecaTV', '기타'];
+
+function normalizeUrl(url) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url}`;
+}
+
 function formatPhone(value) {
   const digits = value.replace(/\D/g, '').slice(0, 11);
   if (digits.length < 4) return digits;
@@ -26,28 +34,69 @@ function formatPhone(value) {
 
 async function submitApplication(userId, applicationData) {
   try {
-    const { error: appError } = await supabase
+    const applicationPayload = {
+      user_id: userId,
+      btag: applicationData.btag,
+      race: applicationData.race,
+      tier: applicationData.tier,
+      intro: applicationData.intro,
+      motivation: applicationData.motivation,
+      playtime: applicationData.playtime,
+      phone: applicationData.phone,
+      status: 'pending',
+      is_streamer: applicationData.isStreamer,
+      streamer_platform: applicationData.isStreamer ? applicationData.streamerPlatform : null,
+      streamer_url: applicationData.isStreamer ? normalizeUrl(applicationData.streamerUrl) : null,
+    };
+
+    let { error: appError } = await supabase
       .from('applications')
-      .insert({
-        user_id: userId,
-        btag: applicationData.btag,
-        race: applicationData.race,
-        tier: applicationData.tier,
-        intro: applicationData.intro,
-        motivation: applicationData.motivation,
-        playtime: applicationData.playtime,
-        phone: applicationData.phone,
-        status: 'pending',
-      });
+      .insert(applicationPayload);
+
+    if (appError) {
+      const message = `${appError.message || ''} ${appError.details || ''}`.toLowerCase();
+      if (appError.code === '42703' || message.includes('does not exist')) {
+        ({ error: appError } = await supabase
+          .from('applications')
+          .insert({
+            user_id: userId,
+            btag: applicationData.btag,
+            race: applicationData.race,
+            tier: applicationData.tier,
+            intro: applicationData.intro,
+            motivation: applicationData.motivation,
+            playtime: applicationData.playtime,
+            phone: applicationData.phone,
+            status: 'pending',
+          }));
+      }
+    }
 
     if (appError) {
       console.warn('applications 테이블 오류:', appError.message);
     }
 
-    const { error: profileError } = await supabase
+    const profilePayload = {
+      role: 'applicant',
+      is_streamer: applicationData.isStreamer,
+      streamer_platform: applicationData.isStreamer ? applicationData.streamerPlatform : null,
+      streamer_url: applicationData.isStreamer ? normalizeUrl(applicationData.streamerUrl) : null,
+    };
+
+    let { error: profileError } = await supabase
       .from('profiles')
-      .update({ role: 'applicant' })
+      .update(profilePayload)
       .eq('id', userId);
+
+    if (profileError) {
+      const message = `${profileError.message || ''} ${profileError.details || ''}`.toLowerCase();
+      if (profileError.code === '42703' || message.includes('does not exist')) {
+        ({ error: profileError } = await supabase
+          .from('profiles')
+          .update({ role: 'applicant' })
+          .eq('id', userId));
+      }
+    }
 
     if (profileError) throw profileError;
 
@@ -80,6 +129,9 @@ function ApplicationForm({ onSubmit, onCancel, loading, error }) {
     motivation: '',
     playtime: '',
     phone: '',
+    isStreamer: false,
+    streamerPlatform: 'SOOP',
+    streamerUrl: '',
   });
 
   const handleSubmit = (e) => {
@@ -186,6 +238,50 @@ function ApplicationForm({ onSubmit, onCancel, loading, error }) {
               className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
               required
             />
+          </div>
+
+          <div className="rounded-xl border border-gray-700 bg-gray-900/40 p-4 space-y-4">
+            <label className="flex items-center gap-3 text-sm text-gray-300 font-medium">
+              <input
+                type="checkbox"
+                checked={formData.isStreamer}
+                onChange={(e) => setFormData((prev) => ({
+                  ...prev,
+                  isStreamer: e.target.checked,
+                  streamerUrl: e.target.checked ? prev.streamerUrl : '',
+                }))}
+                className="w-4 h-4 rounded border-gray-500 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+              />
+              BJ 또는 스트리머입니다. 방송 플랫폼 정보를 추가하겠습니다.
+            </label>
+
+            {formData.isStreamer && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">방송 플랫폼</label>
+                  <select
+                    value={formData.streamerPlatform}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, streamerPlatform: e.target.value }))}
+                    className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500"
+                  >
+                    {STREAMER_PLATFORMS.map((platform) => (
+                      <option key={platform} value={platform}>{platform}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">방송 URL</label>
+                  <input
+                    type="url"
+                    value={formData.streamerUrl}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, streamerUrl: e.target.value }))}
+                    placeholder="https://..."
+                    className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-4 pt-4">

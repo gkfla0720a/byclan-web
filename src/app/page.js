@@ -22,6 +22,7 @@ import ProfileSidebar from './components/ProfileSidebar';
 // 페이지 컴포넌트들
 import HomeContent from './pages/HomeContent';
 import ClanOverview from './pages/ClanOverview';
+import ClanMembers from './pages/ClanMembers';
 import ClanTournament from './pages/ClanTournament';
 import MediaGallery from './pages/MediaGallery';
 import PagePlaceholder from './pages/PagePlaceholder';
@@ -202,6 +203,7 @@ export default function Home() {
 
     // 공개 페이지들
     if (activeView === '개요') return <ClanOverview />;
+    if (activeView === '클랜원') return <ClanMembers />;
     if (activeView === '가입안내') return <VisitorWelcome user={user} profile={profile} mode="guide" navigateTo={navigateTo} onApplicationSubmit={() => {
       const reload = async () => {
         if (!user) return;
@@ -271,7 +273,7 @@ export default function Home() {
   };
 
   // 사이드바가 필요한 뷰
-  const sidebarViews = ['Home', '개요', '가입안내', '공지사항', 'BSL 공지사항', '토너먼트 공지', '자유게시판', '클랜원 소식', '랭킹', '시즌별 랭킹', '대시보드', 'BY래더시스템', 'BSL 경기일정 및 결과', '진행중인 토너먼트', '경기 영상', '사진 갤러리'];
+  const sidebarViews = ['Home', '개요', '클랜원', '가입안내', '공지사항', 'BSL 공지사항', '토너먼트 공지', '자유게시판', '클랜원 소식', '랭킹', '시즌별 랭킹', '대시보드', 'BY래더시스템', 'BSL 경기일정 및 결과', '진행중인 토너먼트', '경기 영상', '사진 갤러리'];
   const showSidebar = sidebarViews.includes(activeView);
 
   return (
