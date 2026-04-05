@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
+import { useNavigate } from '../hooks/useNavigate';
 
-export default function NotificationCenter({ navigateTo, profile }) {
+export default function NotificationCenter({ profile }) {
+  const navigateTo = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 

@@ -1,4 +1,5 @@
 import "./globals.css";
+import { AuthProvider } from "./context/AuthContext";
 
 export const metadata = {
   title: "ByClan NET – 스타크래프트 빠른무한 클랜",
@@ -11,7 +12,9 @@ export default function RootLayout({ children }) {
       lang="ko"
       className="h-full antialiased"
     >
-      <body className="min-h-full flex flex-col bg-[#06060a] text-gray-200">{children}</body>
+      <body className="min-h-full flex flex-col bg-[#06060a] text-gray-200">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

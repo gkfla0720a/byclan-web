@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react'; // ✨ 여기서 useState를 가져와야 에러가 안 납니다!
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import {
   TEST_ACCOUNT_NAMES,
@@ -8,8 +8,10 @@ import {
   TEST_ACCOUNT_SETTING_KEY,
   TEST_MODE_SETTING_KEY,
 } from '@/app/utils/testData';
+import { useNavigate } from '../hooks/useNavigate';
 
-export default function DevConsole({ navigateTo }) {
+export default function DevConsole() {
+  const navigateTo = useNavigate();
   const [isTestMode, setIsTestMode] = useState(false);
   const [testAccountsEnabled, setTestAccountsEnabled] = useState(true);
   const [loading, setLoading] = useState(true);

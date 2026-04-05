@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
+import { useNavigate } from '../hooks/useNavigate';
 
 function ByClanLogo() {
   const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repository/main/ByLogo.png";
@@ -12,12 +13,8 @@ function ByClanLogo() {
   );
 }
 
-export default function Header({ navigateTo }) {
-  const [openMenuIndex, setOpenMenuIndex] = useState(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [mobileAccordionIndex, setMobileAccordionIndex] = useState(null);
-  const menuRefs = useRef([]); 
-  const navRef = useRef(null);
+export default function Header() {
+  const navigateTo = useNavigate();
   
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
