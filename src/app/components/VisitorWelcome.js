@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
 import { ErrorMessage } from './UIStates';
+import { useNavigate } from '../hooks/useNavigate';
 
 const ROLE_LABELS = {
   visitor: '방문자',
@@ -308,7 +309,8 @@ function ApplicationForm({ onSubmit, onCancel, loading, error }) {
   );
 }
 
-export default function VisitorWelcome({ user, profile, mode = 'guide', navigateTo, onApplicationSubmit }) {
+export default function VisitorWelcome({ user, profile, mode = 'guide', onApplicationSubmit }) {
+  const navigateTo = useNavigate();
   const [showApplicationForm, setShowApplicationForm] = useState(mode === 'apply');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

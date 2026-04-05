@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestAccounts } from '@/app/utils/testData';
+import { useNavigate } from '../hooks/useNavigate';
 
 const TIER_COLORS = {
   Challenger: 'text-rose-400',
@@ -38,7 +39,8 @@ function getWinRate(wins, losses) {
 }
 
 // 홈 좌측 프로필 사이드바
-export default function ProfileSidebar({ profile, user, navigateTo }) {
+export default function ProfileSidebar({ profile, user }) {
+  const navigateTo = useNavigate();
   const [spotlightProfile, setSpotlightProfile] = useState(null);
 
   useEffect(() => {

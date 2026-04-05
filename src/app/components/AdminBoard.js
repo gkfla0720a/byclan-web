@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { ROLE_PERMISSIONS } from '../utils/permissions';
+import { useNavigate } from '../hooks/useNavigate';
 
-export default function AdminBoard({ navigateTo }) {
+export default function AdminBoard() {
+  const navigateTo = useNavigate();
   console.log('📍 AdminBoard 컴포넌트 렌더링됨!');
 
   const [posts, setPosts] = useState([]);

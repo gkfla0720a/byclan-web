@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { isMarkedTestAccount } from '@/app/utils/testData';
+import { useNavigate } from '../hooks/useNavigate';
 
-export default function MyProfile({ navigateTo }) {
+export default function MyProfile() {
+  const navigateTo = useNavigate();
   const [profile, setProfile] = useState(null);
   const [email, setEmail] = useState('');
   const [discordName, setDiscordName] = useState(''); 

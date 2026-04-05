@@ -5,8 +5,10 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, ErrorMessage, EmptyState } from '../components/UIStates';
 import { MatchStatus, ActivityLog } from '../components/HomeSections';
 import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
+import { useNavigate } from '../hooks/useNavigate';
 
-function HomeContent({ navigateTo }) {
+function HomeContent() {
+  const navigateTo = useNavigate();
   const [topRankers, setTopRankers] = useState([]);
   const [recentNotices, setRecentNotices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -173,7 +175,7 @@ function HomeContent({ navigateTo }) {
 
       {/* 매치 상태 + 활동 로그 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <MatchStatus navigateTo={navigateTo} />
+        <MatchStatus />
         <ActivityLog />
       </div>
 

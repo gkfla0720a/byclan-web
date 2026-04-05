@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
+import { useNavigate } from '../hooks/useNavigate';
 
 function getTier(points) {
   if (points >= 2400) return 'Challenger';
@@ -23,7 +24,8 @@ function getRaceLabel(race) {
 }
 
 // 래더 미리보기 – 비회원/권한 없는 사용자에게 표시
-export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink }) {
+export default function LadderPreview({ isGuest, requiresDiscordLink }) {
+  const navigateTo = useNavigate();
   const [previewPlayers, setPreviewPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
 
