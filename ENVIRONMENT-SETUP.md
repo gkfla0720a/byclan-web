@@ -1,5 +1,22 @@
 # 환경변수 설정 가이드
 
+## 개발 환경 버전
+
+- Node.js 22 권장 (`.nvmrc` 기준)
+- npm 10 이상 권장
+- 의존성 설치: `npm install`
+
+Next.js 16과 Tailwind 4 조합에서는 오래된 Node 버전이나 불완전한 `node_modules` 상태에서 빌드가 실패할 수 있습니다.
+
+`Error: Cannot find native binding`
+
+위 오류가 나오면 아래 순서로 다시 설치하세요.
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
 ## 📄 .env.local 파일 설정
 
 `.env.local` 파일을 프로젝트 루트에 생성하고 아래 내용을 추가하세요:
