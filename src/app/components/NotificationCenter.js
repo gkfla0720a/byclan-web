@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 
-export default function NotificationCenter() {
+export default function NotificationCenter({ navigateTo, profile }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const isApplicant = profile?.role === 'applicant';
 
   useEffect(() => {
     const loadNotifications = async () => {
@@ -34,6 +36,29 @@ export default function NotificationCenter() {
       <h2 className="text-3xl font-black text-white mb-8 border-b border-gray-700 pb-4 flex items-center gap-3">
         <span>🔔</span> 알림함
       </h2>
+
+      {isApplicant && (
+        <div className="mb-6 rounded-2xl border border-yellow-700/40 bg-yellow-900/20 p-5">
+          <h3 className="text-lg font-bold text-yellow-300 mb-2">가입 신청 진행 상태 안내</h3>
+          <p className="text-sm text-gray-300 leading-relaxed mb-4">
+            운영진이 남긴 심사 결과, 테스트 일정, 합격 또는 불합격 안내는 이 알림함으로 가장 먼저 도착합니다.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => navigateTo?.('가입안내')}
+              className="px-5 py-2.5 rounded-lg font-bold text-sm bg-yellow-500 text-gray-900 hover:bg-yellow-400 transition-colors"
+            >
+              가입 안내 다시 보기
+            </button>
+            <button
+              onClick={() => navigateTo?.('Home')}
+              className="px-5 py-2.5 rounded-lg font-bold text-sm bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+            >
+              홈으로 이동
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         {notifications.map(noti => (

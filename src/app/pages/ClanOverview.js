@@ -5,6 +5,21 @@ import { supabase } from '@/supabase';
 import { ROLE_PERMISSIONS } from '../utils/permissions';
 import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
 
+const ROLE_SECTIONS = [
+  { key: 'leadership', title: '운영진', roles: ['developer', 'master', 'admin'] },
+  { key: 'elite', title: '정예 길드원', roles: ['elite'] },
+  { key: 'members', title: '길드원', roles: ['associate', 'rookie'] },
+];
+
+function isBjMember(member) {
+  const source = [member?.ByID, member?.discord_name, member?.intro]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return source.includes('bj');
+}
+
 // 길드원 리스트 컴포넌트
 function GuildMemberList() {
   const [members, setMembers] = useState([]);
@@ -16,7 +31,6 @@ function GuildMemberList() {
 
   const fetchMembers = async () => {
     try {
-      console.log('🔍 길드원 목록 조회 시작...');
       const { data, error } = await filterVisibleTestAccounts(supabase
         .from('profiles')
         .select('*')
@@ -24,8 +38,6 @@ function GuildMemberList() {
         .neq('role', 'applicant')
         .neq('role', 'expelled')
         .order('ladder_points', { ascending: false }));
-
-      console.log('🔍 길드원 목록 결과:', { data, error });
       
       if (error) throw error;
       setMembers(data || []);
@@ -48,6 +60,14 @@ function GuildMemberList() {
     return ROLE_PERMISSIONS[role]?.name || role;
   };
 
+  const totalMembers = members.length;
+  const eliteCount = members.filter((member) => member.role === 'elite').length;
+  const bjCount = members.filter((member) => isBjMember(member)).length;
+  const groupedMembers = ROLE_SECTIONS.map((section) => ({
+    ...section,
+    members: members.filter((member) => section.roles.includes(member.role)),
+  })).filter((section) => section.members.length > 0);
+
   if (loading) {
     return (
       <div className="text-center py-12 text-cyan-400 font-mono">
@@ -60,56 +80,72 @@ function GuildMemberList() {
     <div className="bg-gray-800 border border-cyan-500/30 rounded-xl overflow-hidden shadow-2xl">
       <div className="bg-gradient-to-r from-cyan-600/20 to-purple-600/20 p-6 border-b border-cyan-500/30">
         <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-          🎭 길드원 명단
+          🎭 클랜원 명단
         </h3>
-        <p className="text-gray-400 text-sm mt-1">랭킹별 길드원 리스트</p>
+        <p className="text-gray-400 text-sm mt-1">현재 활동 중인 멤버를 직책 기준으로 정리했습니다.</p>
       </div>
       
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {members.map((member, index) => (
-            <div 
-              key={member.id} 
-              className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 hover:border-cyan-500/50 transition-all hover:scale-105 cursor-pointer"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="text-3xl">{getRoleIcon(member.role)}</div>
-                <div className="flex-1">
-                  <div className="text-white font-bold text-lg flex items-center gap-2">{member.ByID}{isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}</div>
-                  <div className="text-gray-400 text-sm">{member.discord_name}</div>
-                </div>
-                <div className="text-2xl font-bold text-cyan-400">
-                  #{index + 1}
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-4">
+            <div className="text-xs text-gray-500 uppercase tracking-widest">총 인원</div>
+            <div className="mt-2 text-3xl font-black text-white">{totalMembers}명</div>
+          </div>
+          <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-4">
+            <div className="text-xs text-gray-500 uppercase tracking-widest">정예 길드원</div>
+            <div className="mt-2 text-3xl font-black text-cyan-400">{eliteCount}명</div>
+          </div>
+          <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-4">
+            <div className="text-xs text-gray-500 uppercase tracking-widest">BJ</div>
+            <div className="mt-2 text-3xl font-black text-yellow-400">{bjCount}명</div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {groupedMembers.map((section) => (
+            <section key={section.key} className="rounded-xl border border-gray-700 bg-gray-900/30 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 bg-gray-900/60">
+                <h4 className="text-lg font-bold text-white">{section.title}</h4>
+                <span className="text-sm text-gray-400">{section.members.length}명</span>
               </div>
-              
-              <div className="flex items-center justify-between mb-2">
-                <span 
-                  className="px-2 py-1 rounded-full text-xs font-bold"
-                  style={{ 
-                    backgroundColor: getRoleColor(member.role) + '20',
-                    color: getRoleColor(member.role),
-                    border: `1px solid ${getRoleColor(member.role)}50`
-                  }}
-                >
-                  {getRoleName(member.role)}
-                </span>
-                <div className="text-cyan-400 text-sm font-bold">
-                  {member.ladder_points || 1000}P
-                </div>
+
+              <div className="divide-y divide-gray-800">
+                {section.members.map((member) => (
+                  <div key={member.id} className="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="text-2xl shrink-0">{getRoleIcon(member.role)}</div>
+                      <div className="min-w-0">
+                        <div className="text-white font-bold flex items-center gap-2 flex-wrap">
+                          <span className="truncate">{member.ByID || member.discord_name || '이름 없음'}</span>
+                          {isMarkedTestAccount(member) && (
+                            <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>
+                          )}
+                          {isBjMember(member) && (
+                            <span className="text-[10px] text-pink-300 border border-pink-500/40 px-1.5 py-0.5 rounded">BJ</span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-400 truncate">{member.discord_name || '디스코드명 미등록'}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                      <span
+                        className="px-2 py-1 rounded-full text-xs font-bold"
+                        style={{
+                          backgroundColor: `${getRoleColor(member.role)}20`,
+                          color: getRoleColor(member.role),
+                          border: `1px solid ${getRoleColor(member.role)}50`,
+                        }}
+                      >
+                        {getRoleName(member.role)}
+                      </span>
+                      <span className="text-sm font-bold text-cyan-400">{member.ladder_points || 1000}P</span>
+                      <span className="text-xs text-gray-500">{member.race || 'Terran'}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-              
-              <div className="flex items-center gap-4 text-xs text-gray-500">
-                <span className="flex items-center gap-1">
-                  <span className="text-yellow-400">🏆</span>
-                  {member.race || 'Terran'}
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="text-green-400">📅</span>
-                  {new Date(member.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                </span>
-              </div>
-            </div>
+            </section>
           ))}
         </div>
         
@@ -152,19 +188,19 @@ function ClanOverview() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-          <h3 className="text-lg font-bold text-cyan-400 mb-3">클랜 핵심 재미</h3>
+          <h3 className="text-lg font-bold text-cyan-400 mb-3">클랜 운영 방향</h3>
           <ul className="space-y-2 text-sm text-gray-300 leading-relaxed">
-            <li>• 주 목적은 기존 유저들이 지속적으로 접속해 레더에서 경쟁하는 것입니다.</li>
-            <li>• 관전과 포인트 베팅, 최근 변화가 큰 플레이어 확인도 중요한 재미 요소입니다.</li>
-            <li>• 로그인 전에도 홈, 개요, 가입 절차, 래더 미리보기를 통해 분위기를 확인할 수 있습니다.</li>
+            <li>• ByClan은 빠른무한을 오래 즐기는 유저들이 꾸준히 모여 래더와 내전을 함께 운영하는 클랜입니다.</li>
+            <li>• 활동의 중심은 레더 경쟁, 디스코드 소통, 팀 단위 플레이 적응에 있습니다.</li>
+            <li>• 운영진과 정예 멤버가 신규 인원 적응을 돕고, 활동 흐름은 공지와 알림을 통해 관리됩니다.</li>
           </ul>
         </div>
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-          <h3 className="text-lg font-bold text-cyan-400 mb-3">가입 후 흐름</h3>
+          <h3 className="text-lg font-bold text-cyan-400 mb-3">멤버 구성 안내</h3>
           <ul className="space-y-2 text-sm text-gray-300 leading-relaxed">
-            <li>• 회원가입 시 영문 기반 ByID, 영문+숫자 8자 이상 비밀번호, 약관 동의가 필요합니다.</li>
-            <li>• 가입 직후에는 준회원으로 시작하며 가입신청서를 작성할 수 있습니다.</li>
-            <li>• 정상적인 레더 참여 전에는 Discord 연동이 요구될 수 있으며, 개발자 설정에서 예외 적용이 가능합니다.</li>
+            <li>• 운영진, 정예 길드원, 일반 길드원 구성을 기준으로 역할이 나뉘며 리스트도 같은 기준으로 정리됩니다.</li>
+            <li>• 상단 요약에서는 전체 인원과 정예 길드원 수, BJ 표기가 있는 멤버 수를 빠르게 확인할 수 있습니다.</li>
+            <li>• 멤버 목록은 순위 번호 대신 ByID와 직책, 포인트 중심으로 확인할 수 있도록 단순화했습니다.</li>
           </ul>
         </div>
       </div>

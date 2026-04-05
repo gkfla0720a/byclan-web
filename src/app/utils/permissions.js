@@ -226,7 +226,7 @@ export const PermissionChecker = {
       '공지사항': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '자유게시판': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '프로필': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '알림': ['rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '알림': ['applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '가입신청': ['visitor'], // 직접 메뉴 진입은 사용하지 않지만 호환성 유지
       '가입안내': ['visitor', 'applicant', 'rookie', 'associate', 'elite', 'admin', 'master', 'developer'],
       '정회원 전환신청': ['rookie'] // 신입 길드원만 정회원 신청

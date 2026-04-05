@@ -333,28 +333,6 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', navigate
         {!isRookieOrHigher && (
           <>
             <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-              <h3 className="text-xl font-bold text-white mb-4">🎮 ByClan 클랜 소개</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-900/50 p-4 rounded-lg">
-                  <h4 className="text-yellow-500 font-medium mb-2">🏆 래더 시스템</h4>
-                  <p className="text-gray-300 text-sm">실시간 랭킹 경쟁, 매치 시스템, 포인트 제도</p>
-                </div>
-                <div className="bg-gray-900/50 p-4 rounded-lg">
-                  <h4 className="text-yellow-500 font-medium mb-2">🎯 토너먼트</h4>
-                  <p className="text-gray-300 text-sm">정기 토너먼트, 특별 이벤트, 상품 제공</p>
-                </div>
-                <div className="bg-gray-900/50 p-4 rounded-lg">
-                  <h4 className="text-yellow-500 font-medium mb-2">💬 커뮤니티</h4>
-                  <p className="text-gray-300 text-sm">자유 게시판, 전략 공유, 정보 교류</p>
-                </div>
-                <div className="bg-gray-900/50 p-4 rounded-lg">
-                  <h4 className="text-yellow-500 font-medium mb-2">🎮 Discord</h4>
-                  <p className="text-gray-300 text-sm">실시간 소통, 음성 채널, 클랜 채널</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
               <h3 className="text-xl font-bold text-white mb-4">📋 가입 절차</h3>
               <div className="space-y-3">
                 <StepItem number="1" title="가입 신청" description="기본 정보 제출" />
@@ -373,17 +351,44 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', navigate
                   <>
                     <p>배틀태그, 주 활동 시간, 연락 가능한 번호를 정확하게 적어주세요.</p>
                     <p>자기소개와 가입 동기는 운영진이 실제로 읽고 심사에 참고합니다. 간단해도 실제 플레이 스타일이 드러나는 편이 좋습니다.</p>
+                    <p>테스트 불합격 후 3일 후에 다시 테스트를 볼 수 있습니다.</p>
+                    <p>합격하시면 신입길드원으로 2주간 적응기간을 갖게 됩니다. 그동안 레더 게임과 디스코드 활동을 통해 클랜원들과 즐겁게 팀워크를 맞춰보시길 바라겠습니다.</p>
                     <p>신청 후에는 프로필 권한이 applicant로 바뀌며, 심사 결과는 알림과 운영진 처리 내역으로 반영됩니다.</p>
                   </>
                 ) : (
                   <>
                     <p>ByClan은 래더 참여, 공지 확인, 커뮤니티 활동이 꾸준한 유저를 선호합니다.</p>
                     <p>가입 신청 전에는 로그인과 기본 프로필 설정이 먼저 필요합니다.</p>
+                    <p>테스트 불합격 후 3일 후에 다시 테스트를 볼 수 있습니다.</p>
+                    <p>합격하시면 신입길드원으로 2주간 적응기간을 갖게 됩니다. 그동안 레더 게임과 디스코드 활동을 통해 클랜원들과 즐겁게 팀워크를 맞춰보시길 바라겠습니다.</p>
                     <p>테스트 합격 후에는 Discord 연동과 기본 클랜 활동을 통해 정식 멤버 단계로 올라가게 됩니다.</p>
                   </>
                 )}
               </div>
             </div>
+
+            {isApplied && (
+              <div className="bg-yellow-900/20 border border-yellow-700/40 rounded-xl p-6">
+                <h3 className="text-lg font-bold text-yellow-300 mb-3">🔔 신청 현황 확인</h3>
+                <p className="text-sm text-gray-300 leading-relaxed mb-4">
+                  심사 결과와 운영진 코멘트는 알림함에서 가장 먼저 확인할 수 있습니다. 안내가 바뀌었는지 수시로 확인해주세요.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => navigateTo?.('알림')}
+                    className="px-5 py-2.5 rounded-lg font-bold text-sm bg-yellow-500 text-gray-900 hover:bg-yellow-400 transition-colors"
+                  >
+                    알림함 열기
+                  </button>
+                  <button
+                    onClick={() => navigateTo?.('Home')}
+                    className="px-5 py-2.5 rounded-lg font-bold text-sm bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+                  >
+                    홈으로 이동
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

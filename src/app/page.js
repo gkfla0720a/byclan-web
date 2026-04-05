@@ -160,8 +160,22 @@ export default function Home() {
               가입 신청이 접수되었습니다.<br/>
               테스트 결과를 기다려주세요.
             </p>
-            <div className="text-sm text-gray-400">
-              신청 현황은 &apos;가입 신청&apos; 메뉴에서 확인할 수 있습니다.
+            <div className="text-sm text-gray-400 mb-5">
+              신청 현황과 운영진 안내는 알림함에서 확인할 수 있으며, 가입 안내에서 절차와 주의사항을 다시 볼 수 있습니다.
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => navigateTo('알림')}
+                className="px-5 py-2.5 rounded-lg font-bold text-sm bg-yellow-500 text-gray-900 hover:bg-yellow-400 transition-colors"
+              >
+                알림함 열기
+              </button>
+              <button
+                onClick={() => navigateTo('가입안내')}
+                className="px-5 py-2.5 rounded-lg font-bold text-sm bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+              >
+                가입 안내 보기
+              </button>
             </div>
           </div>
         </main>
@@ -251,7 +265,7 @@ export default function Home() {
       }
       return <MyProfile navigateTo={navigateTo} />;
     }
-    if (activeView === '알림') return user ? <NotificationCenter /> : <PagePlaceholder title="로그인이 필요합니다." />;
+    if (activeView === '알림') return user ? <NotificationCenter navigateTo={navigateTo} profile={profile} /> : <PagePlaceholder title="로그인이 필요합니다." />;
 
     return <PagePlaceholder title={activeView} />;
   };
