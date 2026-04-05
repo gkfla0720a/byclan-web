@@ -2,10 +2,9 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
-import { useApplicationProcess } from '../utils/joinProcess';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
-// 전화번호 자동 포맷팅 함수 (기존 JoinProcess.js에서 가져옴)
+// 전화번호 자동 포맷팅 함수
 function formatPhone(value) {
   const digits = value.replace(/\D/g, '').slice(0, 11);
   if (digits.length < 4) return digits;
@@ -15,14 +14,48 @@ function formatPhone(value) {
   return digits.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
 }
 
+// 가입 신청 처리 함수
+async function submitApplication(userId, applicationData) {
+  try {
+    const { error: appError } = await supabase
+      .from('applications')
+      .insert({
+        user_id: userId,
+        btag: applicationData.btag,
+        race: applicationData.race,
+        tier: applicationData.tier,
+        intro: applicationData.intro,
+        motivation: applicationData.motivation,
+        playtime: applicationData.playtime,
+        phone: applicationData.phone,
+        status: 'pending'
+      });
+
+    if (appError) {
+      // applications 테이블이 없을 경우 profiles에 상태 업데이트만
+      console.warn('applications 테이블 오류:', appError.message);
+    }
+
+    // 프로필 역할을 applicant로 변경
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ role: 'applicant' })
+      .eq('id', userId);
+
+    if (profileError) throw profileError;
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 // 방문자용 환영 페이지
 export default function VisitorWelcome({ user, onApplicationSubmit }) {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-
-  const { submitApplication } = useApplicationProcess();
 
   const handleApplicationSubmit = async (applicationData) => {
     setLoading(true);
@@ -39,7 +72,7 @@ export default function VisitorWelcome({ user, onApplicationSubmit }) {
       } else {
         setError(result.error);
       }
-    } catch (error) {
+    } catch {
       setError('가입 신청 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);

@@ -3,9 +3,10 @@
 
 // 개발자 설정 (localStorage에 저장)
 export const DEV_SETTINGS = {
-  canReviewApplications: true,  // 기본값: 가입심사 가능
-  canManageMembers: true,      // 기본값: 멤버 관리 가능
-  canDelegateMaster: true      // 기본값: 마스터 위임 가능
+  canReviewApplications: true,       // 기본값: 가입심사 가능
+  canManageMembers: true,            // 기본값: 멤버 관리 가능
+  canDelegateMaster: true,           // 기본값: 마스터 위임 가능
+  requireDiscordForLadder: true      // 기본값: 래더 Discord 연동 필수
 };
 
 // 개발자 설정 로드

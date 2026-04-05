@@ -9,41 +9,29 @@ function HomeContent({ navigateTo }) {
   const [topRankers, setTopRankers] = useState([]);
   const [recentNotices, setRecentNotices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      setError(null);
 
-      // 랭킹 데이터 가져오기
-      const { data: rankData, error: rankError } = await supabase
+      const { data: rankData } = await supabase
         .from('ladders')
         .select('*')
         .order('rank', { ascending: true })
         .limit(3);
-      
-      if (rankError) throw rankError;
 
-      // 공지사항 데이터 가져오기
-      const { data: noticeData, error: noticeError } = await supabase
+      const { data: noticeData } = await supabase
         .from('admin_posts')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(3);
-      
-      if (noticeError) throw noticeError;
 
-      // 데이터가 없을 경우 기본값 설정
-      const notices = noticeData && noticeData.length > 0 
-        ? noticeData.map(notice => ({
-            id: notice.id,
+      const notices = noticeData && noticeData.length > 0
+        ? noticeData.map(n => ({
+            id: n.id,
             type: '공지',
-            title: notice.title,
-            date: new Date(notice.created_at).toLocaleDateString('ko-KR', { 
-              month: '2-digit', 
-              day: '2-digit' 
-            }).replace(/\./g, '.')
+            title: n.title,
+            date: new Date(n.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
           }))
         : [
             { id: 1, type: '안내', title: '바이클랜에 오신 것을 환영합니다!', date: '04.04' },
@@ -52,105 +40,131 @@ function HomeContent({ navigateTo }) {
 
       if (rankData) setTopRankers(rankData);
       setRecentNotices(notices);
-      
-    } catch (error) {
-      console.error('홈 데이터 로딩 실패:', error);
-      setError('데이터 로딩 중 오류가 발생했습니다.');
-      
-      // 에러 시 기본값 설정
+    } catch {
       setRecentNotices([
         { id: 1, type: '안내', title: '바이클랜에 오신 것을 환영합니다!', date: '04.04' },
-        { id: 2, type: '공지', title: '클랜 활동이 활발하게 진행 중입니다', date: '04.04' }
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6 sm:space-y-8 animate-fade-in-down mt-4 sm:mt-8">
-      <section className="relative bg-gray-900 rounded-2xl overflow-hidden border border-gray-700 shadow-2xl h-64 sm:h-80 flex flex-col items-center justify-center text-center">
-         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop')] bg-cover opacity-20"></div>
-         <div className="relative z-10 px-4">
-           <h2 className="text-3xl sm:text-5xl font-black text-white mb-4">Welcome to <span className="text-yellow-500">ByClan</span></h2>
-           <button onClick={() => navigateTo('가입신청')} className="px-6 py-2.5 bg-yellow-500 text-gray-900 font-bold rounded-full shadow-lg">가입 신청하기</button>
-         </div>
+    <div className="w-full space-y-5 animate-fade-in-down">
+      {/* 히어로 배너 */}
+      <section className="relative rounded-2xl overflow-hidden border border-cyan-900/40 h-56 sm:h-72 flex flex-col items-center justify-center text-center scanline">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#06060a]/40 to-[#06060a]" />
+        {/* 사이버 그리드 오버레이 */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(rgba(0,212,255,0.04) 1px,transparent 1px), linear-gradient(90deg,rgba(0,212,255,0.04) 1px,transparent 1px)',
+          backgroundSize: '30px 30px'
+        }} />
+        <div className="relative z-10 px-4">
+          <p className="text-cyan-500 text-xs tracking-[0.3em] uppercase mb-2 font-bold animate-flicker">
+            StarCraft Clan Network
+          </p>
+          <h2 className="text-3xl sm:text-5xl font-black text-white mb-4 tracking-tight">
+            Welcome to{' '}
+            <span
+              className="italic"
+              style={{
+                background: 'linear-gradient(155deg,#FFE8C6 0%,#B89C60 20%,#C8A266 40%,#45372A 50%,#5E462E 60%,#B89C60 80%,#2E241C 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              ByClan
+            </span>
+          </h2>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <button
+              onClick={() => navigateTo('가입안내')}
+              className="px-5 py-2 rounded-lg font-bold text-sm btn-neon"
+            >
+              클랜 소개 보기
+            </button>
+            <button
+              onClick={() => navigateTo('대시보드')}
+              className="px-5 py-2 rounded-lg font-bold text-sm bg-yellow-500/10 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/20 transition-all"
+            >
+              ⚔️ 래더 시스템
+            </button>
+          </div>
+        </div>
       </section>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <section className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl cursor-pointer" onClick={() => navigateTo('랭킹')}>
-          <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">🏆 명예의 전당</h3>
-          <div className="space-y-3">
-            {loading ? (
-              <SkeletonLoader count={3} />
-            ) : topRankers.length === 0 ? (
-              <EmptyState message="아직 랭킹 데이터가 없습니다" icon="🏆" />
-            ) : (
-              topRankers.map((p) => (
-                <div key={p.rank} className="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
-                  <span className="text-gray-200 font-semibold">{p.rank}위 {p.name}</span>
-                  <span className="font-bold text-sky-400">{p.points} P</span>
-                </div>
-              ))
-            )}
+
+      {/* 랭킹 + 소식 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <section
+          className="cyber-card p-5 rounded-xl cursor-pointer"
+          onClick={() => navigateTo('랭킹')}
+        >
+          <h3 className="text-base font-bold text-cyan-400 mb-3 border-b border-gray-800 pb-2 flex items-center gap-2">
+            🏆 <span>명예의 전당</span>
+          </h3>
+          <div className="space-y-2">
+            {loading ? <SkeletonLoader count={3} /> :
+             topRankers.length === 0 ? <EmptyState message="아직 랭킹 데이터가 없습니다" icon="🏆" /> :
+             topRankers.map((p) => (
+               <div key={p.rank} className="flex items-center justify-between bg-gray-900/60 px-3 py-2 rounded-lg border border-gray-800/60">
+                 <span className="text-gray-200 font-semibold text-sm">
+                   <span className="text-yellow-500 mr-1">{p.rank}위</span> {p.name}
+                 </span>
+                 <span className="font-bold text-cyan-400 text-sm">{p.points} P</span>
+               </div>
+             ))
+            }
           </div>
         </section>
-        <section className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl cursor-pointer" onClick={() => navigateTo('공지사항')}>
-          <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">📢 최신 소식</h3>
-          <div className="space-y-3">
-            {loading ? (
-              <SkeletonLoader count={3} />
-            ) : recentNotices.length === 0 ? (
-              <EmptyState message="새로운 소식이 없습니다" icon="📢" />
-            ) : (
-              recentNotices.map((n) => (
-                <div key={n.id} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-300 truncate">{n.title}</span>
-                  <span className="text-gray-500 text-xs ml-2">{n.date}</span>
-                </div>
-              ))
-            )}
+
+        <section
+          className="cyber-card p-5 rounded-xl cursor-pointer"
+          onClick={() => navigateTo('공지사항')}
+        >
+          <h3 className="text-base font-bold text-cyan-400 mb-3 border-b border-gray-800 pb-2 flex items-center gap-2">
+            📢 <span>최신 소식</span>
+          </h3>
+          <div className="space-y-2">
+            {loading ? <SkeletonLoader count={3} /> :
+             recentNotices.length === 0 ? <EmptyState message="새로운 소식이 없습니다" icon="📢" /> :
+             recentNotices.map((n) => (
+               <div key={n.id} className="flex items-center justify-between text-sm py-1 border-b border-gray-800/40 last:border-none">
+                 <span className="text-gray-300 truncate">{n.title}</span>
+                 <span className="text-gray-600 text-xs ml-2 shrink-0">{n.date}</span>
+               </div>
+             ))
+            }
           </div>
         </section>
       </div>
 
-      {/* 새로운 섹션들 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* 매치 상태 + 활동 로그 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <MatchStatus navigateTo={navigateTo} />
         <ActivityLog />
       </div>
 
-      {/* 빠른 접근 버튼 */}
-      <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
-        <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">🚀 빠른 접근</h3>
+      {/* 빠른 접근 */}
+      <div className="cyber-card p-5 rounded-xl">
+        <h3 className="text-base font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2">🚀 빠른 접근</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button 
-            onClick={() => navigateTo('가입신청')}
-            className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm font-medium transition-colors"
-          >
-            📝 가입 신청
-          </button>
-          <button 
-            onClick={() => navigateTo('대시보드')}
-            className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm font-medium transition-colors"
-          >
-            ⚔️ 매치 참여
-          </button>
-          <button 
-            onClick={() => navigateTo('자유게시판')}
-            className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm font-medium transition-colors"
-          >
-            💬 커뮤니티
-          </button>
-          <button 
-            onClick={() => navigateTo('랭킹')}
-            className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm font-medium transition-colors"
-          >
-            🏆 랭킹 보기
-          </button>
+          {[
+            { icon: '📝', label: '가입 신청', view: '가입신청' },
+            { icon: '⚔️', label: '매치 참여', view: '대시보드' },
+            { icon: '💬', label: '커뮤니티', view: '자유게시판' },
+            { icon: '🏆', label: '랭킹 보기', view: '랭킹' },
+          ].map(({ icon, label, view }) => (
+            <button
+              key={view}
+              onClick={() => navigateTo(view)}
+              className="p-3 rounded-lg text-sm font-bold text-gray-300 border border-gray-800 bg-gray-900/40 hover:border-cyan-700/50 hover:text-cyan-400 transition-all"
+            >
+              {icon} {label}
+            </button>
+          ))}
         </div>
       </div>
     </div>

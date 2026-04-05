@@ -7,8 +7,14 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
+  // 빌드 타임 SSR에서는 환경변수가 없을 수 있음 – 클라이언트 런타임에서만 경고
+  if (typeof window !== 'undefined') {
+    console.warn('Supabase environment variables are not set. Some features may not work.');
+  }
 }
 
-// 여기서 딱 한 번만 Supabase를 초기화(생성)합니다.
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Supabase 클라이언트 초기화 (env가 없으면 플레이스홀더 사용)
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseKey || 'placeholder-key'
+);

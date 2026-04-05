@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
+/* === ByClan Cyberpunk Theme (Fixed Dark – No Light/Dark Switching) === */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #06060a;
+  --foreground: #e2e8f0;
+  --neon-cyan: #00d4ff;
+  --neon-blue: #3b82f6;
+  --neon-purple: #a855f7;
+  --neon-gold: #f59e0b;
+  --card-bg: #0d0d14;
+  --card-border: rgba(0, 212, 255, 0.12);
+  --card-border-hover: rgba(0, 212, 255, 0.35);
+  --grid-line: rgba(0, 212, 255, 0.04);
 }
 
 @theme inline {
@@ -12,15 +21,100 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  font-family: 'Pretendard', Arial, Helvetica, sans-serif;
+  min-height: 100%;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Cyberpunk grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
 }
+
+/* Neon glow utilities */
+.neon-cyan { color: var(--neon-cyan); text-shadow: 0 0 8px rgba(0,212,255,0.7); }
+.neon-gold { color: var(--neon-gold); text-shadow: 0 0 8px rgba(245,158,11,0.7); }
+.neon-border { border-color: var(--card-border) !important; }
+
+/* Cyberpunk card style */
+.cyber-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.cyber-card:hover {
+  border-color: var(--card-border-hover);
+  box-shadow: 0 0 18px rgba(0,212,255,0.08);
+}
+
+/* Neon button */
+.btn-neon {
+  background: transparent;
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  text-shadow: 0 0 8px rgba(0,212,255,0.6);
+  box-shadow: 0 0 12px rgba(0,212,255,0.15), inset 0 0 12px rgba(0,212,255,0.05);
+  transition: all 0.25s;
+}
+.btn-neon:hover {
+  background: rgba(0,212,255,0.08);
+  box-shadow: 0 0 20px rgba(0,212,255,0.35), inset 0 0 20px rgba(0,212,255,0.08);
+}
+
+/* Scan line overlay */
+.scanline {
+  position: relative;
+  overflow: hidden;
+}
+.scanline::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0,0,0,0.07) 3px,
+    rgba(0,0,0,0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ladder preview blur */
+.ladder-preview-blur {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.5;
+}
+
+/* Animations */
+@keyframes fade-in-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-neon {
+  0%, 100% { box-shadow: 0 0 6px rgba(0,212,255,0.3); }
+  50%       { box-shadow: 0 0 20px rgba(0,212,255,0.6); }
+}
+@keyframes flicker {
+  0%, 95%, 100% { opacity: 1; }
+  96%            { opacity: 0.85; }
+  97%            { opacity: 1; }
+  98%            { opacity: 0.9; }
+}
+
+.animate-fade-in-down { animation: fade-in-down 0.4s ease both; }
+.animate-pulse-neon   { animation: pulse-neon 2.5s ease-in-out infinite; }
+.animate-flicker      { animation: flicker 4s ease-in-out infinite; }
