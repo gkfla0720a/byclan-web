@@ -68,6 +68,12 @@ export default function Home() {
     );
   }
 
+  // [홈게이트 메모] 이 비밀번호 게이트('1990')는 실제 서비스 운영 중에는
+  // 비활성화되어야 하는 임시 보안문입니다.
+  // 코드 점검, 정기 유지보수, 배포 전 사전 확인 등 특정 상황에서만 일시적으로
+  // 활성화하여 외부 접근을 차단하는 용도로 사용됩니다.
+  // 운영 환경에서는 isAuthorized 초기값을 true로 설정하거나
+  // 이 게이트 로직 전체를 조건부로 비활성화해야 합니다.
   const handlePasswordGateSubmit = (e) => {
     e.preventDefault();
 
