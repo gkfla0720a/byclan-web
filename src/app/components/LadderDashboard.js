@@ -173,7 +173,7 @@ function TwoMatchSuggestion({ players, onSelectMatch }) {
   const lowerPool = sorted.slice(half);
   const match1 = buildTeams(upperPool, perTeam, sortA);
   const match2 = buildTeams(lowerPool, perTeam, sortB);
-  const calcAvg = (team) => team ? team.reduce((s, p) => s + (p.ladder_points || 1000), 0) / team.length : 0;
+  const calcAvg = (team) => (team && team.length > 0) ? team.reduce((s, p) => s + (p.ladder_points || 1000), 0) / team.length : 0;
   const diff1 = match1 ? Math.abs(calcAvg(match1.teamA) - calcAvg(match1.teamB)) : 0;
   const diff2 = match2 ? Math.abs(calcAvg(match2.teamA) - calcAvg(match2.teamB)) : 0;
   const SORT_OPTIONS = [
@@ -235,12 +235,12 @@ export default function LadderDashboard({ onMatchEnter }) {
   const [activeProposal, setActiveProposal] = useState(null);
   const [proposalCooldown, setProposalCooldown] = useState(0);
   const [proposalAttempts, setProposalAttempts] = useState(0);
-  const [lastQueueKey, setLastQueueKey] = useState('');
   const [show5v5Warning, setShow5v5Warning] = useState(false);
   const [accepted5v5, setAccepted5v5] = useState(false);
   const cooldownTimerRef = useRef(null);
   const queueTimerRef = useRef(null);
   const currentUserRef = useRef(null);
+  const lastQueueKeyRef = useRef('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -270,14 +270,12 @@ export default function LadderDashboard({ onMatchEnter }) {
 
       // 대기열 인원 변경 시 쿨다운 리셋
       const newKey = qPlayers.map(p => p.id).sort().join(',');
-      setLastQueueKey(prev => {
-        if (prev && prev !== newKey) {
-          setProposalAttempts(0);
-          setProposalCooldown(0);
-          clearTimeout(cooldownTimerRef.current);
-        }
-        return newKey;
-      });
+      if (lastQueueKeyRef.current && lastQueueKeyRef.current !== newKey) {
+        setProposalAttempts(0);
+        setProposalCooldown(0);
+        clearTimeout(cooldownTimerRef.current);
+      }
+      lastQueueKeyRef.current = newKey;
 
       const { data: ongoing } = await supabase
         .from('ladder_matches')
@@ -576,13 +574,15 @@ export default function LadderDashboard({ onMatchEnter }) {
               onChange={e => { setQueueMatchType(e.target.value); setAccepted5v5(false); }}
               className="bg-gray-900 border border-cyan-500/40 text-cyan-300 rounded px-2 py-1 text-xs outline-none cursor-pointer"
             >
-              <option disabled className="text-gray-500">── 래더 매치 ──</option>
-              <option value="3v3">3대3 래더 (BO5 3선승)</option>
-              <option value="4v4">4대4 래더 (BO5 3선승)</option>
-              <option value="5v5">5대5 래더 (BO7 4선승)</option>
-              <option disabled className="text-gray-500">── 일반 게임 ──</option>
-              <option value="1v1">1대1 일반 (래더 미반영)</option>
-              <option value="2v2">2대2 일반 (래더 미반영)</option>
+              <optgroup label="── 래더 매치 ──">
+                <option value="3v3">3대3 래더 (BO5 3선승)</option>
+                <option value="4v4">4대4 래더 (BO5 3선승)</option>
+                <option value="5v5">5대5 래더 (BO7 4선승)</option>
+              </optgroup>
+              <optgroup label="── 일반 게임 ──">
+                <option value="1v1">1대1 일반 (래더 미반영)</option>
+                <option value="2v2">2대2 일반 (래더 미반영)</option>
+              </optgroup>
             </select>
             <button onClick={fetchData} className="text-cyan-700 hover:text-cyan-400 text-xs transition-colors uppercase tracking-wider">
               새로고침

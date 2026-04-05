@@ -19,11 +19,12 @@ const RACE_ICONS = { Protoss: '프', Terran: '테', Zerg: '저' };
 function getRaceCards(comboId) {
   const combo = RACE_COMBOS.find(c => c.id === comboId);
   if (!combo || !combo.races) {
-    // 대포: 랜덤 3종족 (프프프 제외 재시도)
+    // 대포: 랜덤 3종족 (프프프 제외)
     const pool = ['Protoss', 'Terran', 'Zerg'];
     let result;
     do {
-      result = [0, 1, 2].map(() => pool[Math.floor(Math.random() * 3)]);
+      // Shuffle pool and pick 3 (allows duplicates except all-Protoss)
+      result = [0, 1, 2].map(() => pool[Math.floor(Math.random() * pool.length)]);
     } while (result.every(r => r === 'Protoss'));
     return result;
   }
@@ -159,20 +160,25 @@ export default function MatchCenter({ matchId, onExit }) {
     setBettingLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+
+      // 베팅 기록 먼저 시도 (match_bets 테이블이 없으면 skip하고 포인트만 차감)
+      const { error: betError } = await supabase.from('match_bets').insert({
+        match_id: matchId,
+        user_id: user.id,
+        bet_team: betTeam,
+        amount: betAmount,
+      });
+      // 테이블이 없어도 포인트 차감은 진행 (베타 환경 대응)
+      if (betError && !betError.message?.includes('does not exist') && !betError.code?.startsWith('42')) {
+        throw betError;
+      }
+
       // 포인트 차감
       const { error: deductError } = await supabase
         .from('profiles')
         .update({ points: myPoints - betAmount })
         .eq('id', user.id);
       if (deductError) throw deductError;
-
-      // 베팅 기록 (match_bets 테이블이 없으면 skip)
-      await supabase.from('match_bets').insert({
-        match_id: matchId,
-        user_id: user.id,
-        bet_team: betTeam,
-        amount: betAmount,
-      }).then(() => {});
 
       setMyPoints(p => p - betAmount);
       setBettingDone(true);
@@ -421,7 +427,7 @@ export default function MatchCenter({ matchId, onExit }) {
                       <option
                         key={member.id}
                         value={member.id}
-                        disabled={isAlreadySelected || (!canRest && idx > -1)}
+                        disabled={isAlreadySelected || !canRest}
                         className="bg-gray-900"
                       >
                         {member.ByID} (휴식: {count}회)
