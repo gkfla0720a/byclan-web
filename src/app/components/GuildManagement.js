@@ -9,9 +9,9 @@ import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/test
 export default function GuildManagement() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMember, setSelectedMember] = useState(null);
   const [actionModal, setActionModal] = useState({ isOpen: false, action: '', member: null });
   const [masterDelegation, setMasterDelegation] = useState({ isOpen: false, targetId: null });
+  const [pendingRole, setPendingRole] = useState('member');
 
   useEffect(() => {
     fetchMembers();
@@ -44,6 +44,7 @@ export default function GuildManagement() {
       if (error) throw error;
       
       await fetchMembers();
+      setPendingRole('member');
       setActionModal({ isOpen: false, action: '', member: null });
       alert('등급이 변경되었습니다.');
     } catch (error) {
@@ -179,7 +180,10 @@ export default function GuildManagement() {
                       {member.role !== 'developer' && (
                         <>
                           <button
-                            onClick={() => setActionModal({ isOpen: true, action: 'role', member })}
+                            onClick={() => {
+                              setPendingRole(member.role);
+                              setActionModal({ isOpen: true, action: 'role', member });
+                            }}
                             className="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs rounded transition-colors"
                           >
                             등급
@@ -224,17 +228,19 @@ export default function GuildManagement() {
                 </p>
                 <select 
                   className="w-full p-2 bg-gray-800 border border-gray-700 rounded text-white"
-                  defaultValue={actionModal.member.role}
+                  value={pendingRole}
+                  onChange={(event) => setPendingRole(event.target.value)}
                 >
                   <option value="associate">테스트신청자</option>
                   <option value="member">일반 클랜원</option>
+                  <option value="rookie">신입 길드원</option>
                   <option value="elite">정예 길드원</option>
                   <option value="admin">관리자</option>
                   <option value="master">마스터</option>
                 </select>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => handleRoleChange(actionModal.member.id, actionModal.member.role)}
+                    onClick={() => handleRoleChange(actionModal.member.id, pendingRole)}
                     className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white py-2 rounded font-bold transition-colors"
                   >
                     변경

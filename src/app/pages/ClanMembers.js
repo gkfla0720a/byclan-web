@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import { ROLE_PERMISSIONS } from '../utils/permissions';
+import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
 
 const ROLE_SECTIONS = [
@@ -12,6 +12,13 @@ const ROLE_SECTIONS = [
 ];
 
 const VISIBLE_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie'];
+const INLINE_ROLE_OPTIONS = [
+  { value: 'associate', label: '테스트신청자' },
+  { value: 'member', label: '일반 클랜원' },
+  { value: 'rookie', label: '신입 길드원' },
+  { value: 'elite', label: '정예 길드원' },
+  { value: 'admin', label: '관리자' },
+];
 
 function normalizeUrl(url) {
   if (!url) return '';
@@ -40,8 +47,23 @@ function applyDemoStreamers(memberList) {
 export default function ClanMembers() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentRole, setCurrentRole] = useState(null);
+  const [updatingMemberId, setUpdatingMemberId] = useState(null);
 
   useEffect(() => {
+    const loadCurrentUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      setCurrentRole(profile?.role?.trim?.().toLowerCase?.() || null);
+    };
+
     const fetchMembers = async () => {
       try {
         const primaryResult = await filterVisibleTestAccounts(
@@ -88,6 +110,7 @@ export default function ClanMembers() {
       }
     };
 
+    loadCurrentUserRole();
     fetchMembers();
   }, []);
 
@@ -100,6 +123,40 @@ export default function ClanMembers() {
   })).filter((section) => section.members.length > 0);
 
   const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role, color: '#C7CEEA', icon: '👤' };
+  const canManageMembers = PermissionChecker.hasPermission(currentRole, 'member.manage');
+
+  const handleInlineRoleChange = async (member, nextRole) => {
+    if (!canManageMembers || !nextRole || nextRole === member.role) return;
+
+    if (member.role === 'developer') {
+      alert('개발자 등급은 이 화면에서 변경할 수 없습니다.');
+      return;
+    }
+
+    if (member.role === 'master' || nextRole === 'master') {
+      alert('마스터 변경은 길드원 관리 화면에서 진행하세요.');
+      return;
+    }
+
+    const confirmed = window.confirm(`${member.ByID || member.discord_name || '해당 멤버'}의 등급을 ${ROLE_PERMISSIONS[nextRole]?.name || nextRole}(으)로 변경하시겠습니까?`);
+    if (!confirmed) return;
+
+    try {
+      setUpdatingMemberId(member.id);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: nextRole })
+        .eq('id', member.id);
+
+      if (error) throw error;
+
+      setMembers((prev) => prev.map((item) => item.id === member.id ? { ...item, role: nextRole } : item));
+    } catch (error) {
+      alert(`등급 변경 실패: ${error.message}`);
+    } finally {
+      setUpdatingMemberId(null);
+    }
+  };
 
   if (loading) {
     return <div className="text-center py-12 text-cyan-400 font-mono">[ LOADING CLAN MEMBERS... ]</div>;
@@ -131,12 +188,13 @@ export default function ClanMembers() {
             <div className="overflow-x-auto">
               <table className="neon-table min-w-full table-fixed text-sm">
                 <colgroup>
-                  <col className="w-[22%]" />
-                  <col className="w-[24%]" />
-                  <col className="w-[18%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[12%]" />
+                  <col className={canManageMembers ? 'w-[18%]' : 'w-[22%]'} />
+                  <col className={canManageMembers ? 'w-[18%]' : 'w-[24%]'} />
+                  <col className={canManageMembers ? 'w-[16%]' : 'w-[18%]'} />
+                  <col className={canManageMembers ? 'w-[10%]' : 'w-[12%]'} />
+                  <col className={canManageMembers ? 'w-[10%]' : 'w-[12%]'} />
+                  <col className={canManageMembers ? 'w-[10%]' : 'w-[12%]'} />
+                  {canManageMembers && <col className="w-[18%]" />}
                 </colgroup>
                 <thead>
                   <tr>
@@ -146,6 +204,7 @@ export default function ClanMembers() {
                     <th className="px-4 py-3 text-left font-bold">종족</th>
                     <th className="px-4 py-3 text-left font-bold">MMR</th>
                     <th className="px-4 py-3 text-left font-bold">BJ</th>
+                    {canManageMembers && <th className="px-4 py-3 text-left font-bold">관리</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -195,6 +254,24 @@ export default function ClanMembers() {
                             <span className="text-slate-500">-</span>
                           )}
                         </td>
+                        {canManageMembers && (
+                          <td className="px-4 py-3 align-middle">
+                            {member.role === 'developer' || member.role === 'master' ? (
+                              <span className="text-xs text-slate-500">고정</span>
+                            ) : (
+                              <select
+                                value={member.role}
+                                disabled={updatingMemberId === member.id}
+                                onChange={(event) => handleInlineRoleChange(member, event.target.value)}
+                                className="w-full rounded-lg border border-cyan-400/15 bg-slate-950/70 px-2 py-2 text-xs text-slate-100 outline-none focus:border-cyan-300"
+                              >
+                                {INLINE_ROLE_OPTIONS.map((option) => (
+                                  <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                              </select>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}

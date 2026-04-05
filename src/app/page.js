@@ -240,7 +240,7 @@ export default function Home() {
     if (activeView === '가입 심사' || activeView === '관리자' || activeView === '운영진게시판' || activeView === '길드원 관리') {
       if (!user) return <PagePlaceholder title="로그인이 필요합니다." />;
       if (activeView === '가입 심사') return <ApplicationList />;
-      if (activeView === '관리자') return <AdminBoard />;
+      if (activeView === '관리자') return <AdminBoard navigateTo={navigateTo} />;
       if (activeView === '길드원 관리') return <GuildManagement />;
       return <AdminBoard />;
     }

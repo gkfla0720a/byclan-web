@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
-export default function AdminBoard() {
+export default function AdminBoard({ navigateTo }) {
   console.log('📍 AdminBoard 컴포넌트 렌더링됨!');
 
   const [posts, setPosts] = useState([]);
@@ -146,21 +146,31 @@ export default function AdminBoard() {
   return (
     <div className="w-full max-w-5xl mx-auto py-8 px-4 animate-fade-in-down font-sans mb-10">
       
-      <div className="flex items-center justify-between mb-10 border-b-2 border-yellow-700/50 pb-6 shadow-[0_4px_10px_-4px_rgba(234,179,8,0.2)]">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10 border-b-2 border-yellow-700/50 pb-6 shadow-[0_4px_10px_-4px_rgba(234,179,8,0.2)]">
         <div>
           <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-600 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             🔐 ByClan 운영진 전용 기밀 게시판
           </h2>
           <p className="text-gray-400 mt-2 text-sm sm:text-base leading-relaxed break-keep">이곳의 내용은 외부 유출을 엄금합니다. 클랜 마스터 및 운영진만 열람 및 작성이 가능합니다.</p>
         </div>
-        {!isWriting && (
-          <button 
-            onClick={() => setIsWriting(true)} 
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-gray-950 text-base font-bold rounded-full shadow-[0_0_15px_rgba(234,179,8,0.4)] transition-transform hover:scale-105"
-          >
-            <span>✍️</span> 기밀 기록하기
-          </button>
-        )}
+        <div className="flex flex-wrap gap-3 justify-center sm:justify-end">
+          {navigateTo && (
+            <button
+              onClick={() => navigateTo('길드원 관리')}
+              className="flex items-center gap-2 px-6 py-3 bg-cyan-500/10 border border-cyan-400/30 text-cyan-200 text-base font-bold rounded-full shadow-[0_0_15px_rgba(34,211,238,0.12)] transition-transform hover:scale-105"
+            >
+              <span>👥</span> 길드원 관리
+            </button>
+          )}
+          {!isWriting && (
+            <button 
+              onClick={() => setIsWriting(true)} 
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-gray-950 text-base font-bold rounded-full shadow-[0_0_15px_rgba(234,179,8,0.4)] transition-transform hover:scale-105"
+            >
+              <span>✍️</span> 기밀 기록하기
+            </button>
+          )}
+        </div>
       </div>
 
       {isWriting && (

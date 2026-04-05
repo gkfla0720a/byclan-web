@@ -72,6 +72,7 @@ export const ROLE_PERMISSIONS = {
     level: 80,
     permissions: [
       'member.approve',    // 가입 승인
+      'member.manage',     // 멤버 관리
       'match.manage',      // 매치 관리
       'ladder.moderate',   // 래더 중재
       'announcement.edit',  // 공지사항 편집
