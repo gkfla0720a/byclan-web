@@ -16,6 +16,10 @@ function ByClanLogo() {
 export default function Header() {
   const navigateTo = useNavigate();
   
+  const navRef = useRef(null);
+  const [openMenuIndex, setOpenMenuIndex] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileAccordionIndex, setMobileAccordionIndex] = useState(null);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
