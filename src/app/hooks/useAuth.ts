@@ -140,7 +140,7 @@ export function useAuth(): UseAuthReturn {
       if (error) {
         const message = `${error.message || ''} ${error.details || ''}`.toLowerCase();
         if (error.code !== '42P01' && !message.includes('does not exist')) {
-          logger.error('시스템 설정 로드 실패', error, { severity: Severity.WARNING });
+          logger.warning('시스템 설정 로드 실패', { error });
         }
         setTestAccountsEnabled(true);
         return;

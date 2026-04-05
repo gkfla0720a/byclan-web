@@ -1,8 +1,9 @@
 /**
  * Unified error-logger with severity levels.
  *
- * When `NEXT_PUBLIC_SENTRY_DSN` is set, errors are automatically forwarded to
- * Sentry via `@sentry/browser`.  Otherwise only console output is produced.
+ * When `NEXT_PUBLIC_SENTRY_DSN` is set at build time, errors are automatically
+ * forwarded to Sentry via `@sentry/browser`.  Otherwise only console output is
+ * produced.
  *
  * Severity levels: info | warning | error | critical
  */
@@ -13,6 +14,9 @@ export const Severity = /** @type {const} */ ({
   ERROR: 'error',
   CRITICAL: 'critical',
 });
+
+// Evaluated once at module load (Next.js inlines NEXT_PUBLIC_* at build time).
+const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 /** @param {string} level @param {string} message @returns {string} */
 function prefix(level, message) {
@@ -27,7 +31,7 @@ function prefix(level, message) {
  */
 async function reportToSentry(error, level, context) {
   if (typeof window === 'undefined') return;
-  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+  if (!SENTRY_DSN) return;
 
   try {
     const Sentry = await import('@sentry/browser');
