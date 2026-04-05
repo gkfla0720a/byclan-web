@@ -13,9 +13,12 @@ export default function RankingBoard() {
     const fetchRankings = async () => {
       try {
         const { data, error: fetchError } = await filterVisibleTestData(supabase
-          .from('ladders')
-          .select('*')
-          .order('ladders_points', { ascending: false })); // ✅ 수정2
+          .from('profiles')
+          .select('id, ByID, discord_name, race, ladder_points, wins, losses')
+          .neq('role', 'visitor')
+          .neq('role', 'applicant')
+          .neq('role', 'expelled')
+          .order('ladder_points', { ascending: false }));
         if (fetchError) throw fetchError;
         setRankings(data || []);
       } catch (err) {
@@ -72,13 +75,13 @@ export default function RankingBoard() {
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-cyan-400 hidden sm:table-cell">{player.race}</td>
                 <td className="py-3 px-4 text-center font-bold text-cyan-300 text-sm sm:text-base drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
-                  {player.ladders_points}점  {/* ✅ 수정4 */}
+                  {player.ladder_points}점
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-gray-400 hidden md:table-cell">
-                  <span className="text-emerald-400">{player.win}W</span> / <span className="text-red-400">{player.lose}L</span>  {/* ✅ 수정5 */}
+                  <span className="text-emerald-400">{player.wins ?? 0}W</span> / <span className="text-red-400">{player.losses ?? 0}L</span>
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-cyan-500 hidden sm:table-cell">
-                  {((player.win / (player.win + player.lose)) * 100 || 0).toFixed(1)}%  {/* ✅ 수정6 */}
+                  {(player.wins + player.losses) === 0 ? '0.0' : ((player.wins / (player.wins + player.losses)) * 100).toFixed(1)}%
                 </td>
               </tr>
             ))}
