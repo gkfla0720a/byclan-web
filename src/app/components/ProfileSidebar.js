@@ -1,6 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { isSupabaseConfigured, supabase } from '@/supabase';
+import { filterVisibleTestAccounts } from '@/app/utils/testData';
 
 const TIER_COLORS = {
   Bronze: 'text-orange-700',
@@ -35,32 +37,79 @@ function getWinRate(wins, losses) {
 
 // 홈 좌측 프로필 사이드바
 export default function ProfileSidebar({ profile, user, navigateTo }) {
+  const [spotlightProfile, setSpotlightProfile] = useState(null);
+
+  useEffect(() => {
+    const loadSpotlightProfile = async () => {
+      if (!isSupabaseConfigured) {
+        setSpotlightProfile(null);
+        return;
+      }
+
+      try {
+        const { data, error } = await filterVisibleTestAccounts(
+          supabase
+            .from('profiles')
+            .select('id, ByID, discord_name, role, race, ladder_points, wins, losses, points')
+            .in('role', ['associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
+            .order('ladder_points', { ascending: false })
+            .limit(1)
+        );
+
+        if (error) throw error;
+        setSpotlightProfile(data?.[0] || null);
+      } catch (error) {
+        console.error('사이드바 대표 멤버 로딩 실패:', error);
+        setSpotlightProfile(null);
+      }
+    };
+
+    loadSpotlightProfile();
+  }, []);
+
   const isActiveMember =
     profile && ['associate', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 
   if (!user || !profile || !isActiveMember) {
+    const previewProfile = spotlightProfile
+      ? {
+          byId: spotlightProfile.ByID || spotlightProfile.discord_name || 'ByClan Member',
+          points: spotlightProfile.ladder_points ?? 1000,
+          tier: getTier(spotlightProfile.ladder_points || 1000),
+          winRate: getWinRate(spotlightProfile.wins, spotlightProfile.losses),
+          race: RACE_LABELS[spotlightProfile.race] || spotlightProfile.race || '미등록',
+        }
+      : null;
+
     // 방문자 / 비로그인 빈 패널
     return (
       <aside className="hidden lg:flex flex-col w-56 shrink-0 gap-3">
         <div className="cyber-card rounded-xl p-4 flex flex-col gap-3 text-center">
           <div className="text-3xl mb-1">👤</div>
           <p className="text-xs font-bold text-gray-400 leading-relaxed">
-            클랜에 가입하면<br />이 곳에 내 프로필이 표시됩니다
+            {previewProfile
+              ? '현재 활동 중인 클랜원 예시를 보여드리고 있습니다. 로그인 후에는 내 프로필 카드가 이 자리에 표시됩니다.'
+              : '아직 프로필 정보가 충분하지 않습니다. 로그인 또는 가입 후 활동이 시작되면 이 영역이 자동으로 채워집니다.'}
           </p>
           <div className="space-y-1.5 mt-1">
             {[
-              { label: 'ByID', placeholder: 'By_?????' },
-              { label: '점수', placeholder: '- P' },
-              { label: '티어', placeholder: '—' },
-              { label: '승률', placeholder: '-%' },
-              { label: '주종', placeholder: '—' },
+              { label: 'ByID', placeholder: previewProfile?.byId || '프로필 준비 중' },
+              { label: '점수', placeholder: previewProfile ? `${previewProfile.points} P` : '데이터 연결 대기' },
+              { label: '티어', placeholder: previewProfile?.tier || '미정' },
+              { label: '승률', placeholder: previewProfile?.winRate || '집계 전' },
+              { label: '주종', placeholder: previewProfile?.race || '미등록' },
             ].map(({ label, placeholder }) => (
               <div key={label} className="flex justify-between text-xs border-b border-gray-800 pb-1">
                 <span className="text-gray-600">{label}</span>
-                <span className="text-gray-700">{placeholder}</span>
+                <span className="text-gray-500">{placeholder}</span>
               </div>
             ))}
           </div>
+          {previewProfile && (
+            <div className="text-[10px] text-gray-600 border-t border-gray-800 pt-2">
+              최근 래더 포인트 상위 멤버 기준 미리보기
+            </div>
+          )}
           {!user ? (
             <button
               onClick={() => navigateTo('로그인')}

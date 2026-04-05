@@ -36,24 +36,17 @@ function HomeContent({ navigateTo }) {
         .order('created_at', { ascending: false })
         .limit(3));
 
-      const notices = noticeData && noticeData.length > 0
-        ? noticeData.map(n => ({
-            id: n.id,
-            type: '공지',
-            title: n.title,
-            date: new Date(n.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
-          }))
-        : [
-            { id: 1, type: '안내', title: '바이클랜에 오신 것을 환영합니다!', date: '04.04' },
-            { id: 2, type: '공지', title: '클랜 활동이 활발하게 진행 중입니다', date: '04.04' }
-          ];
+      const notices = (noticeData || []).map((n, index) => ({
+        id: n.id || `notice-${index}`,
+        type: index === 0 ? '필독' : '공지',
+        title: n.title,
+        date: new Date(n.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
+      }));
 
       if (rankData) setTopRankers(rankData);
       setRecentNotices(notices);
     } catch {
-      setRecentNotices([
-        { id: 1, type: '안내', title: '바이클랜에 오신 것을 환영합니다!', date: '04.04' },
-      ]);
+      setRecentNotices([]);
     } finally {
       setLoading(false);
     }

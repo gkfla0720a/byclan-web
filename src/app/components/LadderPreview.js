@@ -1,16 +1,91 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { isSupabaseConfigured, supabase } from '@/supabase';
+import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
+
+function getTier(points) {
+  if (points >= 2200) return 'Master';
+  if (points >= 1900) return 'Diamond';
+  if (points >= 1600) return 'Platinum';
+  if (points >= 1350) return 'Gold';
+  if (points >= 1100) return 'Silver';
+  return 'Bronze';
+}
+
+function getRaceLabel(race) {
+  if (race === 'Protoss') return '프';
+  if (race === 'Terran') return '테';
+  if (race === 'Zerg') return '저';
+  if (race === 'Random') return '랜';
+  return '—';
+}
 
 // 래더 미리보기 – 비회원/권한 없는 사용자에게 표시
 export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink }) {
-  const mockQueue = [
-    { id: 1, name: 'By_StarPlayer', tier: 'Diamond', pts: 2150, race: '프' },
-    { id: 2, name: 'By_NightHawk', tier: 'Platinum', pts: 1850, race: '테' },
-    { id: 3, name: 'By_ZergMaster', tier: 'Gold', pts: 1630, race: '저' },
-    { id: 4, name: 'By_ProtosStar', tier: 'Diamond', pts: 2080, race: '프' },
-    { id: 5, name: 'By_TerranAce', tier: 'Platinum', pts: 1920, race: '테' },
-  ];
+  const [previewPlayers, setPreviewPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPreviewPlayers = async () => {
+      if (!isSupabaseConfigured) {
+        setPreviewPlayers([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const queueResult = await filterVisibleTestAccounts(
+          supabase
+            .from('profiles')
+            .select('id, ByID, discord_name, race, ladder_points, is_in_queue')
+            .eq('is_in_queue', true)
+            .order('ladder_points', { ascending: false })
+            .limit(5)
+        );
+
+        let rows = queueResult.data || [];
+
+        if (rows.length === 0) {
+          const ladderResult = await filterVisibleTestData(
+            supabase
+              .from('ladders')
+              .select('*')
+              .order('rank', { ascending: true })
+              .limit(5)
+          );
+
+          rows = (ladderResult.data || []).map((row, index) => ({
+            id: row.id || `ladder-${index}`,
+            ByID: row.nickname || row.name || row.ByID,
+            discord_name: row.discord_name,
+            race: row.race,
+            ladder_points: row.points ?? row.ladders_points ?? 1000,
+            is_in_queue: false,
+          }));
+        }
+
+        setPreviewPlayers(
+          rows.map((player, index) => ({
+            id: player.id || `preview-${index}`,
+            name: player.ByID || player.discord_name || `By_Player${index + 1}`,
+            tier: getTier(player.ladder_points || 1000),
+            pts: player.ladder_points || 1000,
+            race: getRaceLabel(player.race),
+            isInQueue: Boolean(player.is_in_queue),
+          }))
+        );
+      } catch (error) {
+        console.error('래더 미리보기 로딩 실패:', error);
+        setPreviewPlayers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPreviewPlayers();
+  }, []);
+
   const accessMessage = requiresDiscordLink
     ? '현재 설정상 래더 참여 전 Discord 연동이 필요합니다.'
     : isGuest
@@ -83,11 +158,11 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
         {/* 블러된 대기열 미리보기 */}
         <div className="ladder-preview-blur p-6 bg-[#0d0d14]">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-cyan-400">🟢 매칭 대기열 · 5명 대기 중</h3>
+            <h3 className="text-lg font-bold text-cyan-400">🟢 매칭 대기열 · {previewPlayers.length || 0}명 표시 중</h3>
             <span className="text-xs text-gray-500 border border-gray-700 px-2 py-1 rounded">4v4 래더</span>
           </div>
           <div className="space-y-2">
-            {mockQueue.map((p) => (
+            {(loading ? Array.from({ length: 5 }).map((_, index) => ({ id: `loading-${index}`, name: '불러오는 중', tier: 'Loading', pts: 0, race: '…', isInQueue: false })) : previewPlayers).map((p, index) => (
               <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-900/60 border border-gray-800">
                 <div className="flex items-center gap-3">
                   <span className="w-7 h-7 rounded-full bg-cyan-900/50 border border-cyan-700/40 flex items-center justify-center text-xs font-bold text-cyan-400">{p.race}</span>
@@ -102,7 +177,11 @@ export default function LadderPreview({ navigateTo, isGuest, requiresDiscordLink
           </div>
 
           <div className="mt-5 p-4 rounded-lg bg-blue-900/20 border border-blue-700/30 text-center">
-            <div className="text-blue-400 font-bold text-sm">4v4 매치 시작 가능 — 평균 점수 차이 120P</div>
+            <div className="text-blue-400 font-bold text-sm">
+              {previewPlayers.some((player) => player.isInQueue)
+                ? '실시간 대기열 기준 미리보기입니다.'
+                : '현재 대기열이 비어 있어 상위 래더 유저 기준 미리보기를 표시합니다.'}
+            </div>
             <button className="mt-2 px-5 py-2 rounded-lg text-sm font-bold bg-blue-500/20 border border-blue-400/40 text-blue-300 animate-pulse-neon">
               ⚡ 매치 시작 제안
             </button>

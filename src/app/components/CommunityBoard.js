@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/supabase'; // 경로는 길드장님 환경에 맞게 유지
+import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
 export default function CommunityBoard() {
@@ -9,12 +9,18 @@ export default function CommunityBoard() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   
-  // ⭐ 1. 진짜 데이터를 담을 상태 (초기값은 빈 배열 [])
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ⭐ 2. 페이지가 열릴 때 DB에서 글을 가져오는 함수
   const fetchPosts = useCallback(async () => {
-    // 💡 select() 안을 보세요! posts의 모든 것(*)과 profiles의 username을 같이 가져옵니다.
+    if (!isSupabaseConfigured) {
+      setPosts([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
     const { data, error } = await filterVisibleTestData(supabase
       .from('posts')
       .select(`
@@ -29,8 +35,10 @@ export default function CommunityBoard() {
     if (error) {
       console.error("데이터 불러오기 에러:", error);
     } else {
-      setPosts(data);
+      setPosts(data || []);
     }
+
+    setLoading(false);
   }, []);
 
   // 날짜 변환 함수 (예: 2026-04-01T... -> 04.01)
@@ -42,7 +50,6 @@ export default function CommunityBoard() {
     return `${month}.${day}`;
   };
 
-  // ⭐ 3. 컴포넌트가 처음 화면에 나타날 때 (Mount) 한 번만 fetchPosts 실행
   useEffect(() => {
     const loadPosts = async () => {
       await fetchPosts();
@@ -50,8 +57,7 @@ export default function CommunityBoard() {
     void loadPosts();
   }, [fetchPosts]);
 
-  // 글쓰기 완료 함수 (기존 코드 유지하되, 맨 밑에 성공 시 새로고침 기능 추가)
-const handleSubmit = async () => {
+  const handleSubmit = async () => {
     if (!title || !content) {
       alert('제목과 내용을 모두 입력해주세요!');
       return;
@@ -64,8 +70,6 @@ const handleSubmit = async () => {
       return;
     }
 
-    // ⭐ 디스코드 유저 메타데이터에서 이름(닉네임)을 빼옵니다!
-    // (보통 full_name이나 name에 들어있습니다)
     const discordName = user.user_metadata?.full_name || user.user_metadata?.name || '바클유저';
 
     const { error } = await supabase
@@ -75,7 +79,7 @@ const handleSubmit = async () => {
           title: title, 
           content: content, 
           user_id: user.id,
-          author_name: discordName // ⭐ 테이블에 만들어둔 컬럼에 디스코드 이름 저장!
+          author_name: discordName
         }
       ]);
 
@@ -88,13 +92,9 @@ const handleSubmit = async () => {
       setContent('');
       setIsWriting(false);
       
-      // ⭐ 4. 성공적으로 글을 썼다면, 화면을 강제로 새로고침하지 않고
-      // 데이터만 다시 불러와서 즉시 화면에 반영!
       fetchPosts(); 
     }
   };
-
-  // ... (이하 return() 부분은 기존 UI 코드 유지) ...
 
   return (
     <div className="w-full max-w-5xl mx-auto py-8 px-4 animate-fade-in-down">
@@ -102,7 +102,6 @@ const handleSubmit = async () => {
         <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
           <span className="text-yellow-500">💬</span> 자유게시판
         </h2>
-        {/* ✅ 버튼에 onClick 이벤트 추가! 누를 때마다 isWriting 상태가 반전됨 */}
         <button 
           onClick={() => setIsWriting(!isWriting)}
           className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-transform hover:scale-105"
@@ -111,7 +110,6 @@ const handleSubmit = async () => {
         </button>
       </div>
       
-      {/* ✅ isWriting이 true일 때만 아래 글쓰기 폼이 뿅 하고 나타남 */}
       {isWriting && (
         <div className="bg-gray-800 p-4 mb-6 rounded-xl border border-gray-700 shadow-xl flex flex-col gap-3">
           <input 
@@ -136,20 +134,27 @@ const handleSubmit = async () => {
         </div>
       )}
 
-      {/* 기존 게시글 목록 UI */}
       <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
-        <div className="flex flex-col">
+        {!isSupabaseConfigured ? (
+          <div className="p-8 text-center text-gray-400">
+            게시판 데이터 연결이 아직 완료되지 않았습니다. Supabase 연결 후 실제 클랜 글이 여기에 표시됩니다.
+          </div>
+        ) : loading ? (
+          <div className="p-8 text-center text-gray-500">게시글을 불러오는 중입니다...</div>
+        ) : posts.length === 0 ? (
+          <div className="p-8 text-center text-gray-400">
+            아직 등록된 글이 없습니다. 첫 글을 남겨서 오늘 클랜 분위기를 시작해보세요.
+          </div>
+        ) : (
+          <div className="flex flex-col">
           {posts.map(post => (
             <div key={post.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors cursor-pointer group">
               <div className="flex flex-col gap-1 mb-2 sm:mb-0">
                 <span className="text-gray-200 font-medium group-hover:text-yellow-400 transition-colors">{post.title}</span>
-                {/* 모바일 뷰 */}
                 <span className="text-xs text-gray-500 sm:hidden">
-                  {/* profiles에서 ByID를 꺼내오고, 없으면 discord_name으로 처리 */}
                   {post.profiles?.ByID || post.profiles?.discord_name || '알 수 없음'} | {formatDate(post.created_at)} | 조회 {post.views || 0}
                 </span>
               </div>
-              {/* PC/태블릿 뷰 */}
               <div className="hidden sm:flex items-center gap-4 text-sm text-gray-400">
                 <span className="w-24 text-center truncate">{post.profiles?.ByID || post.profiles?.discord_name || '알 수 없음'}</span>
                 <span className="w-16 text-center">{formatDate(post.created_at)}</span>
@@ -157,7 +162,8 @@ const handleSubmit = async () => {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,26 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
+function formatRelativeTime(dateString) {
+  if (!dateString) return '';
+
+  const timestamp = new Date(dateString).getTime();
+  const diffMinutes = Math.max(1, Math.floor((Date.now() - timestamp) / 60000));
+
+  if (diffMinutes < 60) return `${diffMinutes}분 전`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}시간 전`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}일 전`;
+
+  return new Date(dateString).toLocaleDateString('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+  });
+}
+
 // 매치 현황 컴포넌트
 function MatchStatus({ navigateTo }) {
   const [matches, setMatches] = useState([]);
@@ -92,42 +112,67 @@ function ActivityLog() {
       }
 
       try {
-        // 최신 게시글과 가입 신청을 가져옴
-        const [postsResult, applicationsResult] = await Promise.all([
+        const [postsResult, noticesResult, applicationsResult, matchesResult] = await Promise.all([
           filterVisibleTestData(supabase
             .from('posts')
-            .select('title, created_at')
+            .select('id, title, created_at, profiles: user_id ( ByID, discord_name )')
             .order('created_at', { ascending: false })
             .limit(3)),
           filterVisibleTestData(supabase
-            .from('applications')
-            .select('discord_name, status, created_at')
+            .from('admin_posts')
+            .select('id, title, created_at, profiles: author_id ( ByID, discord_name )')
             .order('created_at', { ascending: false })
-            .limit(3))
+            .limit(2)),
+          filterVisibleTestData(supabase
+            .from('applications')
+            .select('id, discord_name, btag, status, created_at')
+            .order('created_at', { ascending: false })
+            .limit(2)),
+          filterVisibleTestData(supabase
+            .from('ladder_matches')
+            .select('id, match_type, status, created_at, map_name')
+            .order('created_at', { ascending: false })
+            .limit(2))
         ]);
 
-        const activities = [
+        const nextActivities = [
           ...(postsResult.data || []).map(post => ({
+            id: `post-${post.id}`,
             type: '게시글',
-            message: `${post.title} 게시글 작성`,
-            time: new Date(post.created_at).toLocaleTimeString('ko-KR', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            }),
+            message: `${post.profiles?.ByID || post.profiles?.discord_name || '클랜원'}님이 '${post.title}' 글을 남겼습니다.`,
+            time: formatRelativeTime(post.created_at),
+            createdAt: post.created_at,
             icon: '📝'
           })),
+          ...(noticesResult.data || []).map(notice => ({
+            id: `notice-${notice.id}`,
+            type: '공지',
+            message: `${notice.profiles?.ByID || notice.profiles?.discord_name || '운영진'}님이 '${notice.title}' 공지를 등록했습니다.`,
+            time: formatRelativeTime(notice.created_at),
+            createdAt: notice.created_at,
+            icon: '📢'
+          })),
           ...(applicationsResult.data || []).map(app => ({
+            id: `application-${app.id}`,
             type: '가입',
-            message: `${app.discord_name || '익명'}님 가입 신청`,
-            time: new Date(app.created_at).toLocaleTimeString('ko-KR', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            }),
+            message: `${app.discord_name || app.btag || '신규 유저'}님이 가입 신청서를 제출했습니다.`,
+            time: formatRelativeTime(app.created_at),
+            createdAt: app.created_at,
             icon: '👋'
-          }))
-        ].sort((a, b) => b.time.localeCompare(a.time)).slice(0, 3);
+          })),
+          ...(matchesResult.data || []).map(match => ({
+            id: `match-${match.id}`,
+            type: '래더',
+            message: `${match.match_type || '1v1'} 매치가 ${match.status || '생성'} 상태로 등록되었습니다${match.map_name ? ` · ${match.map_name}` : ''}.`,
+            time: formatRelativeTime(match.created_at),
+            createdAt: match.created_at,
+            icon: '⚔️'
+          })),
+        ]
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5);
 
-        setActivities(activities);
+        setActivities(nextActivities);
       } catch (error) {
         console.error('활동 로그 로딩 실패:', error);
       } finally {
@@ -147,8 +192,8 @@ function ActivityLog() {
         ) : activities.length === 0 ? (
           <EmptyState message="최근 활동이 없습니다" icon="📈" />
         ) : (
-          activities.map((activity, index) => (
-            <div key={index} className="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
+          activities.map((activity) => (
+            <div key={activity.id} className="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
               <div className="flex items-center space-x-3">
                 <span className="text-lg">{activity.icon}</span>
                 <div>
