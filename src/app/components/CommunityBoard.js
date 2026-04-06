@@ -1,18 +1,52 @@
+/**
+ * 파일명: CommunityBoard.js
+ *
+ * 역할:
+ *   클랜 자유게시판 컴포넌트입니다. 게시글 목록을 보여주고,
+ *   로그인한 사용자가 새 글을 작성·등록할 수 있습니다.
+ *
+ * 주요 기능:
+ *   - Supabase posts 테이블에서 게시글 목록을 최신순으로 불러옵니다.
+ *   - '글쓰기' 버튼을 누르면 제목·내용 입력 폼이 인라인으로 펼쳐집니다.
+ *   - 글 등록 시 로그인 여부를 확인하고, Discord 닉네임을 작성자명으로 사용합니다.
+ *   - 모바일에서는 날짜·조회수가 제목 셀 아래에 작게 표시됩니다.
+ *
+ * 사용 방법:
+ *   import CommunityBoard from './CommunityBoard';
+ *   <CommunityBoard />
+ */
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
+/**
+ * CommunityBoard 컴포넌트
+ *
+ * 자유게시판 목록과 글쓰기 기능을 제공합니다.
+ *
+ * @returns {JSX.Element} 자유게시판 UI
+ */
 export default function CommunityBoard() {
+  /** 글쓰기 폼 표시 여부 (true: 폼 열림, false: 닫힘) */
   const [isWriting, setIsWriting] = useState(false);
+  /** 새 글 제목 입력값 */
   const [title, setTitle] = useState('');
+  /** 새 글 내용 입력값 */
   const [content, setContent] = useState('');
   
+  /** DB에서 불러온 게시글 배열 */
   const [posts, setPosts] = useState([]);
+  /** 게시글 로딩 중 여부 */
   const [loading, setLoading] = useState(true);
+  /** 게시글 불러오기 에러 상태 (null: 에러 없음) */
   const [fetchError, setFetchError] = useState(null);
 
+  /**
+   * posts 테이블에서 게시글을 최신순으로 불러옵니다.
+   * useCallback으로 감싸 fetchPosts 참조가 불필요하게 바뀌지 않도록 합니다.
+   */
   const fetchPosts = useCallback(async () => {
     if (!isSupabaseConfigured) {
       setPosts([]);
@@ -54,6 +88,7 @@ export default function CommunityBoard() {
     return `${month}.${day}`;
   };
 
+  /** 컴포넌트 마운트 시 게시글을 불러옵니다 */
   useEffect(() => {
     const loadPosts = async () => {
       await fetchPosts();
@@ -61,6 +96,11 @@ export default function CommunityBoard() {
     void loadPosts();
   }, [fetchPosts]);
 
+  /**
+   * 새 게시글을 Supabase posts 테이블에 저장합니다.
+   * 로그인하지 않은 경우 알림을 표시하고 중단합니다.
+   * 성공하면 폼을 닫고 목록을 새로 불러옵니다.
+   */
   const handleSubmit = async () => {
     if (!title || !content) {
       alert('제목과 내용을 모두 입력해주세요!');

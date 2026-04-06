@@ -1,3 +1,20 @@
+/**
+ * 파일명: ImprovedAuthForm.js
+ *
+ * 역할:
+ *   이메일/비밀번호 로그인·회원가입과 Discord OAuth 로그인을 모두 지원하는
+ *   통합 인증 폼 컴포넌트 모음입니다.
+ *
+ * 주요 기능:
+ *   - EmailLoginForm: 이메일+비밀번호 로그인 및 회원가입 폼 (아이디 유효성 검사, 중복 확인, 이용약관 포함)
+ *   - DiscordLoginForm: Discord OAuth 로그인 버튼 폼
+ *   - ImprovedAuthForm: 위 두 폼을 loginMethod 상태로 전환하는 최상위 컨테이너
+ *   - 회원가입 시 profiles 테이블에 기본 프로필을 자동 생성합니다.
+ *
+ * 사용 방법:
+ *   import ImprovedAuthForm from './ImprovedAuthForm';
+ *   <ImprovedAuthForm onSuccess={(user) => console.log('로그인 성공', user)} />
+ */
 'use client';
 
 import React, { useState } from 'react';
@@ -5,6 +22,11 @@ import { supabase } from '@/supabase';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
 // ── 유효성 검사 헬퍼 ─────────────────────────────────────────────────────────
+/**
+ * 클랜 아이디(userId) 유효성을 검사합니다.
+ * @param {string} id - 사용자가 입력한 아이디 (By_ 접두사 제외)
+ * @returns {string|null} 오류 메시지 문자열, 또는 유효하면 null
+ */
 function validateUserId(id) {
   if (!id) return '아이디를 입력하세요.';
   if (id.length < 3) return '아이디는 최소 3자 이상이어야 합니다.';
@@ -14,6 +36,11 @@ function validateUserId(id) {
   return null;
 }
 
+/**
+ * 비밀번호 유효성을 검사합니다.
+ * @param {string} pw - 사용자가 입력한 비밀번호
+ * @returns {string|null} 오류 메시지 문자열, 또는 유효하면 null
+ */
 function validatePassword(pw) {
   if (!pw) return '비밀번호를 입력하세요.';
   if (pw.length < 8) return '비밀번호는 최소 8자 이상이어야 합니다.';
@@ -50,16 +77,40 @@ const TERMS_OF_SERVICE = `ByClan 서비스 이용약관
 회원 탈퇴 시 관련 정보는 즉시 파기됩니다. 단, 관련 법령에 의해 보존이 필요한 경우 해당 기간 동안 보존합니다.`;
 
 // ── 이메일 로그인/가입 ────────────────────────────────────────────────────────
+/**
+ * EmailLoginForm 컴포넌트
+ *
+ * 이메일+비밀번호로 로그인하거나 새 계정을 가입하는 폼입니다.
+ * isSignUp 상태로 로그인 모드와 가입 모드를 전환합니다.
+ *
+ * @param {function} onSuccess - 로그인 성공 시 호출되는 콜백. 인자로 user 객체를 전달합니다.
+ * @param {function} onSwitchToDiscord - "Discord로 계속하기" 버튼 클릭 시 호출되는 콜백
+ * @returns {JSX.Element} 이메일 인증 폼 UI
+ */
 function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
+  /** 클랜 아이디 입력값 (가입 시에만 사용, By_ 접두사 제외) */
   const [userId, setUserId] = useState('');
+  /** 이메일 입력값 */
   const [email, setEmail] = useState('');
+  /** 비밀번호 입력값 */
   const [password, setPassword] = useState('');
+  /** API 요청 처리 중 여부 (true: 버튼 비활성화) */
   const [loading, setLoading] = useState(false);
+  /** 에러 메시지 (null: 에러 없음) */
   const [error, setError] = useState(null);
+  /** true면 회원가입 모드, false면 로그인 모드 */
   const [isSignUp, setIsSignUp] = useState(false);
+  /** 이용약관 동의 여부 (가입 시 필수) */
   const [termsAccepted, setTermsAccepted] = useState(false);
+  /** 이용약관 전문 표시 여부 (현재 UI에서 미사용, 확장용) */
   const [showTerms, setShowTerms] = useState(false);
 
+  /**
+   * 폼 제출 핸들러입니다.
+   * - isSignUp이 true면 아이디 중복 확인 → 회원가입 → 프로필 생성 순으로 처리합니다.
+   * - isSignUp이 false면 이메일+비밀번호로 로그인합니다.
+   * @param {React.FormEvent} e - 폼 submit 이벤트
+   */
   const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -280,10 +331,27 @@ function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
 }
 
 // ── Discord 로그인 ─────────────────────────────────────────────────────────────
+/**
+ * DiscordLoginForm 컴포넌트
+ *
+ * Discord OAuth를 통해 로그인하는 버튼 폼입니다.
+ * 클릭 시 Supabase OAuth 흐름을 시작하고 /auth/callback으로 리다이렉트됩니다.
+ *
+ * @param {function} onSuccess - 로그인 성공 콜백 (현재 OAuth는 리다이렉트이므로 직접 호출되지 않음)
+ * @param {function} onSwitchToEmail - "이메일로 로그인" 버튼 클릭 시 호출되는 콜백
+ * @returns {JSX.Element} Discord 로그인 버튼 UI
+ */
 function DiscordLoginForm({ onSuccess, onSwitchToEmail }) {
+  /** Discord OAuth 연동 처리 중 여부 */
   const [loading, setLoading] = useState(false);
+  /** 에러 메시지 상태 */
   const [error, setError] = useState(null);
 
+  /**
+   * Discord OAuth 로그인을 시작합니다.
+   * Supabase가 Discord 인증 페이지로 리다이렉트하고,
+   * 인증 완료 후 /auth/callback으로 돌아옵니다.
+   */
   const handleDiscordLogin = async () => {
     setLoading(true);
     setError(null);
@@ -333,7 +401,17 @@ function DiscordLoginForm({ onSuccess, onSwitchToEmail }) {
 }
 
 // ── 통합 인증 컴포넌트 ──────────────────────────────────────────────────────────
+/**
+ * ImprovedAuthForm 컴포넌트 (기본 내보내기)
+ *
+ * 이메일 폼과 Discord 폼을 loginMethod 상태로 전환하는 최상위 인증 컨테이너입니다.
+ * 배경 그라디언트와 브랜드 헤더가 포함된 전체 화면 레이아웃을 제공합니다.
+ *
+ * @param {function} onSuccess - 인증 성공 시 호출되는 콜백. 인자로 user 객체를 전달합니다.
+ * @returns {JSX.Element} 전체 화면 인증 UI
+ */
 export default function ImprovedAuthForm({ onSuccess }) {
+  /** 현재 표시할 로그인 방식: 'email' 또는 'discord' */
   const [loginMethod, setLoginMethod] = useState('email');
 
   return (

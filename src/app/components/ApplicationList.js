@@ -1,3 +1,17 @@
+/**
+ * @file ApplicationList.js
+ * @역할 클랜 가입 신청서 목록 및 심사 처리 컴포넌트
+ * @주요기능
+ *   - 대기 중인 가입 신청서 목록 조회 ('대기중' 탭)
+ *   - 과거 심사 기록 조회 ('심사 기록실' 탭)
+ *   - 운영진이 신청자의 테스트 담당자 지정
+ *   - 합격/불합격 처리 (피드백 코멘트 작성 후 알림 발송)
+ *   - 합격 시 신청자 계정 권한을 'rookie'로 자동 승급
+ * @사용방법
+ *   member.approve 권한을 가진 운영진에게만 표시됩니다.
+ *   탭을 전환하면 해당 상태의 신청서 목록이 새로 로드됩니다.
+ * @관련컴포넌트 AdminBoard.js (기밀 게시판), GuildManagement.js (길드원 관리)
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -5,23 +19,48 @@ import { supabase } from '@/supabase';
 import { PermissionChecker } from '../utils/permissions';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
+/**
+ * ApplicationList 컴포넌트
+ * 가입 신청서 목록을 관리하고 심사(합격/불합격)를 처리합니다.
+ */
 export default function ApplicationList() {
+  /** 화면에 표시할 신청서 목록 */
   const [applications, setApplications] = useState([]);
+  /** 현재 로그인한 운영진의 프로필 정보 */
   const [myProfile, setMyProfile] = useState(null);
+  /** 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
+  /** 현재 처리(담당 지정/합격/불합격) 중인 신청서 ID (중복 클릭 방지) */
   const [processingId, setProcessingId] = useState(null);
   
   // ✨ 탭 상태 관리 ('pending': 대기중, 'completed': 심사 완료)
+  /** 현재 활성 탭: 'pending'(대기 중) 또는 'completed'(심사 기록실) */
   const [activeTab, setActiveTab] = useState('pending');
 
   // ✨ 피드백 팝업창 상태 관리
+  /**
+   * 합격/불합격 처리 시 열리는 피드백 모달 상태
+   * - isOpen: 모달 열림 여부
+   * - app: 처리할 신청서 객체
+   * - status: '합격' 또는 '불합격'
+   * - feedback: 심사관이 작성하는 코멘트
+   */
   const [modalData, setModalData] = useState({ isOpen: false, app: null, status: '', feedback: '' });
 
   
+  /**
+   * 컴포넌트 마운트 시 및 activeTab이 바뀔 때마다 실행됩니다.
+   * 탭이 바뀌면 해당 탭에 맞는 신청서 목록을 새로 불러옵니다.
+   */
   useEffect(() => {
     checkAuthAndFetch();
   }, [activeTab]); // 탭이 바뀔 때마다 데이터를 새로 불러옵니다.
 
+  /**
+   * 현재 유저 인증 정보를 확인하고 권한이 있으면 신청서 목록을 불러옵니다.
+   * member.approve 권한 없는 유저는 데이터를 불러오지 않습니다.
+   * @async
+   */
   const checkAuthAndFetch = async () => {
     try {
       setLoading(true);
@@ -52,6 +91,12 @@ export default function ApplicationList() {
     }
   };
 
+  /**
+   * 현재 활성 탭에 맞게 신청서 목록을 Supabase에서 불러옵니다.
+   * - 'pending' 탭: 상태가 '대기중'인 신청서를 오래된 순으로 조회
+   * - 'completed' 탭: '대기중'이 아닌 신청서를 최신 순으로 조회
+   * @async
+   */
   const fetchApplications = async () => {
     // ✨ 탭에 따라 불러올 상태('대기중' or '합격/불합격')를 다르게 설정
     const queryStatus = activeTab === 'pending' ? '대기중' : null;
@@ -80,6 +125,12 @@ export default function ApplicationList() {
     }
   };
 
+  /**
+   * 운영진이 특정 신청자의 테스트 담당자로 자신을 지정합니다.
+   * 확인 팝업 후 DB의 tester_id를 현재 유저 ID로 업데이트합니다.
+   * @async
+   * @param {string} appId - 담당할 신청서의 ID
+   */
   const handleClaimTest = async (appId) => {
     if (!window.confirm('이 신청자의 가입 테스트를 담당하시겠습니까?')) return;
 
@@ -99,6 +150,12 @@ export default function ApplicationList() {
     }
   };
 
+  /**
+   * 합격/불합격 처리 모달을 엽니다.
+   * 기본 피드백 메시지를 상태에 미리 입력해 줍니다.
+   * @param {object} app - 처리할 신청서 객체
+   * @param {string} status - '합격' 또는 '불합격'
+   */
   // ✨ 합격/불합격 버튼을 누르면 팝업창(모달)을 엽니다.
   const openProcessModal = (app, status) => {
     setModalData({
@@ -109,6 +166,13 @@ export default function ApplicationList() {
     });
   };
 
+  /**
+   * 모달에서 [전송 및 완료] 버튼을 눌렀을 때 실제 심사 처리를 수행합니다.
+   * 1. applications 테이블 status와 test_result 업데이트
+   * 2. 합격인 경우 profiles 테이블 role을 'rookie'로 변경
+   * 3. 신청자의 알림함(notifications 테이블)에 결과 알림 발송
+   * @async
+   */
   // ✨ 모달창에서 [확인]을 누르면 실제 처리(DB 업데이트 + 알림 발송)가 진행됩니다.
   const confirmProcess = async () => {
     const { app, status, feedback } = modalData;

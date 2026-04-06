@@ -1,3 +1,17 @@
+/**
+ * @file AdminBoard.js
+ * @역할 운영진 전용 기밀 게시판 컴포넌트 (완성 버전)
+ * @주요기능
+ *   - developer / master / admin 등급만 접근 가능한 보안 게시판
+ *   - 기밀 문서(게시글) 목록 조회 및 신규 작성
+ *   - 테스트 데이터 필터링 (filterVisibleTestData 적용)
+ *   - 역할별 색상 뱃지 표시 (ROLE_PERMISSIONS 기반)
+ *   - 길드원 관리 탭으로 이동하는 바로가기 버튼
+ * @사용방법
+ *   관리자 탭 메뉴에서 렌더링됩니다.
+ *   권한 없는 유저는 "CLASSIFIED INFORMATION" 차단 화면을 봅니다.
+ * @관련컴포넌트 AdminMembers.js (구버전), GuildManagement.js (길드원 관리 탭)
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -7,24 +21,45 @@ import { ROLE_PERMISSIONS } from '../utils/permissions';
 import { useNavigate } from '../hooks/useNavigate';
 import { isRelationshipError } from '../utils/retry';
 
+/**
+ * AdminBoard 컴포넌트
+ * 운영진 전용 기밀 게시판을 렌더링합니다.
+ * developer, master, admin 등급만 접근 가능합니다.
+ */
 export default function AdminBoard() {
+  /** 페이지 전환(탭 이동)을 위한 내비게이션 함수 */
   const navigateTo = useNavigate();
   console.log('📍 AdminBoard 컴포넌트 렌더링됨!');
 
+  /** 기밀 게시글 목록을 저장하는 상태 */
   const [posts, setPosts] = useState([]);
+  /** 현재 유저가 관리자(운영진) 권한을 가졌는지 여부 */
   const [isAdmin, setIsAdmin] = useState(false);
+  /** 데이터를 불러오는 중인지 여부 (로딩 스피너 표시에 사용) */
   const [loading, setLoading] = useState(true);
+  /** 현재 로그인한 유저의 프로필 정보 (id, ByID, role 등) */
   const [myProfile, setMyProfile] = useState(null);
 
   // 글쓰기 상태 관리
+  /** 새 글 작성 폼이 화면에 표시되는지 여부 */
   const [isWriting, setIsWriting] = useState(false);
+  /** 새 글의 제목(title)과 내용(content)을 담는 상태 */
   const [newPost, setNewPost] = useState({ title: '', content: '' });
+  /** 글 저장 API 요청이 진행 중인지 여부 (버튼 중복 클릭 방지) */
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * 컴포넌트가 처음 화면에 마운트될 때 권한 확인 및 게시글 데이터를 로드합니다.
+   * 빈 배열 []이므로 최초 1회만 실행됩니다.
+   */
   useEffect(() => {
     checkAdminAndFetch();
   }, []);
 
+  /**
+   * 현재 로그인 유저의 권한을 확인하고, 운영진이면 게시글 목록을 불러옵니다.
+   * @async
+   */
   const checkAdminAndFetch = async () => {
     try {
       setLoading(true);
@@ -38,6 +73,7 @@ export default function AdminBoard() {
           .single();
 
         setMyProfile(profile);
+        /** 역할 문자열을 소문자로 정규화하여 정확히 비교 */
         const currentRole = profile?.role?.trim().toLowerCase();
 
         // 디버그 로그
@@ -62,6 +98,11 @@ export default function AdminBoard() {
     }
   };
 
+  /**
+   * Supabase에서 기밀 게시글 목록을 불러옵니다.
+   * 테스트 데이터는 필터링되며, 관계 에러 발생 시 폴백 쿼리를 실행합니다.
+   * @async
+   */
   const fetchPosts = async () => {
     const { data, error } = await filterVisibleTestData(supabase
       .from('admin_posts')
@@ -92,10 +133,21 @@ export default function AdminBoard() {
     }
   };
 
+  /**
+   * 글쓰기 폼의 입력값을 newPost 상태에 반영합니다.
+   * name 속성을 이용해 title/content 두 필드를 하나의 핸들러로 처리합니다.
+   * @param {React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement>} e - 입력 변경 이벤트
+   */
   const handleInputChange = (e) => {
     setNewPost({ ...newPost, [e.target.name]: e.target.value });
   };
 
+  /**
+   * 새 기밀 문서를 폼 제출 시 Supabase에 저장합니다.
+   * 제목 또는 내용이 비어있으면 저장하지 않습니다.
+   * @async
+   * @param {React.FormEvent} e - 폼 제출 이벤트
+   */
   const handleCreatePost = async (e) => {
     e.preventDefault();
     if (!newPost.title.trim() || !newPost.content.trim()) return;
@@ -123,11 +175,21 @@ export default function AdminBoard() {
     }
   };
 
+  /**
+   * ROLE_PERMISSIONS에 없는 역할(guest, expelled)에 대한 폴백 메타데이터
+   * color: CSS 색상 코드, name: 한국어 역할 이름
+   */
   const fallbackRoleMeta = {
     guest: { name: '방문자', color: '#9CA3AF' },
     expelled: { name: '제명', color: '#F87171' },
   };
 
+  /**
+   * 역할 문자열을 받아 해당 역할의 메타데이터(이름, 색상)를 반환합니다.
+   * ROLE_PERMISSIONS에 없는 역할(guest, expelled 등)은 fallbackRoleMeta를 사용합니다.
+   * @param {string} role - 역할 문자열 (예: 'admin', 'master')
+   * @returns {{ name: string, color: string }} 역할 표시 이름과 색상
+   */
   const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || fallbackRoleMeta[role] || { name: role || '알 수 없음', color: '#9CA3AF' };
 
   if (loading) return (

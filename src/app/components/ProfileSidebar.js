@@ -1,3 +1,27 @@
+/**
+ * @file ProfileSidebar.js
+ *
+ * @역할
+ *   홈 화면 왼쪽에 표시되는 프로필 사이드바 컴포넌트입니다.
+ *   로그인한 활성 클랜원이면 본인 프로필 카드를, 비로그인·비회원이면
+ *   현재 MMR 1위 멤버의 미리보기 카드를 보여줍니다.
+ *
+ * @주요기능
+ *   - 로그인 + 활성 클랜원: 본인의 MMR, 티어, 승률, 주종, 클랜 포인트 표시
+ *   - 비로그인 / 비활성 회원: Supabase에서 MMR 최상위 멤버를 불러와 미리보기 표시
+ *   - 티어 색상(TIER_COLORS), 종족 한국어 레이블(RACE_LABELS) 매핑 제공
+ *   - 프로필 카드 클릭 시 프로필 페이지로 이동
+ *
+ * @관련컴포넌트
+ *   - supabase (@/supabase): DB 데이터 조회
+ *   - filterVisibleTestAccounts (@/app/utils/testData): 테스트 계정 필터링
+ *   - useNavigate (../hooks/useNavigate): 페이지 이동 훅
+ *
+ * @사용방법
+ *   <ProfileSidebar profile={profile} user={user} />
+ *   - profile: 현재 로그인 유저의 프로필 객체 (없으면 null)
+ *   - user: Supabase auth 유저 객체 (없으면 null)
+ */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -5,6 +29,7 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestAccounts } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
+/** 티어별 텍스트 색상 클래스 매핑 (Tailwind CSS 클래스 사용) */
 const TIER_COLORS = {
   Challenger: 'text-rose-400',
   Bronze: 'text-orange-700',
@@ -15,6 +40,7 @@ const TIER_COLORS = {
   Master: 'text-purple-400',
 };
 
+/** 종족 영문 키를 한국어 레이블로 변환하는 매핑 객체 */
 const RACE_LABELS = {
   Terran: '테란',
   Protoss: '프로토스',
@@ -22,6 +48,11 @@ const RACE_LABELS = {
   Random: '랜덤',
 };
 
+/**
+ * MMR(래더 포인트) 수치를 받아 해당 티어 이름을 반환합니다.
+ * @param {number} points - 래더 포인트 (MMR)
+ * @returns {string} 티어 이름 (예: 'Gold', 'Platinum' 등)
+ */
 function getTier(points) {
   if (points >= 2400) return 'Challenger';
   if (points >= 2200) return 'Master';
@@ -32,17 +63,40 @@ function getTier(points) {
   return 'Bronze';
 }
 
+/**
+ * 승수와 패수를 받아 승률 문자열을 반환합니다.
+ * 전적이 없으면 '-'를 반환합니다.
+ * @param {number|undefined} wins - 승리 횟수
+ * @param {number|undefined} losses - 패배 횟수
+ * @returns {string} 승률 문자열 (예: '67%') 또는 '-'
+ */
 function getWinRate(wins, losses) {
   const total = (wins || 0) + (losses || 0);
   if (total === 0) return '-';
   return `${Math.round(((wins || 0) / total) * 100)}%`;
 }
 
-// 홈 좌측 프로필 사이드바
+/**
+ * 홈 좌측 프로필 사이드바 컴포넌트
+ *
+ * 로그인한 활성 클랜원이면 본인 카드를, 그렇지 않으면 MMR 최상위 멤버 미리보기를 표시합니다.
+ *
+ * @param {{ profile: object|null, user: object|null }} props
+ * @param {object|null} props.profile - 현재 로그인 유저의 프로필 (없으면 null)
+ * @param {object|null} props.user - Supabase auth 유저 객체 (없으면 null)
+ * @returns {JSX.Element} 프로필 사이드바 UI
+ */
 export default function ProfileSidebar({ profile, user }) {
+  /** 페이지 이동 함수 (훅에서 가져온 navigate 함수) */
   const navigateTo = useNavigate();
+  /** MMR 최상위 멤버의 프로필 데이터 (비로그인 미리보기용). 초기값은 null. */
   const [spotlightProfile, setSpotlightProfile] = useState(null);
 
+  /**
+   * 컴포넌트가 처음 화면에 나타날 때(마운트 시) 한 번 실행됩니다.
+   * Supabase에서 래더 포인트 기준 최상위 멤버 1명을 불러와 spotlightProfile에 저장합니다.
+   * - wins/losses 컬럼이 없는 구 스키마 환경에서는 fallback 쿼리로 재시도합니다.
+   */
   useEffect(() => {
     const loadSpotlightProfile = async () => {
       if (!isSupabaseConfigured) {
@@ -90,6 +144,11 @@ export default function ProfileSidebar({ profile, user }) {
     loadSpotlightProfile();
   }, []);
 
+  /**
+   * 현재 프로필이 활성 클랜원인지 여부.
+   * 활성 역할 목록에 포함된 경우에만 true가 됩니다.
+   * (applicant·guest 등 비활성 역할이면 false)
+   */
   const isActiveMember =
     profile && ['member', 'associate', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 

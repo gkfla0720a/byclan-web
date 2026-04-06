@@ -1,3 +1,37 @@
+/**
+ * =====================================================================
+ * 파일명: src/app/hooks/useAuth.ts
+ * 역할  : ByClan 웹앱의 핵심 인증(Authentication) 훅입니다.
+ *         로그인/로그아웃 상태, 사용자 프로필, 권한 정보를 관리합니다.
+ *
+ * ■ 주요 기능
+ *   1. 로그인/로그아웃 상태 추적 (Supabase Auth 연동)
+ *   2. 사용자 프로필 로드 및 자동 생성 (신규 가입자)
+ *   3. Discord 계정 연동 감지 및 자동 업데이트
+ *   4. 역할/권한 계산 (getPermissions 함수)
+ *   5. 홈 게이트(비밀번호 인증) 상태 관리
+ *   6. 진행 중인 래더 매치 확인
+ *
+ * ■ 사용 방법
+ *   이 훅은 직접 사용하지 말고, AuthContext를 통해 접근하세요.
+ *   import { useAuthContext } from '@/app/context/AuthContext';
+ *   const { profile, getPermissions, reloadProfile } = useAuthContext();
+ *
+ * ■ 반환하는 주요 상태
+ *   profile:      현재 로그인한 사용자의 프로필 정보 (역할, 포인트 등)
+ *   user:         Supabase Auth 사용자 객체 (이메일, UUID 등)
+ *   authLoading:  인증 상태 로딩 중 여부
+ *   authError:    인증 오류 메시지 (4초 후 자동 삭제)
+ *   needsSetup:   프로필 설정이 필요한지 여부
+ *   getPermissions(): 현재 사용자의 모든 권한 정보 반환
+ *   reloadProfile():  DB에서 최신 프로필 다시 불러오기
+ *
+ * ■ TypeScript 타입 정의
+ *   UserProfile:    profiles DB 테이블 형태
+ *   AuthPermissions: getPermissions() 반환 타입
+ *   UseAuthReturn:  이 훅의 전체 반환 타입
+ * =====================================================================
+ */
 import { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS, loadDevSettings } from '../utils/permissions';
@@ -10,6 +44,26 @@ import { withRetry, isRetryableError } from '../utils/retry';
 import logger, { Severity } from '../utils/errorLogger';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+/**
+ * UserProfile
+ * - Supabase의 profiles 테이블 한 행(row)에 해당하는 타입입니다.
+ * - 각 필드 설명:
+ *   id:             Supabase Auth의 사용자 UUID (기본 키)
+ *   ByID:           클랜 내 고유 닉네임 (예: 'By_홍길동')
+ *   discord_name:   Discord 사용자 이름 (Discord 로그인 시 자동 설정)
+ *   discord_id:     Discord 고유 ID (래더 참여 시 필요)
+ *   role:           클랜 역할 (visitor/applicant/rookie/member/associate/elite/admin/master/developer)
+ *   points:         클랜 활동 포인트
+ *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)
+ *   intro:          자기소개 문구
+ *   ladder_points:  래더 레이팅 포인트 (기본값: 1000)
+ *   is_in_queue:    현재 래더 대기열에 있는지 여부
+ *   vote_to_start:  래더 시작 투표 여부
+ *   wins:           래더 승리 수 (선택)
+ *   losses:         래더 패배 수 (선택)
+ *   queue_joined_at: 대기열 합류 시간 (선택)
+ */
 
 export interface UserProfile {
   id: string;
@@ -29,6 +83,31 @@ export interface UserProfile {
   [key: string]: unknown;
 }
 
+/**
+ * AuthPermissions
+ * - getPermissions() 함수가 반환하는 현재 사용자의 권한 정보 타입입니다.
+ * - 각 필드 설명:
+ *   isDeveloper:    개발자 역할 여부
+ *   isManagement:   운영진(developer/master/admin) 여부
+ *   isSenior:       시니어(developer/master/admin/elite) 여부
+ *   isMember:       정식 클랜원(member 이상) 여부
+ *   level:          역할 레벨 숫자 (0~100)
+ *   roleInfo:       ROLE_PERMISSIONS에서 가져온 역할 상세 정보
+ *   can:            개별 행동 가능 여부 플래그 모음
+ *     manageUsers:         모든 유저 관리 가능 여부
+ *     manageClan:          클랜 설정 관리 가능 여부
+ *     approveMembers:      가입 신청 승인 가능 여부
+ *     manageMatches:       매치 관리 가능 여부
+ *     hostMatches:         매치 개최 가능 여부
+ *     postAnnouncements:   공지 게시 가능 여부
+ *     accessDevTools:      개발자 도구 접근 가능 여부
+ *     moderateLadder:      래더 중재 가능 여부
+ *     playLadder:          래더 플레이 가능 여부
+ *     requiresDiscordLink: Discord 연동이 필요한 상태인지
+ *     discordBypassAllowed: Discord 연동 없이도 플레이 가능한지 (테스트 계정)
+ *   canAccessMenu(menuPath): 특정 메뉴 접근 가능한지 확인하는 함수
+ *   hasLevel(requiredLevel): 최소 레벨을 충족하는지 확인하는 함수
+ */
 export interface AuthPermissions {
   isDeveloper: boolean;
   isManagement: boolean;

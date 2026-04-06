@@ -1,7 +1,29 @@
+/**
+ * =====================================================================
+ * 파일명: src/app/components/Footer.js
+ * 역할  : 웹사이트 최하단에 표시되는 푸터(Footer) 컴포넌트입니다.
+ *         로고, 빠른 링크, Discord 입장 버튼을 포함합니다.
+ *
+ * ■ 표시 내용
+ *   왼쪽:  ByClan 로고 + 클랜 소개 문구 + 저작권 표시
+ *   중앙:  빠른 링크 (지원: 가입 신청, 건의사항 / 규칙: 클랜 회칙, 매너 규정)
+ *   오른쪽: Discord 커뮤니티 입장 버튼
+ *
+ * ■ 스타일
+ *   배경: bg-gray-950 (매우 진한 검정)
+ *   상단 경계: border-t border-gray-800
+ *   반응형: 모바일(세로), 데스크톱(가로 배치)
+ * =====================================================================
+ */
 'use client';
 
 import React from 'react';
 
+/**
+ * ByClanLogo()
+ * - Footer용 ByClan 로고 이미지 컴포넌트입니다.
+ * - Header의 ByClanLogo와 동일한 디자인입니다.
+ */
 // === 로고 컴포넌트 === 
 function ByClanLogo() {
   const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repository/main/ByLogo.png";
@@ -17,6 +39,11 @@ function ByClanLogo() {
   );
 }
 
+/**
+ * Footer()
+ * - 모든 페이지 하단에 표시되는 푸터 컴포넌트입니다.
+ * - 클랜 정보, 빠른 링크, Discord 입장 버튼을 3단 구조로 표시합니다.
+ */
 export default function Footer() {
   return (
     <footer className="w-full bg-gray-950 border-t border-gray-800 mt-16 py-8 sm:py-12 px-4 relative z-10">

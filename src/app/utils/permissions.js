@@ -1,7 +1,40 @@
+/**
+ * =====================================================================
+ * 파일명: src/app/utils/permissions.js
+ * 역할  : ByClan 클랜의 역할(Role) 체계와 권한(Permission) 시스템을 정의합니다.
+ *
+ * ■ 역할 구조 (높은 레벨 = 더 많은 권한)
+ *   developer(100) > master(90) > admin(80) > elite(60)
+ *   > associate/member(50) > rookie(35) > applicant(25) > visitor(10)
+ *
+ * ■ 주요 개념
+ *   - ROLE_PERMISSIONS: 각 역할별로 허용된 권한 목록을 정의한 객체
+ *   - PermissionChecker: 권한 확인 유틸리티 함수 모음
+ *   - DEV_SETTINGS: 개발자 전용 설정 (localStorage에 저장/불러오기)
+ *   - DELEGATION_RULES: 권한 위임 규칙 (누가 누구에게 어떤 권한을 줄 수 있는지)
+ *   - ROLE_CHANGE_RULES: 역할 승격/강등 경로 및 조건
+ *
+ * ■ 사용 방법 (다른 파일에서 import)
+ *   import { PermissionChecker, ROLE_PERMISSIONS } from '@/app/utils/permissions';
+ *   const canPlay = PermissionChecker.hasPermission('elite', 'ladder.play'); // true
+ * =====================================================================
+ */
+
 // 권한 시스템 명확화
 // ByClan 클랜 역할별 접근 제어 정의
 
-// 개발자 설정 (localStorage에 저장)
+/**
+ * DEV_SETTINGS
+ * - 개발자(developer) 역할에게 적용되는 특수 설정 기본값입니다.
+ * - 실제 설정값은 localStorage의 'byclan_dev_settings' 키에 저장됩니다.
+ * - DevSettingsPanel 컴포넌트에서 UI로 변경 가능합니다.
+ *
+ * 각 속성 설명:
+ *   canReviewApplications: 개발자가 가입 심사를 할 수 있는지 여부
+ *   canManageMembers:       개발자가 멤버를 관리할 수 있는지 여부
+ *   canDelegateMaster:      개발자가 마스터 위임을 할 수 있는지 여부
+ *   requireDiscordForLadder: 래더 참여 시 Discord 연동이 필요한지 여부
+ */
 export const DEV_SETTINGS = {
   canReviewApplications: true,       // 기본값: 가입심사 가능
   canManageMembers: true,            // 기본값: 멤버 관리 가능
@@ -9,7 +42,14 @@ export const DEV_SETTINGS = {
   requireDiscordForLadder: true      // 기본값: 래더 Discord 연동 필수
 };
 
-// 개발자 설정 로드
+/**
+ * loadDevSettings()
+ * - localStorage에 저장된 개발자 설정을 불러옵니다.
+ * - 저장된 값이 없으면 DEV_SETTINGS 기본값을 반환합니다.
+ * - 스프레드 연산자(...)로 기본값과 저장값을 합쳐 반환합니다.
+ *
+ * 반환값: DEV_SETTINGS 형태의 객체
+ */
 export const loadDevSettings = () => {
   try {
     const saved = localStorage.getItem('byclan_dev_settings');
@@ -19,7 +59,14 @@ export const loadDevSettings = () => {
   }
 };
 
-// 개발자 설정 저장
+/**
+ * saveDevSettings(settings)
+ * - 개발자 설정 객체를 localStorage에 JSON 형태로 저장합니다.
+ * - DevSettingsPanel에서 설정 변경 시 이 함수를 호출합니다.
+ *
+ * 매개변수:
+ *   settings: 저장할 설정 객체 (DEV_SETTINGS 형태)
+ */
 export const saveDevSettings = (settings) => {
   try {
     localStorage.setItem('byclan_dev_settings', JSON.stringify(settings));
@@ -28,6 +75,45 @@ export const saveDevSettings = (settings) => {
   }
 };
 
+/**
+ * ROLE_PERMISSIONS
+ * - 각 역할(role)의 이름, 설명, 레벨, 허용된 권한 목록을 정의합니다.
+ * - level이 높을수록 더 많은 권한을 가집니다.
+ * - permissions 배열에 있는 문자열 키로 PermissionChecker.hasPermission()을 통해 권한을 확인합니다.
+ *
+ * 권한 키 설명:
+ *   system.admin      - 시스템 전체 관리
+ *   database.modify   - 데이터베이스 직접 수정
+ *   code.deploy       - 코드 배포 권한
+ *   user.manage_all   - 모든 유저 계정 관리
+ *   clan.admin_all    - 클랜 전체 설정 관리
+ *   clan.admin        - 클랜 일반 관리
+ *   member.approve    - 가입 신청 승인/거절
+ *   member.manage     - 멤버 역할 변경, 강퇴 등
+ *   member.test       - 신규 가입자 테스트 진행
+ *   member.mentor     - 신입 멘토링 권한
+ *   master.delegate   - 마스터 권한 위임
+ *   tournament.create - 토너먼트 생성
+ *   tournament.join   - 토너먼트 참여
+ *   ladder.admin      - 래더 시스템 관리
+ *   ladder.moderate   - 래더 중재 (부정 행위 처리 등)
+ *   ladder.play       - 래더 게임 참여
+ *   match.manage      - 매치 관리
+ *   match.host        - 매치 개최
+ *   match.join        - 매치 참여
+ *   match.view        - 매치 관람
+ *   announcement.post - 공지사항 게시
+ *   announcement.edit - 공지사항 편집
+ *   community.post    - 자유게시판 글 작성
+ *   community.view    - 자유게시판 열람
+ *   community.comment - 자유게시판 댓글 작성
+ *   profile.edit      - 프로필 수정
+ *   profile.view      - 프로필 열람
+ *   clan.info         - 클랜 기본 정보 열람
+ *   application.submit - 가입 신청 제출
+ *   application.track - 가입 신청 현황 확인
+ *   discord.required  - Discord 연동 필수 표시
+ */
 export const ROLE_PERMISSIONS = {
   // 개발자 - 시스템 관리
   developer: {
@@ -183,9 +269,29 @@ export const ROLE_PERMISSIONS = {
   }
 };
 
-// 권한 체크 함수들
+/**
+ * PermissionChecker
+ * - 역할 기반 권한 확인 유틸리티 객체입니다.
+ * - hasPermission, hasLevel, isInGroup, canAccessMenu 4가지 함수를 제공합니다.
+ *
+ * 사용 예시:
+ *   PermissionChecker.hasPermission('elite', 'ladder.play')    // → true
+ *   PermissionChecker.hasLevel('admin', 70)                    // → true (80 >= 70)
+ *   PermissionChecker.isInGroup('master', 'management')        // → true
+ *   PermissionChecker.canAccessMenu('visitor', '랭킹')          // → true
+ */
 export const PermissionChecker = {
-  // 특정 권한이 있는지 확인 (개발자 설정 적용)
+  /**
+   * hasPermission(userRole, permission)
+   * - 특정 역할이 특정 권한을 가지고 있는지 확인합니다.
+   * - 개발자 역할의 경우 loadDevSettings()로 추가 설정을 확인합니다.
+   *
+   * 매개변수:
+   *   userRole:   확인할 역할 문자열 (예: 'elite', 'admin')
+   *   permission: 확인할 권한 키 (예: 'ladder.play', 'member.approve')
+   *
+   * 반환값: 권한이 있으면 true, 없으면 false
+   */
   hasPermission: (userRole, permission) => {
     const role = ROLE_PERMISSIONS[userRole];
     if (!role) return false;
@@ -213,13 +319,37 @@ export const PermissionChecker = {
     return role.permissions.includes(permission);
   },
 
-  // 레벨 비교
+  /**
+   * hasLevel(userRole, requiredLevel)
+   * - 특정 역할의 레벨이 요구 레벨 이상인지 확인합니다.
+   *
+   * 매개변수:
+   *   userRole:      확인할 역할 문자열
+   *   requiredLevel: 필요한 최소 레벨 숫자 (예: 50, 80)
+   *
+   * 반환값: 레벨이 충분하면 true, 아니면 false
+   */
   hasLevel: (userRole, requiredLevel) => {
     const role = ROLE_PERMISSIONS[userRole];
     return role ? role.level >= requiredLevel : false;
   },
 
-  // 역할 그룹 확인
+  /**
+   * isInGroup(userRole, group)
+   * - 역할이 특정 그룹에 속하는지 확인합니다.
+   *
+   * 그룹 종류:
+   *   'developers' : developer만 해당
+   *   'management' : developer, master, admin
+   *   'senior'     : developer, master, admin, elite
+   *   'members'    : developer, master, admin, elite, associate, member
+   *
+   * 매개변수:
+   *   userRole: 확인할 역할 문자열
+   *   group:    그룹 이름 문자열
+   *
+   * 반환값: 그룹에 속하면 true, 아니면 false
+   */
   isInGroup: (userRole, group) => {
     switch (group) {
       case 'developers':
@@ -235,7 +365,17 @@ export const PermissionChecker = {
     }
   },
 
-  // 메뉴 접근 권한 확인
+  /**
+   * canAccessMenu(userRole, menuPath)
+   * - 특정 역할이 특정 메뉴에 접근 가능한지 확인합니다.
+   * - menuPath는 사이드바나 헤더에서 사용하는 한국어 메뉴 이름입니다.
+   *
+   * 매개변수:
+   *   userRole: 확인할 역할 문자열
+   *   menuPath: 메뉴 이름 (예: '관리자', '래더', '랭킹')
+   *
+   * 반환값: 접근 가능하면 true, 아니면 false
+   */
   canAccessMenu: (userRole, menuPath) => {
     const menuPermissions = {
       '개발자': ['developer'],
@@ -260,7 +400,15 @@ export const PermissionChecker = {
   }
 };
 
-// 권한 위임 규칙
+/**
+ * DELEGATION_RULES
+ * - 권한 위임 규칙을 정의합니다.
+ * - 누가 누구에게 어떤 권한을 위임할 수 있는지 명시합니다.
+ *
+ * master_to_admin : 마스터가 관리자에게 위임 가능한 권한 목록
+ * admin_to_elite  : 관리자가 정예에게 위임 가능한 권한 목록
+ * developer_override: 개발자는 모든 권한 보유 (클랜 정책 결정권 제외)
+ */
 export const DELEGATION_RULES = {
   // 마스터가 관리자에게 위임 가능한 권한
   master_to_admin: [
@@ -278,7 +426,22 @@ export const DELEGATION_RULES = {
   developer_override: true
 };
 
-// 역할 변경 규칙
+/**
+ * ROLE_CHANGE_RULES
+ * - 역할 승격(promotion)과 강등(demotion) 경로 및 조건을 정의합니다.
+ *
+ * promotion_paths: 각 역할에서 올라갈 수 있는 역할 목록
+ * demotion_paths : 각 역할에서 내려갈 수 있는 역할 목록 (관리자만 가능)
+ * requirements   : 승격을 위해 충족해야 할 조건들
+ *   - days_in_clan          : 클랜 가입 후 경과 일수
+ *   - ladder_games          : 래더 게임 수
+ *   - community_posts       : 커뮤니티 게시글 수
+ *   - tournament_participation: 토너먼트 참여 횟수
+ *   - contribution_points   : 기여 포인트
+ *   - management_experience : 운영 경험 여부
+ *   - leadership_approval   : 리더십 승인 여부
+ *   - clan_contribution     : 클랜 기여도 평가
+ */
 export const ROLE_CHANGE_RULES = {
   // 승격 가능 경로
   promotion_paths: {

@@ -1,3 +1,15 @@
+/**
+ * 파일명: VisitorWelcome.js
+ *
+ * 역할: 방문자·로그인 사용자의 가입 안내 및 클랜 신청서 제출을 담당하는 컴포넌트입니다.
+ * 주요 기능:
+ *   - 사용자 역할(role)에 따라 가입 신청 버튼, 심사 대기 상태, 정식 멤버 환영 메시지를 분기합니다.
+ *   - ApplicationForm: 배틀태그·종족·티어·자기소개 등을 입력하는 모달 폼
+ *   - submitApplication: applications 테이블에 신청서 저장 + profiles 역할을 applicant로 업데이트
+ *   - streamer 컬럼 미존재 시 자동 폴백 쿼리를 실행합니다.
+ * 사용 방법:
+ *   <VisitorWelcome user={user} profile={profile} mode="guide" onApplicationSubmit={fn} />
+ */
 'use client';
 
 import React, { useState } from 'react';
@@ -19,12 +31,22 @@ const ROLE_LABELS = {
 
 const STREAMER_PLATFORMS = ['SOOP', 'YouTube', '치지직', 'Twitch', 'AfreecaTV', '기타'];
 
+/**
+ * URL을 정규화합니다. http(s):// 없으면 https://를 앞에 붙입니다.
+ * @param {string} url
+ * @returns {string}
+ */
 function normalizeUrl(url) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
 }
 
+/**
+ * 전화번호 문자열을 "010-1234-5678" 형식으로 자동 포맷합니다.
+ * @param {string} value - 사용자가 입력한 원시 문자열
+ * @returns {string} 포맷된 전화번호
+ */
 function formatPhone(value) {
   const digits = value.replace(/\D/g, '').slice(0, 11);
   if (digits.length < 4) return digits;
@@ -34,6 +56,13 @@ function formatPhone(value) {
   return digits.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
 }
 
+/**
+ * 클랜 가입 신청서를 Supabase에 제출하고 프로필 역할을 applicant로 변경합니다.
+ * streamer 컬럼 미존재 시 해당 필드를 제외하고 재시도합니다.
+ * @param {string} userId - 현재 로그인 사용자의 UUID
+ * @param {object} applicationData - 신청서 폼 데이터
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
 async function submitApplication(userId, applicationData) {
   try {
     const applicationPayload = {
@@ -122,7 +151,16 @@ function StepItem({ number, title, description, done = false }) {
   );
 }
 
+/**
+ * ApplicationForm 컴포넌트
+ * 클랜 가입 신청서를 입력하는 모달 폼입니다.
+ * @param {function} onSubmit - 폼 제출 시 호출, 인자로 formData 전달
+ * @param {function} onCancel - 취소 버튼 클릭 시 호출
+ * @param {boolean} loading - 제출 처리 중 여부
+ * @param {string|null} error - 에러 메시지
+ */
 function ApplicationForm({ onSubmit, onCancel, loading, error }) {
+  /** 신청서 입력 필드 상태 객체 */
   const [formData, setFormData] = useState({
     btag: '',
     race: 'Terran',
@@ -309,19 +347,42 @@ function ApplicationForm({ onSubmit, onCancel, loading, error }) {
   );
 }
 
+/**
+ * VisitorWelcome 컴포넌트 (기본 내보내기)
+ *
+ * 사용자 상태(비로그인·방문자·신청자·정식 멤버)에 따라 다른 UI를 렌더링합니다.
+ *
+ * @param {object|null} user - Supabase auth 사용자 객체 (비로그인 시 null)
+ * @param {object|null} profile - profiles 테이블의 사용자 프로필 (비로그인 시 null)
+ * @param {'guide'|'apply'} mode - 'apply'면 신청서 폼을 즉시 엽니다
+ * @param {function} onApplicationSubmit - 신청서 제출 성공 후 호출되는 콜백
+ * @returns {JSX.Element} 가입 안내 또는 환영 UI
+ */
 export default function VisitorWelcome({ user, profile, mode = 'guide', onApplicationSubmit }) {
+  /** 페이지 이동 훅 */
   const navigateTo = useNavigate();
+  /** 신청서 폼 모달 표시 여부 */
   const [showApplicationForm, setShowApplicationForm] = useState(mode === 'apply');
+  /** 제출 처리 중 여부 */
   const [loading, setLoading] = useState(false);
+  /** 에러 메시지 */
   const [error, setError] = useState(null);
+  /** 제출 성공 여부 (true면 완료 화면 표시) */
   const [success, setSuccess] = useState(false);
 
+  /** 화면에 표시할 사용자 이름 (ByID > 이메일 기반 > 기본값) */
   const displayName = profile?.ByID || (user?.email ? `By_${user.email.split('@')[0]}` : 'By_Visitor');
+  /** 현재 사용자 역할 (소문자 정규화) */
   const currentRole = profile?.role?.trim?.().toLowerCase?.() || 'guest';
+  /** 이미 가입 신청 완료 여부 */
   const isApplied = currentRole === 'applicant';
+  /** 신입 이상(정식 멤버) 여부 */
   const isRookieOrHigher = ['rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'].includes(currentRole);
+  /** 가입 신청 가능 여부 (로그인 + visitor 역할) */
   const canApply = Boolean(user && currentRole === 'visitor');
+  /** 역할 표시 레이블 */
   const roleLabel = ROLE_LABELS[currentRole] || '클랜 유저';
+  /** 프로필 자기소개 텍스트 */
   const introText = profile?.intro?.trim?.() || '클랜 활동을 이어가고 있는 멤버입니다.';
 
   const handleApplicationSubmit = async (applicationData) => {

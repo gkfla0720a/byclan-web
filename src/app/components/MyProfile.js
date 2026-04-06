@@ -1,3 +1,18 @@
+/**
+ * @file MyProfile.js
+ * @역할 로그인한 유저 자신의 프로필 설정 페이지 컴포넌트
+ * @주요기능
+ *   - 클랜 닉네임(By_ 접두사) 설정 및 중복 확인
+ *   - 주종족 선택 (Protoss / Terran / Zerg / Random)
+ *   - 한줄 자기소개 수정
+ *   - 래더(경쟁전) 전적 데이터 표시 (포인트, 티어, 승/패)
+ *   - 보유 클랜 포인트 표시
+ *   - 로그아웃 기능
+ *   - 개발자(developer) 등급에게만 보이는 개발자 콘솔 진입 버튼
+ * @사용방법
+ *   로그인된 유저만 접근 가능합니다. 프로필이 없으면 에러 메시지를 표시합니다.
+ * @관련컴포넌트 DevConsole.js (개발자 콘솔), GuildManagement.js
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -5,23 +20,39 @@ import { supabase } from '@/supabase';
 import { isMarkedTestAccount } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
+/**
+ * MyProfile 컴포넌트
+ * 현재 로그인한 유저가 자신의 클랜 프로필을 확인하고 수정할 수 있는 페이지입니다.
+ */
 export default function MyProfile() {
+  /** 페이지 전환(탭 이동)을 위한 내비게이션 함수 */
   const navigateTo = useNavigate();
+  /** Supabase profiles 테이블에서 불러온 전체 프로필 데이터 */
   const [profile, setProfile] = useState(null);
+  /** 현재 유저의 이메일 주소 (Supabase Auth에서 가져옴) */
   const [email, setEmail] = useState('');
+  /** 연결된 디스코드 닉네임 (표시 전용, 직접 수정 불가) */
   const [discordName, setDiscordName] = useState(''); 
+  /** ladders 테이블에서 불러온 래더 전적 데이터 (포인트, 티어, 승/패) */
   const [ladderData, setLadderData] = useState(null);
+  /** 프로필 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
+  /** 프로필 저장 요청이 진행 중인지 여부 (버튼 중복 클릭 방지) */
   const [isUpdating, setIsUpdating] = useState(false);
 
   // 수정용 입력 상태들
+  /** By_ 접두사를 제외한 클랜 닉네임 입력값 (예: 'By_홍길동'에서 '홍길동') */
   const [clanNameInput, setClanNameInput] = useState(''); 
+  /** 선택된 주종족 (Protoss / Terran / Zerg / Random / 미지정) */
   const [race, setRace] = useState('미지정');
+  /** 한줄 자기소개 입력값 */
   const [intro, setIntro] = useState('');
+  /** 닉네임 중복 확인 통과 여부. false이면 저장 버튼이 비활성화됩니다. */
   const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
+  /** 최초 로드 시 DB에 저장된 원본 ByID 값 (중복 확인 시 본인 닉네임 허용 판단에 사용) */
   const [originalByID, setOriginalByID] = useState('');
 
-  // 직급 라벨 정의
+  /** 역할 코드를 한국어 표시 이름(+이모지)으로 변환하는 매핑 테이블 */
   const roleLabels = {
     developer: "👨‍💻 시스템 개발자",
     master: "👑 클랜 마스터",
@@ -33,10 +64,19 @@ export default function MyProfile() {
     guest: "👤 방문자"
   };
 
+  /**
+   * 컴포넌트가 처음 마운트될 때 프로필 데이터를 불러옵니다.
+   * 빈 배열 []이므로 최초 1회만 실행됩니다.
+   */
   useEffect(() => {
     fetchProfileData();
   }, []);
 
+  /**
+   * Supabase에서 현재 유저의 프로필 및 래더 데이터를 불러옵니다.
+   * By_ 접두사가 있는 닉네임이 있으면 래더 데이터도 함께 조회합니다.
+   * @async
+   */
   const fetchProfileData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -71,6 +111,12 @@ export default function MyProfile() {
     }
   };
 
+  /**
+   * 닉네임 입력 필드 변경 핸들러입니다.
+   * 공백을 자동으로 제거하고, 값이 바뀌면 중복 확인 상태를 리셋합니다.
+   * (단, 입력값이 원래 본인 닉네임과 동일하면 바로 사용 가능 상태로 유지합니다.)
+   * @param {React.ChangeEvent<HTMLInputElement>} e - 입력 변경 이벤트
+   */
   // 닉네임 입력 변경 핸들러
   const handleInputChange = (e) => {
     const value = e.target.value.replace(/\s/g, ''); // 공백 제거
@@ -79,6 +125,11 @@ export default function MyProfile() {
     setIsNicknameAvailable(`By_${value}` === originalByID);
   };
 
+  /**
+   * 입력한 닉네임(By_ 포함)이 이미 다른 유저가 사용 중인지 확인합니다.
+   * 본인의 현재 닉네임과 동일하면 중복으로 처리하지 않습니다.
+   * @async
+   */
   // 닉네임 중복 확인
   const checkDuplicate = async () => {
     if (!clanNameInput.trim()) return alert('닉네임을 입력해 주세요.');
@@ -108,6 +159,12 @@ export default function MyProfile() {
     }
   };
 
+  /**
+   * 변경된 프로필 정보(닉네임, 종족, 자기소개)를 DB에 저장합니다.
+   * 닉네임 중복 확인을 통과하지 않으면 저장이 차단됩니다.
+   * 저장 성공 후 페이지를 새로고침하여 최신 데이터를 반영합니다.
+   * @async
+   */
   // 프로필 업데이트 저장
   const handleUpdate = async () => {
     if (!isNicknameAvailable) {
@@ -134,6 +191,11 @@ export default function MyProfile() {
     }
   };
 
+  /**
+   * 현재 유저를 Supabase에서 로그아웃하고 홈으로 이동합니다.
+   * 로컬 스토리지를 초기화하여 캐시된 세션 정보를 제거합니다.
+   * @async
+   */
   const handleLogout = async () => {
     if (confirm("로그아웃 하시겠습니까?")) {
       await supabase.auth.signOut();
@@ -147,7 +209,9 @@ export default function MyProfile() {
 
   // 권한 체크: 소문자로 변환하여 정확히 비교
   const currentRole = profile.role?.trim().toLowerCase();
+  /** 현재 유저가 개발자 등급인지 여부 (개발자 콘솔 버튼 표시 여부 결정) */
   const isDeveloper = currentRole === 'developer';
+  /** 화면에 표시할 현재 역할의 한국어 라벨 */
   const userRoleLabel = roleLabels[currentRole] || `👤 방문자 (${currentRole})`;
 
   return (

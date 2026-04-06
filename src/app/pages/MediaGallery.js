@@ -1,9 +1,30 @@
+/**
+ * 파일명: MediaGallery.js
+ *
+ * 역할:
+ *   클랜 내부에 쌓인 공지·게시글·경기 기록을 이미지 카드 형태로 모아 보여주는
+ *   미디어 갤러리 페이지 컴포넌트입니다.
+ *
+ * 주요 기능:
+ *   - admin_posts, posts, ladder_matches 테이블에서 각 2건씩 최신 데이터를 불러옵니다.
+ *   - 세 테이블 데이터를 합쳐 날짜순 정렬 후 최대 6개 카드를 그리드로 표시합니다.
+ *   - 각 카드 배경 이미지는 콘텐츠 유형(공지·게시글·매치)에 따라 다른 Unsplash 이미지를 사용합니다.
+ *   - 로딩 중에는 animate-pulse 스켈레톤 카드를 표시합니다.
+ *
+ * 사용 방법:
+ *   import MediaGallery from './MediaGallery';
+ *   <MediaGallery />
+ */
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
+/**
+ * 파일명: MediaGallery.js (계속)
+ * 콘텐츠 유형별 배경 이미지 URL 매핑
+ */
 const MEDIA_BACKGROUNDS = {
   공지: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=600&auto=format&fit=crop',
   게시글: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?q=80&w=600&auto=format&fit=crop',
@@ -19,10 +40,17 @@ function formatDate(dateString) {
   });
 }
 
+/**
+ * MediaGallery 컴포넌트
+ * @returns {JSX.Element} 미디어 갤러리 그리드 UI
+ */
 function MediaGallery() {
+  /** DB에서 조합한 미디어 아이템 배열 (최대 6개) */
   const [mediaItems, setMediaItems] = useState([]);
+  /** 데이터 로딩 여부 */
   const [loading, setLoading] = useState(true);
 
+  /** 컴포넌트 마운트 시 세 테이블을 병렬 조회하여 미디어 목록을 구성합니다 */
   useEffect(() => {
     const loadMediaItems = async () => {
       if (!isSupabaseConfigured) {

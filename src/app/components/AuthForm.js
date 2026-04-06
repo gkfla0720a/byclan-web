@@ -1,19 +1,56 @@
+/**
+ * 파일명: AuthForm.js
+ *
+ * 역할:
+ *   ByClan 서비스의 로그인 및 회원가입 폼 컴포넌트입니다.
+ *   하나의 컴포넌트에서 로그인/회원가입 모드를 전환하며 처리합니다.
+ *
+ * 주요 기능:
+ *   - 이메일/비밀번호 로그인
+ *   - 닉네임 입력 + 중복 확인 후 회원가입 (By_ 접두사 자동 부여)
+ *   - 가입 시 이용약관 동의 필수 처리
+ *   - 약관 상세 내용을 모달(팝업)로 표시
+ *   - 가입 성공 시 profiles 테이블에 초기 프로필 데이터 자동 생성
+ *
+ * 사용 방법:
+ *   <AuthForm />
+ *   (별도의 props 없이 독립적으로 사용합니다.)
+ */
 'use client';
 
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
 
+/**
+ * 로그인/회원가입 폼 컴포넌트
+ * 버튼 클릭으로 로그인 모드 ↔ 회원가입 모드를 전환합니다.
+ *
+ * @returns {JSX.Element} 로그인 또는 회원가입 폼 UI
+ */
 export default function AuthForm() {
+  /** 현재 모드: false = 로그인, true = 회원가입 */
   const [isSignUp, setIsSignUp] = useState(false);
+  /** 이메일 입력값 */
   const [email, setEmail] = useState('');
+  /** 비밀번호 입력값 */
   const [password, setPassword] = useState('');
+  /** 비밀번호 확인 입력값 (회원가입 모드에서만 사용) */
   const [confirmPassword, setConfirmPassword] = useState('');
+  /** 닉네임 입력값 (By_ 접두사 제외한 부분만 입력받음) */
   const [nickname, setNickname] = useState('');
+  /** 닉네임 중복 확인 완료 여부. 중복 확인 전에는 가입 불가. */
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
+  /** 이용약관 동의 여부. true여야 가입 가능. */
   const [agreed, setAgreed] = useState(false); // ✨ 약관 동의 상태
+  /** API 요청 처리 중 여부. true이면 버튼 비활성화 및 "PROCESSING..." 표시. */
   const [loading, setLoading] = useState(false);
+  /** 약관 상세 모달 표시 여부 */
   const [showTerms, setShowTerms] = useState(false); // ✨ 약관 팝업 토글
 
+  /**
+   * 로그인/회원가입 모드를 전환하고 모든 입력값을 초기화합니다.
+   * 모드 전환 시 이전에 입력한 내용이 남아있지 않도록 전체 리셋합니다.
+   */
   // [수정] 모드 전환 시 모든 상태값 초기화
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
@@ -25,6 +62,12 @@ export default function AuthForm() {
     setAgreed(false);
   };
 
+  /**
+   * 닉네임 중복 여부를 Supabase에서 확인합니다.
+   * - 입력값 앞에 'By_'를 붙여 ByID 컬럼과 비교합니다.
+   * - 중복 없으면 isNicknameChecked를 true로 설정하여 가입을 허용합니다.
+   * - 닉네임 변경 시 isNicknameChecked가 자동으로 false로 리셋됩니다.
+   */
   // [추가] 닉네임 중복 확인
   const checkNicknameDuplicate = async () => {
     if (!nickname.trim()) return alert("닉네임을 입력해주세요.");
@@ -47,6 +90,22 @@ export default function AuthForm() {
     }
   };
 
+  /**
+   * 폼 제출 핸들러입니다. 로그인 또는 회원가입을 처리합니다.
+   *
+   * 회원가입 시 처리 순서:
+   *   1. 닉네임 중복 확인 여부 검증
+   *   2. 비밀번호 일치 검증
+   *   3. 이용약관 동의 여부 검증
+   *   4. Supabase auth.signUp() 호출
+   *   5. 성공 시 profiles 테이블에 초기 데이터 삽입 (역할: rookie, 포인트: 1000)
+   *
+   * 로그인 시 처리 순서:
+   *   1. Supabase auth.signInWithPassword() 호출
+   *   2. 성공 시 페이지 새로고침으로 인증 상태 반영
+   *
+   * @param {React.FormEvent} e - 폼 제출 이벤트 객체
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     

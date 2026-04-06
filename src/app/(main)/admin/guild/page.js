@@ -1,3 +1,12 @@
+/**
+ * 파일명: (main)/admin/guild/page.js
+ * 역할: 길드(클랜) 관리 페이지
+ * URL 경로: /admin/guild
+ * 주요 기능:
+ *   - 길드 설정 및 멤버 관리 기능 제공
+ *   - 비로그인 시 로그인 안내 메시지 표시
+ * 접근 권한: 로그인한 관리자 권한 사용자
+ */
 'use client';
 
 import React from 'react';
@@ -5,7 +14,12 @@ import GuildManagement from '../../../components/GuildManagement';
 import PagePlaceholder from '../../../pages/PagePlaceholder';
 import { useAuthContext } from '../../../context/AuthContext';
 
+/**
+ * GuildPage - 길드 관리 페이지 컴포넌트
+ * 로그인 여부에 따라 길드 관리 화면 또는 로그인 안내를 렌더링합니다.
+ */
 export default function GuildPage() {
+  // 현재 로그인한 사용자 정보 가져오기
   const { user } = useAuthContext();
 
   return (

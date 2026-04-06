@@ -1,3 +1,21 @@
+/**
+ * 파일명: ClanMembers.js
+ *
+ * 역할:
+ *   클랜원 명단 페이지 컴포넌트입니다.
+ *   운영진·정예 길드원·일반 길드원 세 섹션으로 멤버를 분류하여 테이블로 보여줍니다.
+ *
+ * 주요 기능:
+ *   - profiles 테이블에서 visitor·applicant·expelled를 제외한 멤버를 불러옵니다.
+ *   - streamer 관련 컬럼이 없는 경우 자동으로 폴백(fallback) 쿼리를 실행합니다.
+ *   - 관리 권한(member.manage)이 있는 사용자에게만 인라인 등급 변경 드롭다운을 표시합니다.
+ *   - 스트리머 멤버는 방송 플랫폼 링크 버튼을 표시하며, 실제 스트리머가 없으면 데모 데이터를 적용합니다.
+ *   - 총 인원·정예·스트리머 수를 StatCard로 요약합니다.
+ *
+ * 사용 방법:
+ *   import ClanMembers from './ClanMembers';
+ *   <ClanMembers />
+ */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -20,12 +38,24 @@ const INLINE_ROLE_OPTIONS = [
   { value: 'admin', label: '관리자' },
 ];
 
+/**
+ * URL 문자열을 정규화합니다.
+ * http:// 또는 https://로 시작하지 않으면 https://를 앞에 붙입니다.
+ * @param {string} url - 원본 URL 문자열
+ * @returns {string} 정규화된 URL
+ */
 function normalizeUrl(url) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
 }
 
+/**
+ * 멤버 목록에 is_streamer 필드가 하나도 없을 경우,
+ * 앞의 3명에게 임시(데모) 스트리머 정보를 부여합니다.
+ * @param {Array} memberList - profiles 배열
+ * @returns {Array} 데모 스트리머 정보가 추가된 배열
+ */
 function applyDemoStreamers(memberList) {
   if (memberList.some((member) => member.is_streamer)) {
     return memberList;
@@ -44,13 +74,30 @@ function applyDemoStreamers(memberList) {
   });
 }
 
+/**
+ * ClanMembers 컴포넌트
+ *
+ * 클랜원 명단을 직책별로 분류하여 테이블로 렌더링합니다.
+ * 관리 권한이 있으면 인라인 드롭다운으로 등급을 변경할 수 있습니다.
+ *
+ * @returns {JSX.Element} 클랜원 명단 UI
+ */
 export default function ClanMembers() {
+  /** DB에서 불러온 멤버 배열 */
   const [members, setMembers] = useState([]);
+  /** 데이터 로딩 여부 */
   const [loading, setLoading] = useState(true);
+  /** 데이터 로딩 에러 상태 */
   const [error, setError] = useState(null);
+  /** 현재 로그인한 사용자의 역할(role) */
   const [currentRole, setCurrentRole] = useState(null);
+  /** 현재 등급 변경 처리 중인 멤버의 id (처리 완료 시 null) */
   const [updatingMemberId, setUpdatingMemberId] = useState(null);
 
+  /**
+   * 컴포넌트 마운트 시 현재 로그인 사용자 역할과 멤버 목록을 병렬로 불러옵니다.
+   * streamer 컬럼이 없을 경우 해당 컬럼을 제외하고 재시도합니다.
+   */
   useEffect(() => {
     const loadCurrentUserRole = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -116,9 +163,13 @@ export default function ClanMembers() {
     fetchMembers();
   }, []);
 
+  /** 멤버 총 인원 수 */
   const totalMembers = members.length;
+  /** 정예 길드원(elite) 수 */
   const eliteCount = members.filter((member) => member.role === 'elite').length;
+  /** BJ/스트리머로 등록된 멤버 수 */
   const streamerCount = members.filter((member) => Boolean(member.is_streamer)).length;
+  /** ROLE_SECTIONS 정의에 따라 멤버를 직책별로 묶은 배열 (멤버 없는 섹션은 제거) */
   const groupedMembers = ROLE_SECTIONS.map((section) => ({
     ...section,
     members: members.filter((member) => section.roles.includes(member.role)),
@@ -127,6 +178,12 @@ export default function ClanMembers() {
   const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role, color: '#C7CEEA', icon: '👤' };
   const canManageMembers = PermissionChecker.hasPermission(currentRole, 'member.manage');
 
+  /**
+   * 인라인 드롭다운에서 멤버 등급을 변경합니다.
+   * developer·master 등급 변경은 이 화면에서 차단됩니다.
+   * @param {object} member - 등급을 변경할 멤버 객체
+   * @param {string} nextRole - 변경할 새 역할값
+   */
   const handleInlineRoleChange = async (member, nextRole) => {
     if (!canManageMembers || !nextRole || nextRole === member.role) return;
 
@@ -290,6 +347,16 @@ export default function ClanMembers() {
   );
 }
 
+/**
+ * StatCard 컴포넌트
+ *
+ * 레이블과 숫자 값을 강조 색상으로 표시하는 통계 카드입니다.
+ *
+ * @param {string} label - 카드 상단에 표시할 레이블 텍스트
+ * @param {string} value - 카드 중앙에 크게 표시할 값 (예: "12명")
+ * @param {string} accent - 값 텍스트에 적용할 Tailwind 색상 클래스 (예: "text-cyan-400")
+ * @returns {JSX.Element} 통계 카드 UI
+ */
 function StatCard({ label, value, accent }) {
   return (
     <div className="neon-panel rounded-2xl p-4">

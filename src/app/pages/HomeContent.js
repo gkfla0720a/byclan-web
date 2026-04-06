@@ -1,3 +1,21 @@
+/**
+ * 파일명: HomeContent.js
+ *
+ * 역할:
+ *   사이트 메인 홈 화면의 전체 콘텐츠를 구성하는 페이지 컴포넌트입니다.
+ *
+ * 주요 기능:
+ *   - 히어로 배너: 배경 이미지와 사이버 그리드 오버레이로 꾸민 환영 섹션
+ *   - 클랜 소개 카드: 클랜 성향·관전 재미·가입 동선을 3열로 소개
+ *   - 랭킹 미리보기: ladder_points 기준 상위 3인 표시 (클릭 시 랭킹 페이지 이동)
+ *   - 최신 소식: 최근 공지사항 3건 미리보기 (클릭 시 공지 페이지 이동)
+ *   - 매치 현황·활동 로그: HomeSections의 MatchStatus, ActivityLog 컴포넌트 사용
+ *   - 빠른 접근 버튼: 가입안내·매치·커뮤니티·랭킹 4가지 바로가기
+ *
+ * 사용 방법:
+ *   import HomeContent from './HomeContent';
+ *   <HomeContent />
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -7,12 +25,29 @@ import { MatchStatus, ActivityLog } from '../components/HomeSections';
 import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
+/**
+ * HomeContent 컴포넌트
+ *
+ * 홈 화면 전체 레이아웃을 렌더링합니다.
+ * Supabase에서 상위 랭커와 최신 공지를 불러와 표시합니다.
+ *
+ * @returns {JSX.Element} 홈 화면 전체 UI
+ */
 function HomeContent() {
+  /** 페이지 이동 훅 */
   const navigateTo = useNavigate();
+  /** 래더 포인트 기준 상위 3인 랭커 배열 */
   const [topRankers, setTopRankers] = useState([]);
+  /** 최신 공지사항 최대 3건 배열 */
   const [recentNotices, setRecentNotices] = useState([]);
+  /** 데이터 로딩 여부 */
   const [loading, setLoading] = useState(true);
 
+  /**
+   * profiles 테이블에서 상위 랭커 3인과
+   * admin_posts 테이블에서 최신 공지 3건을 병렬로 불러옵니다.
+   * Supabase가 설정되지 않은 경우 안내 메시지용 더미 공지를 반환합니다.
+   */
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -57,6 +92,7 @@ function HomeContent() {
     }
   };
 
+  /** 컴포넌트 마운트 시 fetchData를 한 번 실행합니다 */
   useEffect(() => { fetchData(); }, []);
 
   return (
