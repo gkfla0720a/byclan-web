@@ -1,23 +1,53 @@
+/**
+ * @file AdminMembers.js
+ * @역할 운영진 전용 기밀 게시판 컴포넌트 (단순 버전)
+ * @주요기능
+ *   - 운영진(developer/master/admin) 권한 여부를 확인한 후 게시글 목록을 표시
+ *   - 새로운 기밀 문서 작성 및 저장
+ *   - 작성자 역할 뱃지 표시 (색상 구분)
+ * @사용방법 운영진 전용 탭에서 렌더링됩니다. 권한 없는 유저에게는 접근 차단 화면을 보여줍니다.
+ * @관련컴포넌트 AdminBoard.js (더 완성된 최신 버전)
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { isRelationshipError } from '../utils/retry';
 
+/**
+ * AdminBoard 컴포넌트
+ * 운영진 전용 기밀 게시판을 렌더링합니다.
+ * developer, master, admin 등급만 접근 가능합니다.
+ */
 export default function AdminBoard() {
+  /** 게시글 목록을 저장하는 상태 */
   const [posts, setPosts] = useState([]);
+  /** 현재 유저가 관리자 권한을 가졌는지 여부 */
   const [isAdmin, setIsAdmin] = useState(false);
+  /** 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
+  /** 현재 로그인한 유저의 프로필 정보 */
   const [myProfile, setMyProfile] = useState(null);
 
+  /** 새 글 작성 폼이 열려 있는지 여부 */
   const [isWriting, setIsWriting] = useState(false);
+  /** 새 글 제목과 내용을 담는 상태 */
   const [newPost, setNewPost] = useState({ title: '', content: '' });
+  /** 글 저장 요청이 진행 중인지 여부 (중복 클릭 방지) */
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * 컴포넌트가 처음 화면에 표시될 때 권한 확인 및 데이터 로드를 실행합니다.
+   * 빈 배열 []이므로 최초 1회만 실행됩니다.
+   */
   useEffect(() => {
     checkAdminAndFetch();
   }, []);
 
+  /**
+   * 현재 로그인 유저의 권한을 확인하고, 권한이 있으면 게시글을 불러옵니다.
+   * @async
+   */
   const checkAdminAndFetch = async () => {
     try {
       setLoading(true);
@@ -31,6 +61,7 @@ export default function AdminBoard() {
           .single();
         
         setMyProfile(profile);
+        /** 역할 문자열을 소문자로 정규화하여 비교 */
         const currentRole = profile?.role?.trim().toLowerCase();
         
         // ✨ 최고 개발자(developer) 권한 추가
@@ -46,6 +77,12 @@ export default function AdminBoard() {
     }
   };
 
+  /**
+   * Supabase에서 기밀 게시글 목록을 불러옵니다.
+   * 작성자 정보(ByID, role)를 JOIN하여 가져오며,
+   * 관계 에러 발생 시 작성자 정보 없이 폴백 쿼리를 실행합니다.
+   * @async
+   */
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('admin_posts')
@@ -76,6 +113,12 @@ export default function AdminBoard() {
     }
   };
 
+  /**
+   * 새 기밀 문서를 폼 제출 시 Supabase에 저장합니다.
+   * 제목 또는 내용이 비어있으면 저장하지 않습니다.
+   * @async
+   * @param {React.FormEvent} e - 폼 제출 이벤트
+   */
   const handleCreatePost = async (e) => {
     e.preventDefault();
     if (!newPost.title.trim() || !newPost.content.trim()) return;
@@ -103,6 +146,7 @@ export default function AdminBoard() {
     }
   };
 
+  /** 역할별 CSS 뱃지 색상 클래스 매핑 */
   const roleStyles = {
     developer: "bg-cyan-500 text-black border border-cyan-300", // ✨ 개발자 스타일 추가
     master: "bg-yellow-500 text-black border border-yellow-300",
@@ -112,6 +156,7 @@ export default function AdminBoard() {
     rookie: "bg-emerald-600 text-white border border-emerald-400"
   };
 
+  /** 역할 코드를 한국어 표시 이름으로 변환하는 매핑 테이블 */
   const roleLabels = { 
     developer: "개발자", master: "클랜 마스터", admin: "운영진", elite: "정예", 
     member: "일반", rookie: "신입"

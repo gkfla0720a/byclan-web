@@ -1,8 +1,31 @@
+/**
+ * @file PermissionInfo.js
+ * @역할 역할(role)별 권한 정보를 시각적으로 표시하는 UI 컴포넌트 모음
+ * @주요기능
+ *   - PermissionInfo: 특정 역할의 권한 목록과 레벨을 카드로 표시 (compact 모드 지원)
+ *   - PermissionComparison: 여러 역할의 권한을 테이블로 비교 표시
+ *   - PermissionChecker: 특정 역할이 각 권한을 가졌는지 허용/거부로 표시
+ *   - getPermissionDisplayName: 권한 코드를 한국어 이름으로 변환하는 유틸 함수
+ * @사용방법
+ *   import { PermissionInfo, PermissionComparison, PermissionChecker } from './PermissionInfo';
+ *   <PermissionInfo userRole="admin" />
+ *   <PermissionInfo userRole="elite" compact={true} />
+ *   <PermissionComparison roles={['rookie', 'member', 'elite', 'admin']} />
+ *   <PermissionChecker userRole="master" />
+ * @관련컴포넌트 GuildManagement.js, AdminBoard.js
+ */
 'use client';
 
 import React from 'react';
 import { ROLE_PERMISSIONS, PermissionChecker as PermissionUtilsChecker } from '../utils/permissions';
 
+/**
+ * 특정 역할의 권한 정보를 카드 형태로 표시하는 컴포넌트입니다.
+ * @param {object} props
+ * @param {string} props.userRole - 표시할 역할 코드 (예: 'admin', 'master')
+ * @param {boolean} [props.compact=false] - true이면 아이콘+이름만 표시하는 간소화 모드
+ * @returns {JSX.Element|null} 권한 정보 카드 또는 null (역할 정보 없을 때)
+ */
 // 권한 정보 표시 컴포넌트
 export function PermissionInfo({ userRole, compact = false }) {
   const roleInfo = ROLE_PERMISSIONS[userRole];
@@ -53,6 +76,12 @@ export function PermissionInfo({ userRole, compact = false }) {
   );
 }
 
+/**
+ * 여러 역할의 권한을 테이블 형태로 나란히 비교하는 컴포넌트입니다.
+ * @param {object} props
+ * @param {string[]} [props.roles] - 비교할 역할 코드 배열 (기본값: associate, elite, admin, master)
+ * @returns {JSX.Element} 권한 비교 테이블
+ */
 // 권한 비교 컴포넌트
 export function PermissionComparison({ roles = ['associate', 'elite', 'admin', 'master'] }) {
   return (
@@ -115,8 +144,16 @@ export function PermissionComparison({ roles = ['associate', 'elite', 'admin', '
   );
 }
 
+/**
+ * 특정 역할이 주요 권한 목록 각각을 가지고 있는지 허용/거부로 표시하는 컴포넌트입니다.
+ * 개발자 도구 또는 권한 테스트 용도로 사용합니다.
+ * @param {object} props
+ * @param {string} props.userRole - 검사할 역할 코드
+ * @returns {JSX.Element} 권한 허용/거부 목록
+ */
 // 권한 검사기 컴포넌트
 export function PermissionChecker({ userRole }) {
+  /** 테스트할 권한 코드 목록 */
   const testPermissions = [
     'system.admin',
     'clan.admin',
@@ -155,6 +192,12 @@ export function PermissionChecker({ userRole }) {
   );
 }
 
+/**
+ * 권한 코드 문자열을 한국어 표시 이름으로 변환합니다.
+ * 매핑 테이블에 없는 코드는 원래 문자열 그대로 반환합니다.
+ * @param {string} permission - 변환할 권한 코드 (예: 'member.approve')
+ * @returns {string} 한국어 권한 이름 (예: '가입 승인')
+ */
 // 권한 표시 이름 변환 함수
 function getPermissionDisplayName(permission) {
   const displayNames = {

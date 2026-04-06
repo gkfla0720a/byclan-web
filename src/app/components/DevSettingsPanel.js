@@ -1,19 +1,54 @@
+/**
+ * @file DevSettingsPanel.js
+ * @역할 브라우저 로컬 스토리지 기반 개발자 편의 설정 패널 컴포넌트
+ * @주요기능
+ *   - 화면 우하단에 고정된 ⚙️ 버튼으로 열리는 개발자 설정 패널
+ *   - 가입 심사 권한, 멤버 관리 권한, 마스터 위임 권한 토글
+ *   - 래더 Discord 연동 필수 검사 ON/OFF (개발 시 우회용)
+ *   - 설정값은 브라우저 로컬 스토리지에 저장되므로 새로고침 후에도 유지됨
+ * @사용방법
+ *   개발 환경에서 편의를 위해 사용합니다.
+ *   이 컴포넌트를 렌더링하면 자동으로 우하단 고정 버튼이 표시됩니다.
+ *   <DevSettingsPanel />
+ * @관련컴포넌트 DevConsole.js (서버 기반 설정), permissions.js (saveDevSettings, loadDevSettings)
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { saveDevSettings, loadDevSettings } from '../utils/permissions';
 
+/**
+ * DevSettingsPanel 컴포넌트
+ * 개발자 편의를 위한 권한/기능 토글 패널입니다.
+ * 설정은 브라우저 로컬 스토리지에 저장되며 서버 DB와는 무관합니다.
+ */
 // 사이버틱 개발자 설정 컴포넌트
 export default function DevSettingsPanel() {
+  /**
+   * 현재 개발자 설정 상태 객체.
+   * 초기값은 로컬 스토리지에서 loadDevSettings()로 불러옵니다.
+   * 예: { canReviewApplications: true, canManageMembers: false, ... }
+   */
   const [settings, setSettings] = useState(() => loadDevSettings());
+  /** 설정 패널이 열려있는지 여부 (false이면 우하단 버튼만 표시) */
   const [isOpen, setIsOpen] = useState(false);
 
+  /**
+   * 특정 설정 키의 boolean 값을 반전(toggle)시키고 로컬 스토리지에 저장합니다.
+   * @param {string} key - 토글할 설정 키 (예: 'canReviewApplications')
+   */
   const handleToggle = (key) => {
     const newSettings = { ...settings, [key]: !settings[key] };
     setSettings(newSettings);
     saveDevSettings(newSettings);
   };
 
+  /**
+   * 패널에 표시할 토글 항목 목록.
+   * key: settings 객체의 키 이름
+   * title: 화면에 표시되는 한국어 제목
+   * desc: 기능 설명
+   */
   const toggleItems = [
     {
       key: 'canReviewApplications',

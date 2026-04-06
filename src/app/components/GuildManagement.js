@@ -1,3 +1,17 @@
+/**
+ * @file GuildManagement.js
+ * @역할 길드원(클랜원) 관리 페이지 컴포넌트
+ * @주요기능
+ *   - 길드원 목록 조회 및 등급 변경 (associate/rookie/member/elite/admin)
+ *   - 길드원 제명 처리 (role을 'expelled'로 변경)
+ *   - 마스터 위임 기능: 비밀번호 재인증 또는 이메일 OTP 인증 후 위임 가능
+ *   - 테스트 계정 필터링 지원 (filterVisibleTestAccounts)
+ *   - 역할별 색상/아이콘 표시 (ROLE_PERMISSIONS 기반)
+ * @사용방법
+ *   member.manage 권한을 가진 운영진만 접근할 수 있습니다.
+ *   마스터 위임은 추가적으로 master.delegate 권한과 본인 재인증이 필요합니다.
+ * @관련컴포넌트 AdminBoard.js (기밀 게시판), ApplicationList.js (가입 심사)
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -5,8 +19,15 @@ import { supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
 
+/** 마스터 위임 재인증의 유효 시간: 5분 (밀리초 단위) */
 const DELEGATION_VERIFY_WINDOW_MS = 5 * 60 * 1000;
 
+/**
+ * 마스터 위임 재인증 상태 초기값을 생성합니다.
+ * @param {string} email - 현재 관리자의 이메일
+ * @param {string} phone - 현재 관리자의 전화번호
+ * @returns {object} 초기화된 재인증 상태 객체
+ */
 const createVerificationState = (email = '', phone = '') => ({
   method: 'password',
   password: '',
@@ -23,15 +44,38 @@ const createVerificationState = (email = '', phone = '') => ({
 });
 
 // 사이버틱 길드원 관리 컴포넌트
+/**
+ * GuildManagement 컴포넌트
+ * 길드원 목록을 관리하고 등급 변경/제명/마스터 위임 기능을 제공합니다.
+ */
 export default function GuildManagement() {
+  /** 길드원 목록 (visitor, expelled 제외) */
   const [members, setMembers] = useState([]);
+  /** 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
+  /** 현재 로그인한 관리자 정보 (id, role, email, phone) */
   const [currentManager, setCurrentManager] = useState({ id: null, role: null, email: '', phone: '' });
+  /**
+   * 등급 변경 또는 제명 모달 상태
+   * - isOpen: 모달 열림 여부
+   * - action: 'role'(등급 변경) 또는 'remove'(제명)
+   * - member: 처리 대상 길드원 객체
+   */
   const [actionModal, setActionModal] = useState({ isOpen: false, action: '', member: null });
+  /**
+   * 마스터 위임 모달 상태
+   * - isOpen: 모달 열림 여부
+   * - member: 위임 대상 길드원 객체
+   */
   const [masterDelegation, setMasterDelegation] = useState({ isOpen: false, member: null });
+  /** 등급 변경 모달에서 선택 중인 새 역할값 */
   const [pendingRole, setPendingRole] = useState('member');
+  /** 마스터 위임 전 본인 재인증 상태 (비밀번호/OTP 방식 모두 포함) */
   const [delegationVerification, setDelegationVerification] = useState(createVerificationState());
 
+  /**
+   * 컴포넌트가 처음 마운트될 때 관리자 정보와 길드원 목록을 병렬로 불러옵니다.
+   */
   useEffect(() => {
     const initialize = async () => {
       await Promise.all([loadCurrentManager(), fetchMembers()]);
@@ -40,6 +84,11 @@ export default function GuildManagement() {
     initialize();
   }, []);
 
+  /**
+   * 현재 로그인한 관리자의 프로필과 이메일/전화번호를 불러와 상태에 저장합니다.
+   * 위임 재인증 초기값도 이 함수에서 설정합니다.
+   * @async
+   */
   const loadCurrentManager = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -66,6 +115,11 @@ export default function GuildManagement() {
     }
   };
 
+  /**
+   * Supabase에서 길드원 목록을 불러옵니다.
+   * visitor와 expelled 역할은 제외하며, 테스트 계정도 필터링됩니다.
+   * @async
+   */
   const fetchMembers = async () => {
     try {
       const { data, error } = await filterVisibleTestAccounts(supabase
@@ -84,6 +138,13 @@ export default function GuildManagement() {
     }
   };
 
+  /**
+   * 특정 길드원의 역할(등급)을 변경합니다.
+   * 'master' 역할로의 직접 변경은 허용되지 않습니다. (위임 절차 사용)
+   * @async
+   * @param {string} memberId - 등급을 변경할 길드원의 ID
+   * @param {string} newRole - 새로 적용할 역할 문자열
+   */
   const handleRoleChange = async (memberId, newRole) => {
     if (newRole === 'master') {
       alert('마스터 지정은 재인증 후 마스터 위임으로만 처리할 수 있습니다.');
@@ -107,6 +168,12 @@ export default function GuildManagement() {
     }
   };
 
+  /**
+   * 특정 길드원을 제명 처리합니다.
+   * 제명은 role을 'expelled'로 변경하는 방식으로 처리됩니다.
+   * @async
+   * @param {string} memberId - 제명할 길드원의 ID
+   */
   const handleRemoveMember = async (memberId) => {
     try {
       const { error } = await supabase
@@ -124,6 +191,12 @@ export default function GuildManagement() {
     }
   };
 
+  /**
+   * 현재 마스터를 admin으로 강등하고, 대상 길드원을 새 마스터로 승급합니다.
+   * master.delegate 권한과 5분 이내 재인증이 반드시 필요합니다.
+   * @async
+   * @param {string} targetId - 마스터로 위임할 길드원의 ID
+   */
   const handleMasterDelegation = async (targetId) => {
     const now = Date.now();
 
@@ -165,6 +238,12 @@ export default function GuildManagement() {
     }
   };
 
+  /**
+   * 비밀번호를 이용한 본인 재인증을 수행합니다.
+   * Supabase signInWithPassword를 호출하여 현재 계정인지 확인합니다.
+   * 성공하면 verifiedAt 타임스탬프를 저장합니다.
+   * @async
+   */
   const handlePasswordVerification = async () => {
     if (!delegationVerification.password.trim()) {
       setDelegationVerification((prev) => ({
@@ -218,6 +297,10 @@ export default function GuildManagement() {
     }
   };
 
+  /**
+   * 이메일 OTP 인증 코드를 현재 관리자의 이메일로 발송합니다.
+   * @async
+   */
   const handleSendOtp = async () => {
     if (!currentManager.email) {
       setDelegationVerification((prev) => ({
@@ -257,6 +340,11 @@ export default function GuildManagement() {
     }
   };
 
+  /**
+   * 이메일로 받은 OTP 코드를 검증합니다.
+   * 검증 성공 시 verifiedAt 타임스탬프를 저장합니다.
+   * @async
+   */
   const handleVerifyOtp = async () => {
     if (!delegationVerification.otp.trim()) {
       setDelegationVerification((prev) => ({
@@ -300,28 +388,48 @@ export default function GuildManagement() {
     }
   };
 
+  /**
+   * 마스터 위임 모달을 열고 재인증 상태를 초기화합니다.
+   * @param {object} member - 위임 대상 길드원 객체
+   */
   const openMasterDelegationModal = (member) => {
     setMasterDelegation({ isOpen: true, member });
     setDelegationVerification(createVerificationState(currentManager.email, currentManager.phone));
   };
 
+  /**
+   * 마스터 위임 모달을 닫고 재인증 상태를 초기화합니다.
+   */
   const closeMasterDelegationModal = () => {
     setMasterDelegation({ isOpen: false, member: null });
     setDelegationVerification(createVerificationState(currentManager.email, currentManager.phone));
   };
 
+  /** 재인증이 유효한지 여부: verifiedAt이 있고 5분 이내인 경우 true */
   const isDelegationVerified = Boolean(
     delegationVerification.verifiedAt &&
     Date.now() - delegationVerification.verifiedAt <= DELEGATION_VERIFY_WINDOW_MS
   );
 
+  /** 현재 관리자가 길드원 관리 권한을 가지고 있는지 여부 */
   const canManageMembers = PermissionChecker.hasPermission(currentManager.role, 'member.manage');
+  /** 현재 관리자가 마스터 위임 권한을 가지고 있는지 여부 */
   const canDelegateMaster = PermissionChecker.hasPermission(currentManager.role, 'master.delegate');
 
+  /**
+   * 역할에 해당하는 색상 코드를 반환합니다.
+   * @param {string} role - 역할 문자열
+   * @returns {string} 색상 코드 (hex)
+   */
   const getRoleColor = (role) => {
     return ROLE_PERMISSIONS[role]?.color || '#C7CEEA';
   };
 
+  /**
+   * 역할에 해당하는 이모지 아이콘을 반환합니다.
+   * @param {string} role - 역할 문자열
+   * @returns {string} 이모지 아이콘
+   */
   const getRoleIcon = (role) => {
     return ROLE_PERMISSIONS[role]?.icon || '👤';
   };

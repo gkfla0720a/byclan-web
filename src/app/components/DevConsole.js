@@ -1,3 +1,16 @@
+/**
+ * @file DevConsole.js
+ * @역할 시스템 개발자 전용 관리 콘솔 컴포넌트
+ * @주요기능
+ *   - 서버 테스트 모드 ON/OFF 토글 (system_settings 테이블 기반)
+ *   - 테스트 계정 및 테스트 데이터 일괄 활성화/비활성화
+ *   - 전체 유저 대기열(is_in_queue) 초기화
+ *   - 개발자 로그(주의사항) 표시
+ * @사용방법
+ *   MyProfile 화면에서 'developer' 등급일 때만 보이는 톱니바퀴 버튼을 클릭하면 진입합니다.
+ *   이 컴포넌트는 오직 'developer' 등급만 접근할 수 있어야 합니다.
+ * @관련컴포넌트 MyProfile.js, DevSettingsPanel.js
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,17 +23,38 @@ import {
 } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
+/**
+ * DevConsole 컴포넌트
+ * 시스템 개발자를 위한 관리 콘솔입니다.
+ * 테스트 모드, 테스트 계정 노출, 대기열 리셋 등을 제어합니다.
+ */
 export default function DevConsole() {
+  /** 페이지 전환을 위한 내비게이션 함수 (콘솔 닫기 시 Home으로 이동) */
   const navigateTo = useNavigate();
+  /** 서버 테스트 모드 활성화 여부 (true = 테스트 모드 ON) */
   const [isTestMode, setIsTestMode] = useState(false);
+  /** 테스트 계정 및 테스트 데이터가 화면에 표시되는지 여부 */
   const [testAccountsEnabled, setTestAccountsEnabled] = useState(true);
+  /** system_settings 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
 
+  /**
+   * 테이블/컬럼 미존재 등 무시해도 되는 토글 에러인지 판별합니다.
+   * @param {object} error - Supabase 에러 객체
+   * @returns {boolean} 무시 가능한 에러이면 true
+   */
   const shouldIgnoreToggleError = (error) => {
     const message = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
     return error?.code === '42P01' || error?.code === '42703' || message.includes('does not exist');
   };
 
+  /**
+   * system_settings 테이블에 boolean 설정값을 upsert(없으면 추가, 있으면 업데이트)합니다.
+   * @async
+   * @param {string} key - 설정 키 이름
+   * @param {boolean} value - 설정할 boolean 값
+   * @param {string} description - 설정 설명 (DB에 함께 저장)
+   */
   const upsertBooleanSetting = async (key, value, description) => {
     const { error } = await supabase
       .from('system_settings')
@@ -29,6 +63,10 @@ export default function DevConsole() {
     if (error) throw error;
   };
 
+  /**
+   * system_settings 테이블에서 테스트 모드와 테스트 계정 설정값을 불러옵니다.
+   * @async
+   */
   const loadSettings = async () => {
     const { data, error } = await supabase
       .from('system_settings')
@@ -42,6 +80,10 @@ export default function DevConsole() {
     setTestAccountsEnabled(settingsMap[TEST_ACCOUNT_SETTING_KEY] !== false);
   };
 
+  /**
+   * 컴포넌트가 마운트될 때 system_settings에서 현재 설정값을 불러옵니다.
+   * 빈 배열 []이므로 최초 1회만 실행됩니다.
+   */
   // 1. 초기 시스템 설정 로드 (테스트 모드 상태 확인)
   useEffect(() => {
     const fetchSettings = async () => {
@@ -56,6 +98,11 @@ export default function DevConsole() {
     fetchSettings();
   }, []);
 
+  /**
+   * 서버 테스트 모드를 현재 상태와 반대로 토글합니다.
+   * ON일 때만 테스터 계정의 대기열 신청이 허용됩니다.
+   * @async
+   */
   // 2. 테스트 모드 토글 함수
   const toggleTestMode = async () => {
     const nextMode = !isTestMode;
@@ -68,6 +115,13 @@ export default function DevConsole() {
     }
   };
 
+  /**
+   * 테스트 계정과 테스트 데이터의 표시 여부를 일괄로 토글합니다.
+   * profiles, ladders, admin_posts, posts, applications, notifications, ladder_matches 테이블
+   * 의 is_test_account_active / is_test_data_active 플래그를 일괄 업데이트합니다.
+   * 변경 후 브라우저 커스텀 이벤트(TEST_ACCOUNT_SETTING_EVENT)를 발행합니다.
+   * @async
+   */
   const toggleTestAccounts = async () => {
     const nextState = !testAccountsEnabled;
     const confirmationMessage = nextState
@@ -109,6 +163,11 @@ export default function DevConsole() {
     }
   };
 
+  /**
+   * profiles 테이블의 모든 유저 is_in_queue를 false로 초기화합니다.
+   * 매칭 시스템에 유령 인원이 남아있을 때 강제로 비우는 용도입니다.
+   * @async
+   */
   // 3. 전체 대기열 초기화
   const resetAllQueues = async () => {
     if(!confirm("모든 유저의 대기열 상태를 초기화하시겠습니까?")) return;
