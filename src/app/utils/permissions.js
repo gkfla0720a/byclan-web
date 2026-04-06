@@ -42,7 +42,8 @@ export const ROLE_PERMISSIONS = {
       'clan.admin_all',    // 클랜 전체 관리
       'member.approve',    // 가입 심사
       'member.manage',     // 멤버 관리
-      'master.delegate'    // 마스터 위임
+      'master.delegate',   // 마스터 위임
+      'ladder.play'        // 래더 플레이
     ],
     color: '#FF6B6B',
     icon: '👨‍💻'
@@ -59,6 +60,7 @@ export const ROLE_PERMISSIONS = {
       'master.delegate',   // 마스터 위임
       'tournament.create',  // 토너먼트 생성
       'ladder.admin',      // 래더 관리
+      'ladder.play',       // 래더 플레이
       'announcement.post',  // 공지사항 게시
       'member.test'        // 가입 테스트
     ],
@@ -76,6 +78,7 @@ export const ROLE_PERMISSIONS = {
       'member.manage',     // 멤버 관리
       'match.manage',      // 매치 관리
       'ladder.moderate',   // 래더 중재
+      'ladder.play',       // 래더 플레이
       'announcement.edit',  // 공지사항 편집
       'member.test'        // 가입 테스트
     ],
