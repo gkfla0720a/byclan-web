@@ -159,6 +159,18 @@ export default function Header() {
     window.location.reload();
   };
 
+  const handleDiscordLogin = () => {
+    if (!isSupabaseConfigured) {
+      alert('Supabase 환경변수가 설정되지 않아 로그인 기능을 사용할 수 없습니다.');
+      return;
+    }
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    supabase.auth.signInWithOAuth({
+      provider: 'discord',
+      options: { redirectTo }
+    });
+  };
+
   const menuData = [
     { title: '클랜 소개', items: ['가입안내', '정회원 전환신청', '개요'] },
     { title: '클랜원', items: ['클랜원'] },
@@ -260,24 +272,28 @@ export default function Header() {
                 </div>
               </>
             ) : (
-              <button onClick={() => {
-                if (!isSupabaseConfigured) {
-                  alert('Supabase 환경변수가 설정되지 않아 로그인 기능을 사용할 수 없습니다.');
-                  return;
-                }
-                const redirectTo = `${window.location.origin}/auth/callback`;
-                console.log('[Discord Login] redirectTo:', redirectTo);
-                supabase.auth.signInWithOAuth({ 
-                  provider: 'discord',
-                  options: { redirectTo }
-                });
-              }} className="px-4 py-2 border border-cyan-300/35 rounded-full text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(88,101,242,0.12)] font-bold text-sm">Discord Login</button>
+              <button onClick={handleDiscordLogin} className="px-4 py-2 border border-cyan-300/35 rounded-full text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(88,101,242,0.12)] font-bold text-sm">Discord Login</button>
             )}
           </li>
         </ul>
 
         {/* 모바일 햄버거 메뉴 */}
-        <div className="md:hidden flex items-center gap-3">
+        <div className="md:hidden flex items-center gap-2">
+          {user ? (
+            <>
+              <button onClick={() => handleNav('알림')} aria-label="알림" className="relative p-2 text-slate-300 hover:text-cyan-200 transition-all border border-cyan-400/15 rounded-xl bg-slate-950/60">
+                <span className="text-lg">🔔</span>
+                {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
+              </button>
+              <button onClick={() => handleNav('프로필')} aria-label="프로필" className="p-2 text-slate-300 hover:text-cyan-200 transition-all border border-cyan-400/15 rounded-xl bg-slate-950/60">
+                <span className="text-lg">👤</span>
+              </button>
+            </>
+          ) : (
+            <button onClick={handleDiscordLogin} className="px-3 py-2 border border-cyan-300/35 rounded-xl text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(88,101,242,0.12)] font-bold text-xs whitespace-nowrap">
+              Discord Login
+            </button>
+          )}
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-slate-200 hover:text-cyan-200 p-2 text-xl border border-cyan-400/15 rounded-xl bg-slate-950/60">
             {isMobileMenuOpen ? '✕' : '☰'}
           </button>
@@ -334,6 +350,15 @@ export default function Header() {
           {/* 모바일 개발자 (오직 개발자만!) */}
           {isDeveloper && (
             <button onClick={() => handleNav('개발자')} className="px-6 py-5 text-left text-cyan-200 font-black text-sm border-b border-cyan-400/10 bg-cyan-950/10 transition-all underline decoration-cyan-400/40 underline-offset-8">🛠️ 시스템 개발자 콘솔</button>
+          )}
+
+          {/* 비로그인 시 Discord 로그인 버튼 */}
+          {!user && (
+            <div className="px-6 py-5 border-t border-cyan-400/10 bg-slate-900/35">
+              <button onClick={handleDiscordLogin} className="w-full py-3 border border-cyan-300/35 rounded-xl text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(88,101,242,0.12)] font-bold text-sm">
+                Discord Login
+              </button>
+            </div>
           )}
         </div>
       )}
