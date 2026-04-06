@@ -377,26 +377,34 @@ export const PermissionChecker = {
    * 반환값: 접근 가능하면 true, 아니면 false
    */
   canAccessMenu: (userRole, menuPath) => {
+    // 비로그인 사용자(null/undefined)는 'visitor' 수준으로 간주합니다.
+    const effectiveRole = userRole || 'visitor';
+
+    const ALL_ROLES = ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'];
+    const MEMBER_ROLES = ['rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'];
+
     const menuPermissions = {
       '개발자': ['developer'],
       '관리자': ['developer', 'master', 'admin'],
       '가입 심사': ['developer', 'master', 'admin', 'elite'],
       '운영진게시판': ['developer', 'master', 'admin'],
       '길드원 관리': ['developer', 'master', 'admin'],
-      '대시보드': ['rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '랭킹': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '공지사항': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '자유게시판': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '프로필': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '알림': ['applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '대시보드': MEMBER_ROLES,
+      '랭킹': ALL_ROLES,
+      '경기기록': ALL_ROLES,   // 비로그인 포함 전체 공개
+      '공지사항': ALL_ROLES,
+      '자유게시판': ALL_ROLES,
+      '개요': ALL_ROLES,
+      '클랜원': ALL_ROLES,
+      '프로필': ALL_ROLES,
+      '알림': ['applicant', ...MEMBER_ROLES],
       '가입신청': ['visitor'], // 직접 메뉴 진입은 사용하지 않지만 호환성 유지
-      '가입안내': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
-      '클랜원': ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'],
+      '가입안내': ALL_ROLES,
       '정회원 전환신청': ['rookie'] // 신입 길드원만 정회원 신청
     };
 
     const allowedRoles = menuPermissions[menuPath] || [];
-    return allowedRoles.includes(userRole);
+    return allowedRoles.includes(effectiveRole);
   }
 };
 

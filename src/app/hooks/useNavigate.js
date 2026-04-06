@@ -63,6 +63,7 @@ const VIEW_TO_PATH = {
   '알림': '/notifications',
   '포인트 상점': '/points/shop',
   '포인트 내역': '/points/history',
+  '경기기록': '/matches',
   '로그인': '/login',
 };
 

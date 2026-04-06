@@ -25,10 +25,11 @@ export default function LadderPage() {
   // 프로필, 사용자, 현재 활성 매치 ID, 권한 정보 가져오기
   const { profile, user, activeMatchId, setActiveMatchId, getPermissions } = useAuthContext();
 
-  // 권한 객체에서 래더 플레이 가능 여부와 디스코드 연동 필요 여부 추출
+  // 권한 객체에서 래더 플레이 가능 여부 추출
   const permissions = getPermissions();
   const canPlayLadder = permissions.can?.playLadder;
-  const requiresDiscordLink = permissions.can?.requiresDiscordLink;
+  // Discord 연동은 신입 길드원(rookie) 전환 시에만 필요하므로 래더에서는 항상 false
+  const requiresDiscordLink = false;
   // 비로그인 사용자 여부
   const isGuest = !user;
   // 방문자(visitor) 역할인지 여부
