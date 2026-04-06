@@ -23,28 +23,14 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// -----------------------------------------------------------------------
-// [개발 메모] 아래 하드코딩된 폴백 값(fallbackSupabaseUrl, fallbackSupabaseKey)은
-// 개발·테스트 단계에서만 임시로 공개된 설정입니다.
-// 프로덕션 배포 전에 .env.local 파일에 NEXT_PUBLIC_SUPABASE_URL과
-// NEXT_PUBLIC_SUPABASE_ANON_KEY를 설정한 뒤 이 폴백 값은 제거할 예정입니다.
-// 참고: .env.example 파일에 필요한 환경변수 목록이 정리되어 있습니다.
-// -----------------------------------------------------------------------
+// 개발/테스트 전용 폴백 (프로덕션에서는 환경변수 필수)
+const FALLBACK_URL = 'https://mmsmedvdwmisewngmuka.supabase.co';
+const FALLBACK_KEY = 'sb_publishable_wOeB902mJJwOtWNa9nmyFA_KaaaHfeK';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-/**
- * fallbackSupabaseUrl
- * - .env.local에 URL이 없을 때 사용하는 기본 Supabase 프로젝트 주소입니다.
- * - 개발 환경 전용이며, 실제 서비스 배포 시에는 환경 변수로 대체해야 합니다.
- */
-const fallbackSupabaseUrl = 'https://mmsmedvdwmisewngmuka.supabase.co';
-
-/**
- * fallbackSupabaseKey
- * - .env.local에 키가 없을 때 사용하는 기본 Supabase 공개 API 키입니다.
- * - 이 키는 "anon(익명)" 키로, 공개해도 되는 수준의 읽기 전용 접근 키입니다.
- *   (실제 민감 데이터는 RLS 정책으로 보호합니다)
- */
-const fallbackSupabaseKey = 'sb_publishable_wOeB902mJJwOtWNa9nmyFA_KaaaHfeK';
+// env 값 정리(앞뒤 공백 제거)
+const envUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+const envKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
 
 /**
  * hasExplicitEnv
@@ -52,21 +38,21 @@ const fallbackSupabaseKey = 'sb_publishable_wOeB902mJJwOtWNa9nmyFA_KaaaHfeK';
  *   확인하는 플래그(true/false 값)입니다.
  * - true이면 환경 변수 값을 사용하고, false이면 폴백(기본) 값을 사용합니다.
  */
-const hasExplicitEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const hasExplicitEnv = Boolean(envUrl && envKey);
 
 /**
  * supabaseUrl
  * - 실제로 사용할 Supabase 프로젝트 URL입니다.
  * - 환경 변수가 있으면 그것을, 없으면 폴백 값을 사용합니다.
  */
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || fallbackSupabaseUrl;
+const supabaseUrl = envUrl || (!IS_PRODUCTION ? FALLBACK_URL : '');
 
 /**
  * supabaseKey
  * - 실제로 사용할 Supabase API 키입니다.
  * - 환경 변수가 있으면 그것을, 없으면 폴백 값을 사용합니다.
  */
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || fallbackSupabaseKey;
+const supabaseKey = envKey || (!IS_PRODUCTION ? FALLBACK_KEY : '');
 
 /**
  * isSupabaseConfigured
@@ -77,27 +63,25 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || fallbackSupabas
  * 사용 예시:
  *   if (!isSupabaseConfigured) { console.warn('DB 설정이 안 되어 있습니다'); }
  */
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
+export const isSupabaseConfigured = Boolean(envUrl && envKey);
 
-// 환경 변수 없이 폴백 값으로 동작 중일 때, 브라우저 콘솔에 경고를 한 번만 출력합니다.
-// window.__byclanSupabaseFallbackNoticeShown 플래그를 이용해 중복 출력을 방지합니다.
-if (!hasExplicitEnv && typeof window !== 'undefined' && !window.__byclanSupabaseFallbackNoticeShown) {
-  // 개발 중 콘솔을 과도하게 오염시키지 않도록 한 번만 안내합니다.
-  window.__byclanSupabaseFallbackNoticeShown = true;
-  console.info('Supabase fallback configuration is active. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to override it.');
+// 프로덕션에서 환경변수 누락 시 즉시 에러로 알림
+if (IS_PRODUCTION && !isSupabaseConfigured) {
+  throw new Error(
+    '[Supabase] NEXT_PUBLIC_SUPABASE_URL 또는 NEXT_PUBLIC_SUPABASE_ANON_KEY 가 설정되지 않았습니다.'
+  );
 }
 
-/**
- * supabase
- * - 프로젝트 전체에서 사용하는 Supabase 클라이언트(연결 객체)입니다.
- * - 이 객체로 데이터 조회(select), 삽입(insert), 수정(update), 삭제(delete),
- *   로그인/로그아웃 등 모든 백엔드 작업을 수행합니다.
- *
- * 사용 예시:
- *   // 프로필 목록 조회
- *   const { data, error } = await supabase.from('profiles').select('*');
- *
- *   // Discord 로그인
- *   await supabase.auth.signInWithOAuth({ provider: 'discord' });
- */
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// 개발 환경에서만 fallback 허용 + 1회 경고
+if (!isSupabaseConfigured && typeof window !== 'undefined' && !window.__byclanSupabaseFallbackNoticeShown) {
+  window.__byclanSupabaseFallbackNoticeShown = true;
+  console.warn(
+    '[Supabase] 환경변수가 없어 fallback 설정을 사용 중입니다.\n' +
+      '.env.local 에 NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY 를 설정하세요.'
+  );
+}
+
+const resolvedUrl = isSupabaseConfigured ? envUrl : FALLBACK_URL;
+const resolvedKey = isSupabaseConfigured ? envKey : FALLBACK_KEY;
+
+export const supabase = createClient(resolvedUrl, resolvedKey);
