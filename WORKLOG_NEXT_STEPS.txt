@@ -154,3 +154,9 @@ If issue persists, collect
 1) Full callback URL shown in browser address bar
 2) First 10 console lines after callback
 3) Whether Supabase session exists in browser storage
+
+추가로
+1. 포인트 베팅할 때 디스코드 체널과 연동해서 디스코드 서버에 접속 or 출첵 하면 포인트 지급하는 로직 생성(우선 예시로 1000p지급)
+
+2. 모든 사람들이 자신의 프로필을 볼 수 있도록 권한 부여(방문자 제외)
+3. 홈에서 사이드 프로필의 로딩이 완료되어 데이터베이스에서 데이터가 체워지기 전 사이드 프로필에 굳이 샘플 데이터는 없어도 됨.
