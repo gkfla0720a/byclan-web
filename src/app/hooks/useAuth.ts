@@ -430,6 +430,11 @@ export function useAuth(): UseAuthReturn {
     const devSettings = loadDevSettings();
     const baseLadderPermission = PermissionChecker.hasPermission(userRole, 'ladder.play');
     const discordBypassAllowed = shouldBypassDiscordForTestAccount(profile, testAccountsEnabled);
+    // requiresDiscordLink: Discord 연동이 필요한 상태인지 확인합니다.
+    // discord_id 는 Discord OAuth 로그인 시 항상 저장되는 불변(immutable) 식별자로,
+    // ByID 와 달리 변경될 수 없습니다. 신입 길드원(rookie) 이상의 역할로 전환될 때
+    // discord_id 가 반드시 존재해야 합니다.
+    // 래더 참여 자체에는 Discord 연동이 더 이상 요구되지 않습니다 (requireDiscordForLadder: false).
     const requiresDiscordLink = Boolean(
       baseLadderPermission &&
       devSettings.requireDiscordForLadder &&

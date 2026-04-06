@@ -68,7 +68,7 @@ export default function DevSettingsPanel() {
     {
       key: 'requireDiscordForLadder',
       title: '래더 Discord 연동 필수',
-      desc: '래더 참여 시 Discord 연동 요구 (OFF: 개발 편의용 우회)',
+      desc: '래더 참여 시 Discord 연동 요구 (기본: OFF — 신입 길드원 전환 시에만 필요)',
     },
   ];
 
