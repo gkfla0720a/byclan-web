@@ -33,6 +33,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '../hooks/useNavigate';
+import { useAuthContext } from '../context/AuthContext';
 
 /**
  * ByClanLogo()
@@ -62,6 +63,9 @@ function ByClanLogo() {
  */
 export default function Header() {
   const navigateTo = useNavigate();
+  // AuthContext에서 전역 인증 상태를 가져옵니다.
+  // Header가 독립적인 auth 상태를 관리하지 않고 전역 상태를 공유하여 OAuth 리다이렉트 후에도 올바른 상태를 표시합니다.
+  const { user, profile } = useAuthContext();
   
   // navRef: 헤더 <nav> 요소의 참조. 외부 클릭 감지에 사용됩니다.
   const navRef = useRef(null);
@@ -71,14 +75,12 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   // mobileAccordionIndex: 모바일에서 아코디언 방식으로 펼쳐진 서브메뉴 인덱스
   const [mobileAccordionIndex, setMobileAccordionIndex] = useState(null);
-  // user: 로그인한 Supabase 사용자 객체 (null이면 비로그인 상태)
-  const [user, setUser] = useState(null);
-  // role: 사용자의 클랜 역할 문자열 (예: 'elite', 'admin', 'visitor')
-  const [role, setRole] = useState(null);
   // unreadCount: 읽지 않은 알림 개수 (헤더 뱃지에 표시)
   const [unreadCount, setUnreadCount] = useState(0);
-  // nickname: 헤더에 표시될 사용자 닉네임
-  const [nickname, setNickname] = useState('');
+
+  // profile에서 역할과 닉네임을 파생합니다.
+  const role = profile?.role || null;
+  const nickname = profile?.ByID || profile?.discord_name || user?.user_metadata?.full_name || '유저';
 
   // 권한 체크: 역할 문자열을 소문자로 정규화하여 비교합니다
   // 🛡️ 권한 체크 로직 (소문자 및 공백 완벽 제거)
@@ -92,70 +94,37 @@ export default function Header() {
   // isAdminOrHigher: admin 이상 여부 (관리자 버튼 표시에 사용)
   const isAdminOrHigher = ['developer', 'master', 'admin'].includes(currentRole);
 
+  // 읽지 않은 알림 수를 가져옵니다. user가 변경될 때(로그인/로그아웃)마다 다시 조회합니다.
   useEffect(() => {
-    const getUserData = async () => {
-      if (!isSupabaseConfigured) {
-        setUser(null);
-        setRole(null);
-        setNickname('');
+    const fetchUnreadCount = async () => {
+      if (!isSupabaseConfigured || !user) {
         setUnreadCount(0);
         return;
       }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, ByID, discord_name')
-          .eq('id', user.id)
-          .single();
-          
-        if (profile) {
-          setRole(profile.role);
-          setNickname(profile.ByID || profile.discord_name || user.user_metadata?.full_name || '유저');
-        }
-
-        const { count } = await supabase
-          .from('notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('is_read', false);
-        
-        setUnreadCount(count || 0);
-      }
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+      setUnreadCount(count || 0);
     };
-    getUserData();
+    fetchUnreadCount();
+  }, [user]);
 
-    if (!isSupabaseConfigured) {
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) getUserData();
-      else {
-        setUser(null); setRole(null); setNickname(''); setUnreadCount(0);
-      }
-    });
-
+  // 헤더 외부 클릭 시 드롭다운 메뉴를 닫습니다.
+  useEffect(() => {
     function handleClickOutside(event) {
       if (navRef.current && !navRef.current.contains(event.target)) {
         setOpenMenuIndex(null);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      subscription.unsubscribe();
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.clear();
-    setUser(null); setRole(null); setNickname('');
     window.location.reload();
   };
 
