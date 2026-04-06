@@ -144,6 +144,7 @@ export const ROLE_PERMISSIONS = {
       'community.view',    // 커뮤니티 열람
       'profile.view',      // 프로필 열람
       'community.comment',  // 커뮤니티 댓글
+      'ladder.play',       // 래더 플레이 (Discord 연동 필수)
       'discord.required'   // Discord 연동 필수
     ],
     color: '#DDA0DD',

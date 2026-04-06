@@ -224,7 +224,7 @@ function TwoMatchSuggestion({ players, onSelectMatch }) {
 }
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────
-export default function LadderDashboard({ onMatchEnter }) {
+export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
   const [user, setUser] = useState(null);
   const [myProfile, setMyProfile] = useState(null);
   const [myStats, setMyStats] = useState(null);
@@ -240,6 +240,7 @@ export default function LadderDashboard({ onMatchEnter }) {
   const [proposalAttempts, setProposalAttempts] = useState(0);
   const [show5v5Warning, setShow5v5Warning] = useState(false);
   const [accepted5v5, setAccepted5v5] = useState(false);
+  const [showDiscordModal, setShowDiscordModal] = useState(false);
   const cooldownTimerRef = useRef(null);
   const queueTimerRef = useRef(null);
   const currentUserRef = useRef(null);
@@ -335,6 +336,11 @@ export default function LadderDashboard({ onMatchEnter }) {
 
   const handleJoinQueue = async () => {
     if (!user) return;
+    // Discord 연동 확인
+    if (requiresDiscordLink) {
+      setShowDiscordModal(true);
+      return;
+    }
     const mt = MATCH_TYPES[queueMatchType];
     if (mt?.warning && !accepted5v5) {
       setShow5v5Warning(true);
@@ -497,6 +503,44 @@ export default function LadderDashboard({ onMatchEnter }) {
               </button>
               <button
                 onClick={() => setShow5v5Warning(false)}
+                className="flex-1 py-3 font-black rounded-xl border border-gray-700 text-gray-400 hover:border-gray-500 transition-colors"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Discord 연동 모달 */}
+      {showDiscordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
+          <div className="max-w-sm w-full mx-4 p-7 rounded-2xl border-2 border-indigo-600 bg-[#0a0010] shadow-[0_0_30px_rgba(99,102,241,0.4)]">
+            <div className="text-4xl text-center mb-4">🎮</div>
+            <h3 className="text-center font-black text-lg text-indigo-400 mb-3">Discord 연동 필요</h3>
+            <p className="text-sm text-gray-300 text-center mb-6 leading-relaxed">
+              래더 대기열 참여를 위해<br />
+              Discord 계정 연동이 필요합니다.<br /><br />
+              Discord로 로그인하면 계정이 자동으로<br />
+              연동되어 래더 매치에 참여할 수 있습니다.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  supabase.auth.signInWithOAuth({
+                    provider: 'discord',
+                    options: {
+                      redirectTo: `${window.location.origin}/auth/callback?next=/ladder`
+                    }
+                  });
+                }}
+                className="flex-1 py-3 font-black rounded-xl bg-indigo-700 hover:bg-indigo-600 text-white transition-colors flex items-center justify-center gap-2"
+              >
+                <span>🎮</span>
+                <span>Discord로 로그인</span>
+              </button>
+              <button
+                onClick={() => setShowDiscordModal(false)}
                 className="flex-1 py-3 font-black rounded-xl border border-gray-700 text-gray-400 hover:border-gray-500 transition-colors"
               >
                 취소

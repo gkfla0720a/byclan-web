@@ -13,6 +13,10 @@ export default function AuthCallback() {
         // PKCE 흐름: URL에 code 쿼리 파라미터가 있으면 코드 교환
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
+        const rawNext = params.get('next');
+        // 허용된 리다이렉트 경로만 사용 (open redirect 방지)
+        const ALLOWED_PATHS = ['/ladder', '/profile', '/dashboard', '/ranking', '/members', '/notice', '/community'];
+        const nextPath = (rawNext && ALLOWED_PATHS.includes(rawNext)) ? rawNext : '/';
 
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -21,7 +25,7 @@ export default function AuthCallback() {
             router.push('/?error=auth_callback_error');
             return;
           }
-          window.location.replace('/');
+          window.location.replace(nextPath);
           return;
         }
 
@@ -34,7 +38,7 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          window.location.replace('/');
+          window.location.replace(nextPath);
         } else {
           router.push('/?error=no_session');
         }
