@@ -344,6 +344,8 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
   const [accepted5v5, setAccepted5v5] = useState(false);
   /** Discord 연동 안내 모달 표시 여부 */
   const [showDiscordModal, setShowDiscordModal] = useState(false);
+  /** 진행 중 매치에 참여한 플레이어 프로필 조회 맵 (userId → profile) */
+  const [matchProfiles, setMatchProfiles] = useState({});
   /** 쿨다운 카운트다운 타이머 참조 (clearTimeout에 사용) */
   const cooldownTimerRef = useRef(null);
   /** 대기열 자동 이탈 타이머 참조 (MAX_QUEUE_MINUTES 후 자동 취소) */
@@ -399,21 +401,41 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
 
       const { data: ongoing } = await filterVisibleTestData(supabase
         .from('ladder_matches')
-        .select('*, profiles(*)')
+        .select('*')
         .in('status', ['진행중', '제안중'])
         .order('created_at', { ascending: false })
         .limit(8));
-      setOngoingMatches(ongoing || []);
+      const ongoingList = ongoing || [];
+      setOngoingMatches(ongoingList);
+
+      // 진행 중인 매치 참여 선수 프로필을 별도 조회 (host_id FK 조인은 팀원 정보를 제공하지 않음)
+      const allTeamIds = [...new Set(
+        ongoingList.flatMap(m => [...(m.team_a_ids || []), ...(m.team_b_ids || [])])
+      )];
+      let profMap = {};
+      if (allTeamIds.length > 0) {
+        const { data: teamProfs } = await supabase
+          .from('profiles')
+          .select('id, ByID, discord_name, ladder_points')
+          .in('id', allTeamIds);
+        profMap = Object.fromEntries((teamProfs || []).map(p => [p.id, p]));
+      }
+      setMatchProfiles(profMap);
 
       // 내가 포함된 제안 확인
-      const myProposal = (ongoing || []).find(m =>
+      const myProposal = ongoingList.find(m =>
         m.status === '제안중' &&
         [...(m.team_a_ids || []), ...(m.team_b_ids || [])].includes(authUser.id)
       );
       if (myProposal) {
-        const allProfs = myProposal.profiles || [];
-        const teamA = (myProposal.team_a_ids || []).map(id => allProfs.find(p => p.id === id)).filter(Boolean);
-        const teamB = (myProposal.team_b_ids || []).map(id => allProfs.find(p => p.id === id)).filter(Boolean);
+        const resolveProf = (id) => ({
+          id,
+          ByID: profMap[id]?.ByID,
+          discord_name: profMap[id]?.discord_name,
+          ladder_points: profMap[id]?.ladder_points || 1000,
+        });
+        const teamA = (myProposal.team_a_ids || []).map(resolveProf);
+        const teamB = (myProposal.team_b_ids || []).map(resolveProf);
         const avgA = teamA.length ? teamA.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teamA.length : 1000;
         const avgB = teamB.length ? teamB.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teamB.length : 1000;
         setActiveProposal(prev => prev?.matchId === myProposal.id ? prev : {
@@ -986,10 +1008,9 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
           </div>
           <div className="divide-y divide-emerald-900/20">
             {ongoingMatches.filter(m => m.status === '진행중').map(match => {
-              const allProfs = match.profiles || [];
               const isParticipant = [...(match.team_a_ids || []), ...(match.team_b_ids || [])].includes(user?.id);
-              const teamANames = (match.team_a_ids || []).map(id => getDisplayName(allProfs.find(p => p.id === id)));
-              const teamBNames = (match.team_b_ids || []).map(id => getDisplayName(allProfs.find(p => p.id === id)));
+              const teamANames = (match.team_a_ids || []).map(id => getDisplayName(matchProfiles[id]));
+              const teamBNames = (match.team_b_ids || []).map(id => getDisplayName(matchProfiles[id]));
               return (
                 <div key={match.id} className="px-5 py-4 flex items-center justify-between flex-wrap gap-3">
                   <div>

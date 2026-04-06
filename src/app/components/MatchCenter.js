@@ -157,7 +157,8 @@ export default function MatchCenter({ matchId, onExit }) {
     setMyTeam(teamLetter);
 
     const myTeamIds = teamLetter === 'A' ? (m.team_a_ids || []) : (m.team_b_ids || []);
-    setTeamMembers((m.profiles || []).filter(p => myTeamIds.includes(p.id)));
+    const profilesArray = Array.isArray(m.profiles) ? m.profiles : (m.profiles ? [m.profiles] : []);
+    setTeamMembers(profilesArray.filter(p => myTeamIds.includes(p.id)));
 
     const activeSet = m.match_sets?.find(s => s.status !== '완료') || m.match_sets?.[m.match_sets.length - 1];
     setCurrentSet(activeSet);
