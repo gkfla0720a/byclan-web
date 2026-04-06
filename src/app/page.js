@@ -1,3 +1,30 @@
+/**
+ * =====================================================================
+ * 파일명: src/app/page.js
+ * 역할  : ByClan 웹사이트의 홈 페이지('/' 경로)를 담당합니다.
+ *         로그인 상태와 사용자 역할에 따라 다른 UI를 표시합니다.
+ *
+ * ■ 화면 분기 로직
+ *   1. 로딩 중이고, 프로필 설정이 필요한 경우
+ *      → AuthDashboard 표시 (초기 설정 화면)
+ *
+ *   2. 로그인 했고, 역할이 'applicant'(신규 가입 대기)인 경우
+ *      → "테스트 대기 중" 안내 화면 표시
+ *
+ *   3. 그 외 (방문자 포함 일반 화면)
+ *      → Header + ProfileSidebar + HomeContent + Footer 표시
+ *      → 개발자인 경우 DevSettingsPanel도 함께 표시
+ *
+ * ■ 홈 게이트(HomeGate)
+ *   이 페이지는 HomeGate로 감싸져 있습니다.
+ *   HomeGate는 비밀번호 인증이 완료된 경우에만 내부 컨텐츠를 표시합니다.
+ *   (로그인한 사용자는 자동으로 통과됩니다)
+ *
+ * ■ 관련 컴포넌트
+ *   Header, Footer, HomeGate, ProfileSidebar, HomeContent,
+ *   AuthDashboard, DevSettingsPanel
+ * =====================================================================
+ */
 'use client';
 
 import React from 'react';
@@ -12,6 +39,20 @@ import DevSettingsPanel from './components/DevSettingsPanel';
 import HomeContent from './pages/HomeContent';
 import { useAuthContext } from './context/AuthContext';
 
+/**
+ * Home()
+ * - 홈 페이지 컴포넌트입니다. '/' 경로에서 렌더링됩니다.
+ * - useAuthContext()로 로그인 상태를 읽어 조건부 렌더링을 수행합니다.
+ *
+ * 내부 변수:
+ *   router:      Next.js 라우터 (페이지 이동에 사용)
+ *   user:        로그인한 Supabase 사용자 객체 (null이면 비로그인)
+ *   profile:     사용자 클랜 프로필 (역할, 포인트 등)
+ *   needsSetup:  프로필 초기 설정이 필요한지 여부
+ *   authLoading: 인증 상태 로딩 중 여부
+ *   getPermissions(): 현재 사용자의 권한 정보 반환 함수
+ *   permissions: getPermissions()의 결과값 (isDeveloper 등 포함)
+ */
 export default function Home() {
   const router = useRouter();
   const {
