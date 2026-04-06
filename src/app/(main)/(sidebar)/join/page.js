@@ -19,8 +19,17 @@ import { useAuthContext } from '../../../context/AuthContext';
  * 가입 안내와 신청 기능을 제공하는 VisitorWelcome을 렌더링합니다.
  */
 export default function JoinPage() {
-  // 로그인 사용자 정보, 프로필, 프로필 재조회 함수 가져오기
-  const { user, profile, reloadProfile } = useAuthContext();
+  // 로그인 사용자 정보, 프로필, 로딩 상태, 프로필 재조회 함수 가져오기
+  const { user, profile, reloadProfile, authLoading } = useAuthContext();
+
+  // 인증 상태가 로딩 중이면 프로필이 아직 로드되지 않아 잘못된 사용자 이름이 표시될 수 있으므로 대기합니다.
+  if (authLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-slate-400 text-sm">로딩 중...</div>
+      </div>
+    );
+  }
 
   return (
     <VisitorWelcome
