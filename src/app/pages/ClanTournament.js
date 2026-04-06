@@ -1,4 +1,21 @@
+/**
+ * 파일명: ClanTournament.js
+ *
+ * 역할: 클랜 대회 및 토너먼트 일정을 카드 목록으로 보여주는 페이지 컴포넌트입니다.
+ * 주요 기능: 하드코딩된 대회 목록을 그리드 카드로 표시합니다.
+ * 사용 방법: <ClanTournament />
+ */
+
+/**
+ * ClanTournament 컴포넌트
+ *
+ * 예정된 클랜 대회 목록을 카드 형태로 렌더링합니다.
+ * 현재는 정적 데이터를 사용하며, 추후 DB 연동 예정입니다.
+ *
+ * @returns {JSX.Element} 토너먼트 목록 UI
+ */
 function ClanTournament() {
+  /** 예정·진행 중인 대회 목록 (정적 데이터) */
   const upcomingTournaments = [
     { id: 1, title: '제 5회 BSL (ByClan StarLeague)', status: '참가 접수중', date: '04.10 ~ 04.30', prize: '우승 30만 포인트' },
     { id: 2, title: '주말 2:2 팀플 매치', status: '진행중', date: '03.28 ~ 03.29', prize: '치킨 기프티콘' }

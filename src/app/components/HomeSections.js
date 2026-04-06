@@ -1,9 +1,36 @@
+/**
+ * 파일명: HomeSections.js
+ *
+ * 역할:
+ *   홈 화면에 배치되는 두 가지 섹션 컴포넌트를 정의합니다.
+ *   - MatchStatus: 현재 모집 중이거나 진행 중인 래더 매치 목록을 보여줍니다.
+ *   - ActivityLog: 게시글·공지·가입신청·매치 등 최근 클랜 활동 내역을 통합해 보여줍니다.
+ *
+ * 주요 기능:
+ *   - Supabase DB에서 ladder_matches, posts, admin_posts, applications 데이터를 불러옵니다.
+ *   - 각 데이터를 "X분 전", "X시간 전", "X일 전" 형식의 상대적 시간으로 표시합니다.
+ *   - 로딩 중엔 스켈레톤 UI, 데이터 없을 땐 빈 상태 UI를 표시합니다.
+ *
+ * 사용 방법:
+ *   import { MatchStatus, ActivityLog } from './HomeSections';
+ *   <MatchStatus />   // 매치 현황 섹션
+ *   <ActivityLog />   // 최근 활동 로그 섹션
+ */
 import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
+/**
+ * 날짜 문자열을 현재 시각 기준 상대적 시간 문자열로 변환합니다.
+ *
+ * @param {string} dateString - ISO 형식 날짜 문자열 (예: "2024-04-01T12:00:00Z")
+ * @returns {string} "3분 전", "2시간 전", "5일 전", 또는 "MM.DD" 형식 날짜
+ *
+ * @example
+ *   formatRelativeTime("2024-04-01T12:00:00Z") // "3일 전"
+ */
 function formatRelativeTime(dateString) {
   if (!dateString) return '';
 
@@ -25,11 +52,23 @@ function formatRelativeTime(dateString) {
 }
 
 // 매치 현황 컴포넌트
+/**
+ * MatchStatus 컴포넌트
+ *
+ * 현재 "모집중" 또는 "진행중" 상태인 래더 매치 목록을 최대 3개 표시합니다.
+ * 클릭 시 대시보드 페이지로 이동합니다.
+ *
+ * @returns {JSX.Element} 매치 현황 섹션 UI
+ */
 function MatchStatus() {
+  /** 페이지 이동 훅 — navigateTo('대시보드') 처럼 사용합니다 */
   const navigateTo = useNavigate();
+  /** DB에서 불러온 매치 배열 상태 */
   const [matches, setMatches] = useState([]);
+  /** 데이터 로딩 여부 상태 (true: 로딩 중) */
   const [loading, setLoading] = useState(true);
 
+  /** 컴포넌트 마운트 시 매치 데이터를 한 번 불러옵니다 */
   useEffect(() => {
     const fetchMatches = async () => {
       if (!isSupabaseConfigured) {
@@ -58,6 +97,11 @@ function MatchStatus() {
     fetchMatches();
   }, []);
 
+  /**
+   * 매치 상태값에 따라 배지 색상 클래스를 반환합니다.
+   * @param {string} status - 매치 상태 ("모집중" | "진행중" | 기타)
+   * @returns {string} Tailwind CSS 클래스 문자열
+   */
   const getStatusColor = (status) => {
     switch (status) {
       case '모집중': return 'bg-green-900/80 text-green-400';
@@ -66,6 +110,11 @@ function MatchStatus() {
     }
   };
 
+  /**
+   * 매치 상태값에 따라 이모지가 포함된 표시 텍스트를 반환합니다.
+   * @param {string} status - 매치 상태 ("모집중" | "진행중" | 기타)
+   * @returns {string} 화면에 보여줄 상태 텍스트
+   */
   const getStatusText = (status) => {
     switch (status) {
       case '모집중': return '🔥 모집 중';
@@ -101,10 +150,24 @@ function MatchStatus() {
 }
 
 // 클랜 활동 로그 컴포넌트
+/**
+ * ActivityLog 컴포넌트
+ *
+ * 게시글·공지·가입신청·래더 매치 등 여러 테이블의 최신 데이터를 합쳐
+ * 시간순으로 정렬한 최근 활동 5건을 표시합니다.
+ *
+ * @returns {JSX.Element} 최근 활동 로그 섹션 UI
+ */
 function ActivityLog() {
+  /** DB에서 조합한 활동 항목 배열 상태 */
   const [activities, setActivities] = useState([]);
+  /** 데이터 로딩 여부 상태 */
   const [loading, setLoading] = useState(true);
 
+  /**
+   * 컴포넌트 마운트 시 posts·admin_posts·applications·ladder_matches
+   * 4개 테이블을 병렬로 조회하여 활동 목록을 구성합니다.
+   */
   useEffect(() => {
     const fetchActivities = async () => {
       if (!isSupabaseConfigured) {

@@ -1,3 +1,20 @@
+/**
+ * 파일명: NoticeBoard.js
+ *
+ * 역할:
+ *   클랜 공지사항 목록을 테이블 형태로 보여주는 페이지 컴포넌트입니다.
+ *
+ * 주요 기능:
+ *   - Supabase의 admin_posts 테이블에서 공지 데이터를 불러옵니다.
+ *   - profiles 테이블과 JOIN하여 작성자 정보를 함께 표시하며,
+ *     FK 관계가 없을 경우 JOIN 없이 재시도하는 폴백(fallback) 로직이 있습니다.
+ *   - 첫 번째 공지는 '필독', 나머지는 '공지' 분류 배지로 표시합니다.
+ *   - 모바일에서는 작성자·날짜 컬럼을 숨기고 제목 셀 안에 인라인으로 표시합니다.
+ *
+ * 사용 방법:
+ *   import NoticeBoard from './NoticeBoard';
+ *   <NoticeBoard />
+ */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -6,10 +23,21 @@ import { EmptyState, SkeletonLoader } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { isRelationshipError } from '@/app/utils/retry';
 
+/**
+ * NoticeBoard 컴포넌트
+ *
+ * admin_posts 테이블의 공지사항을 불러와 테이블 UI로 렌더링합니다.
+ * 로딩 중에는 스켈레톤, 데이터 없을 때는 빈 상태 메시지를 보여줍니다.
+ *
+ * @returns {JSX.Element} 공지사항 테이블 UI
+ */
 export default function NoticeBoard() {
+  /** 공지사항 항목 배열 상태 */
   const [notices, setNotices] = useState([]);
+  /** 데이터 로딩 여부 */
   const [loading, setLoading] = useState(true);
 
+  /** 컴포넌트 마운트 시 공지사항 데이터를 불러옵니다 */
   useEffect(() => {
     const loadNotices = async () => {
       if (!isSupabaseConfigured) {
