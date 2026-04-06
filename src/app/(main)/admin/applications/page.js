@@ -1,3 +1,12 @@
+/**
+ * 파일명: (main)/admin/applications/page.js
+ * 역할: 가입 신청서 목록 관리 페이지
+ * URL 경로: /admin/applications
+ * 주요 기능:
+ *   - 클랜 가입 신청 목록 표시 및 승인/거절 처리
+ *   - 비로그인 시 로그인 안내 메시지 표시
+ * 접근 권한: 로그인한 관리자 권한 사용자
+ */
 'use client';
 
 import React from 'react';
@@ -5,7 +14,12 @@ import ApplicationList from '../../../components/ApplicationList';
 import PagePlaceholder from '../../../pages/PagePlaceholder';
 import { useAuthContext } from '../../../context/AuthContext';
 
+/**
+ * ApplicationsPage - 가입 신청 관리 페이지 컴포넌트
+ * 로그인 여부에 따라 신청 목록 또는 로그인 안내를 렌더링합니다.
+ */
 export default function ApplicationsPage() {
+  // 현재 로그인한 사용자 정보 가져오기
   const { user } = useAuthContext();
 
   return (
