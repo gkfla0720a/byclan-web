@@ -1,9 +1,45 @@
+/**
+ * =====================================================================
+ * 파일명: src/app/components/Header.js
+ * 역할  : 웹사이트 최상단에 표시되는 내비게이션 헤더 컴포넌트입니다.
+ *         로고, 메뉴, 로그인/로그아웃, 알림 버튼을 포함합니다.
+ *
+ * ■ 주요 기능
+ *   - ByClan 로고 및 클릭 시 홈으로 이동
+ *   - 데스크톱: 드롭다운 메뉴 (클랜 소개, 클랜원, 래더, BSL 등)
+ *   - 모바일: 햄버거 메뉴(☰)를 열면 아코디언 방식으로 펼쳐짐
+ *   - 역할별 메뉴 표시 (가입 심사: 정예 이상, 관리자: admin 이상, 개발자: developer만)
+ *   - Discord OAuth 로그인 버튼
+ *   - 읽지 않은 알림 개수 표시 (빨간 뱃지)
+ *   - 로그아웃 버튼
+ *
+ * ■ 역할별 표시되는 특수 메뉴
+ *   가입 심사 버튼: developer, master, admin, elite 만 표시
+ *   관리자 버튼:   developer, master, admin 만 표시
+ *   개발자 버튼:   developer 만 표시
+ *
+ * ■ 상태 변수 설명
+ *   openMenuIndex:       열려있는 드롭다운 메뉴 인덱스 (null이면 닫힘)
+ *   isMobileMenuOpen:    모바일 햄버거 메뉴 열림 여부
+ *   mobileAccordionIndex: 모바일에서 펼쳐진 서브메뉴 인덱스
+ *   user:                로그인한 사용자 객체 (null이면 비로그인)
+ *   role:                사용자 역할 문자열
+ *   unreadCount:         읽지 않은 알림 수
+ *   nickname:            표시할 닉네임 (ByID > discord_name > 기타)
+ * =====================================================================
+ */
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '../hooks/useNavigate';
 
+/**
+ * ByClanLogo()
+ * - ByClan 클랜 로고 이미지를 표시하는 내부 컴포넌트입니다.
+ * - GitHub에서 로고 이미지를 불러옵니다.
+ * - 마우스 오버 시 살짝 확대되는 효과가 있습니다.
+ */
 function ByClanLogo() {
   const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repository/main/ByLogo.png";
   return (
@@ -13,24 +49,47 @@ function ByClanLogo() {
   );
 }
 
+/**
+ * Header()
+ * - 웹사이트 상단 내비게이션 바 컴포넌트입니다.
+ * - 로그인 상태, 역할에 따라 다른 메뉴와 버튼을 표시합니다.
+ *
+ * 주요 내부 함수:
+ *   getUserData()       - Supabase에서 현재 로그인 사용자 정보와 알림 수를 불러옴
+ *   handleLogout()      - 로그아웃 처리 (세션 삭제, localStorage 초기화, 페이지 새로고침)
+ *   handleNav(viewName) - 메뉴 클릭 시 페이지 이동 + 드롭다운 닫기
+ *   handleClickOutside  - 메뉴 밖 클릭 시 드롭다운 자동 닫기
+ */
 export default function Header() {
   const navigateTo = useNavigate();
   
+  // navRef: 헤더 <nav> 요소의 참조. 외부 클릭 감지에 사용됩니다.
   const navRef = useRef(null);
+  // openMenuIndex: 데스크톱에서 현재 열려있는 드롭다운 메뉴의 인덱스 (null=모두 닫힘)
   const [openMenuIndex, setOpenMenuIndex] = useState(null);
+  // isMobileMenuOpen: 모바일 햄버거 메뉴 열림 상태
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // mobileAccordionIndex: 모바일에서 아코디언 방식으로 펼쳐진 서브메뉴 인덱스
   const [mobileAccordionIndex, setMobileAccordionIndex] = useState(null);
+  // user: 로그인한 Supabase 사용자 객체 (null이면 비로그인 상태)
   const [user, setUser] = useState(null);
+  // role: 사용자의 클랜 역할 문자열 (예: 'elite', 'admin', 'visitor')
   const [role, setRole] = useState(null);
+  // unreadCount: 읽지 않은 알림 개수 (헤더 뱃지에 표시)
   const [unreadCount, setUnreadCount] = useState(0);
+  // nickname: 헤더에 표시될 사용자 닉네임
   const [nickname, setNickname] = useState('');
 
+  // 권한 체크: 역할 문자열을 소문자로 정규화하여 비교합니다
   // 🛡️ 권한 체크 로직 (소문자 및 공백 완벽 제거)
   const currentRole = role?.toString().trim().toLowerCase();
   
+  // isDeveloper: 개발자 역할 여부 (개발자 전용 메뉴 표시에 사용)
   // 최고 개발자(developer)는 모든 관리자/정예 권한을 상속받습니다.
   const isDeveloper = currentRole === 'developer';
+  // isDevOrHigher: 정예 이상 여부 (가입 심사 버튼 표시에 사용)
   const isDevOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);
+  // isAdminOrHigher: admin 이상 여부 (관리자 버튼 표시에 사용)
   const isAdminOrHigher = ['developer', 'master', 'admin'].includes(currentRole);
 
   useEffect(() => {

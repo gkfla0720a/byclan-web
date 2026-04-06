@@ -1,3 +1,23 @@
+/**
+ * 파일명: LadderPreview.js
+ *
+ * 역할:
+ *   비회원(게스트)이거나 클랜원 등급이 없는 사용자에게 래더 시스템을
+ *   미리보기 형태로 보여주는 컴포넌트입니다.
+ *   실제 래더 기능은 잠금(블러) 처리되고, 가입/로그인을 유도합니다.
+ *
+ * 주요 기능:
+ *   - Supabase에서 대기열 또는 상위 래더 플레이어를 최대 5명 불러옴
+ *   - 불러온 플레이어 정보를 블러(흐림) 처리된 UI로 표시
+ *   - 사용자 상태(게스트 / Discord 미연동 / 등급 부족)에 따라 다른 안내 메시지 표시
+ *   - 래더 시스템의 주요 기능(랭킹, 베팅, 대기열)을 카드로 소개
+ *
+ * 사용 방법:
+ *   <LadderPreview isGuest={true} requiresDiscordLink={false} />
+ *
+ *   - isGuest: 로그인하지 않은 방문자라면 true
+ *   - requiresDiscordLink: Discord 연동이 필요한 경우 true
+ */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -5,6 +25,11 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
+/**
+ * 포인트를 받아 해당하는 래더 티어 이름을 반환합니다.
+ * @param {number} points - 플레이어의 MMR 포인트
+ * @returns {string} 티어 이름 (예: 'Gold', 'Platinum')
+ */
 function getTier(points) {
   if (points >= 2400) return 'Challenger';
   if (points >= 2200) return 'Master';
@@ -15,6 +40,11 @@ function getTier(points) {
   return 'Bronze';
 }
 
+/**
+ * 종족 영문명을 한글 약자로 변환합니다.
+ * @param {string} race - 종족 이름 ('Protoss', 'Terran', 'Zerg', 'Random')
+ * @returns {string} 한글 약자 ('프', '테', '저', '랜') 또는 '—'
+ */
 function getRaceLabel(race) {
   if (race === 'Protoss') return '프';
   if (race === 'Terran') return '테';
@@ -23,12 +53,27 @@ function getRaceLabel(race) {
   return '—';
 }
 
-// 래더 미리보기 – 비회원/권한 없는 사용자에게 표시
+/**
+ * 래더 미리보기 컴포넌트 – 비회원/권한 없는 사용자에게 표시됩니다.
+ * 실제 래더 UI는 블러(흐림) 처리되며, 가입/로그인 안내가 함께 표시됩니다.
+ *
+ * @param {boolean} isGuest - 로그인하지 않은 방문자 여부
+ * @param {boolean} requiresDiscordLink - Discord 연동이 아직 안 된 경우 true
+ * @returns {JSX.Element} 래더 미리보기 화면
+ */
 export default function LadderPreview({ isGuest, requiresDiscordLink }) {
+  /** useNavigate 훅: 페이지 이동 함수 (예: navigateTo('로그인')) */
   const navigateTo = useNavigate();
+  /** 미리보기에 표시할 플레이어 목록 (최대 5명) */
   const [previewPlayers, setPreviewPlayers] = useState([]);
+  /** 데이터 로딩 중 여부 - true이면 로딩 플레이스홀더 표시 */
   const [loading, setLoading] = useState(true);
 
+  /**
+   * 컴포넌트가 처음 화면에 나타날 때(마운트 시) 한 번 실행됩니다.
+   * 대기열에 있는 플레이어를 우선 불러오고, 없으면 상위 래더 유저를 표시합니다.
+   * 의존성 배열이 빈 배열([])이므로 최초 렌더링 시에만 실행됩니다.
+   */
   useEffect(() => {
     const loadPreviewPlayers = async () => {
       if (!isSupabaseConfigured) {
@@ -38,6 +83,7 @@ export default function LadderPreview({ isGuest, requiresDiscordLink }) {
       }
 
       try {
+        // 1단계: 현재 대기열에 있는 플레이어 최대 5명 조회
         const queueResult = await filterVisibleTestAccounts(
           supabase
             .from('profiles')
@@ -50,6 +96,7 @@ export default function LadderPreview({ isGuest, requiresDiscordLink }) {
         let rows = queueResult.data || [];
 
         if (rows.length === 0) {
+          // 2단계: 대기열이 비어 있으면 ladders 테이블에서 상위 5명 조회
           const ladderResult = await filterVisibleTestData(
             supabase
               .from('ladders')
@@ -58,6 +105,7 @@ export default function LadderPreview({ isGuest, requiresDiscordLink }) {
               .limit(5)
           );
 
+          // ladders 테이블 컬럼명이 profiles와 다를 수 있어 통일된 구조로 변환
           rows = (ladderResult.data || []).map((row, index) => ({
             id: row.id || `ladder-${index}`,
             ByID: row.nickname || row.name || row.ByID,
@@ -68,6 +116,7 @@ export default function LadderPreview({ isGuest, requiresDiscordLink }) {
           }));
         }
 
+        // 화면에 표시할 형태로 데이터 가공 후 상태에 저장
         setPreviewPlayers(
           rows.map((player, index) => ({
             id: player.id || `preview-${index}`,
@@ -89,6 +138,12 @@ export default function LadderPreview({ isGuest, requiresDiscordLink }) {
     loadPreviewPlayers();
   }, []);
 
+  /**
+   * 사용자 상태에 따른 안내 메시지를 결정합니다.
+   * - Discord 미연동: Discord 연동 필요 안내
+   * - 게스트(비로그인): 로그인 및 클랜원 등급 필요 안내
+   * - 로그인했으나 등급 부족: 클랜원 등급 필요 안내
+   */
   const accessMessage = requiresDiscordLink
     ? '현재 설정상 래더 참여 전 Discord 연동이 필요합니다.'
     : isGuest

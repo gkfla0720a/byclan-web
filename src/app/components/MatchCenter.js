@@ -1,11 +1,41 @@
+/**
+ * 파일명: MatchCenter.js
+ *
+ * 역할:
+ *   진행 중인 래더 매치의 세부 화면 컴포넌트입니다.
+ *   경기 스코어보드, 포인트 베팅, 세트별 엔트리(출전 선수) 제출 기능을 제공합니다.
+ *
+ * 주요 기능:
+ *   - 실시간 매치 데이터 표시 (Supabase Realtime 구독)
+ *   - 세트 시작 후 5분간 포인트 베팅 창 운영 (타이머 카운트다운)
+ *   - 각 세트마다 팀별 출전 선수(엔트리) 비공개 제출 후 동시 공개
+ *   - 휴식 규칙 적용: 선수별 최대 휴식 횟수 제한 (4v4: 1회, 5v5: 2~3회)
+ *   - 패배팀이 다음 세트 종족 조합 선택권 보유 (프프프/프프테/프프저/프저테/대포)
+ *
+ * 사용 방법:
+ *   <MatchCenter
+ *     matchId="uuid-string"
+ *     onExit={() => { ... }}
+ *   />
+ *
+ *   - matchId: 조회할 래더 매치의 UUID
+ *   - onExit: "래더 로비로 돌아가기" 버튼 클릭 시 호출되는 콜백
+ */
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 
+/** 베팅 가능한 포인트 단위 목록 (가장 작은 단위부터 큰 단위 순) */
 const BET_AMOUNTS = [100, 500, 1000, 5000, 10000];
+/** 세트 시작 후 베팅 가능한 시간(초). 5분 = 300초. */
 const BET_WINDOW_SECONDS = 300; // 5분
 
+/**
+ * 종족 조합 선택지 목록입니다.
+ * 패배팀이 다음 세트의 종족 카드를 선택할 때 사용합니다.
+ * RANDOM(대포)의 경우 races가 null이며, getRaceCards에서 랜덤 생성합니다.
+ */
 const RACE_COMBOS = [
   { id: 'PPP', label: '프프프', races: ['Protoss', 'Protoss', 'Protoss'] },
   { id: 'PPT', label: '프프테', races: ['Protoss', 'Protoss', 'Terran'] },
@@ -14,8 +44,16 @@ const RACE_COMBOS = [
   { id: 'RANDOM', label: '대포 (랜덤)', races: null },
 ];
 
+/** 종족 영문명을 한글 아이콘으로 변환하는 매핑 객체 */
 const RACE_ICONS = { Protoss: '프', Terran: '테', Zerg: '저' };
 
+/**
+ * 선택된 종족 조합 ID로 해당 세트의 종족 카드 배열을 반환합니다.
+ * RANDOM(대포) 선택 시 프프프를 제외한 무작위 3종족 조합을 생성합니다.
+ *
+ * @param {string} comboId - 종족 조합 ID (예: 'PPT', 'RANDOM')
+ * @returns {string[]} 종족 이름 배열 (예: ['Protoss', 'Protoss', 'Terran'])
+ */
 function getRaceCards(comboId) {
   const combo = RACE_COMBOS.find(c => c.id === comboId);
   if (!combo || !combo.races) {
@@ -31,35 +69,74 @@ function getRaceCards(comboId) {
   return combo.races;
 }
 
+/**
+ * 초(seconds)를 'MM:SS' 형식의 문자열로 변환합니다.
+ * 베팅 타이머 표시에 사용됩니다.
+ * @param {number} secs - 초 단위 시간
+ * @returns {string} 예: 274초 → '4:34'
+ */
 function formatTime(secs) {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/**
+ * 매치 센터 컴포넌트입니다.
+ * 진행 중인 래더 매치의 스코어, 베팅, 엔트리 제출을 한 화면에서 관리합니다.
+ *
+ * @param {string} matchId - 조회할 래더 매치의 UUID
+ * @param {function} onExit - 뒤로가기 버튼 클릭 시 호출되는 콜백
+ * @returns {JSX.Element} 매치 센터 UI
+ */
 export default function MatchCenter({ matchId, onExit }) {
+  /** 현재 매치의 전체 데이터 (ladder_matches 테이블 레코드 + profiles 조인) */
   const [match, setMatch] = useState(null);
+  /** 현재 진행 중인 세트 정보 (match_sets 중 미완료 세트) */
   const [currentSet, setCurrentSet] = useState(null);
+  /** 베팅 창 남은 시간(초). 0이 되면 베팅 불가. */
   const [betTimer, setBetTimer] = useState(BET_WINDOW_SECONDS);
+  /** 베팅 타이머가 활성화 상태인지 여부 */
   const [betTimerActive, setBetTimerActive] = useState(false);
+  /** 현재 유저가 속한 팀 ('A' | 'B' | null). null이면 관전자. */
   const [myTeam, setMyTeam] = useState(null);
+  /** 현재 로그인 유저의 ID */
   const [myUserId, setMyUserId] = useState(null);
+  /** 양 팀 엔트리가 모두 제출되어 공개된 상태인지 여부 */
   const [isRevealed, setIsRevealed] = useState(false);
+  /** 내 팀 멤버 목록 (엔트리 선택 드롭다운에 사용) */
   const [teamMembers, setTeamMembers] = useState([]);
+  /**
+   * 내가 작성 중인 엔트리 배열 (최대 3명).
+   * 각 슬롯: { id: 유저ID, ByID: 닉네임, race: 종족 }
+   */
   const [selectedEntry, setSelectedEntry] = useState([
     { id: '', ByID: '', race: '' },
     { id: '', ByID: '', race: '' },
     { id: '', ByID: '', race: '' }
   ]);
+  /** 베팅할 팀 ('A' | 'B' | null). null이면 미선택. */
   const [betTeam, setBetTeam] = useState(null);
+  /** 베팅할 포인트 금액. null이면 미선택. */
   const [betAmount, setBetAmount] = useState(null);
+  /** 이미 베팅 완료했는지 여부. true이면 베팅 UI 숨김. */
   const [bettingDone, setBettingDone] = useState(false);
+  /** 베팅 API 요청 처리 중 여부 */
   const [bettingLoading, setBettingLoading] = useState(false);
+  /** 현재 유저의 보유 포인트. 베팅 가능 금액 표시 및 제한에 사용. */
   const [myPoints, setMyPoints] = useState(0);
+  /** 선택된 종족 조합 ID (기본값: 프프테) */
   const [raceCombo, setRaceCombo] = useState('PPT');
+  /** 종족 선택 패널 표시 여부 */
   const [showRaceSelector, setShowRaceSelector] = useState(false);
+  /** 베팅 타이머 setTimeout 참조 (cleanup에 사용) */
   const setTimerRef = useRef(null);
 
+  /**
+   * 매치 데이터를 Supabase에서 불러오는 함수입니다.
+   * 현재 유저의 팀 배정, 팀 멤버, 활성 세트, 베팅 타이머 잔여 시간을 계산하여 상태에 저장합니다.
+   * useCallback으로 감싸 matchId 변경 시에만 재생성됩니다.
+   */
   const fetchMatchData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -96,6 +173,11 @@ export default function MatchCenter({ matchId, onExit }) {
     }
   }, [matchId]);
 
+  /**
+   * 컴포넌트 마운트 시 매치 데이터를 불러오고 Realtime 채널을 구독합니다.
+   * 해당 매치(m-{matchId})의 DB 변경이 감지될 때마다 fetchMatchData가 자동 호출됩니다.
+   * 언마운트 시 채널 구독을 해제합니다.
+   */
   useEffect(() => {
     void fetchMatchData();
     const channel = supabase.channel(`m-${matchId}`)
@@ -104,6 +186,11 @@ export default function MatchCenter({ matchId, onExit }) {
     return () => { supabase.removeChannel(channel); };
   }, [matchId, fetchMatchData]);
 
+  /**
+   * 베팅 타이머 카운트다운 이펙트입니다.
+   * betTimerActive가 true이고 betTimer가 0보다 클 때 1초마다 1씩 감소시킵니다.
+   * betTimer가 0에 도달하면 betTimerActive를 false로 설정하여 베팅 창을 닫습니다.
+   */
   // 배팅 타이머 카운트다운
   useEffect(() => {
     if (!betTimerActive || betTimer <= 0) return;
@@ -114,6 +201,17 @@ export default function MatchCenter({ matchId, onExit }) {
     return () => clearTimeout(setTimerRef.current);
   }, [betTimer, betTimerActive]);
 
+  /**
+   * 특정 선수의 해당 매치에서의 휴식 횟수와 추가 휴식 가능 여부를 반환합니다.
+   * 완료된 세트 중 해당 선수가 엔트리에 없는 세트를 휴식으로 간주합니다.
+   *
+   * 휴식 허용 횟수:
+   *   - 4v4 이하: 매치 전체 1회
+   *   - 5v5: 5세트 이전 2회, 5세트 이후 3회
+   *
+   * @param {string} playerId - 확인할 플레이어의 유저 ID
+   * @returns {{ count: number, canRest: boolean }} 휴식 횟수와 추가 휴식 가능 여부
+   */
   // 휴식 횟수 계산
   const getRestStatus = (playerId) => {
     if (!match?.match_sets || !myTeam) return { count: 0, canRest: true };
@@ -132,6 +230,12 @@ export default function MatchCenter({ matchId, onExit }) {
     return { count: restCount, canRest: restCount < maxRest };
   };
 
+  /**
+   * 엔트리 슬롯의 선수를 선택합니다.
+   * @param {number} idx - 슬롯 인덱스 (0, 1, 2)
+   * @param {string} playerId - 선택한 선수의 유저 ID
+   * @param {string} race - 해당 슬롯에 배정된 종족
+   */
   const handleSelect = (idx, playerId, race) => {
     const player = teamMembers.find(m => m.id === playerId);
     const newEntry = [...selectedEntry];
@@ -139,6 +243,11 @@ export default function MatchCenter({ matchId, onExit }) {
     setSelectedEntry(newEntry);
   };
 
+  /**
+   * 작성한 엔트리를 match_sets 테이블에 제출합니다.
+   * 상대팀도 제출하면 양 팀 엔트리가 동시에 공개됩니다(isRevealed).
+   * 내 팀에 따라 team_a_ready/team_b_ready 컬럼을 true로 업데이트합니다.
+   */
   const submitEntry = async () => {
     if (!currentSet || !myTeam) return;
     const column = myTeam === 'A' ? 'team_a_ready' : 'team_b_ready';
@@ -151,6 +260,13 @@ export default function MatchCenter({ matchId, onExit }) {
     else alert('엔트리 제출 완료! 상대방을 기다립니다.');
   };
 
+  /**
+   * 포인트 베팅을 처리합니다.
+   * - 자신의 팀에는 베팅할 수 없습니다.
+   * - match_bets 테이블에 베팅 기록을 저장합니다 (테이블 없으면 생략).
+   * - profiles 테이블에서 포인트를 차감합니다.
+   * - 베팅 완료 후 bettingDone을 true로 설정하여 UI를 변경합니다.
+   */
   const handleBet = async () => {
     if (!betTeam || !betAmount || bettingDone || !betTimerActive) return;
     if (betTeam === myTeam) {
@@ -190,13 +306,18 @@ export default function MatchCenter({ matchId, onExit }) {
     }
   };
 
+  /** match 데이터가 아직 로드되지 않았으면 로딩 메시지를 표시합니다. */
   if (!match) {
     return <div className="py-20 text-center text-gray-500 font-mono animate-pulse">전장 진입 중...</div>;
   }
 
+  /** 3v3 이상인 경우 래더 매치로 분류됩니다 (1v1, 2v2는 일반 게임). */
   const isLadderMatch = match.match_type >= 3;
+  /** 매치 포맷 문자열. 5v5 이상은 BO7(4선승), 나머지는 BO5(3선승). */
   const matchFormat = match.match_type >= 5 ? 'BO7 (4선승)' : 'BO5 (3선승)';
+  /** A팀에 베팅 가능 여부. 내가 A팀이면 베팅 불가. */
   const canBetOnA = myTeam !== 'A';
+  /** B팀에 베팅 가능 여부. 내가 B팀이면 베팅 불가. */
   const canBetOnB = myTeam !== 'B';
 
   return (

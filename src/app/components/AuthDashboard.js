@@ -1,19 +1,55 @@
+/**
+ * 파일명: AuthDashboard.js
+ *
+ * 역할:
+ *   회원가입 직후 신규 사용자를 위한 온보딩(초기 설정) 대시보드 컴포넌트입니다.
+ *   프로필 설정 → Discord 연동의 2단계 설정 과정을 안내합니다.
+ *
+ * 주요 기능:
+ *   - ProfileSetup: 클랜 ID, 주력 종족, 자기소개 설정
+ *   - DiscordLinkPanel: Discord OAuth 연동 / 연동 해제
+ *   - 2단계 진행 상태를 하단 점(dot)으로 시각화
+ *   - 모든 설정 완료 시 부모 컴포넌트에 완료 이벤트(onSetupComplete) 전달
+ *
+ * 사용 방법:
+ *   <AuthDashboard user={supabaseUser} onSetupComplete={() => { ... }} />
+ *
+ *   - user: Supabase auth.getUser()로 가져온 현재 로그인 유저 객체
+ *   - onSetupComplete: Discord 연동 완료 시 호출되는 콜백 함수
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
+/**
+ * Discord 연동 상태를 보여주고, 연동/해제 기능을 제공하는 서브 컴포넌트입니다.
+ *
+ * @param {object} user - 현재 로그인한 Supabase 유저 객체
+ * @param {function} onLinked - 연동 상태가 변경될 때 호출되는 콜백 (boolean 전달)
+ */
 // Discord 연동 컴포넌트
 function DiscordLinkPanel({ user, onLinked }) {
+  /** API 요청 처리 중 여부 */
   const [loading, setLoading] = useState(false);
+  /** 오류 메시지. null이면 오류 없음. */
   const [error, setError] = useState(null);
+  /** Discord 연동 완료 여부 */
   const [isLinked, setIsLinked] = useState(false);
 
+  /**
+   * user가 변경될 때마다 Discord 연동 상태를 DB에서 다시 확인합니다.
+   * 컴포넌트 최초 로드 시에도 실행됩니다.
+   */
   useEffect(() => {
     checkDiscordLink();
   }, [user]);
 
+  /**
+   * Supabase profiles 테이블에서 discord_id 필드를 조회하여
+   * 현재 Discord 연동 여부를 확인하고 isLinked 상태를 업데이트합니다.
+   */
   const checkDiscordLink = async () => {
     try {
       const { data, error } = await supabase
@@ -29,6 +65,11 @@ function DiscordLinkPanel({ user, onLinked }) {
     }
   };
 
+  /**
+   * Discord OAuth 팝업을 열어 계정 연동을 시작합니다.
+   * 연동 완료 후 /auth/callback 으로 리디렉션됩니다.
+   * 권한 범위: identify(기본 정보), guilds(서버 목록)
+   */
   const handleDiscordLink = async () => {
     setLoading(true);
     setError(null);
@@ -50,6 +91,10 @@ function DiscordLinkPanel({ user, onLinked }) {
     }
   };
 
+  /**
+   * Discord 연동을 해제합니다.
+   * profiles 테이블의 discord_name과 discord_id를 null로 업데이트합니다.
+   */
   const handleUnlinkDiscord = async () => {
     setLoading(true);
     setError(null);
@@ -139,16 +184,34 @@ function DiscordLinkPanel({ user, onLinked }) {
   );
 }
 
+/**
+ * 신규 가입자의 초기 프로필(클랜 ID, 종족, 자기소개)을 설정하는 서브 컴포넌트입니다.
+ *
+ * @param {object} user - 현재 로그인한 Supabase 유저 객체
+ * @param {function} onComplete - 프로필 저장 완료 시 호출되는 콜백 함수
+ */
 // 프로필 설정 컴포넌트
 function ProfileSetup({ user, onComplete }) {
+  /** API 요청 처리 중 여부 */
   const [loading, setLoading] = useState(false);
+  /** 오류 메시지. null이면 오류 없음. */
   const [error, setError] = useState(null);
+  /**
+   * 폼 입력 데이터 객체
+   * - by_id: 클랜 닉네임 (By_ 포함한 전체 형식)
+   * - race: 주력 종족 (기본값: Terran)
+   * - intro: 자기소개 텍스트
+   */
   const [formData, setFormData] = useState({
     by_id: '',
     race: 'Terran',
     intro: ''
   });
 
+  /**
+   * user가 변경될 때 이메일에서 사용자명을 추출하여 기본 클랜 ID를 자동 설정합니다.
+   * 예: "john@gmail.com" → "By_john"
+   */
   useEffect(() => {
     // 기본값 설정
     setFormData(prev => ({
@@ -157,6 +220,11 @@ function ProfileSetup({ user, onComplete }) {
     }));
   }, [user]);
 
+  /**
+   * 폼 제출 시 profiles 테이블을 업데이트합니다.
+   * 저장 성공 시 onComplete()를 호출하여 다음 단계(Discord 연동)로 이동합니다.
+   * @param {React.FormEvent} e - 폼 제출 이벤트 객체
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -243,8 +311,21 @@ function ProfileSetup({ user, onComplete }) {
   );
 }
 
+/**
+ * 온보딩 통합 대시보드 컴포넌트입니다.
+ * 신규 가입자가 프로필 설정 → Discord 연동의 2단계를 순서대로 완료하도록 안내합니다.
+ *
+ * @param {object} user - 현재 로그인한 Supabase 유저 객체
+ * @param {function} onSetupComplete - 모든 설정 완료 시 호출되는 콜백 함수
+ * @returns {JSX.Element} 온보딩 대시보드 UI
+ */
 // 통합 대시보드 컴포넌트
 export default function AuthDashboard({ user, onSetupComplete }) {
+  /**
+   * 현재 진행 중인 설정 단계
+   * - 'profile': 프로필 설정 단계 (1단계)
+   * - 'discord': Discord 연동 단계 (2단계)
+   */
   const [currentStep, setCurrentStep] = useState('profile'); // 'profile' or 'discord'
 
   return (

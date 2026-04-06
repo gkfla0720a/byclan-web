@@ -1,14 +1,46 @@
+/**
+ * 파일명: RankingBoard.js
+ *
+ * 역할:
+ *   ByClan 래더 MMR(매치메이킹 레이팅) 랭킹을 표 형태로 보여주는 컴포넌트입니다.
+ *   Supabase의 profiles 테이블에서 클랜원 이상의 유저 목록을 MMR 내림차순으로 조회하여
+ *   순위, 닉네임, 종족, MMR, 전적(승/패), 승률을 표시합니다.
+ *
+ * 주요 기능:
+ *   - profiles 테이블에서 visitor/applicant/expelled 제외 후 순위 표시
+ *   - 테스트 계정 데이터 필터링 (filterVisibleTestData 활용)
+ *   - 테스트 데이터에는 'TEST' 뱃지 표시
+ *   - 로딩 중 / 오류 / 데이터 없음 상태별 메시지 표시
+ *
+ * 사용 방법:
+ *   <RankingBoard />
+ *   (별도의 props 없이 독립적으로 사용합니다.)
+ */
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase'; // ✅ 수정1
 import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
 
+/**
+ * 래더 랭킹 보드 컴포넌트
+ * Supabase의 profiles 테이블에서 랭킹 데이터를 불러와 표로 표시합니다.
+ *
+ * @returns {JSX.Element} MMR 랭킹 테이블 UI
+ */
 export default function RankingBoard() {
+  /** 랭킹 데이터 배열. 각 항목은 플레이어 프로필 정보를 담습니다. */
   const [rankings, setRankings] = useState([]);
+  /** 데이터 로딩 중 여부. true이면 "불러오는 중" 메시지를 표시합니다. */
   const [loading, setLoading] = useState(true);
+  /** 데이터 조회 실패 시 오류 객체를 저장합니다. null이면 오류 없음. */
   const [error, setError] = useState(null);
 
+  /**
+   * 컴포넌트가 처음 화면에 나타날 때 랭킹 데이터를 한 번 불러옵니다.
+   * - visitor(방문자), applicant(지원자), expelled(강퇴) 역할은 제외합니다.
+   * - ladder_points(MMR) 내림차순으로 정렬합니다.
+   */
   useEffect(() => {
     const fetchRankings = async () => {
       try {

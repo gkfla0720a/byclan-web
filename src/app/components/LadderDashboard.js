@@ -1,3 +1,28 @@
+/**
+ * 파일명: LadderDashboard.js
+ *
+ * 역할:
+ *   ByClan 래더 시스템의 메인 대시보드 컴포넌트입니다.
+ *   클랜원이 매칭 대기열에 참가하고, 매치를 제안하며, 진행 중인 경기를 확인할 수 있습니다.
+ *
+ * 주요 기능:
+ *   - 실시간 매칭 대기열 표시 (Supabase Realtime 구독)
+ *   - 대기열 참가 / 취소 (최대 20분 자동 타임아웃)
+ *   - 팀 자동 배분 (밸런스 / 상픽 / 하픽 옵션)
+ *   - 매치 시작 제안 및 동의/거절 팝업 (ConsentPopup)
+ *   - 12명 이상일 때 두 경기 동시 제안 (TwoMatchSuggestion)
+ *   - 5v5 경고 모달 및 Discord 연동 필요 모달
+ *   - 진행 중인 래더 매치 목록 표시
+ *
+ * 사용 방법:
+ *   <LadderDashboard
+ *     onMatchEnter={(matchId) => { ... }}
+ *     requiresDiscordLink={false}
+ *   />
+ *
+ *   - onMatchEnter: 매치에 입장할 때 호출되는 콜백 (matchId 전달)
+ *   - requiresDiscordLink: Discord 연동이 필요한 설정일 경우 true
+ */
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -5,6 +30,7 @@ import { supabase } from '@/supabase';
 import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
 
 // ── 상수 ─────────────────────────────────────────────────────────────
+/** 지원하는 매치 유형 정보. 키는 선택 값, 값은 레이블·최소 인원·포맷 등을 담습니다. */
 const MATCH_TYPES = {
   '3v3': { label: '3대3', minPlayers: 6, perTeam: 3, isLadder: true, format: 'BO5 (3선승)' },
   '4v4': { label: '4대4', minPlayers: 8, perTeam: 4, isLadder: true, format: 'BO5 (3선승)' },
@@ -13,17 +39,30 @@ const MATCH_TYPES = {
   '2v2': { label: '2대2', minPlayers: 4, perTeam: 2, isLadder: false, format: '일반게임' },
 };
 
+/** 팀 MMR 차이가 이 값(200점)을 초과하면 불균형 경고를 표시합니다. */
 const BALANCE_THRESHOLD = 200;
+/** 대기열 최대 대기 시간(분). 이 시간이 지나면 자동으로 대기열에서 제거됩니다. */
 const MAX_QUEUE_MINUTES = 20;
+/** 매치 제안 동의/거절 팝업에서 카운트다운 시작 시간(초) */
 const PROPOSAL_CONSENT_SECONDS = 40;
+/**
+ * 매치 제안 실패(거절) 시 적용되는 쿨다운 시간 단계(초)
+ * 첫 번째 실패: 0초, 두 번째: 10초, 세 번째: 30초, 네 번째 이상: 180초
+ */
 const COOLDOWN_STEPS = [0, 10, 30, 180];
 
+/** 티어별 텍스트 색상 클래스 (Tailwind CSS) */
 const TIER_COLORS = {
   Challenger: 'text-rose-400',
   Master: 'text-purple-400', Diamond: 'text-blue-400', Platinum: 'text-cyan-400',
   Gold: 'text-yellow-400', Silver: 'text-gray-400', Bronze: 'text-orange-700',
 };
 
+/**
+ * MMR 포인트로 티어 이름을 반환합니다.
+ * @param {number} pts - 플레이어의 MMR 포인트
+ * @returns {string} 티어 이름
+ */
 function getTier(pts) {
   if (pts >= 2400) return 'Challenger';
   if (pts >= 2200) return 'Master';
@@ -34,11 +73,27 @@ function getTier(pts) {
   return 'Bronze';
 }
 
+/**
+ * 종족 영문명을 한글 약자로 변환합니다.
+ * @param {string} race - 종족 이름
+ * @returns {string} 한글 약자 ('테', '프', '저', '랜') 또는 '?'
+ */
 function getRaceIcon(race) {
   const icons = { Terran: '테', Protoss: '프', Zerg: '저', Random: '랜' };
   return icons[race] || '?';
 }
 
+/**
+ * 대기열 플레이어 배열을 두 팀으로 분배합니다.
+ *
+ * @param {Array} players - 대기열 플레이어 목록
+ * @param {number} perTeam - 팀당 인원 수
+ * @param {string} sortOption - 팀 구성 방식
+ *   - 'balance': MMR 교차 배분 (뱀 드래프트 방식, 가장 균형적)
+ *   - 'top': 상위 MMR 순으로 A팀, 나머지 B팀
+ *   - 'bottom': 하위 MMR 순으로 A팀, 나머지 B팀
+ * @returns {{ teamA: Array, teamB: Array } | null} 두 팀 객체 또는 인원 부족 시 null
+ */
 function buildTeams(players, perTeam, sortOption) {
   if (players.length < perTeam * 2) return null;
   const pool = [...players].slice(0, perTeam * 2);
@@ -59,11 +114,26 @@ function buildTeams(players, perTeam, sortOption) {
   return buildTeams(players, perTeam, 'balance');
 }
 
+/**
+ * 매치 시작 제안 시 표시되는 동의/거절 팝업 컴포넌트입니다.
+ * PROPOSAL_CONSENT_SECONDS(40초) 카운트다운 후 자동으로 거절 처리됩니다.
+ *
+ * @param {object} proposal - 제안된 매치 정보 (팀 구성, 매치 타입 등)
+ * @param {string} myUserId - 현재 로그인 유저의 ID
+ * @param {function} onAccept - 동의 버튼 클릭 시 호출되는 콜백
+ * @param {function} onReject - 거절 또는 시간 초과 시 호출되는 콜백
+ */
 // ── 매치 동의 팝업 ────────────────────────────────────────────────────
 function ConsentPopup({ proposal, myUserId, onAccept, onReject }) {
+  /** 남은 동의 시간(초). 0이 되면 자동 거절됩니다. */
   const [timeLeft, setTimeLeft] = useState(PROPOSAL_CONSENT_SECONDS);
+  /** 거절 처리 여부. true이면 UI가 회색으로 변하고 닫힘 안내가 표시됩니다. */
   const [rejected, setRejected] = useState(false);
 
+  /**
+   * 1초마다 timeLeft를 감소시킵니다.
+   * timeLeft가 0이 되거나 이미 거절 상태면 onReject()를 호출합니다.
+   */
   useEffect(() => {
     if (timeLeft <= 0 && !rejected) { onReject(); return; }
     if (rejected) return;
@@ -165,9 +235,18 @@ function ConsentPopup({ proposal, myUserId, onAccept, onReject }) {
   );
 }
 
+/**
+ * 대기열에 12명 이상일 때, 상위/하위 두 그룹으로 나눠 동시에 두 경기를 제안하는 컴포넌트입니다.
+ * 각 경기마다 팀 구성 정렬 방식을 독립적으로 선택할 수 있습니다.
+ *
+ * @param {Array} players - 전체 대기열 플레이어 목록
+ * @param {function} onSelectMatch - 매치를 선택했을 때 호출되는 콜백. {teamA, teamB} 전달.
+ */
 // ── 12명+ 두 팀 분리 제안 ─────────────────────────────────────────────
 function TwoMatchSuggestion({ players, onSelectMatch }) {
+  /** 상위 매치의 팀 구성 정렬 방식 ('balance' | 'top' | 'bottom') */
   const [sortA, setSortA] = useState('balance');
+  /** 하위 매치의 팀 구성 정렬 방식 ('balance' | 'top' | 'bottom') */
   const [sortB, setSortB] = useState('balance');
   const perTeam = 3;
   const sorted = [...players].sort((a, b) => (b.ladder_points || 1000) - (a.ladder_points || 1000));
@@ -223,29 +302,66 @@ function TwoMatchSuggestion({ players, onSelectMatch }) {
   );
 }
 
+/**
+ * 래더 대시보드 메인 컴포넌트입니다.
+ * 대기열 현황, 팀 밸런스 미리보기, 매치 제안/동의, 진행 중 매치 목록을 통합 제공합니다.
+ *
+ * @param {function} onMatchEnter - 매치에 입장할 때 호출되는 콜백 (matchId: string 전달)
+ * @param {boolean} requiresDiscordLink - Discord 연동이 필요한 설정인지 여부
+ * @returns {JSX.Element} 래더 대시보드 UI
+ */
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────
 export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
+  /** 현재 로그인한 Supabase 유저 객체. 비로그인 상태면 null. */
   const [user, setUser] = useState(null);
+  /** 현재 유저의 profiles 테이블 데이터 (닉네임, 종족, MMR 등) */
   const [myProfile, setMyProfile] = useState(null);
+  /** 현재 유저의 ladders 테이블 통계 데이터 (승/패 등). 없을 수 있음. */
   const [myStats, setMyStats] = useState(null);
+  /** 현재 대기열에 있는 플레이어 목록 (참가 시간 오름차순 정렬) */
   const [queuePlayers, setQueuePlayers] = useState([]);
+  /** 진행 중(진행중/제안중) 래더 매치 목록 (최대 8개) */
   const [ongoingMatches, setOngoingMatches] = useState([]);
+  /** 최초 데이터 로딩 여부. true이면 로딩 화면 표시. */
   const [loading, setLoading] = useState(true);
+  /** 내가 현재 대기열에 있는지 여부 */
   const [inQueue, setInQueue] = useState(false);
+  /** 현재 선택된 매치 유형 (예: '4v4') */
   const [queueMatchType, setQueueMatchType] = useState('4v4');
+  /** 대기열 참가 API 요청 처리 중 여부 */
   const [joiningQueue, setJoiningQueue] = useState(false);
+  /** 팀 구성 정렬 방식 ('balance' | 'top' | 'bottom') */
   const [sortOption, setSortOption] = useState('balance');
+  /** 현재 활성화된 매치 제안 정보. null이면 팝업 미표시. */
   const [activeProposal, setActiveProposal] = useState(null);
+  /** 매치 제안 재시도 쿨다운 남은 시간(초). 0이면 즉시 제안 가능. */
   const [proposalCooldown, setProposalCooldown] = useState(0);
+  /** 매치 제안 시도 횟수 (쿨다운 단계 계산에 사용) */
   const [proposalAttempts, setProposalAttempts] = useState(0);
+  /** 5v5 경고 모달 표시 여부 */
   const [show5v5Warning, setShow5v5Warning] = useState(false);
+  /** 5v5 경고를 확인하고 동의했는지 여부 */
   const [accepted5v5, setAccepted5v5] = useState(false);
+  /** Discord 연동 안내 모달 표시 여부 */
   const [showDiscordModal, setShowDiscordModal] = useState(false);
+  /** 쿨다운 카운트다운 타이머 참조 (clearTimeout에 사용) */
   const cooldownTimerRef = useRef(null);
+  /** 대기열 자동 이탈 타이머 참조 (MAX_QUEUE_MINUTES 후 자동 취소) */
   const queueTimerRef = useRef(null);
+  /** 대기열 이탈 함수에서 최신 유저 ID를 참조하기 위한 ref (클로저 문제 방지) */
   const currentUserRef = useRef(null);
+  /** 대기열 인원 변경 감지용 - 플레이어 ID 목록의 이전 상태를 저장 */
   const lastQueueKeyRef = useRef('');
 
+  /**
+   * Supabase에서 모든 필요 데이터를 한꺼번에 조회하는 함수입니다.
+   * - 현재 유저 정보 및 프로필
+   * - 래더 통계 (ladders 테이블)
+   * - 대기열 플레이어 목록
+   * - 진행 중인 매치 목록
+   * - 내가 포함된 활성 제안(activeProposal) 여부
+   * useCallback으로 감싸 불필요한 재생성을 방지합니다.
+   */
   const fetchData = useCallback(async () => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -317,6 +433,11 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
     }
   }, []);
 
+  /**
+   * 컴포넌트 마운트 시 데이터를 불러오고, Supabase Realtime 채널을 구독합니다.
+   * profiles 또는 ladder_matches 테이블에 변경이 있을 때마다 fetchData가 자동 호출됩니다.
+   * 컴포넌트가 언마운트될 때 채널 구독을 해제(cleanup)합니다.
+   */
   useEffect(() => {
     fetchData();
     const channel = supabase
@@ -327,6 +448,10 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
     return () => { supabase.removeChannel(channel); };
   }, [fetchData]);
 
+  /**
+   * proposalCooldown이 0보다 클 때 1초마다 1씩 감소시킵니다.
+   * 0에 도달하면 타이머가 멈추고 "매치 시작 제안" 버튼이 다시 활성화됩니다.
+   */
   // 쿨다운 카운트다운
   useEffect(() => {
     if (proposalCooldown <= 0) return;
@@ -334,6 +459,13 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
     return () => clearTimeout(cooldownTimerRef.current);
   }, [proposalCooldown]);
 
+  /**
+   * 대기열 참가 버튼 핸들러입니다.
+   * - Discord 연동이 필요한 경우 Discord 모달을 표시합니다.
+   * - 5v5 선택 시 경고 모달을 먼저 표시합니다.
+   * - 성공 시 profiles.is_in_queue를 true로 업데이트하고
+   *   MAX_QUEUE_MINUTES 후 자동 이탈 타이머를 설정합니다.
+   */
   const handleJoinQueue = async () => {
     if (!user) return;
     // Discord 연동 확인
@@ -364,6 +496,11 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
     }
   };
 
+  /**
+   * 대기열 취소 핸들러입니다.
+   * profiles.is_in_queue를 false로 업데이트하고 자동 이탈 타이머를 취소합니다.
+   * currentUserRef를 사용하여 클로저 내에서도 최신 유저 ID를 참조합니다.
+   */
   const handleLeaveQueue = async () => {
     const uid = currentUserRef.current?.id || user?.id;
     if (!uid) return;
@@ -372,6 +509,16 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
     setInQueue(false);
   };
 
+  /**
+   * 매치 시작을 제안합니다. ladder_matches 테이블에 새 레코드를 삽입합니다.
+   * - 팀 MMR 차이가 BALANCE_THRESHOLD(200점) 초과 시 사용자 확인을 요청합니다.
+   * - 제안 횟수에 따라 COOLDOWN_STEPS 기준으로 쿨다운을 증가시킵니다.
+   * - 제안 성공 시 activeProposal 상태를 설정하여 동의 팝업을 띄웁니다.
+   *
+   * @param {string} typeStr - 팀당 인원 수 문자열 (예: '3', '4', '5')
+   * @param {Array} teamA - A팀 플레이어 배열
+   * @param {Array} teamB - B팀 플레이어 배열
+   */
   const handleProposeMatch = async (typeStr, teamA, teamB) => {
     if (!user || proposalCooldown > 0) return;
     const perTeam = parseInt(typeStr);
@@ -417,6 +564,12 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
     }
   };
 
+  /**
+   * 매치 제안 동의 핸들러입니다.
+   * - ladder_matches 상태를 '진행중'으로 업데이트합니다.
+   * - 참여 플레이어 전원의 is_in_queue를 false로 변경합니다.
+   * - onMatchEnter 콜백을 호출하여 MatchCenter 화면으로 이동합니다.
+   */
   const handleAccept = async () => {
     if (!activeProposal) return;
     try {
@@ -433,6 +586,10 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
     }
   };
 
+  /**
+   * 매치 제안 거절 핸들러입니다.
+   * ladder_matches 상태를 '거절됨'으로 업데이트하고 activeProposal을 초기화합니다.
+   */
   const handleReject = async () => {
     if (!activeProposal) return;
     try {
@@ -444,17 +601,33 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
     }
   };
 
+  /**
+   * 플레이어 표시 이름을 반환합니다.
+   * ByID(클랜 닉네임) → discord_name → '???' 순으로 폴백합니다.
+   * @param {object|null} p - 플레이어 프로필 객체
+   * @returns {string} 표시할 이름
+   */
   const getDisplayName = (p) => p?.ByID || p?.discord_name || '???';
 
+  /** 현재 선택된 매치 유형의 팀당 인원 수 */
   const perTeam = MATCH_TYPES[queueMatchType]?.perTeam || 4;
+  /** 매치 시작에 필요한 최소 총 인원 수 (perTeam * 2) */
   const minPlayers = perTeam * 2;
+  /** 현재 선택된 매치 유형의 상세 정보 객체 */
   const matchTypeInfo = MATCH_TYPES[queueMatchType];
+  /** 대기열 인원이 충분하여 매치 제안 가능한지 여부 */
   const canPropose = queuePlayers.length >= minPlayers;
+  /** canPropose가 true일 때 buildTeams로 계산된 두 팀. null이면 팀 구성 미표시. */
   const teams = canPropose ? buildTeams(queuePlayers, perTeam, sortOption) : null;
+  /** A팀 평균 MMR */
   const avgA = teams ? teams.teamA.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teams.teamA.length : 0;
+  /** B팀 평균 MMR */
   const avgB = teams ? teams.teamB.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teams.teamB.length : 0;
+  /** 두 팀 평균 MMR 차이 (절댓값). BALANCE_THRESHOLD 초과 시 경고 표시. */
   const balanceDiff = Math.abs(avgA - avgB);
+  /** 대기열 인원이 8명 이상인지 여부 (팀 구성 정렬 옵션 표시 조건) */
   const has8Plus = queuePlayers.length >= 8;
+  /** 대기열 인원이 12명 이상인지 여부 (두 경기 동시 제안 컴포넌트 표시 조건) */
   const has12Plus = queuePlayers.length >= 12;
 
   if (loading) {
