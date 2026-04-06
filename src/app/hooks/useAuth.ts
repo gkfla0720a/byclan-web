@@ -374,7 +374,7 @@ export function useAuth(): UseAuthReturn {
         postAnnouncements: PermissionChecker.hasPermission(userRole, 'announcement.post'),
         accessDevTools: PermissionChecker.hasPermission(userRole, 'system.admin'),
         moderateLadder: PermissionChecker.hasPermission(userRole, 'ladder.admin'),
-        playLadder: baseLadderPermission && !requiresDiscordLink,
+        playLadder: baseLadderPermission,
         requiresDiscordLink,
         discordBypassAllowed,
       },

@@ -21,7 +21,8 @@ export default function AuthCallback() {
             router.push('/?error=auth_callback_error');
             return;
           }
-          window.location.replace('/');
+          const next = params.get('next');
+          window.location.replace(next && next.startsWith('/') ? next : '/');
           return;
         }
 
@@ -34,7 +35,8 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          window.location.replace('/');
+          const next = params.get('next');
+          window.location.replace(next && next.startsWith('/') ? next : '/');
         } else {
           router.push('/?error=no_session');
         }
