@@ -48,7 +48,7 @@ export default function LadderPage() {
   return (
     <SectionErrorBoundary name="래더">
       {!activeMatchId
-        ? <LadderDashboard requiresDiscordLink={requiresDiscordLink} onMatchEnter={(id) => setActiveMatchId(id)} />
+        ? <LadderDashboard requiresDiscordLink={false} onMatchEnter={(id) => setActiveMatchId(id)} />
         : <MatchCenter matchId={activeMatchId} onExit={() => setActiveMatchId(null)} />}
     </SectionErrorBoundary>
   );

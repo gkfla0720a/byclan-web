@@ -61,6 +61,8 @@ const VIEW_TO_PATH = {
   '개발자': '/developer',
   '프로필': '/profile',
   '알림': '/notifications',
+  '포인트 상점': '/points/shop',
+  '포인트 내역': '/points/history',
   '로그인': '/login',
 };
 
