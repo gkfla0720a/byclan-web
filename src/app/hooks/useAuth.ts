@@ -327,8 +327,7 @@ export function useAuth(): UseAuthReturn {
           .from('ladder_matches')
           .select('id')
           .eq('status', '진행중')
-          .contains('team_a_ids', [authUser.id])
-          .or(`team_b_ids.cs.{${authUser.id}}`)
+          .or(`team_a_ids.cs.{${authUser.id}},team_b_ids.cs.{${authUser.id}}`)
           .maybeSingle();
 
         if (!matchError && m) {

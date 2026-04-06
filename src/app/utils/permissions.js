@@ -314,6 +314,9 @@ export const PermissionChecker = {
       if (permission === 'master.delegate' && !devSettings.canDelegateMaster) {
         return false;
       }
+
+      // 개발자는 나머지 모든 권한을 보유 (developer_override)
+      return true;
     }
     
     return role.permissions.includes(permission);
