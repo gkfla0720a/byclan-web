@@ -79,11 +79,11 @@ export function PermissionInfo({ userRole, compact = false }) {
 /**
  * 여러 역할의 권한을 테이블 형태로 나란히 비교하는 컴포넌트입니다.
  * @param {object} props
- * @param {string[]} [props.roles] - 비교할 역할 코드 배열 (기본값: associate, elite, admin, master)
+ * @param {string[]} [props.roles] - 비교할 역할 코드 배열 (기본값: member, elite, admin, master)
  * @returns {JSX.Element} 권한 비교 테이블
  */
 // 권한 비교 컴포넌트
-export function PermissionComparison({ roles = ['associate', 'elite', 'admin', 'master'] }) {
+export function PermissionComparison({ roles = ['member', 'elite', 'admin', 'master'] }) {
   return (
     <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
       <h3 className="text-xl font-bold text-white mb-4">🔐 역할별 권한 비교</h3>

@@ -48,7 +48,7 @@ import logger, { Severity } from '../utils/errorLogger';
  *   ByID:           클랜 내 고유 닉네임 (예: 'By_홍길동')
  *   discord_name:   Discord 사용자 이름 (Discord 로그인 시 자동 설정)
  *   discord_id:     Discord 고유 ID (래더 참여 시 필요)
- *   role:           클랜 역할 (visitor/applicant/rookie/member/associate/elite/admin/master/developer)
+ *   role:           클랜 역할 (visitor/applicant/rookie/member/elite/admin/master/developer)
  *   points:         클랜 활동 포인트
  *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)
  *   intro:          자기소개 문구
@@ -287,7 +287,7 @@ export function useAuth(): UseAuthReturn {
     setNeedsSetup(false);
 
     // 진행 중인 래더 매치 확인 (정식 멤버만)
-    if (['member', 'associate', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
+    if (['member', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
       try {
         const { data: m, error: matchError } = await supabase
           .from('ladder_matches')

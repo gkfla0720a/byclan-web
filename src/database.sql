@@ -137,7 +137,7 @@ CREATE TABLE public.posts (
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
   discord_name text,
-  role text DEFAULT 'associate'::text,
+  role text DEFAULT 'applicant'::text,
   points integer DEFAULT 0,
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   ByID text,

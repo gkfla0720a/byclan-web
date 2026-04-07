@@ -109,7 +109,7 @@ export default function ProfileSidebar({ profile, user }) {
           supabase
             .from('profiles')
             .select('id, ByID, discord_name, role, race, ladder_points, points, wins, losses')
-            .in('role', ['member', 'associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
+            .in('role', ['member', 'elite', 'admin', 'master', 'developer', 'rookie'])
             .order('ladder_points', { ascending: false })
             .limit(1)
         );
@@ -121,7 +121,7 @@ export default function ProfileSidebar({ profile, user }) {
               supabase
                 .from('profiles')
                 .select('id, ByID, discord_name, role, race, ladder_points, points')
-                .in('role', ['member', 'associate', 'elite', 'admin', 'master', 'developer', 'rookie'])
+                .in('role', ['member', 'elite', 'admin', 'master', 'developer', 'rookie'])
                 .order('ladder_points', { ascending: false })
                 .limit(1)
             );
@@ -150,7 +150,7 @@ export default function ProfileSidebar({ profile, user }) {
    * (applicant·guest 등 비활성 역할이면 false)
    */
   const isActiveMember =
-    profile && ['member', 'associate', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
+    profile && ['member', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 
   if (!user || !profile || !isActiveMember) {
     const previewProfile = spotlightProfile

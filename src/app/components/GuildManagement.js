@@ -2,7 +2,7 @@
  * @file GuildManagement.js
  * @역할 길드원(클랜원) 관리 페이지 컴포넌트
  * @주요기능
- *   - 길드원 목록 조회 및 등급 변경 (associate/rookie/member/elite/admin)
+ *   - 길드원 목록 조회 및 등급 변경 (applicant/rookie/member/elite/admin)
  *   - 길드원 제명 처리 (role을 'expelled'로 변경)
  *   - 마스터 위임 기능: 비밀번호 재인증 또는 이메일 OTP 인증 후 위임 가능
  *   - 테스트 계정 필터링 지원 (filterVisibleTestAccounts)
@@ -565,7 +565,7 @@ export default function GuildManagement() {
                   value={pendingRole}
                   onChange={(event) => setPendingRole(event.target.value)}
                 >
-                  <option value="associate">테스트신청자</option>
+                   <option value="applicant">신규 가입자</option>
                   <option value="member">일반 클랜원</option>
                   <option value="rookie">신입 길드원</option>
                   <option value="elite">정예 길드원</option>

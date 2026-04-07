@@ -19,10 +19,9 @@ import { useNavigate } from '../hooks/useNavigate';
 
 const ROLE_LABELS = {
   visitor: '방문자',
-  applicant: '가입 신청자',
+  applicant: '신규 가입자',
   rookie: '신입 길드원',
   member: '일반 클랜원',
-  associate: '테스트신청자',
   elite: '정예 멤버',
   admin: '운영진',
   master: '마스터',
@@ -377,7 +376,7 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
   /** 이미 가입 신청 완료 여부 */
   const isApplied = currentRole === 'applicant';
   /** 신입 이상(정식 멤버) 여부 */
-  const isRookieOrHigher = ['rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'].includes(currentRole);
+  const isRookieOrHigher = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(currentRole);
   /** 가입 신청 가능 여부 (로그인 + visitor 역할) */
   const canApply = Boolean(user && currentRole === 'visitor');
   /** 역할 표시 레이블 */
