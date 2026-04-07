@@ -245,11 +245,13 @@ export function useAuth(): UseAuthReturn {
       // 화면 전환 등 일시적 상태 변화를 충분히 기다립니다.
       await new Promise<void>(resolve => setTimeout(resolve, 1500));
 
+      const userId = (user as { id: string }).id;
+
       // DB에서 최신 ByID를 직접 조회합니다.
       const { data: fresh } = await supabase
         .from('profiles')
         .select('ByID')
-        .eq('id', (user as { id: string }).id)
+        .eq('id', userId)
         .single();
 
       const freshHasValidByID = !!(fresh?.ByID && (fresh.ByID as string).trim() !== '');
@@ -260,7 +262,7 @@ export function useAuth(): UseAuthReturn {
         const { data: fullProfile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', (user as { id: string }).id)
+          .eq('id', userId)
           .single();
         if (fullProfile) setProfile(fullProfile as UserProfile);
         return;
@@ -270,7 +272,7 @@ export function useAuth(): UseAuthReturn {
       setAuthError('By닉네임이 존재하지 않습니다. 아이디를 재설정해주세요.');
       // 에러 메시지를 잠깐 보여준 뒤 로그아웃합니다.
       await new Promise<void>(resolve => setTimeout(resolve, 3000));
-      try { await supabase.auth.signOut(); } catch (_) { /* 무시 */ }
+      try { await supabase.auth.signOut(); } catch (signOutErr) { logger.error('로그아웃 중 오류', signOutErr); }
       localStorage.clear();
       window.location.reload();
     };

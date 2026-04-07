@@ -80,6 +80,8 @@ export default function Header() {
 
   // profile에서 역할과 닉네임을 파생합니다.
   const role = profile?.role || null;
+  // ByID 없을 때 표시할 에러 메시지 (데스크톱/모바일 공통으로 사용)
+  const NO_BYID_MESSAGE = 'By닉네임이 없습니다. 재설정해주세요.';
   // ByID만 사용합니다. 없으면 null로 처리하며 폴백 닉네임을 사용하지 않습니다.
   const hasValidByID = !!(profile?.ByID && profile.ByID.trim() !== '');
   const nickname = hasValidByID ? profile.ByID : null;
@@ -263,8 +265,8 @@ export default function Header() {
                   {nickname ? (
                     <span className="text-xs font-bold text-slate-100">{nickname}</span>
                   ) : (
-                    <span className="text-xs font-bold text-red-400 max-w-[180px] truncate" title="By닉네임이 존재하지 않습니다. 아이디를 재설정해주세요.">
-                      {authError || 'By닉네임이 없습니다. 재설정해주세요.'}
+                    <span className="text-xs font-bold text-red-400 max-w-[180px] truncate" title={NO_BYID_MESSAGE}>
+                      {authError || NO_BYID_MESSAGE}
                     </span>
                   )}
                   <button onClick={handleLogout} className="text-[10px] text-red-500 font-black ml-1">OUT</button>
@@ -308,7 +310,7 @@ export default function Header() {
                 {nickname ? (
                   <span className="font-black text-cyan-200 text-sm">{nickname}</span>
                 ) : (
-                  <span className="font-black text-red-400 text-xs">{authError || 'By닉네임이 없습니다. 재설정해주세요.'}</span>
+                  <span className="font-black text-red-400 text-xs">{authError || NO_BYID_MESSAGE}</span>
                 )}
                 <button onClick={handleLogout} className="text-[10px] text-red-300 font-black bg-red-950/30 px-3 py-2 rounded-lg border border-red-400/20">LOGOUT</button>
               </div>
