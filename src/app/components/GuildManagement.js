@@ -75,6 +75,7 @@ export default function GuildManagement() {
 
   /**
    * 컴포넌트가 처음 마운트될 때 관리자 정보와 길드원 목록을 병렬로 불러옵니다.
+   * 데이터 로드 완료 후 수습 기간 알림을 자동으로 확인합니다.
    */
   useEffect(() => {
     const initialize = async () => {
@@ -87,6 +88,7 @@ export default function GuildManagement() {
   /**
    * 현재 로그인한 관리자의 프로필과 이메일/전화번호를 불러와 상태에 저장합니다.
    * 위임 재인증 초기값도 이 함수에서 설정합니다.
+   * 데이터 로드 후 2주 수습 기간이 경과한 신입에 대한 운영진 알림을 확인합니다.
    * @async
    */
   const loadCurrentManager = async () => {
@@ -103,15 +105,76 @@ export default function GuildManagement() {
 
       if (error) throw error;
 
+      const role = profile?.role?.trim?.().toLowerCase?.() || null;
       setCurrentManager({
         id: user.id,
-        role: profile?.role?.trim?.().toLowerCase?.() || null,
+        role,
         email: user.email || '',
         phone: user.phone || '',
       });
       setDelegationVerification(createVerificationState(user.email || '', user.phone || ''));
+
+      // admin 이상 직급이면 수습 기간 알림 확인
+      if (['admin', 'master', 'developer'].includes(role)) {
+        await checkRookieReviewNotifications(user.id);
+      }
     } catch (error) {
       console.error('관리자 정보 로드 실패:', error);
+    }
+  };
+
+  /**
+   * 수습 기간(2주)이 경과했지만 아직 운영진에게 검토 알림이 발송되지 않은
+   * 신입 길드원(rookie)을 찾아 admin 이상 전체에게 알림을 보냅니다.
+   * 중복 발송을 막기 위해 알림 제목에 rookie ID를 포함하여 존재 여부를 확인합니다.
+   * @async
+   * @param {string} currentUserId - 현재 로그인한 관리자 ID
+   */
+  const checkRookieReviewNotifications = async (currentUserId) => {
+    try {
+      const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+      // 2주 이상 된 rookie 목록 조회
+      const { data: rookies } = await supabase
+        .from('profiles')
+        .select('id, ByID, rookie_since')
+        .eq('role', 'rookie')
+        .not('rookie_since', 'is', null)
+        .lte('rookie_since', twoWeeksAgo);
+
+      if (!rookies?.length) return;
+
+      // admin+ 운영진 전체 목록 조회
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('role', ['admin', 'master', 'developer']);
+
+      if (!admins?.length) return;
+
+      for (const rookie of rookies) {
+        // 이미 이 rookie에 대한 검토 알림이 현재 관리자에게 발송됐는지 확인
+        const notifTitle = `🔔 수습기간완료:${rookie.id}`;
+        const { data: existing } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('user_id', currentUserId)
+          .eq('title', notifTitle)
+          .limit(1);
+
+        if (existing?.length) continue; // 이미 발송됨
+
+        // 아직 발송되지 않은 경우 admin+ 전원에게 알림 발송
+        const notifRows = admins.map((admin) => ({
+          user_id: admin.id,
+          title: notifTitle,
+          message: `신입 길드원 ${rookie.ByID}님의 2주 수습 기간이 완료되었습니다.\n클랜 생활 지속 여부를 결정해주세요.\n\n• 승인 → 길드원 관리에서 등급 변경\n• 거부 → 길드원 관리에서 제명 처리`,
+        }));
+
+        await supabase.from('notifications').insert(notifRows);
+      }
+    } catch (err) {
+      console.error('수습 기간 알림 확인 실패:', err);
     }
   };
 
@@ -141,20 +204,30 @@ export default function GuildManagement() {
   /**
    * 특정 길드원의 역할(등급)을 변경합니다.
    * 'master' 역할로의 직접 변경은 허용되지 않습니다. (위임 절차 사용)
+   * rookie로 진입하면 rookie_since를 현재 시각으로 기록하고,
+   * rookie에서 다른 역할로 이동하면 rookie_since를 초기화합니다.
    * @async
    * @param {string} memberId - 등급을 변경할 길드원의 ID
    * @param {string} newRole - 새로 적용할 역할 문자열
+   * @param {string} [previousRole] - 변경 전 역할 (rookie_since 처리에 사용)
    */
-  const handleRoleChange = async (memberId, newRole) => {
+  const handleRoleChange = async (memberId, newRole, previousRole) => {
     if (newRole === 'master') {
       alert('마스터 지정은 재인증 후 마스터 위임으로만 처리할 수 있습니다.');
       return;
     }
 
     try {
+      const updates = { role: newRole };
+      if (newRole === 'rookie') {
+        updates.rookie_since = new Date().toISOString();
+      } else if (previousRole === 'rookie') {
+        updates.rookie_since = null;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({ role: newRole })
+        .update(updates)
         .eq('id', memberId);
 
       if (error) throw error;
@@ -167,6 +240,35 @@ export default function GuildManagement() {
       alert('등급 변경 실패: ' + error.message);
     }
   };
+
+  /**
+   * master 전용: 수습 기간 조건에 관계없이 rookie를 즉시 정회원(member)으로 승급합니다.
+   * @async
+   * @param {object} member - 승급 대상 길드원 객체
+   */
+  const handleForcePromoteToMember = async (member) => {
+    if (!window.confirm(`${member.ByID}님을 수습 기간에 관계없이 즉시 정회원으로 승급하시겠습니까?`)) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: 'member', rookie_since: null })
+        .eq('id', member.id);
+      if (error) throw error;
+
+      // 대상 길드원에게 승급 알림 발송
+      await supabase.from('notifications').insert({
+        user_id: member.id,
+        title: '🎉 정회원 승급 알림',
+        message: `마스터에 의해 즉시 정회원으로 승급되었습니다. ByClan의 정식 길드원이 된 것을 축하합니다!`,
+      });
+
+      await fetchMembers();
+      alert(`${member.ByID}님이 정회원으로 승급되었습니다.`);
+    } catch (error) {
+      alert('승급 실패: ' + error.message);
+    }
+  };
+
 
   /**
    * 특정 길드원을 제명 처리합니다.
@@ -509,7 +611,7 @@ export default function GuildManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex gap-2 justify-center">
+                    <div className="flex gap-2 justify-center flex-wrap">
                       {/* 개발자는 제외 */}
                       {member.role !== 'developer' && (
                         <>
@@ -528,6 +630,16 @@ export default function GuildManagement() {
                           >
                             제명
                           </button>
+                          {/* master 전용: rookie를 즉시 정회원으로 승급 */}
+                          {member.role === 'rookie' && currentManager.role === 'master' && (
+                            <button
+                              onClick={() => handleForcePromoteToMember(member)}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs rounded transition-colors"
+                              title="수습 기간에 관계없이 즉시 정회원으로 승급 (마스터 전용)"
+                            >
+                              즉시 승급
+                            </button>
+                          )}
                           {member.role !== 'master' && canDelegateMaster && (
                             <button
                               onClick={() => openMasterDelegationModal(member)}
@@ -576,7 +688,7 @@ export default function GuildManagement() {
                 </p>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => handleRoleChange(actionModal.member.id, pendingRole)}
+                    onClick={() => handleRoleChange(actionModal.member.id, pendingRole, actionModal.member.role)}
                     className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white py-2 rounded font-bold transition-colors"
                   >
                     변경

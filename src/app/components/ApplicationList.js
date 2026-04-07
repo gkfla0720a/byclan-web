@@ -191,11 +191,11 @@ export default function ApplicationList() {
       
       if (appError) throw appError;
 
-      // 2. 합격일 경우 권한 승급
+      // 2. 합격일 경우 권한 승급 및 수습 시작일 기록
       if (isPass && app.user_id) {
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ role: 'rookie' })
+          .update({ role: 'rookie', rookie_since: new Date().toISOString() })
           .eq('id', app.user_id);
         if (profileError) throw profileError;
       }

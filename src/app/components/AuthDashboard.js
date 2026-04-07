@@ -47,19 +47,19 @@ function DiscordLinkPanel({ user, onLinked }) {
   }, [user]);
 
   /**
-   * Supabase profiles 테이블에서 discord_id 필드를 조회하여
+   * Supabase profiles 테이블에서 discord_name 필드를 조회하여
    * 현재 Discord 연동 여부를 확인하고 isLinked 상태를 업데이트합니다.
    */
   const checkDiscordLink = async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('discord_name, discord_id')
+        .select('discord_name')
         .eq('id', user.id)
         .single();
 
       if (error) throw error;
-      setIsLinked(!!data.discord_id);
+      setIsLinked(!!data.discord_name);
     } catch (error) {
       console.error('Discord 연동 확인 실패:', error);
     }
@@ -93,7 +93,7 @@ function DiscordLinkPanel({ user, onLinked }) {
 
   /**
    * Discord 연동을 해제합니다.
-   * profiles 테이블의 discord_name과 discord_id를 null로 업데이트합니다.
+   * profiles 테이블의 discord_name을 null로 업데이트합니다.
    */
   const handleUnlinkDiscord = async () => {
     setLoading(true);
@@ -104,7 +104,6 @@ function DiscordLinkPanel({ user, onLinked }) {
         .from('profiles')
         .update({
           discord_name: null,
-          discord_id: null
         })
         .eq('id', user.id);
 

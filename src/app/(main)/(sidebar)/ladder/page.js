@@ -20,10 +20,20 @@ import { SectionErrorBoundary } from '../../../components/ErrorBoundary';
 /**
  * LadderPage - 래더 페이지 컴포넌트
  * 사용자 권한에 따라 래더 대시보드, 매치 센터, 또는 미리보기를 렌더링합니다.
+ * 진행 중인 매치가 있는 유저는 권한 게이트보다 먼저 MatchCenter로 진입합니다.
  */
 export default function LadderPage() {
   // 프로필, 사용자, 현재 활성 매치 ID, 권한 정보 가져오기
   const { profile, user, activeMatchId, setActiveMatchId, getPermissions } = useAuthContext();
+
+  // 진행 중인 매치가 있는 유저는 권한과 무관하게 바로 MatchCenter로 진입
+  if (activeMatchId) {
+    return (
+      <SectionErrorBoundary name="래더">
+        <MatchCenter matchId={activeMatchId} onExit={() => setActiveMatchId(null)} />
+      </SectionErrorBoundary>
+    );
+  }
 
   // 권한 객체에서 래더 플레이 가능 여부 추출
   const permissions = getPermissions();
@@ -45,9 +55,7 @@ export default function LadderPage() {
 
   return (
     <SectionErrorBoundary name="래더">
-      {!activeMatchId
-        ? <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
-        : <MatchCenter matchId={activeMatchId} onExit={() => setActiveMatchId(null)} />}
+      <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
     </SectionErrorBoundary>
   );
 }

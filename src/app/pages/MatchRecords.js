@@ -55,8 +55,7 @@ export default function MatchRecords() {
 /**
  * MatchRecords 프로필 캐시
  * 키: user.id (Supabase UUID — 불변 식별자)
- * 값: 표시명 (ByID 우선, 없으면 discord_id, 없으면 '알 수 없음')
- * ※ ByID 는 변경 가능한 표시명이고, 실제 인증/식별에는 discord_id(불변) 또는 user.id 를 사용합니다.
+ * 값: 표시명 (ByID, 없으면 '알 수 없음')
  */
   const [profileCache, setProfileCache] = useState({});
 
@@ -93,13 +92,11 @@ export default function MatchRecords() {
       if (allIds.size > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, ByID, discord_id')
+          .select('id, ByID')
           .in('id', Array.from(allIds));
         const cache = {};
         (profiles || []).forEach((p) => {
-          // 키: p.id (Supabase UUID — 불변 식별자), 값: 표시명 (ByID 우선)
-          // ByID 는 표시용이며, 인증 주체에는 discord_id (불변) 를 사용합니다.
-          cache[p.id] = p.ByID || p.discord_id || '알 수 없음';
+          cache[p.id] = p.ByID || '알 수 없음';
         });
         setProfileCache(cache);
       }
