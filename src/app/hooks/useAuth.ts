@@ -237,7 +237,8 @@ export function useAuth(): UseAuthReturn {
         if (insertError) {
           logger.error('프로필 생성 실패', insertError, { severity: Severity.CRITICAL });
           setAuthLoading(false);
-          throw insertError;
+          // 프로필 생성에 실패해도 visitor 상태로 계속 진행
+          return;
         }
 
         const { data: newProfile } = await supabase
@@ -251,8 +252,11 @@ export function useAuth(): UseAuthReturn {
         setAuthLoading(false);
         return;
       }
+      // 프로필 로드 실패 (네트워크 오류 등) – visitor 수준으로 계속 진행
+      // profile은 null로 유지되고 getPermissions()가 visitor로 대체합니다.
+      logger.error('프로필 로드 실패, visitor 수준으로 대체', profileError);
       setAuthLoading(false);
-      throw profileError;
+      return;
     }
 
     let nextProfile: UserProfile = p as UserProfile;
@@ -378,7 +382,19 @@ export function useAuth(): UseAuthReturn {
 
   const getPermissions = (): AuthPermissions => {
     const profileRole = profile?.role;
-    const userRole = profileRole?.trim().toLowerCase();
+    const rawRole = profileRole?.trim().toLowerCase();
+
+    // 로그인은 됐지만 role이 없거나 유효하지 않은 경우(프로필 로드 실패, 삭제된 role 등)
+    // visitor 수준으로 처리해 기능이 완전히 죽지 않게 합니다.
+    let userRole: string | undefined;
+    if (rawRole && (ROLE_PERMISSIONS as Record<string, unknown>)[rawRole]) {
+      userRole = rawRole;
+    } else if (user) {
+      userRole = 'visitor';
+    } else {
+      userRole = undefined;
+    }
+
     const roleInfo = userRole ? (ROLE_PERMISSIONS as Record<string, unknown>)[userRole] : null;
     const baseLadderPermission = PermissionChecker.hasPermission(userRole, 'ladder.play');
 
