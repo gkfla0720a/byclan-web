@@ -1,4 +1,28 @@
-This is a Next.js 16 project.
+# ByClan Web
+
+ByClan 클랜 공식 홈페이지 — Next.js 16 + React 19 + Supabase
+
+## 📚 개발자 문서
+
+| 문서 | 설명 |
+|------|------|
+| [CODE-STRUCTURE.md](CODE-STRUCTURE.md) | 전체 코드 구조 및 아키텍처 (텍스트) |
+| [📊 docs/VISUAL-DIAGRAMS.md](docs/VISUAL-DIAGRAMS.md) | Mermaid 시각화 다이어그램 (8종) |
+| [🖥️ docs/DIAGRAMS-INTERACTIVE.html](docs/DIAGRAMS-INTERACTIVE.html) | 인터랙티브 다이어그램 뷰어 |
+| [DATABASE-GUIDE.md](DATABASE-GUIDE.md) | DB 스키마 및 쿼리 가이드 |
+| [ENVIRONMENT-SETUP.md](ENVIRONMENT-SETUP.md) | 개발 환경 설정 |
+| [MOBILE-GUIDE.md](MOBILE-GUIDE.md) | 모바일 최적화 가이드 |
+
+### 🗺️ 신규 개발자 학습 경로
+
+```text
+1. CODE-STRUCTURE.md       → 전체 구조 파악 (텍스트)
+2. docs/VISUAL-DIAGRAMS.md → 다이어그램으로 시각화 확인
+3. DATABASE-GUIDE.md       → DB 스키마 이해
+4. ENVIRONMENT-SETUP.md    → 로컬 환경 세팅
+```
+
+---
 
 ## Getting Started
 

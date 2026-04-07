@@ -587,6 +587,9 @@ NEXT_PUBLIC_SENTRY_DSN=...                 # Sentry 오류 추적 (선택)
 | 파일 | 내용 |
 |------|------|
 | `README.md` | 개발 서버 실행 방법 |
+| [`docs/VISUAL-DIAGRAMS.md`](docs/VISUAL-DIAGRAMS.md) | 📊 Mermaid 시각화 다이어그램 8종 (인증 흐름, 역할 상태, 라우팅 트리 등) |
+| [`docs/DIAGRAMS-INTERACTIVE.html`](docs/DIAGRAMS-INTERACTIVE.html) | 🖥️ 인터랙티브 다이어그램 뷰어 (다크 테마) |
+| [`docs/diagram-gallery/`](docs/diagram-gallery/) | 🖼️ SVG 다이어그램 이미지 (인증 흐름, 역할 계층, 컴포넌트 의존성, 데이터 레이어) |
 | `ENVIRONMENT-SETUP.md` | 환경 변수 설정 및 개발 환경 구성 |
 | `DATABASE-GUIDE.md` | Supabase SQL Editor 사용법 및 쿼리 참고 |
 | `DATABASE-QUERIES.sql` | 개발용 SQL 쿼리 모음 |

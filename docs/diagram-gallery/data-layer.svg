@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 500" width="820" height="500" font-family="Segoe UI, system-ui, sans-serif">
+  <rect width="820" height="500" fill="#0f172a" rx="12"/>
+  <text x="410" y="36" fill="#e2e8f0" font-size="18" font-weight="bold" text-anchor="middle">ByClan Web — 데이터 레이어 관계도 (Data Layer)</text>
+
+  <!-- auth.users -->
+  <rect x="320" y="65" width="180" height="70" rx="8" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="410" y="86" fill="#a5b4fc" font-size="11" text-anchor="middle">auth.users</text>
+  <text x="410" y="103" fill="#e2e8f0" font-size="12" text-anchor="middle" font-weight="bold">🔑 id (PK)</text>
+  <text x="410" y="120" fill="#94a3b8" font-size="11" text-anchor="middle">email, provider</text>
+  <text x="360" y="136" fill="#475569" font-size="10">Supabase 자동 생성</text>
+
+  <!-- profiles -->
+  <rect x="295" y="195" width="230" height="110" rx="8" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="410" y="214" fill="#a5b4fc" font-size="11" text-anchor="middle">profiles</text>
+  <text x="410" y="231" fill="#e2e8f0" font-size="12" text-anchor="middle" font-weight="bold">🔑 id (FK → auth.users)</text>
+  <text x="410" y="248" fill="#94a3b8" font-size="11" text-anchor="middle">ByID, role, discord_id</text>
+  <text x="410" y="264" fill="#94a3b8" font-size="11" text-anchor="middle">ladder_points, is_in_queue</text>
+  <text x="410" y="280" fill="#94a3b8" font-size="11" text-anchor="middle">points, wins, losses</text>
+  <text x="410" y="296" fill="#fbbf24" font-size="10" text-anchor="middle">⚙️ RLS 정책 적용</text>
+
+  <!-- ladder_matches -->
+  <rect x="60" y="370" width="190" height="90" rx="8" fill="#1e293b" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="155" y="389" fill="#7dd3fc" font-size="11" text-anchor="middle">ladder_matches</text>
+  <text x="155" y="406" fill="#e2e8f0" font-size="12" text-anchor="middle" font-weight="bold">🔑 id (PK)</text>
+  <text x="155" y="422" fill="#94a3b8" font-size="11" text-anchor="middle">status, match_type</text>
+  <text x="155" y="438" fill="#94a3b8" font-size="11" text-anchor="middle">team_a_ids, team_b_ids</text>
+  <text x="155" y="453" fill="#94a3b8" font-size="11" text-anchor="middle">score_a, score_b</text>
+
+  <!-- notifications -->
+  <rect x="310" y="370" width="195" height="90" rx="8" fill="#1e293b" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="408" y="389" fill="#7dd3fc" font-size="11" text-anchor="middle">notifications</text>
+  <text x="408" y="406" fill="#e2e8f0" font-size="12" text-anchor="middle" font-weight="bold">🔑 id (PK)</text>
+  <text x="408" y="422" fill="#94a3b8" font-size="11" text-anchor="middle">user_id (FK)</text>
+  <text x="408" y="438" fill="#94a3b8" font-size="11" text-anchor="middle">title, message</text>
+  <text x="408" y="453" fill="#94a3b8" font-size="11" text-anchor="middle">is_read</text>
+
+  <!-- applications -->
+  <rect x="565" y="370" width="190" height="90" rx="8" fill="#1e293b" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="660" y="389" fill="#7dd3fc" font-size="11" text-anchor="middle">applications</text>
+  <text x="660" y="406" fill="#e2e8f0" font-size="12" text-anchor="middle" font-weight="bold">🔑 id (PK)</text>
+  <text x="660" y="422" fill="#94a3b8" font-size="11" text-anchor="middle">user_id (FK)</text>
+  <text x="660" y="438" fill="#94a3b8" font-size="11" text-anchor="middle">status, content</text>
+  <text x="660" y="453" fill="#94a3b8" font-size="11" text-anchor="middle">created_at</text>
+
+  <!-- Relation lines -->
+  <defs>
+    <marker id="rel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <!-- auth.users 1:1 profiles -->
+  <line x1="410" y1="135" x2="410" y2="195" stroke="#6366f1" stroke-width="1.5" marker-end="url(#rel)"/>
+  <text x="420" y="170" fill="#a5b4fc" font-size="10">1 : 1</text>
+
+  <!-- profiles 1:N ladder_matches -->
+  <line x1="340" y1="305" x2="200" y2="370" stroke="#0284c7" stroke-width="1.2" marker-end="url(#rel)"/>
+  <text x="255" y="345" fill="#7dd3fc" font-size="10">1 : N</text>
+
+  <!-- profiles 1:N notifications -->
+  <line x1="410" y1="305" x2="408" y2="370" stroke="#0284c7" stroke-width="1.2" marker-end="url(#rel)"/>
+  <text x="420" y="345" fill="#7dd3fc" font-size="10">1 : N</text>
+
+  <!-- profiles 1:N applications -->
+  <line x1="480" y1="305" x2="620" y2="370" stroke="#0284c7" stroke-width="1.2" marker-end="url(#rel)"/>
+  <text x="565" y="345" fill="#7dd3fc" font-size="10">1 : N</text>
+
+  <!-- Footer -->
+  <text x="410" y="488" fill="#475569" font-size="11" text-anchor="middle">ByClan Web · Data Layer · docs/diagram-gallery/data-layer.svg</text>
+</svg>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 520" width="820" height="520" font-family="Segoe UI, system-ui, sans-serif">
+  <rect width="820" height="520" fill="#0f172a" rx="12"/>
+  <text x="410" y="36" fill="#e2e8f0" font-size="18" font-weight="bold" text-anchor="middle">ByClan Web — 컴포넌트 의존성 (Component Dependency)</text>
+
+  <!-- Header.js -->
+  <rect x="320" y="65" width="180" height="50" rx="8" fill="#4f46e5"/>
+  <text x="410" y="86" fill="#fff" font-size="14" text-anchor="middle" font-weight="bold">Header.js</text>
+  <text x="410" y="105" fill="#c7d2fe" font-size="11" text-anchor="middle">최상단 네비게이션</text>
+
+  <!-- useAuthContext -->
+  <rect x="290" y="175" width="240" height="50" rx="8" fill="#1d4ed8"/>
+  <text x="410" y="196" fill="#fff" font-size="13" text-anchor="middle" font-weight="bold">useAuthContext()</text>
+  <text x="410" y="214" fill="#bfdbfe" font-size="11" text-anchor="middle">AuthContext에서 상태 구독</text>
+
+  <!-- AuthContext -->
+  <rect x="80" y="295" width="180" height="50" rx="8" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="170" y="316" fill="#e2e8f0" font-size="13" text-anchor="middle" font-weight="bold">AuthContext.ts</text>
+  <text x="170" y="334" fill="#94a3b8" font-size="11" text-anchor="middle">전역 인증 상태</text>
+
+  <!-- useAuth -->
+  <rect x="310" y="295" width="200" height="50" rx="8" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="410" y="316" fill="#e2e8f0" font-size="13" text-anchor="middle" font-weight="bold">useAuth.ts</text>
+  <text x="410" y="334" fill="#94a3b8" font-size="11" text-anchor="middle">세션 · 프로필 · 권한</text>
+
+  <!-- getPermissions / permissions.js -->
+  <rect x="560" y="295" width="180" height="50" rx="8" fill="#dc2626"/>
+  <text x="650" y="316" fill="#fff" font-size="13" text-anchor="middle" font-weight="bold">permissions.js</text>
+  <text x="650" y="334" fill="#fca5a5" font-size="11" text-anchor="middle">ROLE_PERMISSIONS</text>
+
+  <!-- Supabase -->
+  <rect x="310" y="415" width="200" height="50" rx="8" fill="#0284c7"/>
+  <text x="410" y="436" fill="#fff" font-size="13" text-anchor="middle" font-weight="bold">Supabase</text>
+  <text x="410" y="454" fill="#bae6fd" font-size="11" text-anchor="middle">Auth + Database</text>
+
+  <!-- Arrows -->
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Header → useAuthContext -->
+  <line x1="410" y1="115" x2="410" y2="175" stroke="#6366f1" stroke-width="1.5" marker-end="url(#a)"/>
+  <!-- useAuthContext → AuthContext -->
+  <line x1="350" y1="225" x2="230" y2="295" stroke="#6366f1" stroke-width="1.2" marker-end="url(#a)"/>
+  <!-- useAuthContext → useAuth -->
+  <line x1="410" y1="225" x2="410" y2="295" stroke="#6366f1" stroke-width="1.2" marker-end="url(#a)"/>
+  <!-- useAuthContext → permissions -->
+  <line x1="480" y1="225" x2="590" y2="295" stroke="#6366f1" stroke-width="1.2" marker-end="url(#a)"/>
+  <!-- useAuth → Supabase -->
+  <line x1="410" y1="345" x2="410" y2="415" stroke="#0284c7" stroke-width="1.2" marker-end="url(#a)"/>
+  <!-- AuthContext → useAuth -->
+  <line x1="260" y1="320" x2="310" y2="320" stroke="#475569" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
+
+  <!-- Label on Header → useAuthContext line -->
+  <text x="420" y="150" fill="#94a3b8" font-size="10">구독</text>
+
+  <!-- Footer -->
+  <text x="410" y="505" fill="#475569" font-size="11" text-anchor="middle">ByClan Web · Component Dependency · docs/diagram-gallery/component-dependency.svg</text>
+</svg>
