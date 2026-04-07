@@ -33,13 +33,11 @@
  *   canReviewApplications: 개발자가 가입 심사를 할 수 있는지 여부
  *   canManageMembers:       개발자가 멤버를 관리할 수 있는지 여부
  *   canDelegateMaster:      개발자가 마스터 위임을 할 수 있는지 여부
- *   requireDiscordForLadder: 래더 참여 시 Discord 연동이 필요한지 여부
  */
 export const DEV_SETTINGS = {
   canReviewApplications: true,       // 기본값: 가입심사 가능
   canManageMembers: true,            // 기본값: 멤버 관리 가능
-  canDelegateMaster: true,           // 기본값: 마스터 위임 가능
-  requireDiscordForLadder: false     // 기본값: 래더 Discord 연동 불필요
+  canDelegateMaster: true            // 기본값: 마스터 위임 가능
 };
 
 /**

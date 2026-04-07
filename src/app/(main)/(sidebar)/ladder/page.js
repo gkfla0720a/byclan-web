@@ -28,8 +28,6 @@ export default function LadderPage() {
   // 권한 객체에서 래더 플레이 가능 여부 추출
   const permissions = getPermissions();
   const canPlayLadder = permissions.can?.playLadder;
-  // Discord 연동은 신입 길드원(rookie) 전환 시에만 필요하므로 래더에서는 항상 false
-  const requiresDiscordLink = false;
   // 비로그인 사용자 여부
   const isGuest = !user;
   // 방문자(visitor) 역할인지 여부
@@ -40,7 +38,6 @@ export default function LadderPage() {
       <SectionErrorBoundary name="래더 프리뷰">
         <LadderPreview
           isGuest={isGuest || isVisitor}
-          requiresDiscordLink={false}
         />
       </SectionErrorBoundary>
     );
@@ -49,7 +46,7 @@ export default function LadderPage() {
   return (
     <SectionErrorBoundary name="래더">
       {!activeMatchId
-        ? <LadderDashboard requiresDiscordLink={false} onMatchEnter={(id) => setActiveMatchId(id)} />
+        ? <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
         : <MatchCenter matchId={activeMatchId} onExit={() => setActiveMatchId(null)} />}
     </SectionErrorBoundary>
   );

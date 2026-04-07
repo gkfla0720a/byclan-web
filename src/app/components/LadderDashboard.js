@@ -11,17 +11,15 @@
  *   - 팀 자동 배분 (밸런스 / 상픽 / 하픽 옵션)
  *   - 매치 시작 제안 및 동의/거절 팝업 (ConsentPopup)
  *   - 12명 이상일 때 두 경기 동시 제안 (TwoMatchSuggestion)
- *   - 5v5 경고 모달 및 Discord 연동 필요 모달
+ *   - 5v5 경고 모달
  *   - 진행 중인 래더 매치 목록 표시
  *
  * 사용 방법:
  *   <LadderDashboard
  *     onMatchEnter={(matchId) => { ... }}
- *     requiresDiscordLink={false}
  *   />
  *
  *   - onMatchEnter: 매치에 입장할 때 호출되는 콜백 (matchId 전달)
- *   - requiresDiscordLink: Discord 연동이 필요한 설정일 경우 true
  */
 'use client';
 
@@ -307,11 +305,10 @@ function TwoMatchSuggestion({ players, onSelectMatch }) {
  * 대기열 현황, 팀 밸런스 미리보기, 매치 제안/동의, 진행 중 매치 목록을 통합 제공합니다.
  *
  * @param {function} onMatchEnter - 매치에 입장할 때 호출되는 콜백 (matchId: string 전달)
- * @param {boolean} requiresDiscordLink - Discord 연동이 필요한 설정인지 여부
  * @returns {JSX.Element} 래더 대시보드 UI
  */
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────
-export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
+export default function LadderDashboard({ onMatchEnter }) {
   /** 현재 로그인한 Supabase 유저 객체. 비로그인 상태면 null. */
   const [user, setUser] = useState(null);
   /** 현재 유저의 profiles 테이블 데이터 (닉네임, 종족, MMR 등) */
@@ -342,8 +339,6 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
   const [show5v5Warning, setShow5v5Warning] = useState(false);
   /** 5v5 경고를 확인하고 동의했는지 여부 */
   const [accepted5v5, setAccepted5v5] = useState(false);
-  /** Discord 연동 안내 모달 표시 여부 */
-  const [showDiscordModal, setShowDiscordModal] = useState(false);
   /** 진행 중 매치에 참여한 플레이어 프로필 조회 맵 (userId → profile) */
   const [matchProfiles, setMatchProfiles] = useState({});
   /** 쿨다운 카운트다운 타이머 참조 (clearTimeout에 사용) */
@@ -490,11 +485,6 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
    */
   const handleJoinQueue = async () => {
     if (!user) return;
-    // Discord 연동 확인
-    if (requiresDiscordLink) {
-      setShowDiscordModal(true);
-      return;
-    }
     const mt = MATCH_TYPES[queueMatchType];
     if (mt?.warning && !accepted5v5) {
       setShow5v5Warning(true);
@@ -698,44 +688,6 @@ export default function LadderDashboard({ onMatchEnter, requiresDiscordLink }) {
               </button>
               <button
                 onClick={() => setShow5v5Warning(false)}
-                className="flex-1 py-3 font-black rounded-xl border border-gray-700 text-gray-400 hover:border-gray-500 transition-colors"
-              >
-                취소
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Discord 연동 모달 */}
-      {showDiscordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
-          <div className="max-w-sm w-full mx-4 p-7 rounded-2xl border-2 border-indigo-600 bg-[#0a0010] shadow-[0_0_30px_rgba(99,102,241,0.4)]">
-            <div className="text-4xl text-center mb-4">🎮</div>
-            <h3 className="text-center font-black text-lg text-indigo-400 mb-3">Discord 연동 필요</h3>
-            <p className="text-sm text-gray-300 text-center mb-6 leading-relaxed">
-              래더 대기열 참여를 위해<br />
-              Discord 계정 연동이 필요합니다.<br /><br />
-              Discord로 로그인하면 계정이 자동으로<br />
-              연동되어 래더 매치에 참여할 수 있습니다.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  supabase.auth.signInWithOAuth({
-                    provider: 'discord',
-                    options: {
-                      redirectTo: `${window.location.origin}/auth/callback?next=/ladder`
-                    }
-                  });
-                }}
-                className="flex-1 py-3 font-black rounded-xl bg-indigo-700 hover:bg-indigo-600 text-white transition-colors flex items-center justify-center gap-2"
-              >
-                <span>🎮</span>
-                <span>Discord로 로그인</span>
-              </button>
-              <button
-                onClick={() => setShowDiscordModal(false)}
                 className="flex-1 py-3 font-black rounded-xl border border-gray-700 text-gray-400 hover:border-gray-500 transition-colors"
               >
                 취소

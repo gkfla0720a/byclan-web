@@ -4,7 +4,6 @@
  * @주요기능
  *   - 화면 우하단에 고정된 ⚙️ 버튼으로 열리는 개발자 설정 패널
  *   - 가입 심사 권한, 멤버 관리 권한, 마스터 위임 권한 토글
- *   - 래더 Discord 연동 필수 검사 ON/OFF (개발 시 우회용)
  *   - 설정값은 브라우저 로컬 스토리지에 저장되므로 새로고침 후에도 유지됨
  * @사용방법
  *   개발 환경에서 편의를 위해 사용합니다.
@@ -64,11 +63,6 @@ export default function DevSettingsPanel() {
       key: 'canDelegateMaster',
       title: '마스터 위임 권한',
       desc: '마스터 역할 위임 가능',
-    },
-    {
-      key: 'requireDiscordForLadder',
-      title: '래더 Discord 연동 필수',
-      desc: '래더 참여 시 Discord 연동 요구 (기본: OFF — 신입 길드원 전환 시에만 필요)',
     },
   ];
 

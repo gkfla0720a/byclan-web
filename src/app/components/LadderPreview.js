@@ -9,14 +9,13 @@
  * 주요 기능:
  *   - Supabase에서 대기열 또는 상위 래더 플레이어를 최대 5명 불러옴
  *   - 불러온 플레이어 정보를 블러(흐림) 처리된 UI로 표시
- *   - 사용자 상태(게스트 / Discord 미연동 / 등급 부족)에 따라 다른 안내 메시지 표시
+ *   - 사용자 상태(게스트 / 등급 부족)에 따라 다른 안내 메시지 표시
  *   - 래더 시스템의 주요 기능(랭킹, 베팅, 대기열)을 카드로 소개
  *
  * 사용 방법:
- *   <LadderPreview isGuest={true} requiresDiscordLink={false} />
+ *   <LadderPreview isGuest={true} />
  *
  *   - isGuest: 로그인하지 않은 방문자라면 true
- *   - requiresDiscordLink: Discord 연동이 필요한 경우 true
  */
 'use client';
 
@@ -58,10 +57,9 @@ function getRaceLabel(race) {
  * 실제 래더 UI는 블러(흐림) 처리되며, 가입/로그인 안내가 함께 표시됩니다.
  *
  * @param {boolean} isGuest - 로그인하지 않은 방문자 여부
- * @param {boolean} requiresDiscordLink - Discord 연동이 아직 안 된 경우 true
  * @returns {JSX.Element} 래더 미리보기 화면
  */
-export default function LadderPreview({ isGuest, requiresDiscordLink }) {
+export default function LadderPreview({ isGuest }) {
   /** useNavigate 훅: 페이지 이동 함수 (예: navigateTo('로그인')) */
   const navigateTo = useNavigate();
   /** 미리보기에 표시할 플레이어 목록 (최대 5명) */
@@ -140,15 +138,12 @@ export default function LadderPreview({ isGuest, requiresDiscordLink }) {
 
   /**
    * 사용자 상태에 따른 안내 메시지를 결정합니다.
-   * - Discord 미연동: Discord 연동 필요 안내
    * - 게스트(비로그인): 로그인 및 클랜원 등급 필요 안내
    * - 로그인했으나 등급 부족: 클랜원 등급 필요 안내
    */
-  const accessMessage = requiresDiscordLink
-    ? '현재 설정상 래더 참여 전 Discord 연동이 필요합니다.'
-    : isGuest
-      ? '래더 참여는 로그인 후 클랜원 등급 이상이어야 합니다.'
-      : '래더 참여는 클랜원(일반 클랜원 이상) 등급이 필요합니다.';
+  const accessMessage = isGuest
+    ? '래더 참여는 로그인 후 클랜원 등급 이상이어야 합니다.'
+    : '래더 참여는 클랜원(일반 클랜원 이상) 등급이 필요합니다.';
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-6 px-2">
@@ -163,22 +158,7 @@ export default function LadderPreview({ isGuest, requiresDiscordLink }) {
         </p>
           <p className="text-gray-500 text-xs mb-4">{accessMessage}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            {requiresDiscordLink ? (
-              <>
-                <button
-                  onClick={() => navigateTo('프로필')}
-                  className="px-6 py-2.5 rounded-lg font-bold text-sm btn-neon"
-                >
-                  내 상태 확인
-                </button>
-                <button
-                  onClick={() => navigateTo('가입안내')}
-                  className="px-6 py-2.5 rounded-lg font-bold text-sm bg-indigo-500/10 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/20 transition-all"
-                >
-                  Discord 안내 보기
-                </button>
-              </>
-            ) : isGuest ? (
+            {isGuest ? (
               <>
                 <button
                   onClick={() => navigateTo('로그인')}

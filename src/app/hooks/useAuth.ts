@@ -34,12 +34,7 @@
  */
 import { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { PermissionChecker, ROLE_PERMISSIONS, loadDevSettings } from '../utils/permissions';
-import {
-  TEST_ACCOUNT_SETTING_EVENT,
-  TEST_ACCOUNT_SETTING_KEY,
-  shouldBypassDiscordForTestAccount,
-} from '../utils/testData';
+import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { withRetry, isRetryableError } from '../utils/retry';
 import logger, { Severity } from '../utils/errorLogger';
 
@@ -103,8 +98,6 @@ export interface UserProfile {
  *     accessDevTools:      개발자 도구 접근 가능 여부
  *     moderateLadder:      래더 중재 가능 여부
  *     playLadder:          래더 플레이 가능 여부
- *     requiresDiscordLink: Discord 연동이 필요한 상태인지
- *     discordBypassAllowed: Discord 연동 없이도 플레이 가능한지 (테스트 계정)
  *   canAccessMenu(menuPath): 특정 메뉴 접근 가능한지 확인하는 함수
  *   hasLevel(requiredLevel): 최소 레벨을 충족하는지 확인하는 함수
  */
@@ -125,8 +118,6 @@ export interface AuthPermissions {
     accessDevTools: boolean;
     moderateLadder: boolean;
     playLadder: boolean;
-    requiresDiscordLink: boolean;
-    discordBypassAllowed: boolean;
   };
   canAccessMenu: (menuPath: string) => boolean;
   hasLevel: (requiredLevel: number) => boolean;
@@ -196,7 +187,6 @@ export function useAuth(): UseAuthReturn {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [testAccountsEnabled, setTestAccountsEnabled] = useState(true);
   const [password, setPassword] = useState('');
   const [isAuthorizedState, setIsAuthorizedState] = useState(false);
   const [homeGateReady, setHomeGateReady] = useState(false);
@@ -207,30 +197,6 @@ export function useAuth(): UseAuthReturn {
     const timer = setTimeout(() => setAuthError(null), 4000);
     return () => clearTimeout(timer);
   }, [authError]);
-
-  const loadServerSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('key, value_bool')
-        .eq('key', TEST_ACCOUNT_SETTING_KEY)
-        .maybeSingle();
-
-      if (error) {
-        const message = `${error.message || ''} ${error.details || ''}`.toLowerCase();
-        if (error.code !== '42P01' && !message.includes('does not exist')) {
-          logger.warning('시스템 설정 로드 실패', { error });
-        }
-        setTestAccountsEnabled(true);
-        return;
-      }
-
-      setTestAccountsEnabled(data?.value_bool !== false);
-    } catch (error) {
-      logger.error('시스템 설정 초기화 실패', error);
-      setTestAccountsEnabled(true);
-    }
-  };
 
   const loadUserData = async (authUser: Record<string, unknown>) => {
     if (!authUser) {
@@ -368,7 +334,6 @@ export function useAuth(): UseAuthReturn {
           return;
         }
 
-        await loadServerSettings();
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           // Logged-in users automatically pass the HomeGate so they are not
@@ -386,14 +351,6 @@ export function useAuth(): UseAuthReturn {
     };
 
     initializeData();
-
-    const handleTestAccountSettingChanged = (event: Event) => {
-      setTestAccountsEnabled((event as CustomEvent)?.detail !== false);
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener(TEST_ACCOUNT_SETTING_EVENT, handleTestAccountSettingChanged);
-    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
@@ -415,9 +372,6 @@ export function useAuth(): UseAuthReturn {
     });
 
     return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener(TEST_ACCOUNT_SETTING_EVENT, handleTestAccountSettingChanged);
-      }
       subscription.unsubscribe();
     };
   }, []);
@@ -426,20 +380,7 @@ export function useAuth(): UseAuthReturn {
     const profileRole = profile?.role;
     const userRole = profileRole?.trim().toLowerCase();
     const roleInfo = userRole ? (ROLE_PERMISSIONS as Record<string, unknown>)[userRole] : null;
-    const devSettings = loadDevSettings();
     const baseLadderPermission = PermissionChecker.hasPermission(userRole, 'ladder.play');
-    const discordBypassAllowed = shouldBypassDiscordForTestAccount(profile, testAccountsEnabled);
-    // requiresDiscordLink: Discord 연동이 필요한 상태인지 확인합니다.
-    // discord_id 는 Discord OAuth 로그인 시 항상 저장되는 불변(immutable) 식별자로,
-    // ByID 와 달리 변경될 수 없습니다. 신입 길드원(rookie) 이상의 역할로 전환될 때
-    // discord_id 가 반드시 존재해야 합니다.
-    // 래더 참여 자체에는 Discord 연동이 더 이상 요구되지 않습니다 (requireDiscordForLadder: false).
-    const requiresDiscordLink = Boolean(
-      baseLadderPermission &&
-      devSettings.requireDiscordForLadder &&
-      !discordBypassAllowed &&
-      !profile?.discord_id
-    );
 
     return {
       isDeveloper: userRole === 'developer',
@@ -458,8 +399,6 @@ export function useAuth(): UseAuthReturn {
         accessDevTools: PermissionChecker.hasPermission(userRole, 'system.admin'),
         moderateLadder: PermissionChecker.hasPermission(userRole, 'ladder.admin'),
         playLadder: baseLadderPermission,
-        requiresDiscordLink,
-        discordBypassAllowed,
       },
       canAccessMenu: (menuPath: string) => PermissionChecker.canAccessMenu(userRole, menuPath),
       hasLevel: (requiredLevel: number) => PermissionChecker.hasLevel(userRole, requiredLevel),
