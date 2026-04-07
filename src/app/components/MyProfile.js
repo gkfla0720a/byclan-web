@@ -61,7 +61,7 @@ export default function MyProfile() {
     member: "🛡️ 일반 클랜원",
     rookie: "🌱 신입 클랜원",
     applicant: "📝 신규 가입자",
-    guest: "👤 방문자"
+    visitor: "👤 방문자"
   };
 
   /**
