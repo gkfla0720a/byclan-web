@@ -47,7 +47,7 @@ import logger, { Severity } from '../utils/errorLogger';
  *   id:             Supabase Auth의 사용자 UUID (기본 키)
  *   ByID:           클랜 내 고유 닉네임 (예: 'By_홍길동')
  *   discord_name:   Discord 사용자 이름 (Discord 로그인 시 자동 설정)
- *   discord_id:     Discord 고유 ID (래더 참여 시 필요)
+ *   discord_id:     Discord 고유 ID (Discord OAuth 연동 시 저장, 현재 미사용)
  *   role:           클랜 역할 (visitor/applicant/rookie/member/elite/admin/master/developer)
  *   points:         클랜 활동 포인트
  *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)
@@ -64,7 +64,6 @@ export interface UserProfile {
   id: string;
   ByID: string;
   discord_name: string | null;
-  discord_id: string | null;
   role: string;
   points: number;
   race: string;
@@ -223,7 +222,6 @@ export function useAuth(): UseAuthReturn {
           .insert({
             id: authUser.id,
             discord_name: isDiscordProvider ? discordName : null,
-            discord_id: isDiscordProvider ? discordId : null,
             ByID: `By_${(authUser.email as string)?.split('@')[0] || discordName || 'User'}`,
             role: 'visitor',
             points: 0,
@@ -261,10 +259,9 @@ export function useAuth(): UseAuthReturn {
 
     let nextProfile: UserProfile = p as UserProfile;
 
-    if (isDiscordProvider && (!p.discord_id || !p.discord_name)) {
+    if (isDiscordProvider && !p.discord_name) {
       const updates: Record<string, string> = {};
-      if (!p.discord_name) updates.discord_name = discordName;
-      if (!p.discord_id && discordId) updates.discord_id = discordId;
+      updates.discord_name = discordName;
 
       if (Object.keys(updates).length > 0) {
         const { data: updatedProfile, error: updateError } = await supabase
