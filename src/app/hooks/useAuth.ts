@@ -287,8 +287,8 @@ export function useAuth(): UseAuthReturn {
 
     setNeedsSetup(false);
 
-    // 진행 중인 래더 매치 확인 (정식 멤버만)
-    if (['member', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
+    // 진행 중인 래더 매치 확인 (래더 플레이 가능 역할 전체)
+    if (['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
       try {
         const { data: m, error: matchError } = await supabase
           .from('ladder_matches')
