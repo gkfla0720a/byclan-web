@@ -138,6 +138,8 @@ export interface UseAuthReturn {
   setUser: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   needsSetup: boolean;
   setNeedsSetup: React.Dispatch<React.SetStateAction<boolean>>;
+  /** ByID가 비어있거나 없을 때 true. 프로필 설정 페이지로 유도하는 데 사용됩니다. */
+  needsByIDSetup: boolean;
   authLoading: boolean;
   authError: string | null;
   setAuthError: React.Dispatch<React.SetStateAction<string | null>>;
@@ -184,6 +186,7 @@ export function useAuth(): UseAuthReturn {
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
+  const [needsByIDSetup, setNeedsByIDSetup] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
