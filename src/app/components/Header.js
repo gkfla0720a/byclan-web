@@ -65,7 +65,7 @@ export default function Header() {
   const navigateTo = useNavigate();
   // AuthContext에서 전역 인증 상태를 가져옵니다.
   // Header가 독립적인 auth 상태를 관리하지 않고 전역 상태를 공유하여 OAuth 리다이렉트 후에도 올바른 상태를 표시합니다.
-  const { user, profile } = useAuthContext();
+  const { user, profile, authLoading, needsByIDSetup, authError, reloadProfile } = useAuthContext();
   
   // navRef: 헤더 <nav> 요소의 참조. 외부 클릭 감지에 사용됩니다.
   const navRef = useRef(null);
@@ -80,7 +80,9 @@ export default function Header() {
 
   // profile에서 역할과 닉네임을 파생합니다.
   const role = profile?.role || null;
-  const nickname = profile?.ByID || profile?.discord_name || user?.user_metadata?.full_name || '유저';
+  // ByID만 사용합니다. 없으면 null로 처리하며 폴백 닉네임을 사용하지 않습니다.
+  const hasValidByID = !!(profile?.ByID && profile.ByID.trim() !== '');
+  const nickname = hasValidByID ? profile.ByID : null;
 
   // 권한 체크: 역할 문자열을 소문자로 정규화하여 비교합니다
   // 🛡️ 권한 체크 로직 (소문자 및 공백 완벽 제거)
@@ -122,6 +124,14 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ByID가 없는 경우 즉시 프로필 설정 페이지로 이동하여 아이디를 등록하도록 유도합니다.
+  // (자동 로그아웃은 useAuth.ts의 재확인 로직에서 처리합니다.)
+  useEffect(() => {
+    if (user && !authLoading && needsByIDSetup) {
+      navigateTo('프로필');
+    }
+  }, [user, authLoading, needsByIDSetup, navigateTo]);
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -161,12 +171,21 @@ export default function Header() {
     setIsMobileMenuOpen(false);
   };
 
+  // 로고 클릭 시 홈으로 이동하면서 프로필을 재조회합니다.
+  // SPA 탐색이므로 페이지가 새로고침되지 않아 프로필 변동사항이 반영되지 않을 수 있기 때문입니다.
+  const handleLogoClick = () => {
+    handleNav('Home');
+    if (user) {
+      reloadProfile();
+    }
+  };
+
   return (
     <nav ref={navRef} className="relative z-50 border-b border-cyan-400/20 bg-slate-950/70 backdrop-blur-2xl shadow-[0_12px_40px_rgba(15,23,42,0.35)]">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         
         {/* 로고 & 타이틀 */}
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => handleNav('Home')}>
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
           <ByClanLogo />
           {/* 👇 Footer와 완벽하게 동일한 황금빛 그라데이션 및 그림자 적용! */}
           <span 
@@ -241,7 +260,13 @@ export default function Header() {
                 </button>
                 <button onClick={() => handleNav('프로필')} className="p-1 text-slate-300 hover:text-cyan-200 transition-all"><span className="text-lg">👤</span></button>
                 <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-full border border-cyan-400/15 shadow-[0_0_18px_rgba(34,211,238,0.08)]">
-                  <span className="text-xs font-bold text-slate-100">{nickname}</span>
+                  {nickname ? (
+                    <span className="text-xs font-bold text-slate-100">{nickname}</span>
+                  ) : (
+                    <span className="text-xs font-bold text-red-400 max-w-[180px] truncate" title="By닉네임이 존재하지 않습니다. 아이디를 재설정해주세요.">
+                      {authError || 'By닉네임이 없습니다. 재설정해주세요.'}
+                    </span>
+                  )}
                   <button onClick={handleLogout} className="text-[10px] text-red-500 font-black ml-1">OUT</button>
                 </div>
               </>
@@ -280,7 +305,11 @@ export default function Header() {
           {user && (
             <div className="px-6 py-5 border-b border-cyan-400/10 bg-slate-900/35 flex flex-col gap-4">
               <div className="flex justify-between items-center">
-                <span className="font-black text-cyan-200 text-sm">{nickname}</span>
+                {nickname ? (
+                  <span className="font-black text-cyan-200 text-sm">{nickname}</span>
+                ) : (
+                  <span className="font-black text-red-400 text-xs">{authError || 'By닉네임이 없습니다. 재설정해주세요.'}</span>
+                )}
                 <button onClick={handleLogout} className="text-[10px] text-red-300 font-black bg-red-950/30 px-3 py-2 rounded-lg border border-red-400/20">LOGOUT</button>
               </div>
               <div className="flex gap-2">

@@ -32,7 +32,7 @@
  *   UseAuthReturn:  이 훅의 전체 반환 타입
  * =====================================================================
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { withRetry, isRetryableError } from '../utils/retry';
@@ -186,12 +186,30 @@ export function useAuth(): UseAuthReturn {
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
-  const [needsByIDSetup, setNeedsByIDSetup] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // ByID 재확인 진행 상태를 추적하는 ref입니다.
+  // state가 아닌 ref를 사용하여 불필요한 재렌더링을 방지합니다.
+  const byIDRecheckRef = useRef<'idle' | 'checking'>('idle');
   const [password, setPassword] = useState('');
-  const [isAuthorizedState, setIsAuthorizedState] = useState(false);
-  const [homeGateReady, setHomeGateReady] = useState(false);
+
+  // HomeGate 인증 상태를 sessionStorage에서 lazy하게 초기화합니다.
+  // useEffect 내 setState 대신 lazy initializer를 사용하여 불필요한 재렌더링을 피합니다.
+  const [isAuthorizedState, setIsAuthorizedState] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const sessionAuthorized = window.sessionStorage.getItem('byclan_home_gate') === 'authorized';
+    if (!sessionAuthorized) {
+      window.localStorage.removeItem('byclan_home_gate');
+    }
+    return sessionAuthorized;
+  });
+  const [homeGateReady, setHomeGateReady] = useState<boolean>(() => typeof window !== 'undefined');
+
+  // ─── ByID 유효성 파생 ──────────────────────────────────────────────────────
+  // needsByIDSetup은 profile에서 직접 파생되는 계산값입니다. (별도 state 불필요)
+  // profile이 null이면 아직 로딩 중이므로 false로 처리합니다.
+  const needsByIDSetup = profile !== null && !(profile.ByID && profile.ByID.trim() !== '');
 
   // Auto-clear authError after 4 seconds
   useEffect(() => {
@@ -199,6 +217,69 @@ export function useAuth(): UseAuthReturn {
     const timer = setTimeout(() => setAuthError(null), 4000);
     return () => clearTimeout(timer);
   }, [authError]);
+
+  // ─── ByID 안전 재확인 + 자동 로그아웃 ────────────────────────────────────
+  // ByID가 없어 보일 때 즉시 판단하지 않고, 아래 순서로 처리합니다.
+  //   1. 1500ms 대기 (화면 전환·일시적 상태 무시)
+  //   2. DB에서 직접 ByID를 재조회
+  //   3. 재조회에서도 없으면: 에러 메시지 → 3초 후 로그아웃 + 페이지 새로고침
+  //   4. 재조회에서 있으면: 전체 프로필을 다시 로드하고 정상 처리
+  useEffect(() => {
+    if (!user || !profile || authLoading) {
+      byIDRecheckRef.current = 'idle';
+      return;
+    }
+
+    const hasValidByID = !!(profile.ByID && profile.ByID.trim() !== '');
+    // ByID가 유효하면 재확인 상태를 초기화하고 종료합니다.
+    if (hasValidByID) {
+      byIDRecheckRef.current = 'idle';
+      return;
+    }
+    // 이미 재확인 중이면 중복 실행하지 않습니다.
+    if (byIDRecheckRef.current !== 'idle') return;
+
+    byIDRecheckRef.current = 'checking';
+
+    const runRecheck = async () => {
+      // 화면 전환 등 일시적 상태 변화를 충분히 기다립니다.
+      await new Promise<void>(resolve => setTimeout(resolve, 1500));
+
+      // DB에서 최신 ByID를 직접 조회합니다.
+      const { data: fresh } = await supabase
+        .from('profiles')
+        .select('ByID')
+        .eq('id', (user as { id: string }).id)
+        .single();
+
+      const freshHasValidByID = !!(fresh?.ByID && (fresh.ByID as string).trim() !== '');
+
+      if (freshHasValidByID) {
+        // 일시적인 문제였음 - 전체 프로필을 다시 로드하고 종료합니다.
+        byIDRecheckRef.current = 'idle';
+        const { data: fullProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', (user as { id: string }).id)
+          .single();
+        if (fullProfile) setProfile(fullProfile as UserProfile);
+        return;
+      }
+
+      // 재확인 후에도 ByID가 없음 → 에러 표시 후 자동 로그아웃합니다.
+      setAuthError('By닉네임이 존재하지 않습니다. 아이디를 재설정해주세요.');
+      // 에러 메시지를 잠깐 보여준 뒤 로그아웃합니다.
+      await new Promise<void>(resolve => setTimeout(resolve, 3000));
+      try { await supabase.auth.signOut(); } catch (_) { /* 무시 */ }
+      localStorage.clear();
+      window.location.reload();
+    };
+
+    runRecheck().catch(err => {
+      logger.error('ByID 재확인 중 오류 발생', err);
+      byIDRecheckRef.current = 'idle';
+    });
+  }, [user, profile, authLoading]);
 
   const loadUserData = async (authUser: Record<string, unknown>) => {
     if (!authUser) {
@@ -309,17 +390,6 @@ export function useAuth(): UseAuthReturn {
     }
     setAuthLoading(false);
   };
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const sessionAuthorized = window.sessionStorage.getItem('byclan_home_gate') === 'authorized';
-      if (!sessionAuthorized) {
-        window.localStorage.removeItem('byclan_home_gate');
-      }
-      setIsAuthorizedState(sessionAuthorized);
-      setHomeGateReady(true);
-    }
-  }, []);
 
   // Grants HomeGate access for authenticated users so that board, ranking,
   // and member sections are visible without re-entering the password.
@@ -506,6 +576,7 @@ export function useAuth(): UseAuthReturn {
     setUser,
     needsSetup,
     setNeedsSetup,
+    needsByIDSetup,
     authLoading,
     authError,
     setAuthError,

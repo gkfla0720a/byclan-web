@@ -19,6 +19,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import { isMarkedTestAccount } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
+import { useAuthContext } from '../context/AuthContext';
 
 /**
  * MyProfile 컴포넌트
@@ -27,6 +28,8 @@ import { useNavigate } from '../hooks/useNavigate';
 export default function MyProfile() {
   /** 페이지 전환(탭 이동)을 위한 내비게이션 함수 */
   const navigateTo = useNavigate();
+  /** AuthContext에서 전역 프로필 재조회 함수를 가져옵니다. */
+  const { reloadProfile } = useAuthContext();
   /** Supabase profiles 테이블에서 불러온 전체 프로필 데이터 */
   const [profile, setProfile] = useState(null);
   /** 현재 유저의 이메일 주소 (Supabase Auth에서 가져옴) */
@@ -183,7 +186,10 @@ export default function MyProfile() {
 
       if (error) throw error;
       alert('프로필이 성공적으로 업데이트되었습니다.');
-      window.location.reload(); 
+      // 전역 인증 상태(헤더 닉네임 등)와 로컬 화면을 모두 갱신합니다.
+      // window.location.reload() 대신 사용하여 페이지 깜빡임 없이 최신 데이터를 반영합니다.
+      await reloadProfile();
+      fetchProfileData();
     } catch (error) {
       alert('업데이트 실패: ' + error.message);
     } finally {
@@ -242,6 +248,13 @@ export default function MyProfile() {
         {/* 왼쪽 섹션: 회원 정보 수정 폼 */}
         <div className="lg:col-span-2 bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-700 shadow-xl space-y-6">
           
+        {/* ByID 미설정 경고 배너 */}
+          {!originalByID && (
+            <div className="bg-red-900/30 border border-red-500/50 rounded-xl px-4 py-3 text-red-300 text-sm font-bold flex items-center gap-2">
+              ⚠️ By닉네임이 설정되지 않았습니다. 아이디를 입력하고 중복 확인 후 저장해주세요.
+            </div>
+          )}
+
           {/* 1. 닉네임 설정 */}
           <div>
             <label className="block text-gray-400 text-xs font-bold mb-3 uppercase tracking-widest">1. 클랜 닉네임 (By_ ID)</label>
