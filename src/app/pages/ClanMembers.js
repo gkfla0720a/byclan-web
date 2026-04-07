@@ -31,7 +31,7 @@ const ROLE_SECTIONS = [
 
 const VISIBLE_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie'];
 const INLINE_ROLE_OPTIONS = [
-  { value: 'associate', label: '테스트신청자' },
+  { value: 'applicant', label: '신규 가입자' },
   { value: 'member', label: '일반 클랜원' },
   { value: 'rookie', label: '신입 길드원' },
   { value: 'elite', label: '정예 길드원' },

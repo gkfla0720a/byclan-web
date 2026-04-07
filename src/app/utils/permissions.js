@@ -5,7 +5,7 @@
  *
  * ■ 역할 구조 (높은 레벨 = 더 많은 권한)
  *   developer(100) > master(90) > admin(80) > elite(60)
- *   > associate/member(50) > rookie(35) > applicant(25) > visitor(10)
+ *   > member(50) > rookie(35) > applicant(25) > visitor(10)
  *
  * ■ 주요 개념
  *   - ROLE_PERMISSIONS: 각 역할별로 허용된 권한 목록을 정의한 객체
@@ -188,22 +188,6 @@ export const ROLE_PERMISSIONS = {
     icon: '⭐'
   },
 
-  // 테스트 신청자 - 정식 클랜원 전 단계
-  associate: {
-    name: '테스트신청자',
-    description: '테스트 신청 전후 확인용 등급',
-    level: 50,
-    permissions: [
-      'match.join',        // 매치 참여
-      'ladder.play',       // 래더 플레이 (Discord 필수)
-      'community.post',    // 커뮤니티 게시
-      'profile.edit',       // 프로필 수정
-      'tournament.join'    // 토너먼트 참여
-    ],
-    color: '#95E1D3',
-    icon: '🎮'
-  },
-
   // 일반 길드원 - 정식 멤버
   member: {
     name: '일반 클랜원',
@@ -345,7 +329,7 @@ export const PermissionChecker = {
    *   'developers' : developer만 해당
    *   'management' : developer, master, admin
    *   'senior'     : developer, master, admin, elite
-   *   'members'    : developer, master, admin, elite, associate, member
+   *   'members'    : developer, master, admin, elite, member
    *
    * 매개변수:
    *   userRole: 확인할 역할 문자열
@@ -362,7 +346,7 @@ export const PermissionChecker = {
       case 'senior':
         return ['developer', 'master', 'admin', 'elite'].includes(userRole);
       case 'members':
-        return ['member', 'associate', 'elite', 'admin', 'master', 'developer'].includes(userRole);
+        return ['member', 'elite', 'admin', 'master', 'developer'].includes(userRole);
       default:
         return false;
     }
@@ -383,8 +367,8 @@ export const PermissionChecker = {
     // 비로그인 사용자(null/undefined)는 'visitor' 수준으로 간주합니다.
     const effectiveRole = userRole || 'visitor';
 
-    const ALL_ROLES = ['visitor', 'applicant', 'rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'];
-    const MEMBER_ROLES = ['rookie', 'member', 'associate', 'elite', 'admin', 'master', 'developer'];
+    const ALL_ROLES = ['visitor', 'applicant', 'rookie', 'member', 'elite', 'admin', 'master', 'developer'];
+    const MEMBER_ROLES = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'];
 
     const menuPermissions = {
       '개발자': ['developer'],
@@ -456,8 +440,9 @@ export const DELEGATION_RULES = {
 export const ROLE_CHANGE_RULES = {
   // 승격 가능 경로
   promotion_paths: {
-    'guest': ['associate'],
-    'associate': ['elite'],
+    'applicant': ['rookie'],
+    'rookie': ['member'],
+    'member': ['elite'],
     'elite': ['admin'],
     'admin': ['master'],
     'master': [] // 마스터는 최고 등급
@@ -467,20 +452,24 @@ export const ROLE_CHANGE_RULES = {
   demotion_paths: {
     'master': ['admin'],
     'admin': ['elite'],
-    'elite': ['associate'],
-    'associate': ['guest'],
-    'guest': [],
+    'elite': ['member'],
+    'member': ['rookie'],
+    'rookie': ['applicant'],
+    'applicant': [],
     'developer': [] // 개발자는 특별 직급
   },
   
   // 역할 변경 요구 조건
   requirements: {
-    'guest_to_associate': {
+    'applicant_to_rookie': {
       days_in_clan: 7,
       ladder_games: 10,
       community_posts: 5
     },
-    'associate_to_elite': {
+    'rookie_to_member': {
+      days_in_clan: 14
+    },
+    'member_to_elite': {
       days_in_clan: 30,
       ladder_games: 50,
       tournament_participation: 1

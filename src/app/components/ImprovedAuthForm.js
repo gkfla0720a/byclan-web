@@ -153,7 +153,7 @@ function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
           options: {
             data: {
               by_id: byID,
-              role: 'associate'
+              role: 'applicant'
             }
           }
         });
@@ -168,7 +168,7 @@ function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
               id: data.user.id,
               discord_name: userId,
               ByID: byID,
-              role: 'associate',
+              role: 'applicant',
               points: 1000,
               race: 'Terran',
               intro: '새로운 클랜원입니다.',

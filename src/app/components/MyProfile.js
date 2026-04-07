@@ -60,7 +60,7 @@ export default function MyProfile() {
     elite: "⚔️ 정예 클랜원",
     member: "🛡️ 일반 클랜원",
     rookie: "🌱 신입 클랜원",
-    associate: "👀 테스트신청자",
+    applicant: "📝 신규 가입자",
     guest: "👤 방문자"
   };
 
