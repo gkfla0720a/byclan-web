@@ -209,11 +209,15 @@ export const ROLE_PERMISSIONS = {
     level: 35,
     permissions: [
       'match.view',        // 매치 관람
+      'match.join',        // 매치 참가
+      'match.host',        // 매치 개최
       'community.view',    // 커뮤니티 열람
+      'community.comment', // 커뮤니티 댓글
+      'community.post',    // 커뮤니티 게시글 작성
       'profile.view',      // 프로필 열람
-      'community.comment',  // 커뮤니티 댓글
-      'ladder.play',       // 래더 플레이 (Discord 연동 필수)
-      'discord.required'   // Discord 연동 필수
+      'profile.edit',      // 프로필 수정
+      'ladder.play',       // 래더 플레이
+      'tournament.join'    // 토너먼트 참여
     ],
     color: '#DDA0DD',
     icon: '🆕'
@@ -344,7 +348,7 @@ export const PermissionChecker = {
       case 'senior':
         return ['developer', 'master', 'admin', 'elite'].includes(userRole);
       case 'members':
-        return ['member', 'elite', 'admin', 'master', 'developer'].includes(userRole);
+        return ['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(userRole);
       default:
         return false;
     }
