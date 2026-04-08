@@ -265,7 +265,7 @@ export default function Header() {
                   {nickname ? (
                     <span className="text-xs font-bold text-slate-100">{nickname}</span>
                   ) : (
-                    <span className="text-xs font-bold text-red-400 max-w-[180px] truncate" title={NO_BYID_MESSAGE}>
+                    <span className="text-xs text-slate-400 max-w-[180px] truncate" title={NO_BYID_MESSAGE}>
                       {authError || NO_BYID_MESSAGE}
                     </span>
                   )}
@@ -310,7 +310,7 @@ export default function Header() {
                 {nickname ? (
                   <span className="font-black text-cyan-200 text-sm">{nickname}</span>
                 ) : (
-                  <span className="font-black text-red-400 text-xs">{authError || NO_BYID_MESSAGE}</span>
+                  <span className="text-slate-400 text-xs">{authError || NO_BYID_MESSAGE}</span>
                 )}
                 <button onClick={handleLogout} className="text-[10px] text-red-300 font-black bg-red-950/30 px-3 py-2 rounded-lg border border-red-400/20">LOGOUT</button>
               </div>
