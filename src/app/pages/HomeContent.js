@@ -45,6 +45,14 @@ const RACE_LABELS = {
   Random: '랜덤',
 };
 
+/** 종족 영문 키를 이모지 아이콘으로 변환 */
+const RACE_ICONS = {
+  Terran: '🔧',
+  Protoss: '✨',
+  Zerg: '🦠',
+  Random: '🎮',
+};
+
 /** MMR 수치를 받아 티어 이름 반환 */
 function getTier(points) {
   if (points >= 2400) return 'Challenger';
@@ -77,7 +85,7 @@ function MobileProfileCard({ profile, user, navigateTo }) {
   const tierColor = TIER_COLORS[tier] || 'text-gray-400';
   const winRate = getWinRate(profile.wins, profile.losses);
   const race = RACE_LABELS[profile.race] || profile.race || '—';
-  const raceIcon = profile.race === 'Terran' ? '🔧' : profile.race === 'Protoss' ? '✨' : profile.race === 'Zerg' ? '🦠' : '🎮';
+  const raceIcon = RACE_ICONS[profile.race] || '🎮';
 
   return (
     <div
