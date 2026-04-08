@@ -286,7 +286,7 @@ export default function Header() {
             </>
           ) : (
             <button onClick={handleLogin} className="px-3 py-2 border border-cyan-300/35 rounded-xl text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-xs whitespace-nowrap">
-              일반 로그인
+              로그인
             </button>
           )}
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-slate-200 hover:text-cyan-200 p-2 text-xl border border-cyan-400/15 rounded-xl bg-slate-950/60">
@@ -355,7 +355,7 @@ export default function Header() {
           {!user && (
             <div className="px-6 py-5 border-t border-cyan-400/10 bg-slate-900/35">
               <button onClick={handleLogin} className="w-full py-3 border border-cyan-300/35 rounded-xl text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-sm">
-                일반 로그인
+                로그인
               </button>
             </div>
           )}

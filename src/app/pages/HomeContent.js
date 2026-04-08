@@ -6,6 +6,7 @@
  *
  * 주요 기능:
  *   - 히어로 배너: 배경 이미지와 사이버 그리드 오버레이로 꾸민 환영 섹션
+ *   - 모바일 전용 프로필 카드: 로그인한 활성 클랜원에게만 히어로 배너 아래 표시
  *   - 클랜 소개 카드: 클랜 성향·관전 재미·가입 동선을 3열로 소개
  *   - 랭킹 미리보기: ladder_points 기준 상위 3인 표시 (클릭 시 랭킹 페이지 이동)
  *   - 최신 소식: 최근 공지사항 3건 미리보기 (클릭 시 공지 페이지 이동)
@@ -14,7 +15,7 @@
  *
  * 사용 방법:
  *   import HomeContent from './HomeContent';
- *   <HomeContent />
+ *   <HomeContent profile={profile} user={user} />
  */
 'use client';
 
@@ -25,15 +26,107 @@ import { MatchStatus, ActivityLog } from '../components/HomeSections';
 import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
+/** 티어별 텍스트 색상 클래스 매핑 */
+const TIER_COLORS = {
+  Challenger: 'text-rose-400',
+  Bronze: 'text-orange-700',
+  Silver: 'text-gray-400',
+  Gold: 'text-yellow-400',
+  Platinum: 'text-cyan-400',
+  Diamond: 'text-blue-400',
+  Master: 'text-purple-400',
+};
+
+/** 종족 영문 키를 한국어 레이블로 변환 */
+const RACE_LABELS = {
+  Terran: '테란',
+  Protoss: '프로토스',
+  Zerg: '저그',
+  Random: '랜덤',
+};
+
+/** MMR 수치를 받아 티어 이름 반환 */
+function getTier(points) {
+  if (points >= 2400) return 'Challenger';
+  if (points >= 2200) return 'Master';
+  if (points >= 1900) return 'Diamond';
+  if (points >= 1600) return 'Platinum';
+  if (points >= 1350) return 'Gold';
+  if (points >= 1100) return 'Silver';
+  return 'Bronze';
+}
+
+/** 승률 문자열 반환, 전적 없으면 '-' */
+function getWinRate(wins, losses) {
+  const total = (wins || 0) + (losses || 0);
+  if (total === 0) return '-';
+  return `${Math.round(((wins || 0) / total) * 100)}%`;
+}
+
+/**
+ * 모바일 전용 프로필 카드 컴포넌트 (lg 이상에서는 숨김)
+ * 로그인한 활성 클랜원에게 히어로 배너 아래에 표시됩니다.
+ */
+function MobileProfileCard({ profile, user, navigateTo }) {
+  const isActiveMember =
+    profile && ['member', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
+
+  if (!user || !isActiveMember) return null;
+
+  const tier = getTier(profile.ladder_points || 1000);
+  const tierColor = TIER_COLORS[tier] || 'text-gray-400';
+  const winRate = getWinRate(profile.wins, profile.losses);
+  const race = RACE_LABELS[profile.race] || profile.race || '—';
+  const raceIcon = profile.race === 'Terran' ? '🔧' : profile.race === 'Protoss' ? '✨' : profile.race === 'Zerg' ? '🦠' : '🎮';
+
+  return (
+    <div
+      className="lg:hidden neon-panel rounded-2xl p-4 flex items-center gap-4 cursor-pointer"
+      onClick={() => navigateTo('프로필')}
+    >
+      {/* 아바타 */}
+      <div className="w-12 h-12 rounded-full bg-cyan-900/30 border border-cyan-700/30 flex items-center justify-center text-xl shrink-0">
+        {raceIcon}
+      </div>
+      {/* 닉네임 + 티어 */}
+      <div className="flex flex-col min-w-0">
+        <span className="font-black text-sm text-cyan-400 truncate" style={{ textShadow: '0 0 8px rgba(0,212,255,0.4)' }}>
+          {profile.ByID || 'By_????'}
+        </span>
+        <span className={`text-xs font-bold ${tierColor}`}>{tier}</span>
+      </div>
+      {/* 스탯 */}
+      <div className="ml-auto flex gap-4 text-xs text-right shrink-0">
+        <div>
+          <div className="text-gray-500">MMR</div>
+          <div className="font-black text-yellow-400">{profile.ladder_points ?? 1000}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">승률</div>
+          <div className="font-semibold text-gray-300">{winRate}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">전적</div>
+          <div className="text-gray-300">
+            <span className="text-green-400">{profile.wins ?? 0}W</span>{' '}
+            <span className="text-red-400">{profile.losses ?? 0}L</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * HomeContent 컴포넌트
  *
  * 홈 화면 전체 레이아웃을 렌더링합니다.
  * Supabase에서 상위 랭커와 최신 공지를 불러와 표시합니다.
  *
+ * @param {{ profile: object|null, user: object|null }} props
  * @returns {JSX.Element} 홈 화면 전체 UI
  */
-function HomeContent() {
+function HomeContent({ profile = null, user = null }) {
   /** 페이지 이동 훅 */
   const navigateTo = useNavigate();
   /** 래더 포인트 기준 상위 3인 랭커 배열 */
@@ -139,6 +232,9 @@ function HomeContent() {
           </div>
         </div>
       </section>
+
+      {/* 모바일 전용 프로필 카드 (데스크톱에서는 사이드바로 표시) */}
+      <MobileProfileCard profile={profile} user={user} navigateTo={navigateTo} />
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[

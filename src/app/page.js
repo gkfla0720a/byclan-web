@@ -119,7 +119,7 @@ export default function Home() {
           <div className="w-full flex gap-4 mt-4">
             <ProfileSidebar profile={profile} user={user} />
             <div className="flex-1 min-w-0">
-              <HomeContent />
+              <HomeContent profile={profile} user={user} />
             </div>
           </div>
         </main>
