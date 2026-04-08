@@ -14,7 +14,7 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { ROLE_PERMISSIONS } from '../utils/permissions';
@@ -49,18 +49,10 @@ export default function AdminBoard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   /**
-   * 컴포넌트가 처음 화면에 마운트될 때 권한 확인 및 게시글 데이터를 로드합니다.
-   * 빈 배열 []이므로 최초 1회만 실행됩니다.
-   */
-  useEffect(() => {
-    checkAdminAndFetch();
-  }, []);
-
-  /**
    * 현재 로그인 유저의 권한을 확인하고, 운영진이면 게시글 목록을 불러옵니다.
    * @async
    */
-  const checkAdminAndFetch = async () => {
+  const checkAdminAndFetch = useCallback(async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -96,7 +88,14 @@ export default function AdminBoard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  /**
+   * 컴포넌트가 처음 화면에 마운트될 때 권한 확인 및 게시글 데이터를 로드합니다.
+   */
+  useEffect(() => {
+    checkAdminAndFetch();
+  }, [checkAdminAndFetch]);
 
   /**
    * Supabase에서 기밀 게시글 목록을 불러옵니다.
