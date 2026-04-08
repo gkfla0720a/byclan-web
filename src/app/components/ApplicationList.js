@@ -14,7 +14,7 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker } from '../utils/permissions';
 import { filterVisibleTestData } from '@/app/utils/testData';
@@ -49,19 +49,45 @@ export default function ApplicationList() {
 
   
   /**
-   * 컴포넌트 마운트 시 및 activeTab이 바뀔 때마다 실행됩니다.
-   * 탭이 바뀌면 해당 탭에 맞는 신청서 목록을 새로 불러옵니다.
+   * 현재 활성 탭에 맞게 신청서 목록을 Supabase에서 불러옵니다.
+   * - 'pending' 탭: 상태가 '대기중'인 신청서를 오래된 순으로 조회
+   * - 'completed' 탭: '대기중'이 아닌 신청서를 최신 순으로 조회
+   * @async
    */
-  useEffect(() => {
-    checkAuthAndFetch();
-  }, [activeTab]); // 탭이 바뀔 때마다 데이터를 새로 불러옵니다.
+  const fetchApplications = useCallback(async () => {
+    // ✨ 탭에 따라 불러올 상태('대기중' or '합격/불합격')를 다르게 설정
+    const queryStatus = activeTab === 'pending' ? '대기중' : null;
+
+    let query = filterVisibleTestData(supabase
+      .from('applications')
+      // ✨ tester_id와 user_id에서 ByID와 discord_name을 정확히 가져옵니다.
+      .select(`
+        *,
+        tester_id,
+        user_id
+      `));
+
+    if (activeTab === 'pending') {
+      query = query.eq('status', '대기중').order('created_at', { ascending: true });
+    } else {
+      query = query.neq('status', '대기중').order('created_at', { ascending: false });
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("신청서 로드 에러:", error);
+    } else {
+      setApplications(data);
+    }
+  }, [activeTab]);
 
   /**
    * 현재 유저 인증 정보를 확인하고 권한이 있으면 신청서 목록을 불러옵니다.
    * member.approve 권한 없는 유저는 데이터를 불러오지 않습니다.
    * @async
    */
-  const checkAuthAndFetch = async () => {
+  const checkAuthAndFetch = useCallback(async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -89,41 +115,15 @@ export default function ApplicationList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchApplications]);
 
   /**
-   * 현재 활성 탭에 맞게 신청서 목록을 Supabase에서 불러옵니다.
-   * - 'pending' 탭: 상태가 '대기중'인 신청서를 오래된 순으로 조회
-   * - 'completed' 탭: '대기중'이 아닌 신청서를 최신 순으로 조회
-   * @async
+   * 컴포넌트 마운트 시 및 activeTab이 바뀔 때마다 실행됩니다.
+   * 탭이 바뀌면 해당 탭에 맞는 신청서 목록을 새로 불러옵니다.
    */
-  const fetchApplications = async () => {
-    // ✨ 탭에 따라 불러올 상태('대기중' or '합격/불합격')를 다르게 설정
-    const queryStatus = activeTab === 'pending' ? '대기중' : null;
-
-    let query = filterVisibleTestData(supabase
-      .from('applications')
-      // ✨ tester_id와 user_id에서 ByID와 discord_name을 정확히 가져옵니다.
-      .select(`
-        *,
-        tester_id,
-        user_id
-      `));
-
-    if (activeTab === 'pending') {
-      query = query.eq('status', '대기중').order('created_at', { ascending: true });
-    } else {
-      query = query.neq('status', '대기중').order('created_at', { ascending: false });
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("신청서 로드 에러:", error);
-    } else {
-      setApplications(data);
-    }
-  };
+  useEffect(() => {
+    checkAuthAndFetch();
+  }, [checkAuthAndFetch]);
 
   /**
    * 운영진이 특정 신청자의 테스트 담당자로 자신을 지정합니다.

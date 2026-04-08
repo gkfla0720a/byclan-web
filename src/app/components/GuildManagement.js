@@ -14,7 +14,7 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
@@ -74,56 +74,6 @@ export default function GuildManagement() {
   const [delegationVerification, setDelegationVerification] = useState(createVerificationState());
 
   /**
-   * 컴포넌트가 처음 마운트될 때 관리자 정보와 길드원 목록을 병렬로 불러옵니다.
-   * 데이터 로드 완료 후 수습 기간 알림을 자동으로 확인합니다.
-   */
-  useEffect(() => {
-    const initialize = async () => {
-      await Promise.all([loadCurrentManager(), fetchMembers()]);
-    };
-
-    initialize();
-  }, []);
-
-  /**
-   * 현재 로그인한 관리자의 프로필과 이메일/전화번호를 불러와 상태에 저장합니다.
-   * 위임 재인증 초기값도 이 함수에서 설정합니다.
-   * 데이터 로드 후 2주 수습 기간이 경과한 신입에 대한 운영진 알림을 확인합니다.
-   * @async
-   */
-  const loadCurrentManager = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('id, role')
-        .eq('id', user.id)
-        .single();
-
-      if (error) throw error;
-
-      const role = profile?.role?.trim?.().toLowerCase?.() || null;
-      setCurrentManager({
-        id: user.id,
-        role,
-        email: user.email || '',
-        phone: user.phone || '',
-      });
-      setDelegationVerification(createVerificationState(user.email || '', user.phone || ''));
-
-      // admin 이상 직급이면 수습 기간 알림 확인
-      if (['admin', 'master', 'developer'].includes(role)) {
-        await checkRookieReviewNotifications(user.id);
-      }
-    } catch (error) {
-      console.error('관리자 정보 로드 실패:', error);
-    }
-  };
-
-  /**
    * 수습 기간(2주)이 경과했지만 아직 운영진에게 검토 알림이 발송되지 않은
    * 신입 길드원(rookie)을 찾아 admin 이상 전체에게 알림을 보냅니다.
    * 중복 발송을 막기 위해 알림 제목에 rookie ID를 포함하여 존재 여부를 확인합니다.
@@ -179,11 +129,49 @@ export default function GuildManagement() {
   };
 
   /**
+   * 현재 로그인한 관리자의 프로필과 이메일/전화번호를 불러와 상태에 저장합니다.
+   * 위임 재인증 초기값도 이 함수에서 설정합니다.
+   * 데이터 로드 후 2주 수습 기간이 경과한 신입에 대한 운영진 알림을 확인합니다.
+   * @async
+   */
+  const loadCurrentManager = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      const role = profile?.role?.trim?.().toLowerCase?.() || null;
+      setCurrentManager({
+        id: user.id,
+        role,
+        email: user.email || '',
+        phone: user.phone || '',
+      });
+      setDelegationVerification(createVerificationState(user.email || '', user.phone || ''));
+
+      // admin 이상 직급이면 수습 기간 알림 확인
+      if (['admin', 'master', 'developer'].includes(role)) {
+        await checkRookieReviewNotifications(user.id);
+      }
+    } catch (error) {
+      console.error('관리자 정보 로드 실패:', error);
+    }
+  }, []);
+
+  /**
    * Supabase에서 길드원 목록을 불러옵니다.
    * visitor와 expelled 역할은 제외하며, 테스트 계정도 필터링됩니다.
    * @async
    */
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     try {
       const { data, error } = await filterVisibleTestAccounts(supabase
         .from('profiles')
@@ -199,7 +187,19 @@ export default function GuildManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  /**
+   * 컴포넌트가 처음 마운트될 때 관리자 정보와 길드원 목록을 병렬로 불러옵니다.
+   * 데이터 로드 완료 후 수습 기간 알림을 자동으로 확인합니다.
+   */
+  useEffect(() => {
+    const initialize = async () => {
+      await Promise.all([loadCurrentManager(), fetchMembers()]);
+    };
+
+    initialize();
+  }, [loadCurrentManager, fetchMembers]);
 
   /**
    * 특정 길드원의 역할(등급)을 변경합니다.

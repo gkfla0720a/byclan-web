@@ -19,7 +19,7 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
@@ -39,18 +39,10 @@ function DiscordLinkPanel({ user, onLinked }) {
   const [isLinked, setIsLinked] = useState(false);
 
   /**
-   * user가 변경될 때마다 Discord 연동 상태를 DB에서 다시 확인합니다.
-   * 컴포넌트 최초 로드 시에도 실행됩니다.
-   */
-  useEffect(() => {
-    checkDiscordLink();
-  }, [user]);
-
-  /**
    * Supabase profiles 테이블에서 discord_name 필드를 조회하여
    * 현재 Discord 연동 여부를 확인하고 isLinked 상태를 업데이트합니다.
    */
-  const checkDiscordLink = async () => {
+  const checkDiscordLink = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -63,7 +55,15 @@ function DiscordLinkPanel({ user, onLinked }) {
     } catch (error) {
       console.error('Discord 연동 확인 실패:', error);
     }
-  };
+  }, [user]);
+
+  /**
+   * user가 변경될 때마다 Discord 연동 상태를 DB에서 다시 확인합니다.
+   * 컴포넌트 최초 로드 시에도 실행됩니다.
+   */
+  useEffect(() => {
+    checkDiscordLink();
+  }, [checkDiscordLink]);
 
   /**
    * Discord OAuth 팝업을 열어 계정 연동을 시작합니다.
