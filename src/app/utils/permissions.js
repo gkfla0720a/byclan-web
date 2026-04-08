@@ -124,10 +124,29 @@ export const ROLE_PERMISSIONS = {
       'code.deploy',       // 코드 배포
       'user.manage_all',   // 모든 유저 관리
       'clan.admin_all',    // 클랜 전체 관리
+      'clan.admin',        // 클랜 일반 관리
       'member.approve',    // 가입 심사
       'member.manage',     // 멤버 관리
+      'member.test',       // 가입 테스트
+      'member.mentor',     // 신입 멘토링
       'master.delegate',   // 마스터 위임
-      'ladder.play'        // 래더 플레이
+      'tournament.create', // 토너먼트 생성
+      'tournament.join',   // 토너먼트 참여
+      'ladder.admin',      // 래더 관리
+      'ladder.moderate',   // 래더 중재
+      'ladder.play',       // 래더 플레이
+      'match.manage',      // 매치 관리
+      'match.host',        // 매치 개최
+      'match.join',        // 매치 참여
+      'match.view',        // 매치 관람
+      'announcement.post', // 공지사항 게시
+      'announcement.edit', // 공지사항 편집
+      'community.post',    // 자유게시판 게시
+      'community.view',    // 자유게시판 열람
+      'community.comment', // 자유게시판 댓글
+      'profile.edit',      // 프로필 수정
+      'profile.view',      // 프로필 열람
+      'clan.info'          // 클랜 정보 열람
     ],
     color: '#FF6B6B',
     icon: '👨‍💻'
