@@ -104,17 +104,26 @@ export default function MatchCenter({ matchId, onExit }) {
   const [myUserId, setMyUserId] = useState(null);
   /** 양 팀 엔트리가 모두 제출되어 공개된 상태인지 여부 */
   const [isRevealed, setIsRevealed] = useState(false);
-  /** 내 팀 멤버 목록 (엔트리 선택 드롭다운에 사용) */
-  const [teamMembers, setTeamMembers] = useState([]);
+  /** 현재 로그인 유저의 역할 (admin/master/developer 등) */
+  const [myRole, setMyRole] = useState(null);
+  /** 운영진/개발자 실시간 관리모드 활성 여부 (system_settings.match_admin_live_mode) */
+  const [managementMode, setManagementMode] = useState(false);
   /**
-   * 내가 작성 중인 엔트리 배열 (최대 3명).
-   * 각 슬롯: { id: 유저ID, ByID: 닉네임, race: 종족 }
+   * 팀별 작성 중 엔트리 배열 (최대 3명).
+   * A/B 팀 각각 독립적으로 관리하여 시야 전환 시에도 입력 상태를 보존합니다.
    */
-  const [selectedEntry, setSelectedEntry] = useState([
-    { id: '', ByID: '', race: '' },
-    { id: '', ByID: '', race: '' },
-    { id: '', ByID: '', race: '' }
-  ]);
+  const [selectedEntryByTeam, setSelectedEntryByTeam] = useState({
+    A: [
+      { id: '', ByID: '', race: '' },
+      { id: '', ByID: '', race: '' },
+      { id: '', ByID: '', race: '' },
+    ],
+    B: [
+      { id: '', ByID: '', race: '' },
+      { id: '', ByID: '', race: '' },
+      { id: '', ByID: '', race: '' },
+    ],
+  });
   /** 베팅할 팀 ('A' | 'B' | null). null이면 미선택. */
   const [betTeam, setBetTeam] = useState(null);
   /** 베팅할 포인트 금액. null이면 미선택. */
@@ -148,22 +157,21 @@ export default function MatchCenter({ matchId, onExit }) {
     setMatch(m);
 
     const { data: prof } = await supabase
-      .from('profiles').select('points').eq('id', user.id).single();
-    if (prof) setMyPoints(prof.points || 0);
+      .from('profiles').select('points, role').eq('id', user.id).single();
+    if (prof) {
+      setMyPoints(prof.points || 0);
+      setMyRole(prof.role || null);
+    }
 
     const inTeamA = (m.team_a_ids || []).includes(user.id);
     const inTeamB = (m.team_b_ids || []).includes(user.id);
     const teamLetter = inTeamA ? 'A' : inTeamB ? 'B' : null;
     setMyTeam(teamLetter);
 
-    const myTeamIds = teamLetter === 'A' ? (m.team_a_ids || []) : (m.team_b_ids || []);
-    const profilesArray = Array.isArray(m.profiles) ? m.profiles : (m.profiles ? [m.profiles] : []);
-    setTeamMembers(profilesArray.filter(p => myTeamIds.includes(p.id)));
-
     const activeSet = m.match_sets?.find(s => s.status !== '완료') || m.match_sets?.[m.match_sets.length - 1];
     setCurrentSet(activeSet);
 
-    if (activeSet?.team_a_ready && activeSet?.team_b_ready) setIsRevealed(true);
+    setIsRevealed(Boolean(activeSet?.team_a_ready && activeSet?.team_b_ready));
 
     // 배팅 윈도우: 세트 시작 후 5분
     if (activeSet?.started_at) {
@@ -187,6 +195,46 @@ export default function MatchCenter({ matchId, onExit }) {
     return () => { supabase.removeChannel(channel); };
   }, [matchId, fetchMatchData]);
 
+  // 운영진/개발자 실시간 관리모드 스위치를 로드합니다.
+  useEffect(() => {
+    const loadManagementMode = async () => {
+      const { data } = await supabase
+        .from('system_settings')
+        .select('value_bool')
+        .eq('key', 'match_admin_live_mode')
+        .maybeSingle();
+      setManagementMode(Boolean(data?.value_bool));
+    };
+
+    loadManagementMode().catch(() => {
+      // 권한이 없거나 설정이 없는 경우 기본값(false) 유지
+      setManagementMode(false);
+    });
+  }, []);
+
+  const toggleManagementMode = async () => {
+    const nextMode = !managementMode;
+
+    const { error } = await supabase
+      .from('system_settings')
+      .upsert(
+        {
+          key: 'match_admin_live_mode',
+          value_bool: nextMode,
+          description: '운영진/개발자 매치 실시간 관리모드',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'key' },
+      );
+
+    if (error) {
+      alert('관리모드 전환 실패: ' + error.message);
+      return;
+    }
+
+    setManagementMode(nextMode);
+  };
+
   /**
    * 베팅 타이머 카운트다운 이펙트입니다.
    * betTimerActive가 true이고 betTimer가 0보다 클 때 1초마다 1씩 감소시킵니다.
@@ -202,6 +250,24 @@ export default function MatchCenter({ matchId, onExit }) {
     return () => clearTimeout(setTimerRef.current);
   }, [betTimer, betTimerActive]);
 
+  const isManagementRole = ['admin', 'master', 'developer'].includes((myRole || '').trim().toLowerCase());
+  // 관리모드 ON → 'D팀' (양 팀 동시 시야/수정), 아니면 내 팀 또는 관전자(C)
+  const perspectiveTeam = (managementMode && isManagementRole) ? 'D' : (myTeam || 'C');
+
+  const getProfilesArray = () => (Array.isArray(match?.profiles) ? match.profiles : (match?.profiles ? [match.profiles] : []));
+
+  const getTeamMembersByLetter = (teamLetter) => {
+    const profilesArray = getProfilesArray();
+    const teamIds = teamLetter === 'A' ? (match?.team_a_ids || []) : (match?.team_b_ids || []);
+    return profilesArray.filter((p) => teamIds.includes(p.id));
+  };
+
+  const editingTeam = perspectiveTeam === 'A' || perspectiveTeam === 'B' ? perspectiveTeam : null;
+  const selectedEntry = editingTeam ? selectedEntryByTeam[editingTeam] : [];
+
+  const currentTeamEntry = (teamLetter) => currentSet?.[`team_${teamLetter.toLowerCase()}_entry`] || [];
+  const currentTeamReady = (teamLetter) => Boolean(currentSet?.[`team_${teamLetter.toLowerCase()}_ready`]);
+
   /**
    * 특정 선수의 해당 매치에서의 휴식 횟수와 추가 휴식 가능 여부를 반환합니다.
    * 완료된 세트 중 해당 선수가 엔트리에 없는 세트를 휴식으로 간주합니다.
@@ -211,14 +277,15 @@ export default function MatchCenter({ matchId, onExit }) {
    *   - 5v5: 5세트 이전 2회, 5세트 이후 3회
    *
    * @param {string} playerId - 확인할 플레이어의 유저 ID
+   * @param {'A'|'B'|null} teamLetter - 계산 기준 팀
    * @returns {{ count: number, canRest: boolean }} 휴식 횟수와 추가 휴식 가능 여부
    */
   // 휴식 횟수 계산
-  const getRestStatus = (playerId) => {
-    if (!match?.match_sets || !myTeam) return { count: 0, canRest: true };
+  const getRestStatus = (playerId, teamLetter) => {
+    if (!match?.match_sets || !teamLetter) return { count: 0, canRest: true };
     const completedSets = match.match_sets.filter(s => s.status === '완료');
     const restCount = completedSets.filter(s => {
-      const entry = myTeam === 'A' ? s.team_a_entry : s.team_b_entry;
+      const entry = teamLetter === 'A' ? s.team_a_entry : s.team_b_entry;
       return !entry?.some(e => e.id === playerId);
     }).length;
     const totalSets = completedSets.length;
@@ -237,11 +304,15 @@ export default function MatchCenter({ matchId, onExit }) {
    * @param {string} playerId - 선택한 선수의 유저 ID
    * @param {string} race - 해당 슬롯에 배정된 종족
    */
-  const handleSelect = (idx, playerId, race) => {
-    const player = teamMembers.find(m => m.id === playerId);
-    const newEntry = [...selectedEntry];
-    newEntry[idx] = { id: playerId, ByID: player?.ByID || '', race };
-    setSelectedEntry(newEntry);
+  const handleSelect = (teamLetter, idx, playerId, race) => {
+    const members = getTeamMembersByLetter(teamLetter);
+    const player = members.find((m) => m.id === playerId);
+
+    setSelectedEntryByTeam((prev) => {
+      const nextEntry = [...prev[teamLetter]];
+      nextEntry[idx] = { id: playerId, ByID: player?.ByID || '', race };
+      return { ...prev, [teamLetter]: nextEntry };
+    });
   };
 
   /**
@@ -249,16 +320,61 @@ export default function MatchCenter({ matchId, onExit }) {
    * 상대팀도 제출하면 양 팀 엔트리가 동시에 공개됩니다(isRevealed).
    * 내 팀에 따라 team_a_ready/team_b_ready 컬럼을 true로 업데이트합니다.
    */
-  const submitEntry = async () => {
-    if (!currentSet || !myTeam) return;
-    const column = myTeam === 'A' ? 'team_a_ready' : 'team_b_ready';
-    const entryCol = myTeam === 'A' ? 'team_a_entry' : 'team_b_entry';
+  const submitEntry = async (teamLetter) => {
+    const team = teamLetter || editingTeam;
+    if (!currentSet || !team) return;
+
+    const column = team === 'A' ? 'team_a_ready' : 'team_b_ready';
+    const entryCol = team === 'A' ? 'team_a_entry' : 'team_b_entry';
+    const reqCol = team === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
+    const entry = selectedEntryByTeam[team];
+
     const { error } = await supabase.from('match_sets').update({
       [column]: true,
-      [entryCol]: selectedEntry,
+      [entryCol]: entry,
+      [reqCol]: false,
     }).eq('id', currentSet.id);
-    if (error) alert('엔트리 제출 실패: ' + error.message);
-    else alert('엔트리 제출 완료! 상대방을 기다립니다.');
+
+    if (error) {
+      alert('엔트리 제출 실패: ' + error.message);
+      return;
+    }
+
+    alert(managementMode && isManagementRole
+      ? `${team}팀 엔트리를 관리모드로 제출했습니다.`
+      : '엔트리 제출 완료! 상대방을 기다립니다.');
+  };
+
+  /** 엔트리 철회 요청 (team_X_withdraw_req = true). 세트 결과 확정 전에만 허용. */
+  const requestWithdraw = async (teamLetter) => {
+    if (!currentSet || currentSet.winner_team) return;
+    const col = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
+    const { error } = await supabase.from('match_sets').update({ [col]: true }).eq('id', currentSet.id);
+    if (error) alert('철회 요청 실패: ' + error.message);
+  };
+
+  /** 상대방의 철회 요청을 승인 (ready → false, withdraw_req 초기화). 승인 후 상대방이 재작성 가능. */
+  const approveWithdraw = async (teamLetter) => {
+    if (!currentSet || currentSet.winner_team) return;
+    const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
+    const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
+    const { error } = await supabase.from('match_sets').update({
+      [readyCol]: false,
+      [reqCol]: false,
+    }).eq('id', currentSet.id);
+    if (error) alert('철회 승인 실패: ' + error.message);
+  };
+
+  /** 관리모드(D팀) 전용 강제 철회. 상대방 동의 없이 즉시 ready 초기화. */
+  const forceRetract = async (teamLetter) => {
+    if (!currentSet || !isManagementRole || !managementMode) return;
+    const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
+    const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
+    const { error } = await supabase.from('match_sets').update({
+      [readyCol]: false,
+      [reqCol]: false,
+    }).eq('id', currentSet.id);
+    if (error) alert('강제 철회 실패: ' + error.message);
   };
 
   /**
@@ -325,23 +441,23 @@ export default function MatchCenter({ matchId, onExit }) {
     <div className="max-w-4xl mx-auto py-6 px-4 space-y-5 font-mono">
 
       {/* 스코어보드 */}
-      <div className="bg-[#07091a] rounded-2xl p-6 flex justify-around items-center border border-yellow-500/20 shadow-[0_0_20px_rgba(245,158,11,0.08)]">
+      <div className="bg-[#07091a] rounded-2xl p-4 sm:p-6 flex justify-around items-center border border-yellow-500/20 shadow-[0_0_20px_rgba(245,158,11,0.08)] gap-3 sm:gap-0">
         <div className="text-center">
           <p className="text-blue-400 font-black text-xs mb-2 tracking-widest">TEAM A</p>
-          <h2 className="text-6xl font-black text-white drop-shadow-lg">{match.score_a}</h2>
+          <h2 className="text-4xl sm:text-6xl font-black text-white drop-shadow-lg">{match.score_a}</h2>
         </div>
         <div className="text-center">
-          <div className="bg-gray-900/80 px-4 py-1 rounded-full border border-gray-700 text-[10px] text-gray-400 font-bold mb-3 uppercase tracking-widest">
+          <div className="bg-gray-900/80 px-3 sm:px-4 py-1 rounded-full border border-gray-700 text-[9px] sm:text-[10px] text-gray-400 font-bold mb-3 uppercase tracking-widest whitespace-nowrap">
             {match.match_type}v{match.match_type} {isLadderMatch ? 'LADDER' : 'NORMAL'} — {matchFormat}
           </div>
-          <p className="text-3xl font-black text-gray-700 italic">VS</p>
+          <p className="text-2xl sm:text-3xl font-black text-gray-700 italic">VS</p>
           <div className="mt-2 text-[10px] text-gray-600 uppercase tracking-wider">
             세트 {(match.match_sets?.length || 0) + 1}
           </div>
         </div>
         <div className="text-center">
           <p className="text-red-400 font-black text-xs mb-2 tracking-widest">TEAM B</p>
-          <h2 className="text-6xl font-black text-white drop-shadow-lg">{match.score_b}</h2>
+          <h2 className="text-4xl sm:text-6xl font-black text-white drop-shadow-lg">{match.score_b}</h2>
         </div>
       </div>
 
@@ -447,31 +563,56 @@ export default function MatchCenter({ matchId, onExit }) {
       </div>
 
       {/* 엔트리 제출 구역 */}
-      <div className="bg-[#0a0e1e] p-6 rounded-2xl border border-gray-700/50 shadow-xl">
-        <div className="flex justify-between items-center mb-6 border-b border-gray-700/50 pb-4">
-          <h4 className="text-white font-black text-base tracking-wider">
-            ROUND {match.match_sets?.length || 1} ENTRY
-          </h4>
-          <div className="flex items-center gap-2">
-            {/* 종족 카드 표시 */}
-            {currentSet?.race_cards?.map((r, i) => (
-              <span key={i} className="w-8 h-8 bg-gray-900 border border-cyan-600/40 rounded-lg flex items-center justify-center text-cyan-400 font-black text-xs">
-                {RACE_ICONS[r] || r}
-              </span>
-            ))}
-            {/* 패배팀이 다음 종족 선택 */}
-            {myTeam && match.score_a !== undefined && (
-              <button
-                onClick={() => setShowRaceSelector(!showRaceSelector)}
-                className="ml-2 text-xs text-gray-500 hover:text-cyan-400 border border-gray-700 px-2 py-1 rounded transition-colors"
-              >
-                종족 선택
-              </button>
-            )}
+      <div className="bg-[#0a0e1e] p-4 sm:p-6 rounded-2xl border border-gray-700/50 shadow-xl">
+        <div className="flex flex-col gap-3 mb-6 border-b border-gray-700/50 pb-4">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <h4 className="text-white font-black text-base tracking-wider">
+              ROUND {match.match_sets?.length || 1} ENTRY
+            </h4>
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              {currentSet?.race_cards?.map((r, i) => (
+                <span key={i} className="w-8 h-8 bg-gray-900 border border-cyan-600/40 rounded-lg flex items-center justify-center text-cyan-400 font-black text-xs">
+                  {RACE_ICONS[r] || r}
+                </span>
+              ))}
+              {myTeam && match.score_a !== undefined && (
+                <button
+                  onClick={() => setShowRaceSelector(!showRaceSelector)}
+                  className="ml-2 text-xs text-gray-500 hover:text-cyan-400 border border-gray-700 px-2 py-1 rounded transition-colors"
+                >
+                  종족 선택
+                </button>
+              )}
+            </div>
           </div>
+
+          <div className="text-[11px] text-gray-500">
+            현재 시야:{' '}
+            {perspectiveTeam === 'D'
+              ? '운영진(D팀) — 양 팀 동시 열람·수정'
+              : perspectiveTeam === 'A' ? 'A팀 엔트리 화면'
+              : perspectiveTeam === 'B' ? 'B팀 엔트리 화면'
+              : '관전자(C팀) 화면'}
+            {!isRevealed && perspectiveTeam !== 'D' && <span className="ml-2 text-gray-600">(공개 전 상대 엔트리는 보이지 않습니다)</span>}
+          </div>
+
+          {isManagementRole && (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                onClick={toggleManagementMode}
+                className={`px-3 py-1.5 text-xs rounded-lg border font-bold transition-colors ${managementMode ? 'border-emerald-500 text-emerald-300 bg-emerald-950/20' : 'border-gray-700 text-gray-400 hover:border-gray-500'}`}
+              >
+                실시간 관리모드 (D팀) {managementMode ? 'ON' : 'OFF'}
+              </button>
+
+              {managementMode && (
+                <span className="text-[10px] text-emerald-400/70 font-sans">↔ 양 팀 엔트리 동시 열람·수정. 상대방 동의 없이 수정 가능.</span>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* 종족 선택 패널 (패배팀 권한) */}
+        {/* 종족 선택 패널 */}
         {showRaceSelector && (
           <div className="mb-5 p-4 rounded-xl bg-gray-900/60 border border-gray-700">
             <p className="text-gray-500 text-xs mb-3 uppercase tracking-wider">다음 세트 종족 선택 (패배팀 선택권)</p>
@@ -493,42 +634,148 @@ export default function MatchCenter({ matchId, onExit }) {
           </div>
         )}
 
-        {/* 팀 현황 */}
-        <div className="grid grid-cols-2 gap-5 mb-6">
-          {['A', 'B'].map(t => (
-            <div key={t} className={`p-4 rounded-xl border-2 border-dashed transition-all ${
-              t === 'A' ? 'border-blue-900/60 bg-blue-900/5' : 'border-red-900/60 bg-red-900/5'
-            }`}>
-              <p className={`text-center font-black text-xs mb-3 tracking-widest ${t === 'A' ? 'text-blue-500' : 'text-red-500'}`}>
-                TEAM {t}
-              </p>
-              {isRevealed ? (
-                <div className="space-y-2">
-                  {currentSet?.[`team_${t.toLowerCase()}_entry`]?.map((p, i) => (
-                    <div key={i} className="bg-gray-900/60 p-2.5 rounded-lg border border-gray-800 text-xs text-center text-white font-bold">
-                      {p.ByID}
-                      <span className="text-cyan-400 ml-2">({RACE_ICONS[p.race] || p.race})</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="h-24 flex flex-col items-center justify-center gap-2">
-                  {currentSet?.[`team_${t.toLowerCase()}_ready`] ? (
-                    <>
-                      <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-emerald-500 font-bold text-[10px] tracking-wider">제출 완료</p>
-                    </>
-                  ) : (
-                    <p className="text-gray-700 italic text-[10px] animate-pulse">엔트리 작성 중...</p>
+        {/* 팀 현황 (A/B 시야 분리 + 관전자 C 시야 + 운영진 D팀 동시 시야) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-6">
+          {['A', 'B'].map((t) => {
+            // D팀(관리모드)은 공개 전에도 양 팀 엔트리 모두 열람 가능
+            const canSeeEntryBeforeReveal = !isRevealed && (perspectiveTeam === t || perspectiveTeam === 'D');
+            const teamEntry = currentTeamEntry(t);
+            const ready = currentTeamReady(t);
+            const withdrawReq = t === 'A'
+              ? Boolean(currentSet?.team_a_withdraw_req)
+              : Boolean(currentSet?.team_b_withdraw_req);
+            const isMyTeam = myTeam === t;
+            const isOpponentTeam = myTeam === (t === 'A' ? 'B' : 'A');
+            const canWithdraw = ready && !currentSet?.winner_team;
+
+            return (
+              <div key={t} className={`p-4 rounded-xl border-2 border-dashed transition-all ${
+                t === 'A' ? 'border-blue-900/60 bg-blue-900/5' : 'border-red-900/60 bg-red-900/5'
+              }`}>
+                <div className="flex justify-between items-center mb-3">
+                  <p className={`font-black text-xs tracking-widest ${t === 'A' ? 'text-blue-500' : 'text-red-500'}`}>
+                    TEAM {t}
+                  </p>
+                  {ready && !currentSet?.winner_team && (
+                    <span className="text-[9px] text-emerald-500 font-bold">✓ 제출</span>
                   )}
                 </div>
-              )}
-            </div>
-          ))}
+
+                {isRevealed || canSeeEntryBeforeReveal ? (
+                  <div className="space-y-2">
+                    {teamEntry.length > 0 ? teamEntry.map((p, i) => (
+                      <div key={i} className="bg-gray-900/60 p-2.5 rounded-lg border border-gray-800 text-xs text-center text-white font-bold">
+                        {p.ByID}
+                        <span className="text-cyan-400 ml-2">({RACE_ICONS[p.race] || p.race})</span>
+                      </div>
+                    )) : (
+                      <p className="text-center text-gray-600 text-[10px] italic">아직 제출된 엔트리가 없습니다.</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-20 flex flex-col items-center justify-center gap-2">
+                    {ready ? (
+                      <p className="text-emerald-500 font-bold text-[10px] tracking-wider">제출 완료 (비공개)</p>
+                    ) : (
+                      <p className="text-gray-700 italic text-[10px] animate-pulse">엔트리 작성 중...</p>
+                    )}
+                  </div>
+                )}
+
+                {/* 철회 요청/승인/강제 철회 버튼 (세트 결과 확정 전에만 노출) */}
+                {!currentSet?.winner_team && (
+                  <div className="mt-3 space-y-1.5">
+                    {/* 내 팀이 제출 완료 & 철회 요청 없음 → 수정 요청 버튼 */}
+                    {isMyTeam && canWithdraw && !withdrawReq && (
+                      <button
+                        onClick={() => requestWithdraw(t)}
+                        className="w-full py-1.5 text-[10px] rounded-lg border border-yellow-700/60 text-yellow-500 hover:border-yellow-500 hover:text-yellow-300 transition-colors font-bold"
+                      >
+                        엔트리 수정 요청
+                      </button>
+                    )}
+                    {/* 내 팀 철회 요청 대기 중 */}
+                    {isMyTeam && canWithdraw && withdrawReq && (
+                      <p className="text-center text-yellow-500/70 text-[10px] font-bold py-1">수정 요청 중… 상대방 승인 대기</p>
+                    )}
+                    {/* 상대방 철회 요청 → 승인 버튼 */}
+                    {isOpponentTeam && withdrawReq && (
+                      <button
+                        onClick={() => approveWithdraw(t)}
+                        className="w-full py-1.5 text-[10px] rounded-lg border border-cyan-600/60 text-cyan-400 hover:border-cyan-400 transition-colors font-bold"
+                      >
+                        {t}팀 수정 요청 승인
+                      </button>
+                    )}
+                    {/* 운영진(D팀) 강제 철회 */}
+                    {perspectiveTeam === 'D' && ready && (
+                      <button
+                        onClick={() => forceRetract(t)}
+                        className="w-full py-1.5 text-[10px] rounded-lg border border-orange-700/50 text-orange-400 hover:border-orange-500 transition-colors font-bold"
+                      >
+                        강제 철회 (관리)
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* 내 엔트리 작성 */}
-        {!isRevealed && !currentSet?.[`team_${myTeam?.toLowerCase()}_ready`] && myTeam && (
+        {/* 엔트리 작성/수정 */}
+        {/* 관리모드(D팀) — A·B 양 팀 폼 동시 표시, isRevealed 무관하게 항상 편집 가능 */}
+        {managementMode && isManagementRole && !currentSet?.winner_team && (
+          <div className="pt-4 border-t border-gray-700/50 space-y-4">
+            <p className="text-orange-400/80 text-[10px] uppercase tracking-wider font-bold">↕ D팀 관리 — 양 팀 엔트리 직접 수정</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {['A', 'B'].map((t) => {
+                const tEntry = selectedEntryByTeam[t];
+                const tReady = currentTeamReady(t);
+                return (
+                  <div key={t} className={`space-y-2 p-3 rounded-xl border ${t === 'A' ? 'border-blue-800/40' : 'border-red-800/40'}`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${t === 'A' ? 'text-blue-400' : 'text-red-400'}`}>
+                      {t}팀 엔트리 {tReady ? '(제출됨 — 강제 수정)' : '관리'}
+                    </p>
+                    {(currentSet?.race_cards || getRaceCards(raceCombo)).map((race, idx) => (
+                      <div key={idx} className="flex items-center gap-2 bg-gray-900/60 p-2 rounded-lg border border-gray-800">
+                        <div className="w-7 h-6 bg-gray-900 rounded flex items-center justify-center text-yellow-500 font-black border border-yellow-600/30 text-[10px] shrink-0">
+                          {RACE_ICONS[race] || race}
+                        </div>
+                        <select
+                          className="flex-1 bg-transparent text-white text-xs outline-none cursor-pointer font-bold"
+                          value={tEntry[idx]?.id || ''}
+                          onChange={(e) => handleSelect(t, idx, e.target.value, race)}
+                        >
+                          <option value="" className="bg-gray-900">선수 선택</option>
+                          {getTeamMembersByLetter(t).map((member) => {
+                            const { count, canRest } = getRestStatus(member.id, t);
+                            const isAlreadySelected = tEntry.some((se, i) => i !== idx && se.id === member.id);
+                            return (
+                              <option key={member.id} value={member.id} disabled={isAlreadySelected || !canRest} className="bg-gray-900">
+                                {member.ByID} ({count}회){isAlreadySelected ? ' [이미선택]' : ''}{!canRest ? ' [한도]' : ''}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => submitEntry(t)}
+                      disabled={tEntry.some((e) => !e.id)}
+                      className={`w-full py-2 rounded-lg font-black text-xs disabled:opacity-25 transition-all ${t === 'A' ? 'bg-blue-800 hover:bg-blue-700 text-white' : 'bg-red-800 hover:bg-red-700 text-white'}`}
+                    >
+                      {tEntry.every((e) => e.id) ? `${t}팀 제출 →` : '선수 배치 필요'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 일반 플레이어 — 내 팀 엔트리 작성 (미제출 또는 철회 승인 후 재작성) */}
+        {!managementMode && !isRevealed && editingTeam && !currentTeamReady(editingTeam) && (
           <div className="space-y-3 pt-4 border-t border-gray-700/50">
             <p className="text-gray-600 text-xs uppercase tracking-wider mb-2">내 팀 엔트리 작성</p>
             {(currentSet?.race_cards || getRaceCards(raceCombo)).map((race, idx) => (
@@ -539,11 +786,11 @@ export default function MatchCenter({ matchId, onExit }) {
                 <select
                   className="flex-1 bg-transparent text-white text-sm outline-none cursor-pointer font-bold"
                   value={selectedEntry[idx]?.id || ''}
-                  onChange={e => handleSelect(idx, e.target.value, race)}
+                  onChange={(e) => handleSelect(editingTeam, idx, e.target.value, race)}
                 >
                   <option value="" className="bg-gray-900">선수 선택</option>
-                  {teamMembers.map(member => {
-                    const { count, canRest } = getRestStatus(member.id);
+                  {getTeamMembersByLetter(editingTeam).map((member) => {
+                    const { count, canRest } = getRestStatus(member.id, editingTeam);
                     const isAlreadySelected = selectedEntry.some((se, i) => i !== idx && se.id === member.id);
                     return (
                       <option
@@ -562,11 +809,11 @@ export default function MatchCenter({ matchId, onExit }) {
               </div>
             ))}
             <button
-              onClick={submitEntry}
-              disabled={selectedEntry.some(e => !e.id)}
+              onClick={() => submitEntry(editingTeam)}
+              disabled={selectedEntry.some((e) => !e.id)}
               className="w-full mt-4 py-4 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-xl disabled:opacity-25 active:scale-98 transition-all text-sm tracking-wider"
             >
-              {selectedEntry.every(e => e.id) ? '엔트리 최종 제출 →' : '모든 슬롯에 선수를 배치하세요'}
+              {selectedEntry.every((e) => e.id) ? '엔트리 최종 제출 →' : '모든 슬롯에 선수를 배치하세요'}
             </button>
           </div>
         )}

@@ -74,11 +74,33 @@ export default function JoinTransferPage() {
   }
 
   if (!profile || profile.role !== 'rookie') {
+    const role = profile?.role;
+    const isMemberOrHigher = ['member', 'elite', 'admin', 'master', 'developer'].includes(role);
+
     return (
-      <div className="max-w-lg mx-auto mt-16 bg-gray-900 border border-red-500/30 rounded-2xl p-10 text-center">
-        <div className="text-5xl mb-4">🚫</div>
-        <h2 className="text-2xl font-black text-red-400 mb-3">접근 불가</h2>
-        <p className="text-gray-400">이 페이지는 신입 길드원(rookie)만 접근할 수 있습니다.</p>
+      <div className="max-w-lg mx-auto mt-16 bg-gray-900 border border-slate-600/40 rounded-2xl p-10 text-center shadow-xl">
+        <div className="text-5xl mb-4">🧭</div>
+        <h2 className="text-2xl font-black text-slate-100 mb-3">이 페이지는 신입 전환 전용입니다</h2>
+        <p className="text-gray-300 leading-relaxed">
+          {isMemberOrHigher
+            ? '이미 정회원 이상으로 활동 중입니다. 전환 신청은 더 이상 필요하지 않습니다.'
+            : '정회원 전환 신청은 신입 길드원(rookie) 단계에서만 진행됩니다.'}
+        </p>
+
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => window.location.assign('/')}
+            className="px-5 py-2.5 rounded-lg font-bold text-sm bg-slate-700 text-white hover:bg-slate-600 transition-colors"
+          >
+            홈으로 이동
+          </button>
+          <button
+            onClick={() => window.location.assign('/join')}
+            className="px-5 py-2.5 rounded-lg font-bold text-sm bg-slate-800 text-slate-200 border border-slate-600 hover:bg-slate-700 transition-colors"
+          >
+            가입 안내 보기
+          </button>
+        </div>
       </div>
     );
   }

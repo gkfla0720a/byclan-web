@@ -39,7 +39,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent flex flex-col justify-center items-center p-4 relative z-10">
+    <div className="min-h-[calc(100vh-5rem)] bg-transparent flex flex-col items-center px-4 py-8 sm:py-10 relative z-10">
       <ImprovedAuthForm
         onSuccess={(u) => {
           handleAuthSuccess(u);
@@ -48,7 +48,7 @@ export default function LoginPage() {
       />
       <button
         onClick={() => router.back()}
-        className="mt-4 text-gray-500 hover:text-gray-300 text-sm underline"
+        className="mt-5 text-gray-500 hover:text-gray-300 text-sm underline underline-offset-4"
       >
         ← 돌아가기
       </button>

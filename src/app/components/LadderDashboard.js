@@ -497,6 +497,7 @@ export default function LadderDashboard({ onMatchEnter }) {
         queue_joined_at: new Date().toISOString(),
       }).eq('id', user.id);
       setInQueue(true);
+      fetchData();
       clearTimeout(queueTimerRef.current);
       queueTimerRef.current = setTimeout(() => {
         handleLeaveQueue();
@@ -519,6 +520,7 @@ export default function LadderDashboard({ onMatchEnter }) {
     clearTimeout(queueTimerRef.current);
     await supabase.from('profiles').update({ is_in_queue: false }).eq('id', uid);
     setInQueue(false);
+    fetchData();
   };
 
   /**

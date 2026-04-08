@@ -50,15 +50,15 @@ export default function AuthCallback() {
           return;
         }
 
-        // Implicit 흐름: hash에 access_token이 있으면 세션 확인
-        const { data, error } = await supabase.auth.getSession();
+        // Implicit 흐름: hash에 access_token이 있으면 Auth 서버 기준으로 사용자 검증
+        const { data, error } = await supabase.auth.getUser();
         if (error) {
           console.error('Auth callback error:', error);
           router.push('/?error=auth_callback_error');
           return;
         }
 
-        if (data.session) {
+        if (data.user) {
           window.location.replace(nextPath);
         } else {
           router.push('/?error=no_session');

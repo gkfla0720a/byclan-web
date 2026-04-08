@@ -94,19 +94,53 @@ export default function ProfileSidebar({ profile, user }) {
   const isActiveMember =
     profile && ['member', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 
-  if (!user || !profile || !isActiveMember) {
-    // 방문자 / 비로그인 빈 패널
+  // 로그인은 되었지만 ByID/전적/주종/포인트가 비어 있는 경우도 빈 프로필 카드로 취급합니다.
+  const hasProfileData = Boolean(
+    profile?.ByID ||
+    profile?.race ||
+    profile?.ladder_points !== undefined ||
+    profile?.wins !== undefined ||
+    profile?.losses !== undefined ||
+    profile?.points !== undefined
+  );
+
+  if (!user || !profile || !isActiveMember || !hasProfileData) {
+    // 방문자 / 비로그인 / 프로필 미완성 상태 공통 플레이스홀더
     return (
       <aside className="hidden lg:flex flex-col w-56 shrink-0 gap-3">
-        <div className="cyber-card rounded-xl p-4 flex flex-col gap-3 text-center">
-          <div className="text-3xl mb-1">👤</div>
-          <p className="text-xs font-bold text-gray-400 leading-relaxed">
-            로그인 후 활동이 시작되면 내 프로필 카드가 이 자리에 표시됩니다.
-          </p>
+        <div className="cyber-card rounded-xl p-4 flex flex-col gap-3">
+          <div className="flex flex-col items-center gap-1.5 pb-2 border-b border-gray-800">
+            <div className="w-12 h-12 rounded-full bg-gray-900/70 border border-gray-700 flex items-center justify-center text-xl">👤</div>
+            <span className="font-black text-sm text-gray-400 truncate max-w-full">기록 없음</span>
+          </div>
+
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">MMR</span>
+              <span className="font-black text-gray-500 text-sm">-</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">티어</span>
+              <span className="font-semibold text-gray-500">-</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">승률</span>
+              <span className="font-semibold text-gray-500">-</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">주종</span>
+              <span className="font-semibold text-gray-500">-</span>
+            </div>
+            <div className="flex justify-between items-center border-t border-gray-800 pt-2">
+              <span className="text-gray-500">전적</span>
+              <span className="text-gray-500">-</span>
+            </div>
+          </div>
+
           {!user ? (
             <button
               onClick={() => navigateTo('로그인')}
-              className="mt-2 w-full py-2 rounded-lg text-xs font-bold btn-neon"
+              className="mt-1 w-full py-2 rounded-lg text-xs font-bold btn-neon"
             >
               로그인
             </button>
@@ -118,6 +152,8 @@ export default function ProfileSidebar({ profile, user }) {
               가입 안내
             </button>
           )}
+
+          <p className="pt-1 text-center text-[10px] text-gray-600">로그인 후 프로필 정보가 표시됩니다</p>
         </div>
       </aside>
     );
