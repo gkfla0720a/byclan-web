@@ -46,7 +46,9 @@ function _getDevSettingsServerSnapshot() {
 function _updateDevSettingsStore(nextSettings) {
   _devSettingsValue = nextSettings;
   _devSettingsInitialized = true;
-  _devSettingsListeners.forEach(l => l());
+  _devSettingsListeners.forEach(l => {
+    try { l(); } catch { /* 개별 리스너 오류가 다른 리스너 실행을 막지 않도록 방어합니다. */ }
+  });
 }
 
 /**
