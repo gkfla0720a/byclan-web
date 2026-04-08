@@ -5,11 +5,12 @@
  *   클랜 공지사항 목록을 테이블 형태로 보여주는 페이지 컴포넌트입니다.
  *
  * 주요 기능:
- *   - Supabase의 admin_posts 테이블에서 공지 데이터를 불러옵니다.
+ *   - Supabase의 notice_posts 테이블에서 공지 데이터를 불러옵니다.
  *   - profiles 테이블과 JOIN하여 작성자 정보를 함께 표시하며,
  *     FK 관계가 없을 경우 JOIN 없이 재시도하는 폴백(fallback) 로직이 있습니다.
  *   - 첫 번째 공지는 '필독', 나머지는 '공지' 분류 배지로 표시합니다.
  *   - 모바일에서는 작성자·날짜 컬럼을 숨기고 제목 셀 안에 인라인으로 표시합니다.
+ *   - admin 이상 등급은 공지사항을 작성할 수 있습니다 (announcement.post 권한 필요).
  *
  * 사용 방법:
  *   import NoticeBoard from './NoticeBoard';
@@ -22,6 +23,8 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { EmptyState, SkeletonLoader } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { isRelationshipError } from '@/app/utils/retry';
+import { PermissionChecker } from '@/app/utils/permissions';
+import { useAuthContext } from '@/app/context/AuthContext';
 
 /**
  * NoticeBoard 컴포넌트
@@ -36,6 +39,17 @@ export default function NoticeBoard() {
   const [notices, setNotices] = useState([]);
   /** 데이터 로딩 여부 */
   const [loading, setLoading] = useState(true);
+  /** 글쓰기 폼 표시 여부 */
+  const [isWriting, setIsWriting] = useState(false);
+  /** 새 공지 제목·내용 */
+  const [newPost, setNewPost] = useState({ title: '', content: '' });
+  /** 공지 저장 요청 진행 중 여부 */
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /** 현재 로그인 유저 프로필 (권한 확인용) */
+  const { profile } = useAuthContext();
+  /** 현재 유저가 공지사항 작성 권한을 가졌는지 (admin 이상) */
+  const canPost = profile ? PermissionChecker.hasPermission(profile.role, 'announcement.post') : false;
 
   /** 컴포넌트 마운트 시 공지사항 데이터를 불러옵니다 */
   useEffect(() => {
@@ -49,7 +63,7 @@ export default function NoticeBoard() {
       try {
         const { data, error } = await filterVisibleTestData(
           supabase
-            .from('admin_posts')
+            .from('notice_posts')
             .select('id, title, content, created_at, profiles:author_id ( ByID, discord_name, role )')
             .order('created_at', { ascending: false })
         );
@@ -59,7 +73,7 @@ export default function NoticeBoard() {
           if (isRelationshipError(error)) {
             const { data: fallbackData, error: fallbackError } = await filterVisibleTestData(
               supabase
-                .from('admin_posts')
+                .from('notice_posts')
                 .select('id, title, content, created_at')
                 .order('created_at', { ascending: false })
             );
@@ -105,13 +119,113 @@ export default function NoticeBoard() {
     loadNotices();
   }, []);
 
+  /**
+   * 새 공지사항을 notice_posts 테이블에 저장합니다.
+   * announcement.post 권한(admin 이상)이 없으면 저장하지 않습니다.
+   */
+  const handleCreatePost = async (e) => {
+    e.preventDefault();
+    if (!newPost.title.trim() || !newPost.content.trim()) return;
+    if (!canPost) {
+      alert('공지사항 작성 권한이 없습니다.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('로그인이 필요합니다.');
+      const { error } = await supabase
+        .from('notice_posts')
+        .insert({ title: newPost.title, content: newPost.content, author_id: user.id });
+
+      if (error) throw error;
+
+      alert('공지사항이 등록되었습니다.');
+      setNewPost({ title: '', content: '' });
+      setIsWriting(false);
+      // 목록 새로고침
+      const { data } = await filterVisibleTestData(
+        supabase
+          .from('notice_posts')
+          .select('id, title, content, created_at, profiles:author_id ( ByID, discord_name, role )')
+          .order('created_at', { ascending: false })
+      );
+      setNotices(
+        (data || []).map((notice, index) => ({
+          id: notice.id || `notice-${index}`,
+          type: index === 0 ? '필독' : '공지',
+          title: notice.title,
+          author: notice.profiles?.ByID || notice.profiles?.discord_name || '운영진',
+          date: notice.created_at
+            ? new Date(notice.created_at).toLocaleDateString('ko-KR')
+            : '-',
+        }))
+      );
+    } catch (error) {
+      alert('공지사항 등록 실패: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto py-8 px-4 animate-fade-in-down">
       <div className="flex justify-between items-end mb-6 border-b border-gray-700 pb-3">
         <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
           <span className="text-yellow-500">📢</span> 공지사항
         </h2>
+        {canPost && (
+          <button
+            onClick={() => setIsWriting(!isWriting)}
+            className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-transform hover:scale-105"
+          >
+            {isWriting ? '취소하기 ❌' : '공지 작성 ✍️'}
+          </button>
+        )}
       </div>
+
+      {isWriting && (
+        <div className="bg-gray-800 p-6 mb-6 rounded-xl border border-yellow-700 shadow-xl animate-fade-in-down">
+          <h3 className="text-lg font-bold text-yellow-300 mb-4">새 공지사항 작성</h3>
+          <form onSubmit={handleCreatePost} className="space-y-4">
+            <input
+              type="text"
+              name="title"
+              value={newPost.title}
+              onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+              placeholder="공지 제목을 입력하세요"
+              required
+              className="w-full p-3 rounded-xl bg-gray-900 border border-gray-700 focus:border-yellow-500 focus:outline-none text-white font-semibold"
+            />
+            <textarea
+              name="content"
+              value={newPost.content}
+              onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+              placeholder="공지 내용을 입력하세요"
+              required
+              rows="6"
+              className="w-full p-3 rounded-xl bg-gray-900 border border-gray-700 focus:border-yellow-500 focus:outline-none text-white text-sm leading-relaxed"
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl disabled:opacity-50"
+              >
+                {isSubmitting ? '등록 중...' : '공지 등록'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsWriting(false)}
+                className="px-6 py-2.5 bg-gray-600 hover:bg-gray-500 text-white font-bold rounded-xl"
+              >
+                취소
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
       
       <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
         {loading ? (

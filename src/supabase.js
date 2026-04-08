@@ -10,49 +10,19 @@
  *   - 이 파일에서 만든 `supabase` 객체를 import해서 DB 쿼리, 로그인 등을
  *     처리합니다.
  *
- * ■ 사용 방법 (다른 파일에서 import)
- *   import { supabase } from '@/supabase';
- *   const { data, error } = await supabase.from('profiles').select('*');
- *
- * ■ 환경 변수 설정 (.env.local 파일에 아래 값을 넣으세요)
+ * ■ 환경 변수 설정 (프로젝트 루트의 .env.local 파일에 아래 값을 넣으세요)
  *   NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
  *   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsIn...
  *   (Supabase 대시보드 → 프로젝트 설정 → API 탭에서 확인 가능)
+ *   템플릿: .env.example 파일 참고
  * =====================================================================
  */
 
 import { createClient } from '@supabase/supabase-js';
 
-// 개발/테스트 전용 폴백 (프로덕션에서는 환경변수 필수)
-const FALLBACK_URL = 'https://mmsmedvdwmisewngmuka.supabase.co';
-const FALLBACK_KEY = 'sb_publishable_wOeB902mJJwOtWNa9nmyFA_KaaaHfeK';
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
-
 // env 값 정리(앞뒤 공백 제거)
 const envUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
 const envKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
-
-/**
- * hasExplicitEnv
- * - 환경 변수(.env.local)에 Supabase URL과 KEY가 명시적으로 설정되어 있는지
- *   확인하는 플래그(true/false 값)입니다.
- * - true이면 환경 변수 값을 사용하고, false이면 폴백(기본) 값을 사용합니다.
- */
-const hasExplicitEnv = Boolean(envUrl && envKey);
-
-/**
- * supabaseUrl
- * - 실제로 사용할 Supabase 프로젝트 URL입니다.
- * - 환경 변수가 있으면 그것을, 없으면 폴백 값을 사용합니다.
- */
-const supabaseUrl = envUrl || (!IS_PRODUCTION ? FALLBACK_URL : '');
-
-/**
- * supabaseKey
- * - 실제로 사용할 Supabase API 키입니다.
- * - 환경 변수가 있으면 그것을, 없으면 폴백 값을 사용합니다.
- */
-const supabaseKey = envKey || (!IS_PRODUCTION ? FALLBACK_KEY : '');
 
 /**
  * isSupabaseConfigured
@@ -65,28 +35,20 @@ const supabaseKey = envKey || (!IS_PRODUCTION ? FALLBACK_KEY : '');
  */
 export const isSupabaseConfigured = Boolean(envUrl && envKey);
 
-// 프로덕션에서 환경변수 누락 시 에러 로그 출력
-// throw 대신 console.error를 사용합니다:
-// - next build 는 NODE_ENV=production 으로 실행되므로, throw 하면 정적 페이지 생성이
-//   실패합니다. 환경 변수는 빌드 후 배포 시점에 주입되는 경우도 있기 때문입니다.
-// - isSupabaseConfigured = false 일 때 모든 DB 호출이 이미 조기 반환으로 처리되므로
-//   앱 자체는 안전하게 동작합니다.
-if (IS_PRODUCTION && !isSupabaseConfigured) {
+// 환경변수 누락 시 명확한 경고 메시지 출력
+// ※ 모듈 로드 시점에 throw 하면 SSR/빌드가 중단되므로 console.error 로만 알립니다.
+//   실제 DB 요청은 isSupabaseConfigured 를 확인한 뒤에만 수행하므로 런타임 오류는
+//   자연스럽게 방지됩니다.
+if (!isSupabaseConfigured) {
   console.error(
-    '[Supabase] NEXT_PUBLIC_SUPABASE_URL 또는 NEXT_PUBLIC_SUPABASE_ANON_KEY 가 설정되지 않았습니다.'
+    '[Supabase] NEXT_PUBLIC_SUPABASE_URL 또는 NEXT_PUBLIC_SUPABASE_ANON_KEY 가 설정되지 않았습니다.\n' +
+    '.env.local 파일에 두 값을 설정하세요. 템플릿은 .env.example 을 참고하세요.'
   );
 }
 
-// 개발 환경에서만 fallback 허용 + 1회 경고
-if (!isSupabaseConfigured && typeof window !== 'undefined' && !window.__byclanSupabaseFallbackNoticeShown) {
-  window.__byclanSupabaseFallbackNoticeShown = true;
-  console.warn(
-    '[Supabase] 환경변수가 없어 fallback 설정을 사용 중입니다.\n' +
-      '.env.local 에 NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY 를 설정하세요.'
-  );
-}
-
-const resolvedUrl = isSupabaseConfigured ? envUrl : FALLBACK_URL;
-const resolvedKey = isSupabaseConfigured ? envKey : FALLBACK_KEY;
-
-export const supabase = createClient(resolvedUrl, resolvedKey);
+// 환경변수가 없으면 더미 값으로 클라이언트를 생성합니다.
+// 실제 요청은 isSupabaseConfigured 가 true 일 때만 이루어집니다.
+export const supabase = createClient(
+  envUrl || 'https://placeholder.supabase.co',
+  envKey || 'placeholder-key'
+);

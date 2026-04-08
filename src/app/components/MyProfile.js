@@ -42,6 +42,8 @@ export default function MyProfile() {
   const [loading, setLoading] = useState(true);
   /** 프로필 저장 요청이 진행 중인지 여부 (버튼 중복 클릭 방지) */
   const [isUpdating, setIsUpdating] = useState(false);
+  /** Discord 연동 해제 기능 활성화 여부 (DevConsole에서 제어, 기본값: false) */
+  const [discordUnlinkEnabled, setDiscordUnlinkEnabled] = useState(false);
 
   // 수정용 입력 상태들
   /** By_ 접두사를 제외한 클랜 닉네임 입력값 (예: 'By_홍길동'에서 '홍길동') */
@@ -73,6 +75,7 @@ export default function MyProfile() {
    */
   useEffect(() => {
     fetchProfileData();
+    loadDiscordUnlinkSetting();
   }, []);
 
   /**
@@ -111,6 +114,45 @@ export default function MyProfile() {
       console.error("데이터 로드 에러:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * system_settings에서 Discord 연동 해제 기능 활성화 여부를 불러옵니다.
+   * @async
+   */
+  const loadDiscordUnlinkSetting = async () => {
+    try {
+      const { data } = await supabase
+        .from('system_settings')
+        .select('value_bool')
+        .eq('key', 'discord_unlink_enabled')
+        .maybeSingle();
+      setDiscordUnlinkEnabled(Boolean(data?.value_bool));
+    } catch {
+      setDiscordUnlinkEnabled(false);
+    }
+  };
+
+  /**
+   * 현재 유저의 Discord 연동을 해제합니다.
+   * discord_id와 discord_name을 profiles 테이블에서 초기화하고 로그아웃합니다.
+   * 이후 Discord로 재로그인하면 새 계정으로 재연동됩니다.
+   * @async
+   */
+  const handleDiscordUnlink = async () => {
+    if (!confirm('Discord 연동을 해제하시겠습니까?\n해제 후 로그아웃되며, 다시 로그인하면 새 Discord 계정으로 재연동됩니다.')) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ discord_id: null, discord_name: null })
+        .eq('id', profile.id);
+      if (error) throw error;
+      await supabase.auth.signOut();
+      localStorage.clear();
+      window.location.href = '/';
+    } catch (error) {
+      alert('Discord 연동 해제 실패: ' + error.message);
     }
   };
 
@@ -181,7 +223,6 @@ export default function MyProfile() {
         ByID: `By_${clanNameInput}`,
         race: race,
         intro: intro,
-        discord_name: discordName 
       }).eq('id', profile.id);
 
       if (error) throw error;
@@ -286,6 +327,14 @@ export default function MyProfile() {
             <div>
               <label className="block text-gray-400 text-xs font-bold mb-3 uppercase tracking-widest">2. 연결된 디스코드</label>
               <input type="text" value={discordName} disabled className="w-full p-3.5 rounded-xl bg-gray-900/50 border border-gray-700 text-gray-500 cursor-not-allowed text-sm font-medium" />
+              {discordUnlinkEnabled && (
+                <button
+                  onClick={handleDiscordUnlink}
+                  className="mt-2 w-full py-2 bg-red-900/30 hover:bg-red-900/50 border border-red-500/50 text-red-400 hover:text-red-300 text-xs font-bold rounded-xl transition-all"
+                >
+                  🔓 Discord 연동 해제
+                </button>
+              )}
             </div>
             <div>
               <label className="block text-gray-400 text-xs font-bold mb-3 uppercase tracking-widest">3. 주종족 선택</label>

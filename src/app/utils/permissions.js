@@ -182,7 +182,8 @@ export const ROLE_PERMISSIONS = {
       'match.manage',      // 매치 관리
       'ladder.moderate',   // 래더 중재
       'ladder.play',       // 래더 플레이
-      'announcement.edit',  // 공지사항 편집
+      'announcement.post', // 공지사항 게시
+      'announcement.edit', // 공지사항 편집
       'member.test'        // 가입 테스트
     ],
     color: '#6BCF7F',

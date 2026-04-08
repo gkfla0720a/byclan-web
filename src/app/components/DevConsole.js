@@ -23,6 +23,9 @@ import {
 } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
+/** system_settings 키: Discord 연동 해제 기능 활성화 여부 (기본값: false) */
+const DISCORD_UNLINK_SETTING_KEY = 'discord_unlink_enabled';
+
 /**
  * DevConsole 컴포넌트
  * 시스템 개발자를 위한 관리 콘솔입니다.
@@ -35,6 +38,8 @@ export default function DevConsole() {
   const [isTestMode, setIsTestMode] = useState(false);
   /** 테스트 계정 및 테스트 데이터가 화면에 표시되는지 여부 */
   const [testAccountsEnabled, setTestAccountsEnabled] = useState(true);
+  /** Discord 연동 해제 기능 활성화 여부 (기본값: false) */
+  const [discordUnlinkEnabled, setDiscordUnlinkEnabled] = useState(false);
   /** system_settings 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
 
@@ -71,13 +76,14 @@ export default function DevConsole() {
     const { data, error } = await supabase
       .from('system_settings')
       .select('key, value_bool')
-      .in('key', [TEST_MODE_SETTING_KEY, TEST_ACCOUNT_SETTING_KEY]);
+      .in('key', [TEST_MODE_SETTING_KEY, TEST_ACCOUNT_SETTING_KEY, DISCORD_UNLINK_SETTING_KEY]);
 
     if (error) throw error;
 
     const settingsMap = Object.fromEntries((data || []).map((item) => [item.key, item.value_bool]));
     setIsTestMode(Boolean(settingsMap[TEST_MODE_SETTING_KEY]));
     setTestAccountsEnabled(settingsMap[TEST_ACCOUNT_SETTING_KEY] !== false);
+    setDiscordUnlinkEnabled(Boolean(settingsMap[DISCORD_UNLINK_SETTING_KEY]));
   };
 
   /**
@@ -164,6 +170,23 @@ export default function DevConsole() {
   };
 
   /**
+   * Discord 연동 해제 기능의 활성화 여부를 토글합니다.
+   * ON이면 MyProfile 화면에 "Discord 연동 해제" 버튼이 표시됩니다.
+   * 기본값은 OFF입니다. 클랜 정책에 따라 사용 여부를 결정하세요.
+   * @async
+   */
+  const toggleDiscordUnlink = async () => {
+    const nextState = !discordUnlinkEnabled;
+    try {
+      await upsertBooleanSetting(DISCORD_UNLINK_SETTING_KEY, nextState, 'Discord 연동 해제 기능 활성화 여부');
+      setDiscordUnlinkEnabled(nextState);
+      alert(`Discord 연동 해제 기능이 ${nextState ? 'ON (활성화)' : 'OFF (비활성화)'} 되었습니다.`);
+    } catch (error) {
+      alert("설정 업데이트 실패: " + error.message);
+    }
+  };
+
+  /**
    * profiles 테이블의 모든 유저 is_in_queue를 false로 초기화합니다.
    * 매칭 시스템에 유령 인원이 남아있을 때 강제로 비우는 용도입니다.
    * @async
@@ -171,7 +194,7 @@ export default function DevConsole() {
   // 3. 전체 대기열 초기화
   const resetAllQueues = async () => {
     if(!confirm("모든 유저의 대기열 상태를 초기화하시겠습니까?")) return;
-    const { error } = await supabase.from('profiles').update({ is_in_queue: false });
+    const { error } = await supabase.from('profiles').update({ is_in_queue: false }).eq('is_in_queue', true);
     if (!error) alert("대기열이 모두 비워졌습니다.");
   };
 
@@ -228,15 +251,29 @@ export default function DevConsole() {
             대상: {TEST_ACCOUNT_NAMES.join(', ')}
           </p>
         </button>
+
+        {/* Discord 연동 해제 기능 토글 */}
+        <button
+          onClick={toggleDiscordUnlink}
+          className={`p-6 border-2 rounded-2xl transition-all text-left group ${discordUnlinkEnabled ? 'border-purple-500 bg-purple-500/10' : 'border-gray-700 bg-gray-800'}`}
+        >
+          <p className={`font-bold mb-1 text-[10px] uppercase ${discordUnlinkEnabled ? 'text-purple-400' : 'text-gray-500'}`}>Discord Auth</p>
+          <p className="text-white font-black text-xl">연동 해제 기능: {discordUnlinkEnabled ? 'ON' : 'OFF'}</p>
+          <p className="text-gray-500 text-[10px] mt-2 leading-relaxed">
+            ON이면 내 프로필 화면에 &apos;Discord 연동 해제&apos; 버튼이 표시됩니다.<br/>
+            클랜원이 Discord 계정을 변경할 때 사용합니다. 기본값: OFF
+          </p>
+        </button>
       </div>
 
       <div className="bg-gray-900/50 p-6 rounded-2xl border border-gray-800">
         <h3 className="text-gray-400 font-bold text-xs mb-4 uppercase tracking-widest border-b border-gray-800 pb-2">Developer Logs</h3>
         <ul className="text-[10px] text-gray-600 space-y-2 list-disc pl-4 font-medium">
           <li>테스트 모드는 개발 시뮬레이션용입니다. 실사용 시 반드시 OFF로 유지하세요.</li>
-          <li>대기열 리셋은 DB의 모든 유저 데이터를 즉시 반영합니다.</li>
+          <li>대기열 리셋은 is_in_queue=true인 유저만 false로 갱신합니다.</li>
           <li>테스트 계정 토글은 `is_test_account_active` 및 `is_test_data_active` 플래그를 갱신합니다.</li>
           <li>테스트 계정이 열려 있는 동안에는 테스트 계정에 한해 래더 Discord 연동 필수 검사가 임시 우회됩니다.</li>
+          <li>Discord 연동 해제 기능은 기본 OFF입니다. ON 시 클랜원이 내 프로필에서 Discord를 해제·재연동할 수 있습니다.</li>
         </ul>
       </div>
     </div>
