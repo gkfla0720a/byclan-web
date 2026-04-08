@@ -367,21 +367,41 @@ function EmailLoginForm({ onSuccess }) {
  */
 export default function ImprovedAuthForm({ onSuccess }) {
   return (
-    <div className="min-h-screen bg-[#06060a] flex flex-col justify-center items-center p-4 relative z-10">
-      {/* 배경 그리드 효과 */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,212,255,0.04)_0%,transparent_70%)] pointer-events-none" />
+    <div className="w-full max-w-5xl relative z-10">
+      <div className="absolute -inset-2 rounded-[28px] bg-[radial-gradient(circle_at_25%_20%,rgba(34,211,238,0.18)_0%,rgba(8,47,73,0.06)_40%,transparent_72%)] pointer-events-none" />
 
-      <div className="mb-10 text-center relative z-10">
-        <h1 className="text-5xl font-black text-white italic tracking-tighter">
-          BYCLAN <span className="text-yellow-500">NET</span>
-        </h1>
-        <p className="text-gray-500 text-xs mt-2 uppercase tracking-widest font-bold">
-          스타크래프트 빠른무한 클랜 관리 시스템
-        </p>
-      </div>
+      <div className="relative overflow-hidden rounded-[24px] border border-cyan-400/20 bg-[#06060a]/85 shadow-[0_30px_80px_rgba(5,10,18,0.55)]">
+        <div className="grid lg:grid-cols-[1.1fr_1fr]">
+          <section className="hidden lg:flex flex-col justify-between p-8 border-r border-cyan-400/10 bg-[linear-gradient(145deg,rgba(8,47,73,0.32)_0%,rgba(2,6,23,0.92)_65%)]">
+            <div>
+              <h1 className="text-5xl font-black text-white italic tracking-tighter leading-none">
+                BYCLAN <span className="text-yellow-500">NET</span>
+              </h1>
+              <p className="text-gray-400 text-xs mt-3 uppercase tracking-[0.2em] font-bold">
+                스타크래프트 빠른무한 클랜 관리 시스템
+              </p>
+            </div>
 
-      <div className="relative z-10 w-full flex justify-center">
-        <EmailLoginForm onSuccess={onSuccess} />
+            <div className="space-y-2 text-xs text-cyan-100/80">
+              <p>• 래더 운영, 전적, 포인트를 한 번에 관리</p>
+              <p>• 모바일/데스크톱 모두 동일한 인증 경험</p>
+              <p>• 로그인 후 개인화된 프로필 데이터 자동 연결</p>
+            </div>
+          </section>
+
+          <section className="p-4 sm:p-6 lg:p-8">
+            <div className="mb-5 text-center lg:hidden">
+              <h1 className="text-3xl sm:text-4xl font-black text-white italic tracking-tight">
+                BYCLAN <span className="text-yellow-500">NET</span>
+              </h1>
+              <p className="text-gray-500 text-[11px] mt-2 uppercase tracking-[0.18em] font-bold">
+                스타크래프트 빠른무한 클랜 관리 시스템
+              </p>
+            </div>
+
+            <EmailLoginForm onSuccess={onSuccess} />
+          </section>
+        </div>
       </div>
     </div>
   );
