@@ -25,6 +25,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./context/ToastContext";
 import ToastContainer from "./components/ToastContainer";
+import { Analytics } from "@vercel/analytics/next";
 
 /**
  * metadata
@@ -72,6 +73,7 @@ export default function RootLayout({ children }) {
             <ToastContainer />
           </ToastProvider>
         </ErrorBoundary>
+        <Analytics />
       </body>
     </html>
   );
