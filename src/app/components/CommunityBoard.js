@@ -20,6 +20,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
+import { PermissionChecker } from '@/app/utils/permissions';
+import { useAuthContext } from '@/app/context/AuthContext';
 
 /**
  * CommunityBoard 컴포넌트
@@ -42,6 +44,9 @@ export default function CommunityBoard() {
   const [loading, setLoading] = useState(true);
   /** 게시글 불러오기 에러 상태 (null: 에러 없음) */
   const [fetchError, setFetchError] = useState(null);
+
+  /** 현재 로그인 유저 프로필 (권한 확인용) */
+  const { profile } = useAuthContext();
 
   /**
    * posts 테이블에서 게시글을 최신순으로 불러옵니다.
@@ -111,6 +116,12 @@ export default function CommunityBoard() {
 
     if (!user) {
       alert('글을 작성하려면 로그인이 필요합니다!');
+      return;
+    }
+
+    const userRole = profile?.role?.trim()?.toLowerCase();
+    if (!PermissionChecker.hasPermission(userRole, 'community.post')) {
+      alert('게시글 작성 권한이 없습니다. (rookie 이상 등급 필요)');
       return;
     }
 
