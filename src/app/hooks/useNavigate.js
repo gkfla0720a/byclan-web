@@ -25,6 +25,7 @@
  */
 'use client';
 
+import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -104,7 +105,7 @@ export function useNavigate() {
    * 매개변수:
    *   viewName: 이동할 페이지의 한국어 이름 (예: '랭킹', '관리자')
    */
-  const navigateTo = (viewName) => {
+  const navigateTo = useCallback((viewName) => {
     const path = VIEW_TO_PATH[viewName];
     if (path) {
       router.push(path);
@@ -114,7 +115,7 @@ export function useNavigate() {
       }
       router.push(`/${encodeURIComponent(viewName)}`);
     }
-  };
+  }, [router]);
 
   return navigateTo;
 }

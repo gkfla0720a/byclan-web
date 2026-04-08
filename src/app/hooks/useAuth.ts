@@ -277,9 +277,13 @@ export function useAuth(): UseAuthReturn {
       window.location.reload();
     };
 
-    runRecheck().catch(err => {
+    runRecheck().catch(async err => {
       logger.error('ByID 재확인 중 오류 발생', err);
       byIDRecheckRef.current = 'idle';
+      // 재확인 중 오류가 발생해도 로그아웃하여 사용자가 엉킨 상태에 머무르지 않도록 합니다.
+      try { await supabase.auth.signOut(); } catch (signOutErr) { logger.error('로그아웃 중 오류', signOutErr); }
+      localStorage.clear();
+      window.location.reload();
     });
   }, [user, profile, authLoading]);
 
