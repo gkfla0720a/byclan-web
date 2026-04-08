@@ -32,7 +32,7 @@
  *   UseAuthReturn:  이 훅의 전체 반환 타입
  * =====================================================================
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { withRetry, isRetryableError } from '../utils/retry';
@@ -179,7 +179,45 @@ function getDiscordIdentity(authUser: Record<string, unknown>) {
   };
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
+// ─── HomeGate external store ─────────────────────────────────────────────────
+// useSyncExternalStore avoids hydration mismatches (React error #418) because
+// it accepts separate server and client snapshots. The server snapshot always
+// returns false; the client snapshot lazily reads sessionStorage on first call
+// and then tracks in-memory updates from setIsAuthorized / ensureHomeGateAuthorized.
+
+let _homeGateAuthorized = false;
+let _homeGateInitialized = false;
+const _homeGateListeners = new Set<() => void>();
+
+function _subscribeHomeGate(listener: () => void): () => void {
+  _homeGateListeners.add(listener);
+  return () => { _homeGateListeners.delete(listener); };
+}
+
+function _getHomeGateSnapshot(): boolean {
+  if (!_homeGateInitialized) {
+    _homeGateInitialized = true;
+    _homeGateAuthorized = window.sessionStorage.getItem('byclan_home_gate') === 'authorized';
+    if (!_homeGateAuthorized) {
+      window.localStorage.removeItem('byclan_home_gate');
+    }
+  }
+  return _homeGateAuthorized;
+}
+
+function _getHomeGateServerSnapshot(): boolean {
+  return false;
+}
+
+function _updateHomeGateStore(value: boolean): void {
+  _homeGateAuthorized = value;
+  _homeGateInitialized = true;
+  _homeGateListeners.forEach(l => l());
+}
+
+// homeGateReady never changes after mount (client = true, server = false),
+// so no subscription is needed; this noop satisfies the useSyncExternalStore API.
+const _noopSubscribe = () => () => {};
 
 export function useAuth(): UseAuthReturn {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -194,17 +232,20 @@ export function useAuth(): UseAuthReturn {
   const byIDRecheckRef = useRef<'idle' | 'checking'>('idle');
   const [password, setPassword] = useState('');
 
-  // HomeGate 인증 상태를 sessionStorage에서 lazy하게 초기화합니다.
-  // useEffect 내 setState 대신 lazy initializer를 사용하여 불필요한 재렌더링을 피합니다.
-  const [isAuthorizedState, setIsAuthorizedState] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    const sessionAuthorized = window.sessionStorage.getItem('byclan_home_gate') === 'authorized';
-    if (!sessionAuthorized) {
-      window.localStorage.removeItem('byclan_home_gate');
-    }
-    return sessionAuthorized;
-  });
-  const [homeGateReady, setHomeGateReady] = useState<boolean>(() => typeof window !== 'undefined');
+  // HomeGate 인증 상태입니다.
+  // useSyncExternalStore를 사용하여 SSR/hydration 불일치(React error #418)를 방지합니다.
+  // 서버 스냅샷은 항상 false를 반환하고, 클라이언트 스냅샷은 sessionStorage를 읽습니다.
+  const isAuthorizedState = useSyncExternalStore(
+    _subscribeHomeGate,
+    _getHomeGateSnapshot,
+    _getHomeGateServerSnapshot,
+  );
+  // 클라이언트 마운트 후에만 true가 됩니다 (서버에서는 false → 로딩 화면 표시).
+  const homeGateReady = useSyncExternalStore(
+    _noopSubscribe,
+    () => true,
+    () => false,
+  );
 
   // ─── ByID 유효성 파생 ──────────────────────────────────────────────────────
   // needsByIDSetup은 profile에서 직접 파생되는 계산값입니다. (별도 state 불필요)
@@ -402,7 +443,7 @@ export function useAuth(): UseAuthReturn {
   const ensureHomeGateAuthorized = () => {
     if (window.sessionStorage.getItem('byclan_home_gate') !== 'authorized') {
       window.sessionStorage.setItem('byclan_home_gate', 'authorized');
-      setIsAuthorizedState(true);
+      _updateHomeGateStore(true);
     }
   };
 
@@ -528,15 +569,13 @@ export function useAuth(): UseAuthReturn {
   };
 
   const setIsAuthorized = (value: boolean) => {
-    setIsAuthorizedState(value);
-    if (typeof window !== 'undefined') {
-      if (value) {
-        window.sessionStorage.setItem('byclan_home_gate', 'authorized');
-        window.localStorage.removeItem('byclan_home_gate');
-      } else {
-        window.sessionStorage.removeItem('byclan_home_gate');
-        window.localStorage.removeItem('byclan_home_gate');
-      }
+    _updateHomeGateStore(value);
+    if (value) {
+      window.sessionStorage.setItem('byclan_home_gate', 'authorized');
+      window.localStorage.removeItem('byclan_home_gate');
+    } else {
+      window.sessionStorage.removeItem('byclan_home_gate');
+      window.localStorage.removeItem('byclan_home_gate');
     }
   };
 
