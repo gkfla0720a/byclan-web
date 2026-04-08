@@ -65,9 +65,14 @@ const supabaseKey = envKey || (!IS_PRODUCTION ? FALLBACK_KEY : '');
  */
 export const isSupabaseConfigured = Boolean(envUrl && envKey);
 
-// 프로덕션에서 환경변수 누락 시 즉시 에러로 알림
+// 프로덕션에서 환경변수 누락 시 에러 로그 출력
+// throw 대신 console.error를 사용합니다:
+// - next build 는 NODE_ENV=production 으로 실행되므로, throw 하면 정적 페이지 생성이
+//   실패합니다. 환경 변수는 빌드 후 배포 시점에 주입되는 경우도 있기 때문입니다.
+// - isSupabaseConfigured = false 일 때 모든 DB 호출이 이미 조기 반환으로 처리되므로
+//   앱 자체는 안전하게 동작합니다.
 if (IS_PRODUCTION && !isSupabaseConfigured) {
-  throw new Error(
+  console.error(
     '[Supabase] NEXT_PUBLIC_SUPABASE_URL 또는 NEXT_PUBLIC_SUPABASE_ANON_KEY 가 설정되지 않았습니다.'
   );
 }
