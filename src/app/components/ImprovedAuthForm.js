@@ -82,12 +82,12 @@ const TERMS_OF_SERVICE = `ByClan 서비스 이용약관
  *
  * 이메일+비밀번호로 로그인하거나 새 계정을 가입하는 폼입니다.
  * isSignUp 상태로 로그인 모드와 가입 모드를 전환합니다.
+ * 폼 하단에 Discord OAuth 로그인 버튼이 함께 표시됩니다.
  *
  * @param {function} onSuccess - 로그인 성공 시 호출되는 콜백. 인자로 user 객체를 전달합니다.
- * @param {function} onSwitchToDiscord - "Discord로 계속하기" 버튼 클릭 시 호출되는 콜백
- * @returns {JSX.Element} 이메일 인증 폼 UI
+ * @returns {JSX.Element} 이메일 인증 폼 UI (Discord 로그인 옵션 포함)
  */
-function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
+function EmailLoginForm({ onSuccess }) {
   /** 클랜 아이디 입력값 (가입 시에만 사용, By_ 접두사 제외) */
   const [userId, setUserId] = useState('');
   /** 이메일 입력값 */
@@ -104,6 +104,8 @@ function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
   const [termsAccepted, setTermsAccepted] = useState(false);
   /** 이용약관 전문 표시 여부 (현재 UI에서 미사용, 확장용) */
   const [showTerms, setShowTerms] = useState(false);
+  /** Discord OAuth 연동 처리 중 여부 */
+  const [discordLoading, setDiscordLoading] = useState(false);
 
   /**
    * 폼 제출 핸들러입니다.
@@ -199,6 +201,28 @@ function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Discord OAuth 로그인을 시작합니다.
+   * Supabase가 Discord 인증 페이지로 리다이렉트하고,
+   * 인증 완료 후 /auth/callback으로 돌아옵니다.
+   */
+  const handleDiscordLogin = async () => {
+    setDiscordLoading(true);
+    setError(null);
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (oauthError) throw oauthError;
+    } catch (err) {
+      setError(err.message);
+      setDiscordLoading(false);
     }
   };
 
@@ -319,82 +343,13 @@ function EmailLoginForm({ onSuccess, onSwitchToDiscord }) {
       <div className="mt-4 pt-4 border-t border-gray-800">
         <div className="text-center text-gray-500 text-sm mb-3">또는</div>
         <button
-          onClick={onSwitchToDiscord}
-          className="w-full py-2 bg-indigo-700/30 border border-indigo-600/40 text-indigo-300 font-medium rounded-lg hover:bg-indigo-700/50 transition-colors flex items-center justify-center gap-2"
-        >
-          <span>🎮</span>
-          <span>Discord로 계속하기</span>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Discord 로그인 ─────────────────────────────────────────────────────────────
-/**
- * DiscordLoginForm 컴포넌트
- *
- * Discord OAuth를 통해 로그인하는 버튼 폼입니다.
- * 클릭 시 Supabase OAuth 흐름을 시작하고 /auth/callback으로 리다이렉트됩니다.
- *
- * @param {function} onSuccess - 로그인 성공 콜백 (현재 OAuth는 리다이렉트이므로 직접 호출되지 않음)
- * @param {function} onSwitchToEmail - "이메일로 로그인" 버튼 클릭 시 호출되는 콜백
- * @returns {JSX.Element} Discord 로그인 버튼 UI
- */
-function DiscordLoginForm({ onSuccess, onSwitchToEmail }) {
-  /** Discord OAuth 연동 처리 중 여부 */
-  const [loading, setLoading] = useState(false);
-  /** 에러 메시지 상태 */
-  const [error, setError] = useState(null);
-
-  /**
-   * Discord OAuth 로그인을 시작합니다.
-   * Supabase가 Discord 인증 페이지로 리다이렉트하고,
-   * 인증 완료 후 /auth/callback으로 돌아옵니다.
-   */
-  const handleDiscordLogin = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'discord',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-
-      if (oauthError) throw oauthError;
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="cyber-card p-8 rounded-xl w-full max-w-md">
-      <h2 className="text-2xl font-bold text-white mb-6 text-center">Discord 로그인</h2>
-
-      {error && <ErrorMessage message={error} />}
-
-      <div className="space-y-4">
-        <button
           onClick={handleDiscordLogin}
-          disabled={loading}
-          className="w-full py-3 bg-indigo-700/30 border border-indigo-600/40 text-indigo-300 font-bold rounded-lg hover:bg-indigo-700/50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          disabled={discordLoading}
+          className="w-full py-2 bg-indigo-700/30 border border-indigo-600/40 text-indigo-300 font-medium rounded-lg hover:bg-indigo-700/50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
           <span>🎮</span>
-          <span>{loading ? '연동 중...' : 'Discord로 로그인'}</span>
+          <span>{discordLoading ? '연동 중...' : 'Discord로 로그인'}</span>
         </button>
-
-        <div className="text-center">
-          <button
-            onClick={onSwitchToEmail}
-            className="text-cyan-500 hover:text-cyan-400 text-sm"
-          >
-            이메일로 로그인
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -404,16 +359,13 @@ function DiscordLoginForm({ onSuccess, onSwitchToEmail }) {
 /**
  * ImprovedAuthForm 컴포넌트 (기본 내보내기)
  *
- * 이메일 폼과 Discord 폼을 loginMethod 상태로 전환하는 최상위 인증 컨테이너입니다.
+ * 이메일/비밀번호 로그인과 Discord 로그인 옵션이 한 화면에 표시되는 인증 컨테이너입니다.
  * 배경 그라디언트와 브랜드 헤더가 포함된 전체 화면 레이아웃을 제공합니다.
  *
  * @param {function} onSuccess - 인증 성공 시 호출되는 콜백. 인자로 user 객체를 전달합니다.
  * @returns {JSX.Element} 전체 화면 인증 UI
  */
 export default function ImprovedAuthForm({ onSuccess }) {
-  /** 현재 표시할 로그인 방식: 'email' 또는 'discord' */
-  const [loginMethod, setLoginMethod] = useState('email');
-
   return (
     <div className="min-h-screen bg-[#06060a] flex flex-col justify-center items-center p-4 relative z-10">
       {/* 배경 그리드 효과 */}
@@ -429,17 +381,7 @@ export default function ImprovedAuthForm({ onSuccess }) {
       </div>
 
       <div className="relative z-10 w-full flex justify-center">
-        {loginMethod === 'email' ? (
-          <EmailLoginForm
-            onSuccess={onSuccess}
-            onSwitchToDiscord={() => setLoginMethod('discord')}
-          />
-        ) : (
-          <DiscordLoginForm
-            onSuccess={onSuccess}
-            onSwitchToEmail={() => setLoginMethod('email')}
-          />
-        )}
+        <EmailLoginForm onSuccess={onSuccess} />
       </div>
     </div>
   );
