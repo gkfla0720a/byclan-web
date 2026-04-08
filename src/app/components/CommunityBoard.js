@@ -119,7 +119,7 @@ export default function CommunityBoard() {
       return;
     }
 
-    const userRole = profile?.role?.trim().toLowerCase();
+    const userRole = profile?.role?.trim()?.toLowerCase();
     if (!PermissionChecker.hasPermission(userRole, 'community.post')) {
       alert('게시글 작성 권한이 없습니다. (rookie 이상 등급 필요)');
       return;

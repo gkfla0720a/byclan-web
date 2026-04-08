@@ -133,7 +133,8 @@ export default function NoticeBoard() {
 
     try {
       setIsSubmitting(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('로그인이 필요합니다.');
       const { error } = await supabase
         .from('notice_posts')
         .insert({ title: newPost.title, content: newPost.content, author_id: user.id });
