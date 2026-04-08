@@ -16,6 +16,7 @@
  *   <MatchStatus />   // 매치 현황 섹션
  *   <ActivityLog />   // 최근 활동 로그 섹션
  */
+'use client';
 import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from './UIStates';
