@@ -448,6 +448,22 @@ export function useAuth(): UseAuthReturn {
   };
 
   useEffect(() => {
+    const syncAuthFromServer = async () => {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error || !data?.user) {
+        setUser(null);
+        setProfile(null);
+        setActiveMatchId(null);
+        setAuthLoading(false);
+        return;
+      }
+
+      // Auth 서버에서 검증된 사용자만 HomeGate를 통과시킵니다.
+      ensureHomeGateAuthorized();
+      await loadUserData(data.user as unknown as Record<string, unknown>);
+    };
+
     const initializeData = async () => {
       try {
         if (!isSupabaseConfigured) {
@@ -455,16 +471,7 @@ export function useAuth(): UseAuthReturn {
           return;
         }
 
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          // Logged-in users automatically pass the HomeGate so they are not
-          // shown the password prompt when opening the site in a new tab while
-          // already authenticated.
-          ensureHomeGateAuthorized();
-          await loadUserData(session.user as unknown as Record<string, unknown>);
-        } else {
-          setAuthLoading(false);
-        }
+        await syncAuthFromServer();
       } catch (error) {
         logger.error('인증 초기화 실패', error);
         setAuthLoading(false);
@@ -473,23 +480,23 @@ export function useAuth(): UseAuthReturn {
 
     initializeData();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
         setActiveMatchId(null);
+        setAuthLoading(false);
         return;
       }
-      if (session?.user) {
-        // Auto-pass the HomeGate for users who sign in so that board,
-        // ranking, and member sections become immediately visible.
-        ensureHomeGateAuthorized();
-        try {
-          await loadUserData(session.user as unknown as Record<string, unknown>);
-        } catch (error) {
+
+      // onAuthStateChange 콜백 내부에서 Supabase 호출을 직접 await하지 않습니다.
+      // SDK 권고에 따라 다음 태스크로 넘겨 deadlock/race 가능성을 줄입니다.
+      setTimeout(() => {
+        syncAuthFromServer().catch((error) => {
           logger.error('인증 상태 갱신 실패', error);
-        }
-      }
+          setAuthLoading(false);
+        });
+      }, 0);
     });
 
     return () => {
