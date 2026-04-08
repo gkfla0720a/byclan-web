@@ -4,17 +4,15 @@
  * @역할
  *   홈 화면 왼쪽에 표시되는 프로필 사이드바 컴포넌트입니다.
  *   로그인한 활성 클랜원이면 본인 프로필 카드를, 비로그인·비회원이면
- *   현재 MMR 1위 멤버의 미리보기 카드를 보여줍니다.
+ *   로그인/가입 안내 카드를 보여줍니다.
  *
  * @주요기능
  *   - 로그인 + 활성 클랜원: 본인의 MMR, 티어, 승률, 주종, 클랜 포인트 표시
- *   - 비로그인 / 비활성 회원: Supabase에서 MMR 최상위 멤버를 불러와 미리보기 표시
+ *   - 비로그인 / 비활성 회원: 로그인 또는 가입 안내 표시
  *   - 티어 색상(TIER_COLORS), 종족 한국어 레이블(RACE_LABELS) 매핑 제공
  *   - 프로필 카드 클릭 시 프로필 페이지로 이동
  *
  * @관련컴포넌트
- *   - supabase (@/supabase): DB 데이터 조회
- *   - filterVisibleTestAccounts (@/app/utils/testData): 테스트 계정 필터링
  *   - useNavigate (../hooks/useNavigate): 페이지 이동 훅
  *
  * @사용방법
@@ -24,9 +22,7 @@
  */
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { isSupabaseConfigured, supabase } from '@/supabase';
-import { filterVisibleTestAccounts } from '@/app/utils/testData';
+import React from 'react';
 import { useNavigate } from '../hooks/useNavigate';
 
 /** 티어별 텍스트 색상 클래스 매핑 (Tailwind CSS 클래스 사용) */
@@ -79,7 +75,7 @@ function getWinRate(wins, losses) {
 /**
  * 홈 좌측 프로필 사이드바 컴포넌트
  *
- * 로그인한 활성 클랜원이면 본인 카드를, 그렇지 않으면 MMR 최상위 멤버 미리보기를 표시합니다.
+ * 로그인한 활성 클랜원이면 본인 카드를, 그렇지 않으면 로그인/가입 안내를 표시합니다.
  *
  * @param {{ profile: object|null, user: object|null }} props
  * @param {object|null} props.profile - 현재 로그인 유저의 프로필 (없으면 null)
@@ -89,60 +85,6 @@ function getWinRate(wins, losses) {
 export default function ProfileSidebar({ profile, user }) {
   /** 페이지 이동 함수 (훅에서 가져온 navigate 함수) */
   const navigateTo = useNavigate();
-  /** MMR 최상위 멤버의 프로필 데이터 (비로그인 미리보기용). 초기값은 null. */
-  const [spotlightProfile, setSpotlightProfile] = useState(null);
-
-  /**
-   * 컴포넌트가 처음 화면에 나타날 때(마운트 시) 한 번 실행됩니다.
-   * Supabase에서 래더 포인트 기준 최상위 멤버 1명을 불러와 spotlightProfile에 저장합니다.
-   * - wins/losses 컬럼이 없는 구 스키마 환경에서는 fallback 쿼리로 재시도합니다.
-   */
-  useEffect(() => {
-    const loadSpotlightProfile = async () => {
-      if (!isSupabaseConfigured) {
-        setSpotlightProfile(null);
-        return;
-      }
-
-      try {
-        const primaryResult = await filterVisibleTestAccounts(
-          supabase
-            .from('profiles')
-            .select('id, ByID, discord_name, role, race, ladder_points, points, wins, losses')
-            .in('role', ['member', 'elite', 'admin', 'master', 'developer', 'rookie'])
-            .order('ladder_points', { ascending: false })
-            .limit(1)
-        );
-
-        if (primaryResult.error) {
-          const message = `${primaryResult.error.message || ''} ${primaryResult.error.details || ''}`.toLowerCase();
-          if (primaryResult.error.code === '42703' || message.includes('does not exist')) {
-            const fallbackResult = await filterVisibleTestAccounts(
-              supabase
-                .from('profiles')
-                .select('id, ByID, discord_name, role, race, ladder_points, points')
-                .in('role', ['member', 'elite', 'admin', 'master', 'developer', 'rookie'])
-                .order('ladder_points', { ascending: false })
-                .limit(1)
-            );
-
-            if (fallbackResult.error) throw fallbackResult.error;
-            setSpotlightProfile(fallbackResult.data?.[0] || null);
-            return;
-          }
-
-          throw primaryResult.error;
-        }
-
-        setSpotlightProfile(primaryResult.data?.[0] || null);
-      } catch (error) {
-        console.error('사이드바 대표 멤버 로딩 실패:', error);
-        setSpotlightProfile(null);
-      }
-    };
-
-    loadSpotlightProfile();
-  }, []);
 
   /**
    * 현재 프로필이 활성 클랜원인지 여부.
@@ -153,47 +95,14 @@ export default function ProfileSidebar({ profile, user }) {
     profile && ['member', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 
   if (!user || !profile || !isActiveMember) {
-    const previewProfile = spotlightProfile
-      ? {
-          byId: spotlightProfile.ByID || spotlightProfile.discord_name || 'ByClan Member',
-          points: spotlightProfile.ladder_points ?? 1000,
-          tier: getTier(spotlightProfile.ladder_points || 1000),
-          winRate: spotlightProfile.wins !== undefined || spotlightProfile.losses !== undefined
-            ? getWinRate(spotlightProfile.wins, spotlightProfile.losses)
-            : '집계 중',
-          race: RACE_LABELS[spotlightProfile.race] || spotlightProfile.race || '미등록',
-        }
-      : null;
-
     // 방문자 / 비로그인 빈 패널
     return (
       <aside className="hidden lg:flex flex-col w-56 shrink-0 gap-3">
         <div className="cyber-card rounded-xl p-4 flex flex-col gap-3 text-center">
           <div className="text-3xl mb-1">👤</div>
           <p className="text-xs font-bold text-gray-400 leading-relaxed">
-            {previewProfile
-              ? '현재 활동 중인 클랜원 예시를 보여드리고 있습니다. 로그인 후에는 내 프로필 카드가 이 자리에 표시됩니다.'
-              : '아직 프로필 정보가 충분하지 않습니다. 로그인 또는 가입 후 활동이 시작되면 이 영역이 자동으로 채워집니다.'}
+            로그인 후 활동이 시작되면 내 프로필 카드가 이 자리에 표시됩니다.
           </p>
-          <div className="space-y-1.5 mt-1">
-            {[
-              { label: 'ByID', placeholder: previewProfile?.byId || '프로필 준비 중' },
-              { label: 'MMR', placeholder: previewProfile ? `${previewProfile.points}점` : '데이터 연결 대기' },
-              { label: '티어', placeholder: previewProfile?.tier || '미정' },
-              { label: '승률', placeholder: previewProfile?.winRate || '집계 전' },
-              { label: '주종', placeholder: previewProfile?.race || '미등록' },
-            ].map(({ label, placeholder }) => (
-              <div key={label} className="flex justify-between text-xs border-b border-gray-800 pb-1">
-                <span className="text-gray-600">{label}</span>
-                <span className="text-gray-500">{placeholder}</span>
-              </div>
-            ))}
-          </div>
-          {previewProfile && (
-            <div className="text-[10px] text-gray-600 border-t border-gray-800 pt-2">
-              최근 MMR 상위 멤버 기준 미리보기
-            </div>
-          )}
           {!user ? (
             <button
               onClick={() => navigateTo('로그인')}
