@@ -19,7 +19,7 @@ import { supabase } from '@/supabase';
  * AuthCallback 컴포넌트
  *
  * OAuth/이메일 인증 콜백을 처리하고 적절한 페이지로 리다이렉트합니다.
- * 처리 중에는 "Discord 로그인 처리 중..." 로딩 화면을 표시합니다.
+ * 처리 중에는 "소셜 로그인 처리 중..." 로딩 화면을 표시합니다.
  *
  * @returns {JSX.Element} 로딩 화면 UI
  */
@@ -75,7 +75,7 @@ export default function AuthCallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="text-center">
-        <div className="text-white text-xl mb-4">Discord 로그인 처리 중...</div>
+        <div className="text-white text-xl mb-4">소셜 로그인 처리 중...</div>
         <div className="text-gray-400">잠시만 기다려주세요.</div>
       </div>
     </div>

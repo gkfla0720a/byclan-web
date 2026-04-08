@@ -64,6 +64,11 @@ export interface UserProfile {
   id: string;
   ByID: string;
   discord_name: string | null;
+  google_sub?: string | null;
+  google_email?: string | null;
+  google_name?: string | null;
+  google_avatar_url?: string | null;
+  auth_provider?: string | null;
   role: string;
   points: number;
   race: string;
@@ -151,9 +156,10 @@ export interface UseAuthReturn {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function getDiscordIdentity(authUser: Record<string, unknown>) {
+function getSocialIdentity(authUser: Record<string, unknown>) {
   const identities = (authUser?.identities as { provider: string; identity_id?: string; id?: string }[]) || [];
   const discordIdentity = identities.find((identity) => identity.provider === 'discord');
+  const googleIdentity = identities.find((identity) => identity.provider === 'google');
   const meta = authUser?.user_metadata as Record<string, unknown> | undefined;
   const appMeta = authUser?.app_metadata as Record<string, unknown> | undefined;
 
@@ -162,21 +168,145 @@ function getDiscordIdentity(authUser: Record<string, unknown>) {
     meta?.provider === 'discord' ||
     !!discordIdentity;
 
+  const isGoogleProvider =
+    appMeta?.provider === 'google' ||
+    meta?.provider === 'google' ||
+    !!googleIdentity;
+
   return {
     isDiscordProvider,
-    discordId:
-      (meta?.provider_id as string) ||
-      (meta?.sub as string) ||
-      discordIdentity?.identity_id ||
-      discordIdentity?.id ||
-      null,
+    isGoogleProvider,
     discordName:
       (meta?.preferred_username as string) ||
       (meta?.full_name as string) ||
       (meta?.name as string) ||
       ((authUser?.email as string)?.split('@')[0]) ||
       'User',
+    googleSub:
+      (meta?.sub as string) ||
+      (meta?.provider_id as string) ||
+      googleIdentity?.identity_id ||
+      googleIdentity?.id ||
+      null,
+    googleEmail:
+      (meta?.email as string) ||
+      (authUser?.email as string) ||
+      null,
+    googleName:
+      (meta?.full_name as string) ||
+      (meta?.name as string) ||
+      (meta?.given_name as string) ||
+      ((authUser?.email as string)?.split('@')[0]) ||
+      'User',
+    googleAvatarUrl:
+      (meta?.avatar_url as string) ||
+      (meta?.picture as string) ||
+      null,
+    authProvider:
+      (appMeta?.provider as string) ||
+      (meta?.provider as string) ||
+      (identities[0]?.provider as string) ||
+      'email',
   };
+}
+
+function sanitizeByIdSeed(seed: string): string {
+  const cleaned = seed
+    .normalize('NFKD')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 20);
+  return cleaned || 'User';
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  const code = (error as { code?: string })?.code;
+  const message = (error as { message?: string })?.message || '';
+  return code === '23505' || /duplicate key/i.test(message);
+}
+
+async function resolveUniqueByID(seed: string, currentUserId?: string): Promise<string> {
+  const base = `By_${sanitizeByIdSeed(seed)}`;
+  const candidates = Array.from({ length: 30 }, (_, i) => (i === 0 ? base : `${base}${i + 1}`));
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, ByID')
+    .in('ByID', candidates);
+
+  if (error) {
+    logger.warn('ByID 후보 조회 실패, 기본값으로 진행', error);
+    return base;
+  }
+
+  const taken = new Map<string, string>();
+  (data || []).forEach((row: { id: string; ByID: string }) => {
+    taken.set(row.ByID, row.id);
+  });
+
+  for (const candidate of candidates) {
+    const owner = taken.get(candidate);
+    if (!owner || owner === currentUserId) {
+      return candidate;
+    }
+  }
+
+  const suffix = (currentUserId || Date.now().toString()).replace(/-/g, '').slice(0, 6);
+  return `${base}${suffix}`;
+}
+
+async function syncSocialProfileData(
+  authUser: Record<string, unknown>,
+  currentProfile: UserProfile
+): Promise<UserProfile> {
+  const {
+    isDiscordProvider,
+    isGoogleProvider,
+    discordName,
+    googleSub,
+    googleEmail,
+    googleName,
+    googleAvatarUrl,
+    authProvider,
+  } = getSocialIdentity(authUser);
+
+  const updates: Record<string, unknown> = {};
+
+  if (isDiscordProvider && !currentProfile.discord_name) {
+    updates.discord_name = discordName;
+  }
+
+  if (isGoogleProvider) {
+    if (googleSub && currentProfile.google_sub !== googleSub) updates.google_sub = googleSub;
+    if (googleEmail && currentProfile.google_email !== googleEmail) updates.google_email = googleEmail;
+    if (googleName && currentProfile.google_name !== googleName) updates.google_name = googleName;
+    if (googleAvatarUrl && currentProfile.google_avatar_url !== googleAvatarUrl) updates.google_avatar_url = googleAvatarUrl;
+    if (authProvider && currentProfile.auth_provider !== authProvider) updates.auth_provider = authProvider;
+  } else if (authProvider && currentProfile.auth_provider !== authProvider) {
+    updates.auth_provider = authProvider;
+  }
+
+  if (!currentProfile.ByID || !currentProfile.ByID.trim()) {
+    const seed = googleName || discordName || (authUser.email as string)?.split('@')[0] || 'User';
+    updates.ByID = await resolveUniqueByID(seed, authUser.id as string);
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return currentProfile;
+  }
+
+  const { data: updatedProfile, error: updateError } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', authUser.id)
+    .select('*')
+    .single();
+
+  if (updateError) {
+    logger.warn('소셜 프로필 동기화 일부 실패', updateError);
+    return currentProfile;
+  }
+
+  return (updatedProfile as UserProfile) || currentProfile;
 }
 
 // ─── HomeGate external store ─────────────────────────────────────────────────
@@ -337,7 +467,7 @@ export function useAuth(): UseAuthReturn {
     }
 
     setUser(authUser);
-    const { isDiscordProvider, discordId, discordName } = getDiscordIdentity(authUser);
+    const { isDiscordProvider, isGoogleProvider, discordName, googleName, googleEmail } = getSocialIdentity(authUser);
 
     const { data: p, error: profileError } = await supabase
       .from('profiles')
@@ -348,20 +478,40 @@ export function useAuth(): UseAuthReturn {
     if (profileError) {
       if (profileError.code === 'PGRST116') {
         // 프로필 없음 – visitor 기본 프로필 생성
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authUser.id,
-            discord_name: isDiscordProvider ? discordName : null,
-            ByID: `By_${(authUser.email as string)?.split('@')[0] || discordName || 'User'}`,
-            role: 'visitor',
-            points: 0,
-            race: 'Terran',
-            intro: '클랜 방문자',
-            ladder_points: 1000,
-            is_in_queue: false,
-            vote_to_start: false,
-          });
+        const byIdSeed = isGoogleProvider
+          ? (googleName || (googleEmail || '').split('@')[0] || 'User')
+          : (isDiscordProvider
+            ? discordName
+            : ((authUser.email as string)?.split('@')[0] || 'User'));
+
+        let insertError: unknown = null;
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          const uniqueByID = await resolveUniqueByID(`${byIdSeed}${attempt === 0 ? '' : attempt + 1}`, authUser.id as string);
+          const { error } = await supabase
+            .from('profiles')
+            .insert({
+              id: authUser.id,
+              discord_name: isDiscordProvider ? discordName : null,
+              ByID: uniqueByID,
+              role: 'visitor',
+              points: 0,
+              race: 'Terran',
+              intro: '클랜 방문자',
+              ladder_points: 1000,
+              is_in_queue: false,
+              vote_to_start: false,
+            });
+
+          if (!error) {
+            insertError = null;
+            break;
+          }
+
+          insertError = error;
+          if (!isUniqueViolation(error)) {
+            break;
+          }
+        }
 
         if (insertError) {
           logger.error('프로필 생성 실패', insertError, { severity: Severity.CRITICAL });
@@ -376,7 +526,8 @@ export function useAuth(): UseAuthReturn {
           .eq('id', authUser.id)
           .single();
 
-        setProfile(newProfile as UserProfile);
+        const syncedProfile = await syncSocialProfileData(authUser, newProfile as UserProfile);
+        setProfile(syncedProfile);
         setNeedsSetup(false);
         setAuthLoading(false);
         return;
@@ -389,24 +540,7 @@ export function useAuth(): UseAuthReturn {
     }
 
     let nextProfile: UserProfile = p as UserProfile;
-
-    if (isDiscordProvider && !p.discord_name) {
-      const updates: Record<string, string> = {};
-      updates.discord_name = discordName;
-
-      if (Object.keys(updates).length > 0) {
-        const { data: updatedProfile, error: updateError } = await supabase
-          .from('profiles')
-          .update(updates)
-          .eq('id', authUser.id)
-          .select('*')
-          .single();
-
-        if (!updateError && updatedProfile) {
-          nextProfile = updatedProfile as UserProfile;
-        }
-      }
-    }
+    nextProfile = await syncSocialProfileData(authUser, nextProfile);
 
     setProfile(nextProfile);
 
