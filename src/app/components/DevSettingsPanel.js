@@ -13,8 +13,41 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { saveDevSettings, loadDevSettings } from '../utils/permissions';
+import React, { useState, useSyncExternalStore } from 'react';
+import { saveDevSettings, loadDevSettings, DEV_SETTINGS } from '../utils/permissions';
+
+// ─── Dev settings external store ─────────────────────────────────────────────
+// useSyncExternalStore를 사용하여 React error #418(hydration 불일치)을 방지합니다.
+// - 서버 스냅샷(getServerSnapshot)은 항상 DEV_SETTINGS 기본값을 반환합니다.
+// - 클라이언트 스냅샷(getSnapshot)은 첫 호출 시 localStorage를 읽습니다.
+// - useState 초기값에서 localStorage를 읽는 방식을 피하므로
+//   react-hooks/set-state-in-effect 린트 규칙도 통과합니다.
+let _devSettingsValue = DEV_SETTINGS;
+let _devSettingsInitialized = false;
+const _devSettingsListeners = new Set();
+
+function _subscribeDevSettings(listener) {
+  _devSettingsListeners.add(listener);
+  return () => _devSettingsListeners.delete(listener);
+}
+
+function _getDevSettingsSnapshot() {
+  if (!_devSettingsInitialized) {
+    _devSettingsInitialized = true;
+    _devSettingsValue = loadDevSettings();
+  }
+  return _devSettingsValue;
+}
+
+function _getDevSettingsServerSnapshot() {
+  return DEV_SETTINGS;
+}
+
+function _updateDevSettingsStore(nextSettings) {
+  _devSettingsValue = nextSettings;
+  _devSettingsInitialized = true;
+  _devSettingsListeners.forEach(l => l());
+}
 
 /**
  * DevSettingsPanel 컴포넌트
@@ -25,10 +58,16 @@ import { saveDevSettings, loadDevSettings } from '../utils/permissions';
 export default function DevSettingsPanel() {
   /**
    * 현재 개발자 설정 상태 객체.
-   * 초기값은 로컬 스토리지에서 loadDevSettings()로 불러옵니다.
+   * useSyncExternalStore를 통해 외부 스토어에서 읽습니다.
+   * - 서버 스냅샷: DEV_SETTINGS (hydration 안전)
+   * - 클라이언트 스냅샷: localStorage에서 로드 (마운트 후 자동)
    * 예: { canReviewApplications: true, canManageMembers: false, ... }
    */
-  const [settings, setSettings] = useState(() => loadDevSettings());
+  const settings = useSyncExternalStore(
+    _subscribeDevSettings,
+    _getDevSettingsSnapshot,
+    _getDevSettingsServerSnapshot,
+  );
   /** 설정 패널이 열려있는지 여부 (false이면 우하단 버튼만 표시) */
   const [isOpen, setIsOpen] = useState(false);
 
@@ -38,7 +77,7 @@ export default function DevSettingsPanel() {
    */
   const handleToggle = (key) => {
     const newSettings = { ...settings, [key]: !settings[key] };
-    setSettings(newSettings);
+    _updateDevSettingsStore(newSettings);
     saveDevSettings(newSettings);
   };
 
