@@ -173,10 +173,10 @@ function EmailLoginForm({ onSuccess }) {
               discord_name: userId,
               ByID: byID,
               role: 'applicant',
-              points: 1000,
+              Clan_Point: 1000,
               race: 'Terran',
               intro: '새로운 클랜원입니다.',
-              ladder_points: 1000
+              Ladder_MMR: 1000
             });
 
           if (profileError) {

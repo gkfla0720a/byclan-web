@@ -12,10 +12,10 @@ begin
     discord_name,
     "ByID",
     role,
-    points,
+    "Clan_Point",
     race,
     intro,
-    ladder_points,
+    "Ladder_MMR",
     is_in_queue,
     vote_to_start
   )
@@ -156,7 +156,7 @@ on conflict (key) do update set
   updated_at = now();
 
 insert into public.profiles (
-  id, discord_name, "ByID", role, points, race, intro, ladder_points,
+  id, discord_name, "ByID", role, "Clan_Point", race, intro, "Ladder_MMR",
   is_in_queue, vote_to_start, is_test_account, is_test_account_active
 )
 values
@@ -174,10 +174,10 @@ on conflict (id) do update set
   discord_name = excluded.discord_name,
   "ByID" = excluded."ByID",
   role = excluded.role,
-  points = excluded.points,
+  "Clan_Point" = excluded."Clan_Point",
   race = excluded.race,
   intro = excluded.intro,
-  ladder_points = excluded.ladder_points,
+  "Ladder_MMR" = excluded."Ladder_MMR",
   is_in_queue = excluded.is_in_queue,
   vote_to_start = excluded.vote_to_start,
   is_test_account = true,
@@ -198,10 +198,10 @@ begin
     return;
   end if;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'points') then
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'Clan_Point') then
     update public.profiles
-    set points = coalesce(points, 0)
-    where points is null;
+    set "Clan_Point" = coalesce("Clan_Point", 0)
+    where "Clan_Point" is null;
   end if;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'role') then
@@ -229,10 +229,10 @@ begin
     where intro is null or intro = '';
   end if;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'ladder_points') then
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'Ladder_MMR') then
     update public.profiles
-    set ladder_points = 1000
-    where ladder_points is null;
+    set "Ladder_MMR" = 1000
+    where "Ladder_MMR" is null;
   end if;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'is_in_queue') then
@@ -951,7 +951,7 @@ select
   to_jsonb(p)->>'discord_id' as discord_id,
   p.is_test_account,
   p.is_test_account_active,
-  p.ladder_points
+  p."Ladder_MMR"
 from public.profiles p
 where is_test_account = true
 order by discord_name;

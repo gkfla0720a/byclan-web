@@ -39,18 +39,18 @@ export default function RankingBoard() {
   /**
    * 컴포넌트가 처음 화면에 나타날 때 랭킹 데이터를 한 번 불러옵니다.
    * - visitor(방문자), applicant(지원자), expelled(강퇴) 역할은 제외합니다.
-   * - ladder_points(MMR) 내림차순으로 정렬합니다.
+   * - Ladder_MMR(MMR) 내림차순으로 정렬합니다.
    */
   useEffect(() => {
     const fetchRankings = async () => {
       try {
         const { data, error: fetchError } = await filterVisibleTestData(supabase
           .from('profiles')
-          .select('id, ByID, discord_name, race, ladder_points, wins, losses')
+          .select('id, ByID, discord_name, race, Ladder_MMR, wins, losses')
           .neq('role', 'visitor')
           .neq('role', 'applicant')
           .neq('role', 'expelled')
-          .order('ladder_points', { ascending: false }));
+          .order('Ladder_MMR', { ascending: false }));
         if (fetchError) throw fetchError;
         setRankings(data || []);
       } catch (err) {
@@ -107,7 +107,7 @@ export default function RankingBoard() {
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-cyan-400 hidden sm:table-cell">{player.race}</td>
                 <td className="py-3 px-4 text-center font-bold text-cyan-300 text-sm sm:text-base drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
-                  {player.ladder_points}점
+                  {player.Ladder_MMR}점
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-gray-400 hidden md:table-cell">
                   <span className="text-emerald-400">{player.wins ?? 0}W</span> / <span className="text-red-400">{player.losses ?? 0}L</span>

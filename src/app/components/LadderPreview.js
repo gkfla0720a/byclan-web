@@ -26,16 +26,16 @@ import { useNavigate } from '../hooks/useNavigate';
 
 /**
  * 포인트를 받아 해당하는 래더 티어 이름을 반환합니다.
- * @param {number} points - 플레이어의 MMR 포인트
+ * @param {number} mmr - 플레이어의 MMR 포인트
  * @returns {string} 티어 이름 (예: 'Gold', 'Platinum')
  */
-function getTier(points) {
-  if (points >= 2400) return 'Challenger';
-  if (points >= 2200) return 'Master';
-  if (points >= 1900) return 'Diamond';
-  if (points >= 1600) return 'Platinum';
-  if (points >= 1350) return 'Gold';
-  if (points >= 1100) return 'Silver';
+function getTier(mmr) {
+  if (mmr >= 2400) return 'Challenger';
+  if (mmr >= 2200) return 'Master';
+  if (mmr >= 1900) return 'Diamond';
+  if (mmr >= 1600) return 'Platinum';
+  if (mmr >= 1350) return 'Gold';
+  if (mmr >= 1100) return 'Silver';
   return 'Bronze';
 }
 
@@ -85,9 +85,9 @@ export default function LadderPreview({ isGuest }) {
         const queueResult = await filterVisibleTestAccounts(
           supabase
             .from('profiles')
-            .select('id, ByID, discord_name, race, ladder_points, is_in_queue')
+            .select('id, ByID, discord_name, race, Ladder_MMR, is_in_queue')
             .eq('is_in_queue', true)
-            .order('ladder_points', { ascending: false })
+            .order('Ladder_MMR', { ascending: false })
             .limit(5)
         );
 
@@ -109,7 +109,7 @@ export default function LadderPreview({ isGuest }) {
             ByID: row.nickname || row.name || row.ByID,
             discord_name: row.discord_name,
             race: row.race,
-            ladder_points: row.points ?? row.ladders_points ?? 1000,
+            Ladder_MMR: row.points ?? row.ladders_points ?? 1000,
             is_in_queue: false,
           }));
         }
@@ -119,8 +119,8 @@ export default function LadderPreview({ isGuest }) {
           rows.map((player, index) => ({
             id: player.id || `preview-${index}`,
             name: player.ByID || player.discord_name || `By_Player${index + 1}`,
-            tier: getTier(player.ladder_points || 1000),
-            pts: player.ladder_points || 1000,
+            tier: getTier(player.Ladder_MMR || 1000),
+            pts: player.Ladder_MMR || 1000,
             race: getRaceLabel(player.race),
             isInQueue: Boolean(player.is_in_queue),
           }))

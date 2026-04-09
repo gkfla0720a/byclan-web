@@ -8,7 +8,7 @@
  *   - 히어로 배너: 배경 이미지와 사이버 그리드 오버레이로 꾸민 환영 섹션
  *   - 모바일 전용 프로필 카드: 로그인한 활성 클랜원에게만 히어로 배너 아래 표시
  *   - 클랜 소개 카드: 클랜 성향·관전 재미·가입 동선을 3열로 소개
- *   - 랭킹 미리보기: ladder_points 기준 상위 3인 표시 (클릭 시 랭킹 페이지 이동)
+ *   - 랭킹 미리보기: Ladder_MMR 기준 상위 3인 표시 (클릭 시 랭킹 페이지 이동)
  *   - 최신 소식: 최근 공지사항 3건 미리보기 (클릭 시 공지 페이지 이동)
  *   - 매치 현황·활동 로그: HomeSections의 MatchStatus, ActivityLog 컴포넌트 사용
  *   - 빠른 접근 버튼: 가입안내·매치·커뮤니티·랭킹 4가지 바로가기
@@ -54,13 +54,13 @@ const RACE_ICONS = {
 };
 
 /** MMR 수치를 받아 티어 이름 반환 */
-function getTier(points) {
-  if (points >= 2400) return 'Challenger';
-  if (points >= 2200) return 'Master';
-  if (points >= 1900) return 'Diamond';
-  if (points >= 1600) return 'Platinum';
-  if (points >= 1350) return 'Gold';
-  if (points >= 1100) return 'Silver';
+function getTier(mmr) {
+  if (mmr >= 2400) return 'Challenger';
+  if (mmr >= 2200) return 'Master';
+  if (mmr >= 1900) return 'Diamond';
+  if (mmr >= 1600) return 'Platinum';
+  if (mmr >= 1350) return 'Gold';
+  if (mmr >= 1100) return 'Silver';
   return 'Bronze';
 }
 
@@ -81,7 +81,7 @@ function MobileProfileCard({ profile, user, navigateTo }) {
 
   if (!user || !isActiveMember) return null;
 
-  const tier = getTier(profile.ladder_points || 1000);
+  const tier = getTier(profile.Ladder_MMR || 1000);
   const tierColor = TIER_COLORS[tier] || 'text-gray-400';
   const winRate = getWinRate(profile.wins, profile.losses);
   const race = RACE_LABELS[profile.race] || profile.race || '—';
@@ -107,7 +107,7 @@ function MobileProfileCard({ profile, user, navigateTo }) {
       <div className="ml-auto flex gap-4 text-xs text-right shrink-0">
         <div>
           <div className="text-gray-500">MMR</div>
-          <div className="font-black text-yellow-400">{profile.ladder_points ?? 1000}</div>
+          <div className="font-black text-yellow-400">{profile.Ladder_MMR ?? 1000}</div>
         </div>
         <div>
           <div className="text-gray-500">승률</div>
@@ -164,11 +164,11 @@ function HomeContent({ profile = null, user = null }) {
 
       const { data: rankData } = await filterVisibleTestData(supabase
         .from('profiles')
-        .select('id, ByID, discord_name, ladder_points')
+        .select('id, ByID, discord_name, Ladder_MMR')
         .neq('role', 'visitor')
         .neq('role', 'applicant')
         .neq('role', 'expelled')
-        .order('ladder_points', { ascending: false })
+        .order('Ladder_MMR', { ascending: false })
         .limit(3));
 
       const { data: noticeData } = await filterVisibleTestData(supabase
@@ -288,7 +288,7 @@ function HomeContent({ profile = null, user = null }) {
                    <span className="text-yellow-500 mr-1">{index + 1}위</span> {p.ByID || p.discord_name}
                    {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
                  </span>
-                 <span className="font-bold text-cyan-400 text-sm">MMR {p.ladder_points}점</span>
+                 <span className="font-bold text-cyan-400 text-sm">MMR {p.Ladder_MMR}점</span>
                </div>
              ))
             }

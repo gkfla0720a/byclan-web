@@ -117,11 +117,11 @@ export default function ClanMembers() {
         const primaryResult = await filterVisibleTestAccounts(
           supabase
             .from('profiles')
-            .select('id, ByID, discord_name, role, race, intro, ladder_points, is_streamer, streamer_platform, streamer_url')
+            .select('id, ByID, discord_name, role, race, intro, Ladder_MMR, is_streamer, streamer_platform, streamer_url')
             .neq('role', 'visitor')
             .neq('role', 'applicant')
             .neq('role', 'expelled')
-            .order('ladder_points', { ascending: false })
+            .order('Ladder_MMR', { ascending: false })
         );
 
         if (primaryResult.error) {
@@ -130,11 +130,11 @@ export default function ClanMembers() {
             const fallbackResult = await filterVisibleTestAccounts(
               supabase
                 .from('profiles')
-                .select('id, ByID, discord_name, role, race, intro, ladder_points')
+                .select('id, ByID, discord_name, role, race, intro, Ladder_MMR')
                 .neq('role', 'visitor')
                 .neq('role', 'applicant')
                 .neq('role', 'expelled')
-                .order('ladder_points', { ascending: false })
+                .order('Ladder_MMR', { ascending: false })
             );
 
             if (fallbackResult.error) throw fallbackResult.error;
@@ -293,7 +293,7 @@ export default function ClanMembers() {
                           </span>
                         </td>
                           <td className="px-4 py-3 text-slate-300 align-middle">{member.race || 'Terran'}</td>
-                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.ladder_points || 1000}점</td>
+                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.Ladder_MMR || 1000}점</td>
                           <td className="px-4 py-3 text-slate-200 align-middle">
                           {member.is_streamer ? (
                             <div className="flex items-center gap-2">

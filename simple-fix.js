@@ -13,10 +13,10 @@ supabase
     discord_name: 'halim0720',
     ByID: 'By_halim0720',
     role: 'developer',
-    points: 100,
+    Clan_Point: 100,
     race: 'Terran',
     intro: '시스템 개발자',
-    ladder_points: 1500,
+    Ladder_MMR: 1500,
     is_in_queue: false,
     vote_to_start: false
   })

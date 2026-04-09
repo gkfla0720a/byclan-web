@@ -132,8 +132,8 @@ export default function MatchCenter({ matchId, onExit }) {
   const [bettingDone, setBettingDone] = useState(false);
   /** 베팅 API 요청 처리 중 여부 */
   const [bettingLoading, setBettingLoading] = useState(false);
-  /** 현재 유저의 보유 포인트. 베팅 가능 금액 표시 및 제한에 사용. */
-  const [myPoints, setMyPoints] = useState(0);
+  /** 현재 유저의 보유 클랜 포인트. 베팅 가능 금액 표시 및 제한에 사용. */
+  const [myClanPoint, setMyClanPoint] = useState(0);
   /** 선택된 종족 조합 ID (기본값: 프프테) */
   const [raceCombo, setRaceCombo] = useState('PPT');
   /** 종족 선택 패널 표시 여부 */
@@ -157,9 +157,9 @@ export default function MatchCenter({ matchId, onExit }) {
     setMatch(m);
 
     const { data: prof } = await supabase
-      .from('profiles').select('points, role').eq('id', user.id).single();
+      .from('profiles').select('*').eq('id', user.id).single();
     if (prof) {
-      setMyPoints(prof.points || 0);
+      setMyClanPoint(prof.Clan_Point ?? 0);
       setMyRole(prof.role || null);
     }
 
@@ -409,11 +409,11 @@ export default function MatchCenter({ matchId, onExit }) {
       // 포인트 차감
       const { error: deductError } = await supabase
         .from('profiles')
-        .update({ points: myPoints - betAmount })
+        .update({ Clan_Point: myClanPoint - betAmount })
         .eq('id', user.id);
       if (deductError) throw deductError;
 
-      setMyPoints(p => p - betAmount);
+      setMyClanPoint(p => p - betAmount);
       setBettingDone(true);
       alert(`${betTeam}팀에 ${betAmount.toLocaleString()}P 베팅 완료!`);
     } catch (err) {
@@ -484,7 +484,7 @@ export default function MatchCenter({ matchId, onExit }) {
         {betTimerActive && !bettingDone && (
           <>
             <p className="text-gray-500 text-xs mb-3 font-sans">
-              내 포인트: <span className="text-purple-400 font-bold">{myPoints.toLocaleString()} CP</span>
+              내 포인트: <span className="text-purple-400 font-bold">{myClanPoint.toLocaleString()} CP</span>
               {myTeam && <span className="ml-3 text-gray-600">※ 자신의 팀({myTeam})에는 베팅 불가</span>}
             </p>
 
@@ -523,11 +523,11 @@ export default function MatchCenter({ matchId, onExit }) {
                 <button
                   key={amt}
                   onClick={() => setBetAmount(betAmount === amt ? null : amt)}
-                  disabled={amt > myPoints}
+                  disabled={amt > myClanPoint}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     betAmount === amt
                       ? 'bg-yellow-600 text-white shadow-[0_0_8px_rgba(245,158,11,0.4)]'
-                      : amt > myPoints
+                      : amt > myClanPoint
                         ? 'bg-gray-900 text-gray-700 border border-gray-800 cursor-not-allowed opacity-40'
                         : 'bg-gray-900 border border-gray-700 text-gray-400 hover:border-yellow-600 hover:text-yellow-400'
                   }`}
