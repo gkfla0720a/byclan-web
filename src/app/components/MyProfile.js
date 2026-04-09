@@ -7,6 +7,7 @@
  *   - 한줄 자기소개 수정
  *   - 래더(경쟁전) 전적 데이터 표시 (포인트, 티어, 승/패)
  *   - 보유 클랜 포인트 표시
+ *   - 소셜 계정(Discord / Google) 연동 및 연동 해제
  *   - 로그아웃 기능
  *   - 개발자(developer) 등급에게만 보이는 개발자 콘솔 진입 버튼
  * @사용방법
@@ -49,16 +50,20 @@ export default function MyProfile() {
   const [profile, setProfile] = useState(null);
   /** 현재 유저의 이메일 주소 (Supabase Auth에서 가져옴) */
   const [email, setEmail] = useState('');
-  /** 연결된 디스코드 닉네임 (표시 전용, 직접 수정 불가) */
-  const [discordName, setDiscordName] = useState(''); 
   /** ladders 테이블에서 불러온 래더 전적 데이터 (포인트, 티어, 승/패) */
   const [ladderData, setLadderData] = useState(null);
   /** 프로필 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
   /** 프로필 저장 요청이 진행 중인지 여부 (버튼 중복 클릭 방지) */
   const [isUpdating, setIsUpdating] = useState(false);
-  /** Discord 연동 해제 기능 활성화 여부 (DevConsole에서 제어, 기본값: false) */
-  const [discordUnlinkEnabled, setDiscordUnlinkEnabled] = useState(false);
+
+  // 소셜 계정 연동 상태
+  /** Discord 연동 처리 중 여부 */
+  const [discordLinking, setDiscordLinking] = useState(false);
+  /** Google 연동 처리 중 여부 */
+  const [googleLinking, setGoogleLinking] = useState(false);
+  /** 연동 관련 메시지 (성공/에러) */
+  const [linkMessage, setLinkMessage] = useState(null);
 
   // 수정용 입력 상태들
   /** By_ 접두사를 제외한 클랜 닉네임 입력값 (예: 'By_홍길동'에서 '홍길동') */
@@ -99,12 +104,12 @@ export default function MyProfile() {
   };
 
   /**
-   * 컴포넌트가 처음 마운트될 때 프로필 데이터를 불러옵니다.
-   * 빈 배열 []이므로 최초 1회만 실행됩니다.
+   * 컴포넌트가 처음 마운트될 때 프로필 데이터를 불러오고
+   * URL 파라미터에서 연동 결과 메시지를 읽습니다.
    */
   useEffect(() => {
     fetchProfileData();
-    loadDiscordUnlinkSetting();
+    readLinkResultFromUrl();
   }, []);
 
   /**
@@ -125,7 +130,6 @@ export default function MyProfile() {
         setProfile(profileData);
         setRace(profileData.race || '미지정');
         setIntro(profileData.intro || '');
-        setDiscordName(profileData.discord_name || user.user_metadata?.full_name || '알 수 없음');
         
         const currentByID = profileData.ByID || '';
         if (currentByID.startsWith('By_')) {
@@ -148,41 +152,151 @@ export default function MyProfile() {
   };
 
   /**
-   * system_settings에서 Discord 연동 해제 기능 활성화 여부를 불러옵니다.
-   * @async
+   * URL 파라미터에서 소셜 계정 연동 결과를 읽어 메시지를 표시합니다.
+   * 연동 성공: ?linked=discord|google
+   * 연동 실패(충돌): ?error=discord_conflict|google_conflict|link_failed
    */
-  const loadDiscordUnlinkSetting = async () => {
-    try {
-      const { data } = await supabase
-        .from('system_settings')
-        .select('value_bool')
-        .eq('key', 'discord_unlink_enabled')
-        .maybeSingle();
-      setDiscordUnlinkEnabled(Boolean(data?.value_bool));
-    } catch {
-      setDiscordUnlinkEnabled(false);
+  const readLinkResultFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const linked = params.get('linked');
+    const errorParam = params.get('error');
+
+    if (linked === 'discord') {
+      setLinkMessage({ type: 'success', text: 'Discord 계정이 성공적으로 연동되었습니다.' });
+    } else if (linked === 'google') {
+      setLinkMessage({ type: 'success', text: 'Google 계정이 성공적으로 연동되었습니다.' });
+    } else if (errorParam === 'discord_conflict') {
+      setLinkMessage({ type: 'error', text: '이 Discord 계정은 이미 다른 계정에 연동되어 있습니다. 해당 계정에서 연동을 먼저 해제해주세요.' });
+    } else if (errorParam === 'google_conflict') {
+      setLinkMessage({ type: 'error', text: '이 Google 계정은 이미 다른 계정에 연동되어 있습니다. 해당 계정에서 연동을 먼저 해제해주세요.' });
+    } else if (errorParam === 'link_failed') {
+      setLinkMessage({ type: 'error', text: '소셜 계정 연동에 실패했습니다. 다시 시도해주세요.' });
+    }
+
+    // 메시지를 읽은 후 URL 파라미터를 정리합니다
+    if (linked || errorParam) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('linked');
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url.pathname + (url.search || ''));
     }
   };
 
   /**
-   * 현재 유저의 Discord 연동을 해제합니다.
-   * discord_id와 discord_name을 profiles 테이블에서 초기화하고 로그아웃합니다.
-   * 이후 Discord로 재로그인하면 새 계정으로 재연동됩니다.
+   * Discord 계정 연동을 시작합니다.
+   * Supabase linkIdentity API를 사용해 현재 세션에 Discord 계정을 추가합니다.
+   * 콜백에서 충돌 감지가 이루어집니다.
+   * @async
+   */
+  const handleLinkDiscord = async () => {
+    setDiscordLinking(true);
+    setLinkMessage(null);
+    try {
+      const { error } = await supabase.auth.linkIdentity({
+        provider: 'discord',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/profile&link_provider=discord`
+        }
+      });
+      if (error) throw error;
+      // OAuth 리다이렉트가 발생하므로 여기까지 실행되지 않습니다
+    } catch (err) {
+      setLinkMessage({ type: 'error', text: 'Discord 연동 시작 실패: ' + err.message });
+      setDiscordLinking(false);
+    }
+  };
+
+  /**
+   * Google 계정 연동을 시작합니다.
+   * Supabase linkIdentity API를 사용해 현재 세션에 Google 계정을 추가합니다.
+   * @async
+   */
+  const handleLinkGoogle = async () => {
+    setGoogleLinking(true);
+    setLinkMessage(null);
+    try {
+      const { error } = await supabase.auth.linkIdentity({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/profile&link_provider=google`
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      setLinkMessage({ type: 'error', text: 'Google 연동 시작 실패: ' + err.message });
+      setGoogleLinking(false);
+    }
+  };
+
+  /**
+   * Discord 연동을 해제합니다.
+   * - profiles 테이블에서 discord_id, discord_name을 초기화합니다.
+   * - Supabase Auth에서도 Discord identity를 제거합니다.
+   * - Discord가 유일한 로그인 수단이면 로그아웃 후 홈으로 이동합니다.
    * @async
    */
   const handleDiscordUnlink = async () => {
-    if (!confirm('Discord 연동을 해제하시겠습니까?\n해제 후 로그아웃되며, 다시 로그인하면 새 Discord 계정으로 재연동됩니다.')) return;
+    if (!confirm('Discord 연동을 해제하시겠습니까?\nDiscord가 유일한 로그인 수단인 경우 로그아웃됩니다.')) return;
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const discordIdentity = user?.identities?.find((i) => i.provider === 'discord');
+      const identityCount = user?.identities?.length || 0;
+
       const { error } = await supabase
         .from('profiles')
         .update({ discord_id: null, discord_name: null })
         .eq('id', profile.id);
       if (error) throw error;
-      await supabase.auth.signOut();
-      localStorage.clear();
-      window.location.href = '/';
+
+      if (discordIdentity && identityCount > 1) {
+        // 다른 로그인 수단이 있으므로 identity만 해제하고 로그아웃하지 않습니다
+        await supabase.auth.unlinkIdentity(discordIdentity);
+        await reloadProfile();
+        await fetchProfileData();
+        setLinkMessage({ type: 'success', text: 'Discord 연동이 해제되었습니다.' });
+      } else {
+        // Discord가 유일한 로그인 수단: 로그아웃 후 홈으로 이동
+        await supabase.auth.signOut();
+        localStorage.clear();
+        window.location.href = '/';
+      }
     } catch (error) {
       alert('Discord 연동 해제 실패: ' + error.message);
+    }
+  };
+
+  /**
+   * Google 연동을 해제합니다.
+   * - profiles 테이블에서 google_sub, google_email 등을 초기화합니다.
+   * - Supabase Auth에서도 Google identity를 제거합니다.
+   * - Google이 유일한 로그인 수단이면 로그아웃 후 홈으로 이동합니다.
+   * @async
+   */
+  const handleGoogleUnlink = async () => {
+    if (!confirm('Google 연동을 해제하시겠습니까?\nGoogle이 유일한 로그인 수단인 경우 로그아웃됩니다.')) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const googleIdentity = user?.identities?.find((i) => i.provider === 'google');
+      const identityCount = user?.identities?.length || 0;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ google_sub: null, google_email: null, google_name: null, google_avatar_url: null })
+        .eq('id', profile.id);
+      if (error) throw error;
+
+      if (googleIdentity && identityCount > 1) {
+        await supabase.auth.unlinkIdentity(googleIdentity);
+        await reloadProfile();
+        await fetchProfileData();
+        setLinkMessage({ type: 'success', text: 'Google 연동이 해제되었습니다.' });
+      } else {
+        await supabase.auth.signOut();
+        localStorage.clear();
+        window.location.href = '/';
+      }
+    } catch (error) {
+      alert('Google 연동 해제 실패: ' + error.message);
     }
   };
 
@@ -428,39 +542,25 @@ export default function MyProfile() {
             </p>
           </div>
 
-          {/* 2. 디스코드 & 종족 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-400 text-xs font-bold mb-3 uppercase tracking-widest">2. 연결된 디스코드</label>
-              <input type="text" value={discordName} disabled className="w-full p-3.5 rounded-xl bg-gray-900/50 border border-gray-700 text-gray-500 cursor-not-allowed text-sm font-medium" />
-              {discordUnlinkEnabled && (
-                <button
-                  onClick={handleDiscordUnlink}
-                  className="mt-2 w-full py-2 bg-red-900/30 hover:bg-red-900/50 border border-red-500/50 text-red-400 hover:text-red-300 text-xs font-bold rounded-xl transition-all"
-                >
-                  🔓 Discord 연동 해제
-                </button>
-              )}
-            </div>
-            <div>
-              <label className="block text-gray-400 text-xs font-bold mb-3 uppercase tracking-widest">3. 주종족 선택</label>
-              <select 
-                value={race} 
-                onChange={(e) => setRace(e.target.value)}
-                className="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-600 text-white font-bold text-sm focus:border-yellow-500 focus:outline-none transition-all cursor-pointer"
-              >
-                <option value="미지정">선택해 주세요</option>
-                <option value="Protoss">프로토스 (Protoss)</option>
-                <option value="Terran">테란 (Terran)</option>
-                <option value="Zerg">저그 (Zerg)</option>
-                <option value="Random">랜덤 (Random)</option>
-              </select>
-            </div>
+          {/* 2. 종족 선택 */}
+          <div>
+            <label className="block text-gray-400 text-xs font-bold mb-3 uppercase tracking-widest">2. 주종족 선택</label>
+            <select 
+              value={race} 
+              onChange={(e) => setRace(e.target.value)}
+              className="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-600 text-white font-bold text-sm focus:border-yellow-500 focus:outline-none transition-all cursor-pointer"
+            >
+              <option value="미지정">선택해 주세요</option>
+              <option value="Protoss">프로토스 (Protoss)</option>
+              <option value="Terran">테란 (Terran)</option>
+              <option value="Zerg">저그 (Zerg)</option>
+              <option value="Random">랜덤 (Random)</option>
+            </select>
           </div>
 
           {/* 3. 자기소개 */}
           <div>
-            <label className="block text-gray-400 text-xs font-bold mb-3 uppercase tracking-widest">4. 한줄 자기소개</label>
+            <label className="block text-gray-400 text-xs font-bold mb-3 uppercase tracking-widest">3. 한줄 자기소개</label>
             <textarea 
               value={intro}
               onChange={(e) => setIntro(e.target.value)}
@@ -481,6 +581,97 @@ export default function MyProfile() {
           >
             {isUpdating ? '데이터 처리 중...' : '변경 사항 저장하기'}
           </button>
+
+          {/* 소셜 계정 연동 */}
+          <div className="pt-2 border-t border-gray-700">
+            <label className="block text-gray-400 text-xs font-bold mb-4 uppercase tracking-widest">4. 소셜 계정 연동</label>
+
+            {/* 연동 결과 메시지 */}
+            {linkMessage && (
+              <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-bold flex items-start gap-2 ${
+                linkMessage.type === 'success'
+                  ? 'bg-emerald-900/30 border border-emerald-500/50 text-emerald-300'
+                  : 'bg-red-900/30 border border-red-500/50 text-red-300'
+              }`}>
+                <span>{linkMessage.type === 'success' ? '✓' : '⚠️'}</span>
+                <span>{linkMessage.text}</span>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {/* Discord */}
+              <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-gray-900/60 border border-gray-700">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-indigo-400 text-lg shrink-0">🎮</span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Discord</p>
+                    <p className="text-sm font-medium truncate">
+                      {profile.discord_id
+                        ? <span className="text-white">{profile.discord_id}</span>
+                        : <span className="text-gray-600">연동되지 않음</span>
+                      }
+                    </p>
+                  </div>
+                </div>
+                {profile.discord_id ? (
+                  <button
+                    onClick={handleDiscordUnlink}
+                    className="shrink-0 px-3 py-1.5 bg-red-900/30 hover:bg-red-900/50 border border-red-500/50 text-red-400 hover:text-red-300 text-xs font-bold rounded-lg transition-all"
+                  >
+                    연동 해제
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleLinkDiscord}
+                    disabled={discordLinking}
+                    className="shrink-0 px-3 py-1.5 bg-indigo-700/30 hover:bg-indigo-700/50 border border-indigo-600/40 text-indigo-300 text-xs font-bold rounded-lg transition-all disabled:opacity-50"
+                  >
+                    {discordLinking ? '연동 중...' : '연동하기'}
+                  </button>
+                )}
+              </div>
+
+              {/* Google */}
+              <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-gray-900/60 border border-gray-700">
+                <div className="flex items-center gap-3 min-w-0">
+                  <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115z"/>
+                    <path fill="#34A853" d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987z"/>
+                    <path fill="#4A90D9" d="M19.834 21c2.195-2.048 3.62-5.096 3.62-9 0-.71-.109-1.473-.272-2.182H12v4.637h6.436c-.317 1.559-1.17 2.766-2.395 3.558L19.834 21z"/>
+                    <path fill="#FBBC05" d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 0 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067z"/>
+                  </svg>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Google</p>
+                    <p className="text-sm font-medium truncate">
+                      {profile.google_email
+                        ? <span className="text-white">{profile.google_email}</span>
+                        : <span className="text-gray-600">연동되지 않음</span>
+                      }
+                    </p>
+                  </div>
+                </div>
+                {profile.google_email ? (
+                  <button
+                    onClick={handleGoogleUnlink}
+                    className="shrink-0 px-3 py-1.5 bg-red-900/30 hover:bg-red-900/50 border border-red-500/50 text-red-400 hover:text-red-300 text-xs font-bold rounded-lg transition-all"
+                  >
+                    연동 해제
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleLinkGoogle}
+                    disabled={googleLinking}
+                    className="shrink-0 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-gray-600/50 text-gray-200 text-xs font-bold rounded-lg transition-all disabled:opacity-50"
+                  >
+                    {googleLinking ? '연동 중...' : '연동하기'}
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="text-[10px] text-gray-600 mt-2">
+              이미 다른 계정에 연동된 소셜 계정은 연동할 수 없습니다. 기존 연동을 먼저 해제해주세요.
+            </p>
+          </div>
         </div>
 
         {/* 오른쪽 섹션: 전적 및 자산 정보 */}

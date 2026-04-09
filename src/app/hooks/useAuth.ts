@@ -46,8 +46,8 @@ import logger, { Severity } from '../utils/errorLogger';
  * - 각 필드 설명:
  *   id:             Supabase Auth의 사용자 UUID (기본 키)
  *   ByID:           클랜 내 고유 닉네임 (예: 'By_홍길동')
- *   discord_name:   Discord 사용자 이름 (Discord 로그인 시 자동 설정)
- *   discord_id:     Discord 고유 ID (Discord OAuth 연동 시 저장, 현재 미사용)
+ *   discord_name:   Discord 사용자 이름 (표시용 이름, 연동 시 저장됨)
+ *   discord_id:     Discord 고유 ID (canonical 식별자 – 연동 여부 판단·충돌 감지에 사용)
  *   role:           클랜 역할 (visitor/applicant/rookie/member/elite/admin/master/developer)
  *   Clan_Point:     클랜 재화 포인트 (베팅·상점 등에 사용)
  *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)
@@ -64,6 +64,7 @@ export interface UserProfile {
   id: string;
   ByID: string;
   discord_name: string | null;
+  discord_id?: string | null;
   google_sub?: string | null;
   google_email?: string | null;
   google_name?: string | null;
@@ -181,7 +182,12 @@ function normalizeProfileRow(profile: Record<string, unknown> | null): UserProfi
 }
 
 function getSocialIdentity(authUser: Record<string, unknown>) {
-  const identities = (authUser?.identities as { provider: string; identity_id?: string; id?: string }[]) || [];
+  const identities = (authUser?.identities as {
+    provider: string;
+    identity_id?: string;
+    id?: string;
+    identity_data?: Record<string, unknown>;
+  }[]) || [];
   const discordIdentity = identities.find((identity) => identity.provider === 'discord');
   const googleIdentity = identities.find((identity) => identity.provider === 'google');
   const meta = authUser?.user_metadata as Record<string, unknown> | undefined;
@@ -200,6 +206,12 @@ function getSocialIdentity(authUser: Record<string, unknown>) {
   return {
     isDiscordProvider,
     isGoogleProvider,
+    discordId:
+      (discordIdentity?.identity_data?.sub as string) ||
+      (discordIdentity?.identity_data?.provider_id as string) ||
+      discordIdentity?.identity_id ||
+      discordIdentity?.id ||
+      null,
     discordName:
       (meta?.preferred_username as string) ||
       (meta?.full_name as string) ||
@@ -285,6 +297,7 @@ async function syncSocialProfileData(
   const {
     isDiscordProvider,
     isGoogleProvider,
+    discordId,
     discordName,
     googleSub,
     googleEmail,
@@ -295,8 +308,11 @@ async function syncSocialProfileData(
 
   const updates: Record<string, unknown> = {};
 
-  if (isDiscordProvider && !currentProfile.discord_name) {
-    updates.discord_name = discordName;
+  if (isDiscordProvider) {
+    if (!currentProfile.discord_name) updates.discord_name = discordName;
+    // discord_id는 아직 없을 때만 백필(최초 로그인 시)합니다.
+    // 명시적 연동(linkIdentity) 흐름에서는 auth/callback이 직접 저장합니다.
+    if (discordId && !currentProfile.discord_id) updates.discord_id = discordId;
   }
 
   if (isGoogleProvider) {
