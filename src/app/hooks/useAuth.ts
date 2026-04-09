@@ -286,7 +286,9 @@ async function syncSocialProfileData(
 
   if (isDiscordProvider) {
     if (!currentProfile.discord_name) updates.discord_name = discordName;
-    if (discordId && currentProfile.discord_id !== discordId) updates.discord_id = discordId;
+    // discord_id는 아직 없을 때만 백필(최초 로그인 시)합니다.
+    // 명시적 연동(linkIdentity) 흐름에서는 auth/callback이 직접 저장합니다.
+    if (discordId && !currentProfile.discord_id) updates.discord_id = discordId;
   }
 
   if (isGoogleProvider) {

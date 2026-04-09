@@ -151,7 +151,7 @@ export default function AuthCallback() {
         const nextPath = (rawNext && ALLOWED_PATHS.includes(rawNext)) ? rawNext : '/';
 
         if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
             console.error('Code exchange error:', error);
             router.push('/?error=auth_callback_error');
@@ -159,10 +159,11 @@ export default function AuthCallback() {
           }
 
           // 소셜 계정 연동 흐름: link_provider 파라미터가 있으면 충돌 검사 수행
+          // exchangeCodeForSession 응답의 user를 재사용하여 불필요한 API 호출을 줄입니다
           if (linkProvider === 'discord' || linkProvider === 'google') {
-            const { data: userData } = await supabase.auth.getUser();
-            if (userData?.user) {
-              const redirectTo = await handleLinkCallback(userData.user, linkProvider);
+            const user = sessionData?.user;
+            if (user) {
+              const redirectTo = await handleLinkCallback(user, linkProvider);
               window.location.replace(redirectTo);
               return;
             }
