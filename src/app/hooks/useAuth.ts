@@ -64,6 +64,7 @@ export interface UserProfile {
   id: string;
   ByID: string;
   discord_name: string | null;
+  discord_id?: string | null;
   google_sub?: string | null;
   google_email?: string | null;
   google_name?: string | null;
@@ -157,7 +158,12 @@ export interface UseAuthReturn {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getSocialIdentity(authUser: Record<string, unknown>) {
-  const identities = (authUser?.identities as { provider: string; identity_id?: string; id?: string }[]) || [];
+  const identities = (authUser?.identities as {
+    provider: string;
+    identity_id?: string;
+    id?: string;
+    identity_data?: Record<string, unknown>;
+  }[]) || [];
   const discordIdentity = identities.find((identity) => identity.provider === 'discord');
   const googleIdentity = identities.find((identity) => identity.provider === 'google');
   const meta = authUser?.user_metadata as Record<string, unknown> | undefined;
@@ -176,6 +182,12 @@ function getSocialIdentity(authUser: Record<string, unknown>) {
   return {
     isDiscordProvider,
     isGoogleProvider,
+    discordId:
+      (discordIdentity?.identity_data?.sub as string) ||
+      (discordIdentity?.identity_data?.provider_id as string) ||
+      discordIdentity?.identity_id ||
+      discordIdentity?.id ||
+      null,
     discordName:
       (meta?.preferred_username as string) ||
       (meta?.full_name as string) ||
@@ -261,6 +273,7 @@ async function syncSocialProfileData(
   const {
     isDiscordProvider,
     isGoogleProvider,
+    discordId,
     discordName,
     googleSub,
     googleEmail,
@@ -271,8 +284,9 @@ async function syncSocialProfileData(
 
   const updates: Record<string, unknown> = {};
 
-  if (isDiscordProvider && !currentProfile.discord_name) {
-    updates.discord_name = discordName;
+  if (isDiscordProvider) {
+    if (!currentProfile.discord_name) updates.discord_name = discordName;
+    if (discordId && currentProfile.discord_id !== discordId) updates.discord_id = discordId;
   }
 
   if (isGoogleProvider) {
