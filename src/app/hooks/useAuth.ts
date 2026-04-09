@@ -46,8 +46,8 @@ import logger, { Severity } from '../utils/errorLogger';
  * - 각 필드 설명:
  *   id:             Supabase Auth의 사용자 UUID (기본 키)
  *   ByID:           클랜 내 고유 닉네임 (예: 'By_홍길동')
- *   discord_name:   Discord 사용자 이름 (Discord 로그인 시 자동 설정)
- *   discord_id:     Discord 고유 ID (Discord OAuth 연동 시 저장, 현재 미사용)
+ *   discord_name:   Discord 사용자 이름 (표시용 이름, 연동 시 저장됨)
+ *   discord_id:     Discord 고유 ID (canonical 식별자 – 연동 여부 판단·충돌 감지에 사용)
  *   role:           클랜 역할 (visitor/applicant/rookie/member/elite/admin/master/developer)
  *   points:         클랜 활동 포인트
  *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)

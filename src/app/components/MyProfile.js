@@ -500,14 +500,14 @@ export default function MyProfile() {
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Discord</p>
                     <p className="text-sm font-medium truncate">
-                      {profile.discord_name
-                        ? <span className="text-white">{profile.discord_name}</span>
+                      {profile.discord_id
+                        ? <span className="text-white">{profile.discord_name || profile.discord_id}</span>
                         : <span className="text-gray-600">연동되지 않음</span>
                       }
                     </p>
                   </div>
                 </div>
-                {profile.discord_name ? (
+                {profile.discord_id ? (
                   <button
                     onClick={handleDiscordUnlink}
                     className="shrink-0 px-3 py-1.5 bg-red-900/30 hover:bg-red-900/50 border border-red-500/50 text-red-400 hover:text-red-300 text-xs font-bold rounded-lg transition-all"
