@@ -41,11 +41,6 @@ async function handleLinkCallback(user, provider) {
       identity.identity_data?.provider_id ||
       identity.identity_id ||
       null;
-    const discordName =
-      identity.identity_data?.preferred_username ||
-      identity.identity_data?.full_name ||
-      identity.identity_data?.name ||
-      'User';
 
     if (!discordId) return '/profile?error=link_failed';
 
@@ -65,10 +60,10 @@ async function handleLinkCallback(user, provider) {
       return '/profile?error=discord_conflict';
     }
 
-    // 충돌 없음 – profiles 테이블에 Discord 정보 저장
+    // 충돌 없음 – profiles 테이블에 discord_id 저장
     await supabase
       .from('profiles')
-      .update({ discord_id: discordId, discord_name: discordName })
+      .update({ discord_id: discordId })
       .eq('id', user.id);
 
     return '/profile?linked=discord';

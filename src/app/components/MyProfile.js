@@ -501,7 +501,7 @@ export default function MyProfile() {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Discord</p>
                     <p className="text-sm font-medium truncate">
                       {profile.discord_id
-                        ? <span className="text-white">{profile.discord_name || profile.discord_id}</span>
+                        ? <span className="text-white">{profile.discord_id}</span>
                         : <span className="text-gray-600">연동되지 않음</span>
                       }
                     </p>
