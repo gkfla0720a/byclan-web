@@ -75,27 +75,6 @@ function applyDemoStreamers(memberList) {
 }
 
 /**
- * 스트리머 관련 컬럼이 아직 반영되지 않은 DB/스키마 캐시 환경인지 판별합니다.
- * @param {object} error - Supabase/PostgREST 에러 객체
- * @returns {boolean}
- */
-function hasMissingStreamerColumnError(error) {
-  const message = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
-  const mentionsStreamerColumn =
-    message.includes('is_streamer') ||
-    message.includes('streamer_platform') ||
-    message.includes('streamer_url');
-
-  return (
-    error?.code === '42703' ||
-    error?.code === 'PGRST204' ||
-    message.includes('does not exist') ||
-    message.includes('could not find') ||
-    mentionsStreamerColumn
-  );
-}
-
-/**
  * 역할 문자열을 UI/권한 체크에 맞는 소문자 형식으로 정규화합니다.
  * @param {object} member - profiles 레코드
  * @returns {object}
@@ -109,37 +88,14 @@ function normalizeMemberRole(member) {
 }
 
 /**
- * DB 스키마 차이를 흡수하기 위해 포인트 컬럼을 Clan_point로 정규화합니다.
- * @param {object} member - profiles 레코드
- * @returns {object}
- */
-function normalizeMemberPoints(member) {
-  const ladderPoints =
-    typeof member?.Clan_point === 'number'
-      ? member.Clan_point
-      : typeof member?.points === 'number'
-        ? member.points
-        : 1000;
-
-  return {
-    ...member,
-    Clan_point: ladderPoints,
-  };
-}
-
-/**
- * profiles 조회를 스키마 호환 가능한 순서로 재시도합니다.
- * - 최신: streamer + Clan_point
- * - 구버전: Clan_point 없음(points 사용)
- * - 더 구버전: streamer 없음
+ * profiles 조회를 시도하고, streamer 컬럼이 없으면 해당 컬럼을 제외해 재시도합니다.
+ * Clan_point 컬럼이 없으면 에러를 그대로 반환합니다.
  * @returns {{ data: object[]|null, error: object|null }}
  */
 async function fetchMembersWithSchemaFallback() {
   const queryCandidates = [
     'id, ByID, discord_name, role, race, intro, Clan_point, is_streamer, streamer_platform, streamer_url',
-    'id, ByID, discord_name, role, race, intro, points, is_streamer, streamer_platform, streamer_url',
     'id, ByID, discord_name, role, race, intro, Clan_point',
-    'id, ByID, discord_name, role, race, intro, points',
   ];
 
   for (const selectColumns of queryCandidates) {
@@ -212,40 +168,14 @@ export default function ClanMembers() {
 
     const fetchMembers = async () => {
       try {
-        const primaryResult = await fetchMembersWithSchemaFallback();
+        const { data, error } = await fetchMembersWithSchemaFallback();
 
-        if (primaryResult.error) {
-          if (hasMissingStreamerColumnError(primaryResult.error)) {
-            const fallbackResult = await filterVisibleTestAccounts(
-              supabase
-                .from('profiles')
-                .select('id, ByID, discord_name, role, race, intro, points')
-                .neq('role', 'visitor')
-                .neq('role', 'applicant')
-                .neq('role', 'expelled')
-                .order('points', { ascending: false })
-            );
-
-            if (fallbackResult.error) throw fallbackResult.error;
-            setMembers(
-              applyDemoStreamers(
-                (fallbackResult.data || [])
-                  .map(normalizeMemberRole)
-                  .map(normalizeMemberPoints)
-                  .filter((member) => VISIBLE_MEMBER_ROLES.includes(member.role))
-              )
-            );
-            return;
-          }
-
-          throw primaryResult.error;
-        }
+        if (error) throw error;
 
         setMembers(
           applyDemoStreamers(
-            (primaryResult.data || [])
+            (data || [])
               .map(normalizeMemberRole)
-              .map(normalizeMemberPoints)
               .filter((member) => VISIBLE_MEMBER_ROLES.includes(member.role))
           )
         );
@@ -392,7 +322,7 @@ export default function ClanMembers() {
                           </span>
                         </td>
                           <td className="px-4 py-3 text-slate-300 align-middle">{member.race || 'Terran'}</td>
-                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.Clan_point || 1000}점</td>
+                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.Clan_point ?? 0}점</td>
                           <td className="px-4 py-3 text-slate-200 align-middle">
                           {member.is_streamer ? (
                             <div className="flex items-center gap-2">
