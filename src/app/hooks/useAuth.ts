@@ -160,24 +160,17 @@ export interface UseAuthReturn {
 function normalizeProfileRow(profile: Record<string, unknown> | null): UserProfile | null {
   if (!profile) return null;
 
-  const clanPoint =
-    typeof profile.Clan_Point === 'number'
-      ? profile.Clan_Point
-      : typeof profile.points === 'number'
-        ? profile.points
-        : 0;
-
-  const ladderMMR =
-    typeof profile.Ladder_MMR === 'number'
-      ? profile.Ladder_MMR
-      : typeof profile.ladder_points === 'number'
-        ? profile.ladder_points
-        : 1000;
+  if (typeof profile.Clan_Point !== 'number') {
+    logger.warn('normalizeProfileRow: Clan_Point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
+  }
+  if (typeof profile.Ladder_MMR !== 'number') {
+    logger.warn('normalizeProfileRow: Ladder_MMR 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
+  }
 
   return {
     ...(profile as UserProfile),
-    Clan_Point: clanPoint,
-    Ladder_MMR: ladderMMR,
+    Clan_Point: typeof profile.Clan_Point === 'number' ? profile.Clan_Point : 0,
+    Ladder_MMR: typeof profile.Ladder_MMR === 'number' ? profile.Ladder_MMR : 1000,
   };
 }
 
