@@ -85,9 +85,9 @@ export default function LadderPreview({ isGuest }) {
         const queueResult = await filterVisibleTestAccounts(
           supabase
             .from('profiles')
-            .select('id, ByID, discord_name, race, ladder_points, is_in_queue')
+            .select('id, ByID, discord_name, race, Clan_point, is_in_queue')
             .eq('is_in_queue', true)
-            .order('ladder_points', { ascending: false })
+            .order('Clan_point', { ascending: false })
             .limit(5)
         );
 
@@ -109,7 +109,7 @@ export default function LadderPreview({ isGuest }) {
             ByID: row.nickname || row.name || row.ByID,
             discord_name: row.discord_name,
             race: row.race,
-            ladder_points: row.points ?? row.ladders_points ?? 1000,
+            Clan_point: row.points ?? row.ladders_points ?? 1000,
             is_in_queue: false,
           }));
         }
@@ -119,8 +119,8 @@ export default function LadderPreview({ isGuest }) {
           rows.map((player, index) => ({
             id: player.id || `preview-${index}`,
             name: player.ByID || player.discord_name || `By_Player${index + 1}`,
-            tier: getTier(player.ladder_points || 1000),
-            pts: player.ladder_points || 1000,
+            tier: getTier(player.Clan_point || 1000),
+            pts: player.Clan_point || 1000,
             race: getRaceLabel(player.race),
             isInQueue: Boolean(player.is_in_queue),
           }))

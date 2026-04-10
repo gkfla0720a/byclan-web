@@ -34,7 +34,7 @@ const checkCurrentData = async () => {
       .neq('role', 'visitor')
       .neq('role', 'applicant')
       .neq('role', 'expelled')
-      .order('ladder_points', { ascending: false });
+      .order('Clan_point', { ascending: false });
     
     if (guildError) {
       console.error('❌ 길드원 조회 실패:', guildError);
@@ -48,7 +48,7 @@ const checkCurrentData = async () => {
         ByID: member.ByID,
         discord_name: member.discord_name,
         role: member.role,
-        ladder_points: member.ladder_points || 1000,
+        Clan_point: member.Clan_point || 1000,
         race: member.race || 'Terran'
       }));
       console.log('🏆 랭킹별 길드원:', rankedMembers);

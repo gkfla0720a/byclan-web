@@ -1,7 +1,7 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
-CREATE TABLE public.admin_posts (
+CREATE TABLE IF NOT EXISTS public.admin_posts (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   title text NOT NULL,
   content text NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE public.admin_posts (
   CONSTRAINT admin_posts_pkey PRIMARY KEY (id),
   CONSTRAINT admin_posts_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.applications (
+CREATE TABLE IF NOT EXISTS public.applications (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   user_id uuid,
   discord_name text,
@@ -34,15 +34,15 @@ CREATE TABLE public.applications (
   CONSTRAINT applications_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
   CONSTRAINT fk_applications_tester_id FOREIGN KEY (tester_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.ladder_matches (
+CREATE TABLE IF NOT EXISTS public.ladder_matches (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   host_id uuid,
   status text DEFAULT '모집중'::text,
   match_type text CHECK (match_type = ANY (ARRAY['1v1'::text, '2v2'::text, '3v3'::text, '4v4'::text, '5v5'::text])),
-  team_a_ids ARRAY DEFAULT '{}'::uuid[],
-  team_b_ids ARRAY DEFAULT '{}'::uuid[],
-  team_a_races ARRAY DEFAULT '{}'::text[],
-  team_b_races ARRAY DEFAULT '{}'::text[],
+  team_a_ids uuid[] DEFAULT '{}'::uuid[],
+  team_b_ids uuid[] DEFAULT '{}'::uuid[],
+  team_a_races text[] DEFAULT '{}'::text[],
+  team_b_races text[] DEFAULT '{}'::text[],
   winning_team text,
   map_name text,
   created_at timestamp with time zone DEFAULT now(),
@@ -55,7 +55,7 @@ CREATE TABLE public.ladder_matches (
   CONSTRAINT ladder_matches_pkey PRIMARY KEY (id),
   CONSTRAINT ladder_matches_host_id_fkey FOREIGN KEY (host_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.ladders (
+CREATE TABLE IF NOT EXISTS public.ladders (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   rank integer,
   nickname text,
@@ -68,7 +68,7 @@ CREATE TABLE public.ladders (
   is_test_data_active boolean DEFAULT true,
   CONSTRAINT ladders_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.match_bets (
+CREATE TABLE IF NOT EXISTS public.match_bets (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   match_id uuid,
   user_id uuid,
@@ -80,7 +80,7 @@ CREATE TABLE public.match_bets (
   CONSTRAINT match_bets_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.ladder_matches(id),
   CONSTRAINT match_bets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.match_sets (
+CREATE TABLE IF NOT EXISTS public.match_sets (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   match_id uuid,
   set_number integer,
@@ -90,15 +90,15 @@ CREATE TABLE public.match_sets (
   winner_team text,
   status text DEFAULT '엔트리제출중'::text,
   created_at timestamp with time zone DEFAULT now(),
-  race_cards ARRAY,
+  race_cards text[],
   team_a_ready boolean DEFAULT false,
   team_b_ready boolean DEFAULT false,
-  team_a_rest_ids ARRAY,
-  team_b_rest_ids ARRAY,
+  team_a_rest_ids uuid[],
+  team_b_rest_ids uuid[],
   CONSTRAINT match_sets_pkey PRIMARY KEY (id),
   CONSTRAINT match_sets_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.ladder_matches(id)
 );
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS public.notifications (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid,
   title text NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE public.notifications (
   CONSTRAINT notifications_pkey PRIMARY KEY (id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.point_logs (
+CREATE TABLE IF NOT EXISTS public.point_logs (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   user_id uuid,
   amount integer,
@@ -120,7 +120,7 @@ CREATE TABLE public.point_logs (
   CONSTRAINT point_logs_pkey PRIMARY KEY (id),
   CONSTRAINT point_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.posts (
+CREATE TABLE IF NOT EXISTS public.posts (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   user_id uuid,
   author_name text,
@@ -134,7 +134,7 @@ CREATE TABLE public.posts (
   CONSTRAINT posts_pkey PRIMARY KEY (id),
   CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid NOT NULL,
   discord_name text,
   role text DEFAULT 'applicant'::text,
@@ -143,7 +143,7 @@ CREATE TABLE public.profiles (
   ByID text,
   race text DEFAULT '미지정'::text,
   intro text DEFAULT ''::text,
-  ladder_points integer DEFAULT 1000,
+  Clan_point integer DEFAULT 1000,
   is_in_queue boolean DEFAULT false,
   vote_to_start boolean DEFAULT false,
   is_test_account boolean DEFAULT false,
@@ -156,7 +156,7 @@ CREATE TABLE public.profiles (
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
-CREATE TABLE public.system_settings (
+CREATE TABLE IF NOT EXISTS public.system_settings (
   key text NOT NULL,
   value_bool boolean DEFAULT false,
   updated_at timestamp with time zone DEFAULT now(),

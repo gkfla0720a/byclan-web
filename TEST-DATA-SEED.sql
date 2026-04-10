@@ -15,7 +15,7 @@ begin
     points,
     race,
     intro,
-    ladder_points,
+    Clan_point,
     is_in_queue,
     vote_to_start
   )
@@ -156,7 +156,7 @@ on conflict (key) do update set
   updated_at = now();
 
 insert into public.profiles (
-  id, discord_name, "ByID", role, points, race, intro, ladder_points,
+  id, discord_name, "ByID", role, points, race, intro, Clan_point,
   is_in_queue, vote_to_start, is_test_account, is_test_account_active
 )
 values
@@ -177,7 +177,7 @@ on conflict (id) do update set
   points = excluded.points,
   race = excluded.race,
   intro = excluded.intro,
-  ladder_points = excluded.ladder_points,
+  Clan_point = excluded.Clan_point,
   is_in_queue = excluded.is_in_queue,
   vote_to_start = excluded.vote_to_start,
   is_test_account = true,
@@ -229,10 +229,10 @@ begin
     where intro is null or intro = '';
   end if;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'ladder_points') then
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'Clan_point') then
     update public.profiles
-    set ladder_points = 1000
-    where ladder_points is null;
+    set Clan_point = 1000
+    where Clan_point is null;
   end if;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'is_in_queue') then
@@ -951,7 +951,7 @@ select
   to_jsonb(p)->>'discord_id' as discord_id,
   p.is_test_account,
   p.is_test_account_active,
-  p.ladder_points
+  p.Clan_point
 from public.profiles p
 where is_test_account = true
 order by discord_name;

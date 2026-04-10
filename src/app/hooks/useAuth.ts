@@ -52,7 +52,7 @@ import logger, { Severity } from '../utils/errorLogger';
  *   points:         클랜 활동 포인트
  *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)
  *   intro:          자기소개 문구
- *   ladder_points:  래더 레이팅 포인트 (기본값: 1000)
+ *   Clan_point:  래더 레이팅 포인트 (기본값: 1000)
  *   is_in_queue:    현재 래더 대기열에 있는지 여부
  *   vote_to_start:  래더 시작 투표 여부
  *   wins:           래더 승리 수 (선택)
@@ -74,7 +74,7 @@ export interface UserProfile {
   points: number;
   race: string;
   intro: string;
-  ladder_points: number;
+  Clan_point: number;
   is_in_queue: boolean;
   vote_to_start: boolean;
   wins?: number;
@@ -513,7 +513,7 @@ export function useAuth(): UseAuthReturn {
               points: 0,
               race: 'Terran',
               intro: '클랜 방문자',
-              ladder_points: 1000,
+              Clan_point: 1000,
               is_in_queue: false,
               vote_to_start: false,
             });

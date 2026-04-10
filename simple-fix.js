@@ -16,7 +16,7 @@ supabase
     points: 100,
     race: 'Terran',
     intro: '시스템 개발자',
-    ladder_points: 1500,
+    Clan_point: 1500,
     is_in_queue: false,
     vote_to_start: false
   })

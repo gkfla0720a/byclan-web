@@ -3,7 +3,7 @@
 -- 목적:
 -- 1) profiles 테이블에 비어 있는 기본 데이터를 채움
 -- 2) wins / losses 컬럼이 없으면 생성
--- 3) ladder_points가 비어 있으면 자연스러운 구간값으로 채움
+-- 3) Clan_point가 비어 있으면 자연스러운 구간값으로 채움
 -- 4) 승률/전적이 비어 있으면 포인트 구간 기준으로 보정
 
 do $$
@@ -66,16 +66,16 @@ begin
     where intro is null or btrim(intro) = '';
   end if;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'ladder_points') then
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'Clan_point') then
     with ranked as (
       select
         id,
         row_number() over (order by coalesce(discord_name, ''), id::text) as rn
       from public.profiles
-      where ladder_points is null
+      where Clan_point is null
     )
     update public.profiles p
-    set ladder_points = case mod(r.rn - 1, 10)
+    set Clan_point = case mod(r.rn - 1, 10)
       when 0 then 2480
       when 1 then 2260
       when 2 then 2090
@@ -94,13 +94,13 @@ begin
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'wins') then
     update public.profiles
     set wins = case
-      when coalesce(ladder_points, 1000) >= 2400 then 68
-      when coalesce(ladder_points, 1000) >= 2200 then 54
-      when coalesce(ladder_points, 1000) >= 2000 then 43
-      when coalesce(ladder_points, 1000) >= 1800 then 35
-      when coalesce(ladder_points, 1000) >= 1600 then 28
-      when coalesce(ladder_points, 1000) >= 1400 then 21
-      when coalesce(ladder_points, 1000) >= 1200 then 15
+      when coalesce(Clan_point, 1000) >= 2400 then 68
+      when coalesce(Clan_point, 1000) >= 2200 then 54
+      when coalesce(Clan_point, 1000) >= 2000 then 43
+      when coalesce(Clan_point, 1000) >= 1800 then 35
+      when coalesce(Clan_point, 1000) >= 1600 then 28
+      when coalesce(Clan_point, 1000) >= 1400 then 21
+      when coalesce(Clan_point, 1000) >= 1200 then 15
       else 9
     end
     where wins is null;
@@ -109,13 +109,13 @@ begin
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'losses') then
     update public.profiles
     set losses = case
-      when coalesce(ladder_points, 1000) >= 2400 then 18
-      when coalesce(ladder_points, 1000) >= 2200 then 17
-      when coalesce(ladder_points, 1000) >= 2000 then 19
-      when coalesce(ladder_points, 1000) >= 1800 then 20
-      when coalesce(ladder_points, 1000) >= 1600 then 21
-      when coalesce(ladder_points, 1000) >= 1400 then 22
-      when coalesce(ladder_points, 1000) >= 1200 then 23
+      when coalesce(Clan_point, 1000) >= 2400 then 18
+      when coalesce(Clan_point, 1000) >= 2200 then 17
+      when coalesce(Clan_point, 1000) >= 2000 then 19
+      when coalesce(Clan_point, 1000) >= 1800 then 20
+      when coalesce(Clan_point, 1000) >= 1600 then 21
+      when coalesce(Clan_point, 1000) >= 1400 then 22
+      when coalesce(Clan_point, 1000) >= 1200 then 23
       else 24
     end
     where losses is null;
@@ -130,17 +130,17 @@ select
   "ByID",
   role,
   race,
-  ladder_points,
+  Clan_point,
   wins,
   losses,
   case
-    when coalesce(ladder_points, 1000) >= 2400 then 'Challenger'
-    when coalesce(ladder_points, 1000) >= 2200 then 'Master'
-    when coalesce(ladder_points, 1000) >= 1900 then 'Diamond'
-    when coalesce(ladder_points, 1000) >= 1600 then 'Platinum'
-    when coalesce(ladder_points, 1000) >= 1350 then 'Gold'
-    when coalesce(ladder_points, 1000) >= 1100 then 'Silver'
+    when coalesce(Clan_point, 1000) >= 2400 then 'Challenger'
+    when coalesce(Clan_point, 1000) >= 2200 then 'Master'
+    when coalesce(Clan_point, 1000) >= 1900 then 'Diamond'
+    when coalesce(Clan_point, 1000) >= 1600 then 'Platinum'
+    when coalesce(Clan_point, 1000) >= 1350 then 'Gold'
+    when coalesce(Clan_point, 1000) >= 1100 then 'Silver'
     else 'Bronze'
   end as derived_tier
 from public.profiles
-order by coalesce(ladder_points, 1000) desc, coalesce(discord_name, '') asc;
+order by coalesce(Clan_point, 1000) desc, coalesce(discord_name, '') asc;

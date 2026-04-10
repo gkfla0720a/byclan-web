@@ -96,17 +96,17 @@ function buildTeams(players, perTeam, sortOption) {
   if (players.length < perTeam * 2) return null;
   const pool = [...players].slice(0, perTeam * 2);
   if (sortOption === 'balance') {
-    const sorted = [...pool].sort((a, b) => (b.ladder_points || 1000) - (a.ladder_points || 1000));
+    const sorted = [...pool].sort((a, b) => (b.Clan_point || 1000) - (a.Clan_point || 1000));
     const teamA = [], teamB = [];
     sorted.forEach((p, i) => { if (i % 2 === 0) teamA.push(p); else teamB.push(p); });
     return { teamA, teamB };
   }
   if (sortOption === 'top') {
-    const sorted = [...pool].sort((a, b) => (b.ladder_points || 1000) - (a.ladder_points || 1000));
+    const sorted = [...pool].sort((a, b) => (b.Clan_point || 1000) - (a.Clan_point || 1000));
     return { teamA: sorted.slice(0, perTeam), teamB: sorted.slice(perTeam) };
   }
   if (sortOption === 'bottom') {
-    const sorted = [...pool].sort((a, b) => (a.ladder_points || 1000) - (b.ladder_points || 1000));
+    const sorted = [...pool].sort((a, b) => (a.Clan_point || 1000) - (b.Clan_point || 1000));
     return { teamA: sorted.slice(0, perTeam), teamB: sorted.slice(perTeam) };
   }
   return buildTeams(players, perTeam, 'balance');
@@ -191,7 +191,7 @@ function ConsentPopup({ proposal, myUserId, onAccept, onReject }) {
                     <div key={p.id} className="text-xs text-gray-300 truncate flex items-center gap-1 mb-1">
                       <span className="text-cyan-600 w-4 text-center">{getRaceIcon(p.race)}</span>
                       <span className="flex-1 truncate">{p.ByID || p.discord_name}</span>
-                      <span className="text-yellow-500 text-[10px]">{p.ladder_points || 1000}점</span>
+                      <span className="text-yellow-500 text-[10px]">{p.Clan_point || 1000}점</span>
                     </div>
                   ))}
                   <div className={`text-center text-[10px] mt-1 font-bold ${team === 'A' ? 'text-blue-400' : 'text-red-400'}`}>
@@ -247,13 +247,13 @@ function TwoMatchSuggestion({ players, onSelectMatch }) {
   /** 하위 매치의 팀 구성 정렬 방식 ('balance' | 'top' | 'bottom') */
   const [sortB, setSortB] = useState('balance');
   const perTeam = 3;
-  const sorted = [...players].sort((a, b) => (b.ladder_points || 1000) - (a.ladder_points || 1000));
+  const sorted = [...players].sort((a, b) => (b.Clan_point || 1000) - (a.Clan_point || 1000));
   const half = Math.floor(sorted.length / 2);
   const upperPool = sorted.slice(0, half);
   const lowerPool = sorted.slice(half);
   const match1 = buildTeams(upperPool, perTeam, sortA);
   const match2 = buildTeams(lowerPool, perTeam, sortB);
-  const calcAvg = (team) => (team && team.length > 0) ? team.reduce((s, p) => s + (p.ladder_points || 1000), 0) / team.length : 0;
+  const calcAvg = (team) => (team && team.length > 0) ? team.reduce((s, p) => s + (p.Clan_point || 1000), 0) / team.length : 0;
   const diff1 = match1 ? Math.abs(calcAvg(match1.teamA) - calcAvg(match1.teamB)) : 0;
   const diff2 = match2 ? Math.abs(calcAvg(match2.teamA) - calcAvg(match2.teamB)) : 0;
   const SORT_OPTIONS = [
@@ -379,7 +379,7 @@ export default function LadderDashboard({ onMatchEnter }) {
 
       const { data: queue } = await filterVisibleTestAccounts(supabase
         .from('profiles')
-        .select('id, ByID, discord_name, race, ladder_points, role, is_in_queue, queue_joined_at')
+        .select('id, ByID, discord_name, race, Clan_point, role, is_in_queue, queue_joined_at')
         .eq('is_in_queue', true)
         .order('queue_joined_at', { ascending: true }));
       const qPlayers = queue || [];
@@ -411,7 +411,7 @@ export default function LadderDashboard({ onMatchEnter }) {
       if (allTeamIds.length > 0) {
         const { data: teamProfs } = await supabase
           .from('profiles')
-          .select('id, ByID, discord_name, ladder_points')
+          .select('id, ByID, discord_name, Clan_point')
           .in('id', allTeamIds);
         profMap = Object.fromEntries((teamProfs || []).map(p => [p.id, p]));
       }
@@ -427,12 +427,12 @@ export default function LadderDashboard({ onMatchEnter }) {
           id,
           ByID: profMap[id]?.ByID,
           discord_name: profMap[id]?.discord_name,
-          ladder_points: profMap[id]?.ladder_points || 1000,
+          Clan_point: profMap[id]?.Clan_point || 1000,
         });
         const teamA = (myProposal.team_a_ids || []).map(resolveProf);
         const teamB = (myProposal.team_b_ids || []).map(resolveProf);
-        const avgA = teamA.length ? teamA.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teamA.length : 1000;
-        const avgB = teamB.length ? teamB.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teamB.length : 1000;
+        const avgA = teamA.length ? teamA.reduce((s, p) => s + (p.Clan_point || 1000), 0) / teamA.length : 1000;
+        const avgB = teamB.length ? teamB.reduce((s, p) => s + (p.Clan_point || 1000), 0) / teamB.length : 1000;
         setActiveProposal(prev => prev?.matchId === myProposal.id ? prev : {
           matchId: myProposal.id,
           matchType: `${myProposal.match_type}v${myProposal.match_type}`,
@@ -536,8 +536,8 @@ export default function LadderDashboard({ onMatchEnter }) {
   const handleProposeMatch = async (typeStr, teamA, teamB) => {
     if (!user || proposalCooldown > 0) return;
     const perTeam = parseInt(typeStr);
-    const avgA = teamA.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teamA.length;
-    const avgB = teamB.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teamB.length;
+    const avgA = teamA.reduce((s, p) => s + (p.Clan_point || 1000), 0) / teamA.length;
+    const avgB = teamB.reduce((s, p) => s + (p.Clan_point || 1000), 0) / teamB.length;
     const diff = Math.abs(avgA - avgB);
 
     if (diff > BALANCE_THRESHOLD) {
@@ -634,9 +634,9 @@ export default function LadderDashboard({ onMatchEnter }) {
   /** canPropose가 true일 때 buildTeams로 계산된 두 팀. null이면 팀 구성 미표시. */
   const teams = canPropose ? buildTeams(queuePlayers, perTeam, sortOption) : null;
   /** A팀 평균 MMR */
-  const avgA = teams ? teams.teamA.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teams.teamA.length : 0;
+  const avgA = teams ? teams.teamA.reduce((s, p) => s + (p.Clan_point || 1000), 0) / teams.teamA.length : 0;
   /** B팀 평균 MMR */
-  const avgB = teams ? teams.teamB.reduce((s, p) => s + (p.ladder_points || 1000), 0) / teams.teamB.length : 0;
+  const avgB = teams ? teams.teamB.reduce((s, p) => s + (p.Clan_point || 1000), 0) / teams.teamB.length : 0;
   /** 두 팀 평균 MMR 차이 (절댓값). BALANCE_THRESHOLD 초과 시 경고 표시. */
   const balanceDiff = Math.abs(avgA - avgB);
   /** 대기열 인원이 8명 이상인지 여부 (팀 구성 정렬 옵션 표시 조건) */
@@ -726,13 +726,13 @@ export default function LadderDashboard({ onMatchEnter }) {
             <div>
               <p className="text-gray-500 text-[10px] uppercase tracking-wider">MMR</p>
               <p className="text-yellow-400 font-bold text-xl drop-shadow-[0_0_5px_rgba(234,179,8,0.6)]">
-                {myProfile?.ladder_points ?? myStats?.ladders_points ?? 1000}점
+                {myProfile?.Clan_point ?? myStats?.ladders_points ?? 1000}점
               </p>
             </div>
             <div>
               <p className="text-gray-500 text-[10px] uppercase tracking-wider">티어</p>
-              <p className={`font-bold ${TIER_COLORS[getTier(myProfile?.ladder_points ?? 1000)]}`}>
-                {getTier(myProfile?.ladder_points ?? 1000)}
+              <p className={`font-bold ${TIER_COLORS[getTier(myProfile?.Clan_point ?? 1000)]}`}>
+                {getTier(myProfile?.Clan_point ?? 1000)}
               </p>
             </div>
             {(myProfile?.wins !== undefined || myStats?.win !== undefined) && (
@@ -794,7 +794,7 @@ export default function LadderDashboard({ onMatchEnter }) {
         ) : (
           <div className="divide-y divide-cyan-900/20">
             {queuePlayers.map((p, idx) => {
-              const tier = getTier(p.ladder_points || 1000);
+              const tier = getTier(p.Clan_point || 1000);
               const isMe = p.id === user?.id;
               const queueMinutes = p.queue_joined_at
                 ? Math.floor((Date.now() - new Date(p.queue_joined_at).getTime()) / 60000)
@@ -813,7 +813,7 @@ export default function LadderDashboard({ onMatchEnter }) {
                   </div>
                   <div className="flex items-center gap-4 text-xs">
                     <span className={`font-bold ${TIER_COLORS[tier]}`}>{tier}</span>
-                    <span className="text-yellow-400 font-bold">{p.ladder_points || 1000}점</span>
+                    <span className="text-yellow-400 font-bold">{p.Clan_point || 1000}점</span>
                     <span className="text-gray-600 hidden sm:inline">{queueMinutes}분</span>
                   </div>
                 </div>
@@ -863,7 +863,7 @@ export default function LadderDashboard({ onMatchEnter }) {
                     <div key={p.id} className="text-xs text-gray-300 flex items-center gap-2">
                       <span className="text-cyan-600 w-4">{getRaceIcon(p.race)}</span>
                       <span className="flex-1 truncate">{getDisplayName(p)}</span>
-                      <span className="text-yellow-400">{p.ladder_points || 1000}점</span>
+                      <span className="text-yellow-400">{p.Clan_point || 1000}점</span>
                     </div>
                   ))}
                 </div>
@@ -881,7 +881,7 @@ export default function LadderDashboard({ onMatchEnter }) {
                     <div key={p.id} className="text-xs text-gray-300 flex items-center gap-2 flex-row-reverse">
                       <span className="text-cyan-600 w-4">{getRaceIcon(p.race)}</span>
                       <span className="flex-1 truncate text-right">{getDisplayName(p)}</span>
-                      <span className="text-yellow-400">{p.ladder_points || 1000}점</span>
+                      <span className="text-yellow-400">{p.Clan_point || 1000}점</span>
                     </div>
                   ))}
                 </div>

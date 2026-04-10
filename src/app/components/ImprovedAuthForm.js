@@ -176,7 +176,7 @@ function EmailLoginForm({ onSuccess }) {
               points: 1000,
               race: 'Terran',
               intro: '새로운 클랜원입니다.',
-              ladder_points: 1000
+              Clan_point: 1000
             });
 
           if (profileError) {
