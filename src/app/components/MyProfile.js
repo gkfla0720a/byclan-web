@@ -718,18 +718,6 @@ export default function MyProfile() {
         </div>
 
       </div>
-    </div>
-  );
-          {/* 로그아웃 버튼 */}
-          <button 
-            onClick={handleLogout}
-            className="w-full py-4 bg-gray-900 hover:bg-red-900/20 border border-gray-800 hover:border-red-500/50 text-gray-500 hover:text-red-500 text-xs font-black rounded-2xl transition-all shadow-md uppercase tracking-widest"
-          >
-            Logout
-          </button>
-        </div>
-
-      </div>
 
       {/* ── 계정 보안 섹션 ──────────────────────────────────────────────────── */}
       <div className="mt-8 bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-700 shadow-xl space-y-8">
@@ -830,5 +818,4 @@ export default function MyProfile() {
 
     </div>
   );
-}
 }
