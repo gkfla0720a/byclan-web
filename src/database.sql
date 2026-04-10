@@ -136,14 +136,13 @@ CREATE TABLE IF NOT EXISTS public.posts (
 );
 CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid NOT NULL,
-  discord_name text,
-  role text DEFAULT 'applicant'::text,
+  discord_id text,
+  role text DEFAULT 'visitor'::text,
   "Clan_Point" integer DEFAULT 0,
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   ByID text,
   race text DEFAULT '미지정'::text,
   intro text DEFAULT ''::text,
-  Clan_point integer DEFAULT 1000,
   is_in_queue boolean DEFAULT false,
   vote_to_start boolean DEFAULT false,
   is_test_account boolean DEFAULT false,

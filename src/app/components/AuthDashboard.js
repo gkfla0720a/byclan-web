@@ -94,7 +94,7 @@ function DiscordLinkPanel({ user, onLinked }) {
 
   /**
    * Discord 연동을 해제합니다.
-   * profiles 테이블의 discord_id, discord_name을 null로 업데이트합니다.
+   * profiles 테이블의 discord_id를 null로 업데이트합니다.
    */
   const handleUnlinkDiscord = async () => {
     setLoading(true);
@@ -105,7 +105,6 @@ function DiscordLinkPanel({ user, onLinked }) {
         .from('profiles')
         .update({
           discord_id: null,
-          discord_name: null,
         })
         .eq('id', user.id);
 

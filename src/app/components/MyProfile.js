@@ -230,7 +230,7 @@ export default function MyProfile() {
 
   /**
    * Discord 연동을 해제합니다.
-   * - profiles 테이블에서 discord_id, discord_name을 초기화합니다.
+   * - profiles 테이블에서 discord_id를 초기화합니다.
    * - Supabase Auth에서도 Discord identity를 제거합니다.
    * - Discord가 유일한 로그인 수단이면 로그아웃 후 홈으로 이동합니다.
    * @async
@@ -244,7 +244,7 @@ export default function MyProfile() {
 
       const { error } = await supabase
         .from('profiles')
-        .update({ discord_id: null, discord_name: null })
+        .update({ discord_id: null })
         .eq('id', profile.id);
       if (error) throw error;
 
