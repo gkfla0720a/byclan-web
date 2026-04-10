@@ -45,14 +45,12 @@ import logger, { Severity } from '../utils/errorLogger';
  * - Supabase의 profiles 테이블 한 행(row)에 해당하는 타입입니다.
  * - 각 필드 설명:
  *   id:             Supabase Auth의 사용자 UUID (기본 키)
- *   ByID:           클랜 내 고유 닉네임 (예: 'By_홍길동')
- *   discord_name:   Discord 사용자 이름 (표시용 이름, 연동 시 저장됨)
- *   discord_id:     Discord 고유 ID (canonical 식별자 – 연동 여부 판단·충돌 감지에 사용)
+ *   ByID:           클랜 내 고유 닉네임 (예: 'By_홍길동') – 클랜원이라면 반드시 존재해야 함
+ *   discord_id:     Discord 고유 ID (연동 식별자 – 연동 여부 판단·충돌 감지·표시에 사용)
  *   role:           클랜 역할 (visitor/applicant/rookie/member/elite/admin/master/developer)
- *   Clan_Point:     클랜 재화 포인트 (베팅·상점 등에 사용)
+ *   Clan_Point:     클랜 재화 포인트 (베팅·상점 등에 사용, 기본값: 0)
  *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)
  *   intro:          자기소개 문구
- *   Clan_point:  래더 레이팅 포인트 (기본값: 1000)
  *   is_in_queue:    현재 래더 대기열에 있는지 여부
  *   vote_to_start:  래더 시작 투표 여부
  *   wins:           래더 승리 수 (선택)
@@ -63,7 +61,6 @@ import logger, { Severity } from '../utils/errorLogger';
 export interface UserProfile {
   id: string;
   ByID: string;
-  discord_name: string | null;
   discord_id?: string | null;
   google_sub?: string | null;
   google_email?: string | null;
@@ -74,7 +71,6 @@ export interface UserProfile {
   Clan_Point: number;
   race: string;
   intro: string;
-  Clan_point: number;
   is_in_queue: boolean;
   vote_to_start: boolean;
   wins?: number;
@@ -302,7 +298,6 @@ async function syncSocialProfileData(
   const updates: Record<string, unknown> = {};
 
   if (isDiscordProvider) {
-    if (!currentProfile.discord_name) updates.discord_name = discordName;
     // discord_id는 아직 없을 때만 백필(최초 로그인 시)합니다.
     // 명시적 연동(linkIdentity) 흐름에서는 auth/callback이 직접 저장합니다.
     if (discordId && !currentProfile.discord_id) updates.discord_id = discordId;
@@ -524,13 +519,11 @@ export function useAuth(): UseAuthReturn {
             .from('profiles')
             .insert({
               id: authUser.id,
-              discord_name: isDiscordProvider ? discordName : null,
               ByID: uniqueByID,
               role: 'visitor',
-                Clan_Point: 0,
+              Clan_Point: 0,
               race: 'Terran',
               intro: '클랜 방문자',
-              Clan_point: 1000,
               is_in_queue: false,
               vote_to_start: false,
             });

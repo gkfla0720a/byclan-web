@@ -39,18 +39,18 @@ export default function RankingBoard() {
   /**
    * 컴포넌트가 처음 화면에 나타날 때 랭킹 데이터를 한 번 불러옵니다.
    * - visitor(방문자), applicant(지원자), expelled(강퇴) 역할은 제외합니다.
-   * - Clan_point(MMR) 내림차순으로 정렬합니다.
+   * - Clan_Point(MMR) 내림차순으로 정렬합니다.
    */
   useEffect(() => {
     const fetchRankings = async () => {
       try {
         const { data, error: fetchError } = await filterVisibleTestData(supabase
           .from('profiles')
-          .select('id, ByID, discord_name, race, Clan_point, wins, losses')
+          .select('id, ByID, race, Clan_Point, wins, losses')
           .neq('role', 'visitor')
           .neq('role', 'applicant')
           .neq('role', 'expelled')
-          .order('Clan_point', { ascending: false }));
+          .order('Clan_Point', { ascending: false }));
         if (fetchError) throw fetchError;
         setRankings(data || []);
       } catch (err) {
@@ -100,14 +100,14 @@ export default function RankingBoard() {
                 </td>
                 <td className="py-3 px-4 font-medium text-cyan-50">
                   <div className="flex flex-col sm:flex-row gap-1 sm:items-center">
-                    <span className="text-sm sm:text-base tracking-wide">{player.ByID || player.discord_name}</span>  {/* ✅ 수정3 */}
+                    <span className="text-sm sm:text-base tracking-wide">{player.ByID || <span className="text-red-400">[ByID 없음]</span>}</span>
                     {isMarkedTestData(player) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
                     <span className="text-[10px] text-cyan-600 sm:hidden">[{player.race}]</span>
                   </div>
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-cyan-400 hidden sm:table-cell">{player.race}</td>
                 <td className="py-3 px-4 text-center font-bold text-cyan-300 text-sm sm:text-base drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
-                  {player.Clan_point}점
+                  {player.Clan_Point}점
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-gray-400 hidden md:table-cell">
                   <span className="text-emerald-400">{player.wins ?? 0}W</span> / <span className="text-red-400">{player.losses ?? 0}L</span>

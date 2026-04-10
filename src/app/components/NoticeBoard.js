@@ -64,7 +64,7 @@ export default function NoticeBoard() {
         const { data, error } = await filterVisibleTestData(
           supabase
             .from('notice_posts')
-            .select('id, title, content, created_at, profiles:author_id ( ByID, discord_name, role )')
+            .select('id, title, content, created_at, profiles:author_id ( ByID, role )')
             .order('created_at', { ascending: false })
         );
 
@@ -102,7 +102,7 @@ export default function NoticeBoard() {
             id: notice.id || `notice-${index}`,
             type: index === 0 ? '필독' : '공지',
             title: notice.title,
-            author: notice.profiles?.ByID || notice.profiles?.discord_name || '운영진',
+            author: notice.profiles?.ByID || '[ByID 없음]',
             date: notice.created_at
               ? new Date(notice.created_at).toLocaleDateString('ko-KR')
               : '-',
@@ -148,7 +148,7 @@ export default function NoticeBoard() {
       const { data } = await filterVisibleTestData(
         supabase
           .from('notice_posts')
-          .select('id, title, content, created_at, profiles:author_id ( ByID, discord_name, role )')
+          .select('id, title, content, created_at, profiles:author_id ( ByID, role )')
           .order('created_at', { ascending: false })
       );
       setNotices(
@@ -156,7 +156,7 @@ export default function NoticeBoard() {
           id: notice.id || `notice-${index}`,
           type: index === 0 ? '필독' : '공지',
           title: notice.title,
-          author: notice.profiles?.ByID || notice.profiles?.discord_name || '운영진',
+          author: notice.profiles?.ByID || '[ByID 없음]',
           date: notice.created_at
             ? new Date(notice.created_at).toLocaleDateString('ko-KR')
             : '-',

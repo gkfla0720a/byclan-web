@@ -170,13 +170,11 @@ function EmailLoginForm({ onSuccess }) {
             .from('profiles')
             .insert({
               id: data.user.id,
-              discord_name: userId,
               ByID: byID,
               role: 'applicant',
-              Clan_Point: 1000,
+              Clan_Point: 0,
               race: 'Terran',
-              intro: '새로운 클랜원입니다.',
-              Clan_point: 1000
+              intro: '새로운 클랜원입니다.'
             });
 
           if (profileError) {

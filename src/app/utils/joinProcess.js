@@ -25,7 +25,8 @@ import { supabase } from '@/supabase';
  *
  * 매개변수:
  *   data: 가입 신청 폼에서 입력받은 데이터 객체
- *         (discord_name, race, intro 등 포함)
+ *         (btag, race, tier, intro, motivation, playtime, phone, isStreamer 등 포함)
+ *         Discord 정보는 폼에 포함되지 않으며, 프로필에서 디스코드 연동 시 자동 저장됩니다.
  *
  * 반환값: 처리 결과 (성공/실패 정보)
  */

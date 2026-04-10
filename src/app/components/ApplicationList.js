@@ -60,7 +60,6 @@ export default function ApplicationList() {
 
     let query = filterVisibleTestData(supabase
       .from('applications')
-      // ✨ tester_id와 user_id에서 ByID와 discord_name을 정확히 가져옵니다.
       .select(`
         *,
         tester_id,
@@ -93,10 +92,10 @@ export default function ApplicationList() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        // ✨ 여기서도 변경된 ByID와 discord_name을 가져오도록 수정
+        // 환경 확인 후 권한이 있으면 신청서 목록을 불러옵니다.
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, ByID, discord_name, role')
+          .select('id, ByID, role')
           .eq('id', user.id)
           .single();
         
@@ -177,7 +176,7 @@ export default function ApplicationList() {
   const confirmProcess = async () => {
     const { app, status, feedback } = modalData;
     const isPass = status === '합격';
-    const testerName = myProfile.ByID || myProfile.discord_name || '운영진';
+    const testerName = myProfile.ByID || '[ByID 없음]';
 
     try {
       setProcessingId(app.id);
@@ -292,7 +291,7 @@ export default function ApplicationList() {
                 {/* 디스코드 이름 표시 (있는 경우) */}
                 {app.applicant && (
                   <span className="text-sm text-gray-500 mb-1">
-                    (Discord: {app.applicant.ByID || app.applicant.discord_name})
+                    (Discord: {app.applicant.ByID || '[ByID 없음]'})
                   </span>
                 )}
               </div>
@@ -343,7 +342,7 @@ export default function ApplicationList() {
                   <div className="text-sm">
                     {app.tester_id ? (
                       <span className="text-yellow-400 font-bold flex items-center gap-2">
-                        ⚔️ 테스트 담당: {app.tester?.ByID || app.tester?.discord_name || '알 수 없는 요원'}
+                        ⚔️ 테스트 담당: {app.tester?.ByID || '[ByID 없음]'}
                         {app.tester_id === myProfile.id && <span className="text-xs bg-yellow-900/50 border border-yellow-700 px-2 py-0.5 rounded-full">나의 임무</span>}
                       </span>
                     ) : (

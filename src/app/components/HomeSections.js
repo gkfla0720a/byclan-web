@@ -191,7 +191,7 @@ function ActivityLog() {
             .limit(2)),
           filterVisibleTestData(supabase
             .from('applications')
-            .select('id, discord_name, btag, status, created_at')
+            .select('id, btag, status, created_at')
             .order('created_at', { ascending: false })
             .limit(2)),
           filterVisibleTestData(supabase
@@ -221,7 +221,7 @@ function ActivityLog() {
           ...(applicationsResult.data || []).map(app => ({
             id: `application-${app.id}`,
             type: '가입',
-            message: `${app.discord_name || app.btag || '신규 유저'}님이 가입 신청서를 제출했습니다.`,
+            message: `${app.btag || '신규 유저'}님이 가입 신청서를 제출했습니다.`,
             time: formatRelativeTime(app.created_at),
             createdAt: app.created_at,
             icon: '👋'

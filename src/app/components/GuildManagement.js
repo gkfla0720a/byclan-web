@@ -586,7 +586,7 @@ export default function GuildManagement() {
                       <span className="text-2xl">{getRoleIcon(member.role)}</span>
                       <div>
                         <div className="text-white font-medium flex items-center gap-2">{member.ByID}{isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}</div>
-                        <div className="text-gray-400 text-sm">{member.discord_name}</div>
+                        <div className="text-gray-400 text-sm">{member.discord_id || '-'}</div>
                       </div>
                     </div>
                   </td>
@@ -734,7 +734,7 @@ export default function GuildManagement() {
           <div className="bg-gray-900 border border-yellow-500/30 rounded-xl p-6 max-w-lg w-full shadow-2xl">
             <h3 className="text-xl font-bold text-yellow-400 mb-4">👑 마스터 위임</h3>
             <p className="text-gray-300 mb-4 leading-relaxed">
-              <span className="text-white font-semibold">{masterDelegation.member?.ByID || masterDelegation.member?.discord_name || '대상 멤버'}</span> 님에게 마스터 권한을 위임합니다.
+              <span className="text-white font-semibold">{masterDelegation.member?.ByID || '[ByID 없음]'}</span> 님에게 마스터 권한을 위임합니다.
               <br />
               <span className="text-yellow-400">위임 전에 현재 로그인한 운영 계정으로 본인 재인증을 완료해야 합니다.</span>
             </p>
