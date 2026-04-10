@@ -16,7 +16,7 @@ const createTestData = async () => {
         Clan_Point: 100,
         race: 'Terran',
         intro: '테스트 마스터 계정',
-        Ladder_MMR: 1500,
+        Clan_point: 1500,
         is_in_queue: false,
         vote_to_start: false
       },
@@ -28,7 +28,7 @@ const createTestData = async () => {
         Clan_Point: 80,
         race: 'Protoss',
         intro: '테스트 관리자 계정',
-        Ladder_MMR: 1400,
+        Clan_point: 1400,
         is_in_queue: false,
         vote_to_start: false
       },
@@ -40,7 +40,7 @@ const createTestData = async () => {
         Clan_Point: 60,
         race: 'Zerg',
         intro: '테스트 정예 계정',
-        Ladder_MMR: 1300,
+        Clan_point: 1300,
         is_in_queue: false,
         vote_to_start: false
       },
@@ -52,7 +52,7 @@ const createTestData = async () => {
         Clan_Point: 50,
         race: 'Terran',
         intro: '테스트 일반 계정',
-        Ladder_MMR: 1200,
+        Clan_point: 1200,
         is_in_queue: false,
         vote_to_start: false
       }

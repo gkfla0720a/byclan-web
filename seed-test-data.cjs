@@ -240,7 +240,7 @@ function buildProfiles() {
     Clan_Point: user.clanPoints,
     race: user.race,
     intro: user.intro,
-    Ladder_MMR: user.ladderPoints,
+    Clan_point: user.ladderPoints,
     is_in_queue: false,
     vote_to_start: false,
     is_test_account: true,

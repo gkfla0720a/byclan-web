@@ -26,10 +26,10 @@ import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/test
 const ROLE_SECTIONS = [
   { key: 'leadership', title: '운영진', roles: ['developer', 'master', 'admin'] },
   { key: 'elite', title: '정예 길드원', roles: ['elite'] },
-  { key: 'members', title: '길드원', roles: ['member', 'rookie'] },
+  { key: 'members', title: '길드원', roles: ['member', 'rookie', 'associate'] },
 ];
 
-const VISIBLE_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie'];
+const VISIBLE_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie', 'associate'];
 const INLINE_ROLE_OPTIONS = [
   { value: 'applicant', label: '신규 가입자' },
   { value: 'member', label: '일반 클랜원' },
@@ -75,6 +75,104 @@ function applyDemoStreamers(memberList) {
 }
 
 /**
+ * 스트리머 관련 컬럼이 아직 반영되지 않은 DB/스키마 캐시 환경인지 판별합니다.
+ * @param {object} error - Supabase/PostgREST 에러 객체
+ * @returns {boolean}
+ */
+function hasMissingStreamerColumnError(error) {
+  const message = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
+  const mentionsStreamerColumn =
+    message.includes('is_streamer') ||
+    message.includes('streamer_platform') ||
+    message.includes('streamer_url');
+
+  return (
+    error?.code === '42703' ||
+    error?.code === 'PGRST204' ||
+    message.includes('does not exist') ||
+    message.includes('could not find') ||
+    mentionsStreamerColumn
+  );
+}
+
+/**
+ * 역할 문자열을 UI/권한 체크에 맞는 소문자 형식으로 정규화합니다.
+ * @param {object} member - profiles 레코드
+ * @returns {object}
+ */
+function normalizeMemberRole(member) {
+  const normalizedRole = member?.role?.trim?.().toLowerCase?.();
+  return {
+    ...member,
+    role: normalizedRole || member?.role,
+  };
+}
+
+/**
+ * DB 스키마 차이를 흡수하기 위해 포인트 컬럼을 Clan_point로 정규화합니다.
+ * @param {object} member - profiles 레코드
+ * @returns {object}
+ */
+function normalizeMemberPoints(member) {
+  const ladderPoints =
+    typeof member?.Clan_point === 'number'
+      ? member.Clan_point
+      : typeof member?.points === 'number'
+        ? member.points
+        : 1000;
+
+  return {
+    ...member,
+    Clan_point: ladderPoints,
+  };
+}
+
+/**
+ * profiles 조회를 스키마 호환 가능한 순서로 재시도합니다.
+ * - 최신: streamer + Clan_point
+ * - 구버전: Clan_point 없음(points 사용)
+ * - 더 구버전: streamer 없음
+ * @returns {{ data: object[]|null, error: object|null }}
+ */
+async function fetchMembersWithSchemaFallback() {
+  const queryCandidates = [
+    'id, ByID, discord_name, role, race, intro, Clan_point, is_streamer, streamer_platform, streamer_url',
+    'id, ByID, discord_name, role, race, intro, points, is_streamer, streamer_platform, streamer_url',
+    'id, ByID, discord_name, role, race, intro, Clan_point',
+    'id, ByID, discord_name, role, race, intro, points',
+  ];
+
+  for (const selectColumns of queryCandidates) {
+    const result = await filterVisibleTestAccounts(
+      supabase
+        .from('profiles')
+        .select(selectColumns)
+        .neq('role', 'visitor')
+        .neq('role', 'applicant')
+        .neq('role', 'expelled')
+        .order('Clan_point', { ascending: false })
+    );
+
+    if (!result.error) {
+      return result;
+    }
+
+    const message = `${result.error?.message || ''} ${result.error?.details || ''} ${result.error?.hint || ''}`.toLowerCase();
+    const isMissingColumn =
+      result.error?.code === '42703' ||
+      result.error?.code === 'PGRST204' ||
+      message.includes('does not exist') ||
+      message.includes('could not find');
+
+    if (!isMissingColumn) {
+      return result;
+    }
+  }
+
+  return { data: null, error: new Error('profiles schema mismatch: no compatible query found') };
+}
+
+/**
  * ClanMembers 컴포넌트
  *
  * 클랜원 명단을 직책별로 분류하여 테이블로 렌더링합니다.
@@ -114,32 +212,28 @@ export default function ClanMembers() {
 
     const fetchMembers = async () => {
       try {
-        const primaryResult = await filterVisibleTestAccounts(
-          supabase
-            .from('profiles')
-            .select('id, ByID, discord_name, role, race, intro, Ladder_MMR, is_streamer, streamer_platform, streamer_url')
-            .neq('role', 'visitor')
-            .neq('role', 'applicant')
-            .neq('role', 'expelled')
-            .order('Ladder_MMR', { ascending: false })
-        );
+        const primaryResult = await fetchMembersWithSchemaFallback();
 
         if (primaryResult.error) {
-          const message = `${primaryResult.error.message || ''} ${primaryResult.error.details || ''}`.toLowerCase();
-          if (primaryResult.error.code === '42703' || message.includes('does not exist')) {
+          if (hasMissingStreamerColumnError(primaryResult.error)) {
             const fallbackResult = await filterVisibleTestAccounts(
               supabase
                 .from('profiles')
-                .select('id, ByID, discord_name, role, race, intro, Ladder_MMR')
+                .select('id, ByID, discord_name, role, race, intro, points')
                 .neq('role', 'visitor')
                 .neq('role', 'applicant')
                 .neq('role', 'expelled')
-                .order('Ladder_MMR', { ascending: false })
+                .order('points', { ascending: false })
             );
 
             if (fallbackResult.error) throw fallbackResult.error;
             setMembers(
-              applyDemoStreamers((fallbackResult.data || []).filter((member) => VISIBLE_MEMBER_ROLES.includes(member.role)))
+              applyDemoStreamers(
+                (fallbackResult.data || [])
+                  .map(normalizeMemberRole)
+                  .map(normalizeMemberPoints)
+                  .filter((member) => VISIBLE_MEMBER_ROLES.includes(member.role))
+              )
             );
             return;
           }
@@ -148,7 +242,12 @@ export default function ClanMembers() {
         }
 
         setMembers(
-          applyDemoStreamers((primaryResult.data || []).filter((member) => VISIBLE_MEMBER_ROLES.includes(member.role)))
+          applyDemoStreamers(
+            (primaryResult.data || [])
+              .map(normalizeMemberRole)
+              .map(normalizeMemberPoints)
+              .filter((member) => VISIBLE_MEMBER_ROLES.includes(member.role))
+          )
         );
       } catch (error) {
         console.error('클랜원 목록 로드 실패:', error);
@@ -293,7 +392,7 @@ export default function ClanMembers() {
                           </span>
                         </td>
                           <td className="px-4 py-3 text-slate-300 align-middle">{member.race || 'Terran'}</td>
-                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.Ladder_MMR || 1000}점</td>
+                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.Clan_point || 1000}점</td>
                           <td className="px-4 py-3 text-slate-200 align-middle">
                           {member.is_streamer ? (
                             <div className="flex items-center gap-2">
