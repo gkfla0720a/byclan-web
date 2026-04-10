@@ -22,10 +22,10 @@ $$;
 
 do $$
 begin
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'points') then
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'Clan_Point') then
     update public.profiles
-    set points = 0
-    where points is null;
+    set "Clan_Point" = 0
+    where "Clan_Point" is null;
   end if;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'role') then

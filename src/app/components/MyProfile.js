@@ -22,6 +22,21 @@ import { isMarkedTestAccount } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 import { useAuthContext } from '../context/AuthContext';
 
+function normalizeProfileRow(profileData) {
+  if (!profileData) return profileData;
+  const clanPoint =
+    typeof profileData.Clan_Point === 'number'
+      ? profileData.Clan_Point
+      : typeof profileData.points === 'number'
+        ? profileData.points
+        : 0;
+
+  return {
+    ...profileData,
+    Clan_Point: clanPoint,
+  };
+}
+
 /**
  * MyProfile 컴포넌트
  * 현재 로그인한 유저가 자신의 클랜 프로필을 확인하고 수정할 수 있는 페이지입니다.
@@ -62,6 +77,20 @@ export default function MyProfile() {
   /** 최초 로드 시 DB에 저장된 원본 ByID 값 (중복 확인 시 본인 닉네임 허용 판단에 사용) */
   const [originalByID, setOriginalByID] = useState('');
 
+  // ── 계정 보안 (이메일/비밀번호 변경) ─────────────────────────────────────
+  /** 이메일 변경 입력값 */
+  const [newEmail, setNewEmail] = useState('');
+  /** 현재 비밀번호 (비밀번호 변경 재인증에 사용) */
+  const [currentPassword, setCurrentPassword] = useState('');
+  /** 새 비밀번호 입력값 */
+  const [newPassword, setNewPassword] = useState('');
+  /** 새 비밀번호 확인 입력값 */
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  /** 계정 보안 섹션 로딩 여부 */
+  const [securityLoading, setSecurityLoading] = useState(false);
+  /** 계정 보안 작업 결과 메시지 { type: 'success'|'error', text: string } */
+  const [securityMsg, setSecurityMsg] = useState(null);
+
   /** 역할 코드를 한국어 표시 이름(+이모지)으로 변환하는 매핑 테이블 */
   const roleLabels = {
     developer: "👨‍💻 시스템 개발자",
@@ -94,7 +123,8 @@ export default function MyProfile() {
       if (!user) return;
       setEmail(user.email);
 
-      const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      const { data: profileDataRaw } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      const profileData = normalizeProfileRow(profileDataRaw);
 
       if (profileData) {
         setProfile(profileData);
@@ -365,6 +395,82 @@ export default function MyProfile() {
     }
   };
 
+  /**
+   * 비밀번호 강도 검증
+   * Supabase 설정: 최소 8자, 영문+숫자 필수
+   */
+  const validateNewPassword = (pw) => {
+    if (!pw) return '새 비밀번호를 입력하세요.';
+    if (pw.length < 8) return '비밀번호는 최소 8자 이상이어야 합니다.';
+    if (!/[a-zA-Z]/.test(pw)) return '영문자가 포함되어야 합니다.';
+    if (!/[0-9]/.test(pw)) return '숫자가 포함되어야 합니다.';
+    return null;
+  };
+
+  /**
+   * 이메일 변경 핸들러
+   * Supabase "Secure email change" 활성화됨:
+   * 기존 이메일과 새 이메일 양쪽 모두에 확인 링크가 발송됩니다.
+   */
+  const handleEmailChange = async () => {
+    if (!newEmail.trim()) return setSecurityMsg({ type: 'error', text: '새 이메일 주소를 입력하세요.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return setSecurityMsg({ type: 'error', text: '올바른 이메일 형식이 아닙니다.' });
+    if (newEmail === email) return setSecurityMsg({ type: 'error', text: '현재 이메일과 동일합니다.' });
+
+    setSecurityLoading(true);
+    setSecurityMsg(null);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      if (error) throw error;
+      setSecurityMsg({
+        type: 'success',
+        text: `확인 이메일이 발송되었습니다. 기존 주소(${email})와 새 주소(${newEmail}) 양쪽의 링크를 모두 클릭해야 변경이 완료됩니다.`,
+      });
+      setNewEmail('');
+    } catch (err) {
+      setSecurityMsg({ type: 'error', text: '이메일 변경 실패: ' + err.message });
+    } finally {
+      setSecurityLoading(false);
+    }
+  };
+
+  /**
+   * 비밀번호 변경 핸들러
+   * Supabase "Require current password" 활성화됨:
+   * 현재 비밀번호로 재인증 후 새 비밀번호로 변경합니다.
+   */
+  const handlePasswordChange = async () => {
+    const pwErr = validateNewPassword(newPassword);
+    if (pwErr) return setSecurityMsg({ type: 'error', text: pwErr });
+    if (newPassword !== confirmNewPassword) return setSecurityMsg({ type: 'error', text: '새 비밀번호가 일치하지 않습니다.' });
+    if (!currentPassword) return setSecurityMsg({ type: 'error', text: '현재 비밀번호를 입력하세요.' });
+    if (currentPassword === newPassword) return setSecurityMsg({ type: 'error', text: '새 비밀번호가 현재 비밀번호와 동일합니다.' });
+
+    setSecurityLoading(true);
+    setSecurityMsg(null);
+    try {
+      // 1단계: 현재 비밀번호로 재인증
+      const { error: reAuthError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (reAuthError) throw new Error('현재 비밀번호가 올바르지 않습니다.');
+
+      // 2단계: 새 비밀번호로 변경
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) throw updateError;
+
+      setSecurityMsg({ type: 'success', text: '비밀번호가 성공적으로 변경되었습니다.' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (err) {
+      setSecurityMsg({ type: 'error', text: err.message });
+    } finally {
+      setSecurityLoading(false);
+    }
+  };
+
   if (loading) return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">LOADING...</div>;
   if (!profile) return <div className="text-center py-24 text-red-500">프로필 정보를 찾을 수 없습니다.</div>;
 
@@ -598,7 +704,7 @@ export default function MyProfile() {
              <h3 className="text-white font-black text-xs mb-4 border-b border-gray-700/50 pb-2 uppercase tracking-[0.2em]">Clan Assets</h3>
              <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">보유 클랜 포인트</p>
              <p className="text-2xl font-black text-emerald-400 flex items-center gap-2">
-               💰 {profile.points?.toLocaleString() || 0} <span className="text-xs text-gray-500 font-normal">CP</span>
+               💰 {profile.Clan_Point?.toLocaleString() || 0} <span className="text-xs text-gray-500 font-normal">CP</span>
              </p>
           </div>
 
@@ -614,4 +720,115 @@ export default function MyProfile() {
       </div>
     </div>
   );
+          {/* 로그아웃 버튼 */}
+          <button 
+            onClick={handleLogout}
+            className="w-full py-4 bg-gray-900 hover:bg-red-900/20 border border-gray-800 hover:border-red-500/50 text-gray-500 hover:text-red-500 text-xs font-black rounded-2xl transition-all shadow-md uppercase tracking-widest"
+          >
+            Logout
+          </button>
+        </div>
+
+      </div>
+
+      {/* ── 계정 보안 섹션 ──────────────────────────────────────────────────── */}
+      <div className="mt-8 bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-700 shadow-xl space-y-8">
+        <h3 className="text-white font-black text-xs uppercase tracking-[0.2em] border-b border-gray-700/50 pb-3">
+          🔒 계정 보안
+        </h3>
+
+        {securityMsg && (
+          <div className={`px-4 py-3 rounded-xl text-sm font-bold ${securityMsg.type === 'success' ? 'bg-emerald-900/30 border border-emerald-500/50 text-emerald-300' : 'bg-red-900/30 border border-red-500/50 text-red-300'}`}>
+            {securityMsg.type === 'success' ? '✓ ' : '⚠ '}{securityMsg.text}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* 이메일 변경 */}
+          <div className="space-y-4">
+            <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest">이메일 변경</h4>
+            <div>
+              <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">현재 이메일</label>
+              <input type="text" value={email} disabled className="w-full p-3 rounded-xl bg-gray-900/50 border border-gray-700 text-gray-500 cursor-not-allowed text-sm" />
+            </div>
+            <div>
+              <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">새 이메일</label>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="new@example.com"
+                className="w-full p-3 rounded-xl bg-gray-900 border border-gray-600 text-white text-sm focus:border-cyan-500 focus:outline-none transition-all"
+              />
+            </div>
+            <p className="text-gray-600 text-[10px] leading-relaxed">
+              변경 시 기존 이메일과 새 이메일 양쪽 모두에 확인 링크가 발송됩니다. 두 링크를 모두 클릭해야 변경이 완료됩니다.
+            </p>
+            <button
+              onClick={handleEmailChange}
+              disabled={securityLoading || !newEmail}
+              className="w-full py-3 bg-cyan-700/30 hover:bg-cyan-700/50 border border-cyan-500/40 text-cyan-300 text-xs font-black rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {securityLoading ? '처리 중...' : '이메일 변경 요청'}
+            </button>
+          </div>
+
+          {/* 비밀번호 변경 */}
+          <div className="space-y-4">
+            <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest">비밀번호 변경</h4>
+            <div>
+              <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">현재 비밀번호</label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="현재 비밀번호"
+                className="w-full p-3 rounded-xl bg-gray-900 border border-gray-600 text-white text-sm focus:border-yellow-500 focus:outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">새 비밀번호</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="8자 이상, 영문+숫자 포함"
+                className="w-full p-3 rounded-xl bg-gray-900 border border-gray-600 text-white text-sm focus:border-yellow-500 focus:outline-none transition-all"
+              />
+              {newPassword && (
+                <div className="flex gap-3 mt-1.5 text-[10px]">
+                  <span className={newPassword.length >= 8 ? 'text-green-400' : 'text-gray-600'}>✓ 8자 이상</span>
+                  <span className={/[a-zA-Z]/.test(newPassword) ? 'text-green-400' : 'text-gray-600'}>✓ 영문 포함</span>
+                  <span className={/[0-9]/.test(newPassword) ? 'text-green-400' : 'text-gray-600'}>✓ 숫자 포함</span>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">새 비밀번호 확인</label>
+              <input
+                type="password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                placeholder="비밀번호 재입력"
+                className={`w-full p-3 rounded-xl bg-gray-900 border text-white text-sm focus:outline-none transition-all ${
+                  newPassword && confirmNewPassword
+                    ? newPassword === confirmNewPassword ? 'border-emerald-500' : 'border-red-500'
+                    : 'border-gray-600'
+                }`}
+              />
+            </div>
+            <button
+              onClick={handlePasswordChange}
+              disabled={securityLoading || !currentPassword || !newPassword || !confirmNewPassword}
+              className="w-full py-3 bg-yellow-700/30 hover:bg-yellow-700/50 border border-yellow-500/40 text-yellow-300 text-xs font-black rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {securityLoading ? '처리 중...' : '비밀번호 변경'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}
 }

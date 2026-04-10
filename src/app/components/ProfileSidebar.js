@@ -46,16 +46,16 @@ const RACE_LABELS = {
 
 /**
  * MMR(래더 포인트) 수치를 받아 해당 티어 이름을 반환합니다.
- * @param {number} points - 래더 포인트 (MMR)
+ * @param {number} mmr - 래더 MMR 포인트
  * @returns {string} 티어 이름 (예: 'Gold', 'Platinum' 등)
  */
-function getTier(points) {
-  if (points >= 2400) return 'Challenger';
-  if (points >= 2200) return 'Master';
-  if (points >= 1900) return 'Diamond';
-  if (points >= 1600) return 'Platinum';
-  if (points >= 1350) return 'Gold';
-  if (points >= 1100) return 'Silver';
+function getTier(mmr) {
+  if (mmr >= 2400) return 'Challenger';
+  if (mmr >= 2200) return 'Master';
+  if (mmr >= 1900) return 'Diamond';
+  if (mmr >= 1600) return 'Platinum';
+  if (mmr >= 1350) return 'Gold';
+  if (mmr >= 1100) return 'Silver';
   return 'Bronze';
 }
 
@@ -101,7 +101,7 @@ export default function ProfileSidebar({ profile, user }) {
     profile?.Clan_point !== undefined ||
     profile?.wins !== undefined ||
     profile?.losses !== undefined ||
-    profile?.points !== undefined
+    profile?.Clan_Point !== undefined
   );
 
   if (!user || !profile || !isActiveMember || !hasProfileData) {
@@ -219,11 +219,11 @@ export default function ProfileSidebar({ profile, user }) {
       </div>
 
       {/* 클랜 포인트 */}
-      {profile.points !== undefined && (
+      {profile.Clan_Point !== undefined && (
         <div className="cyber-card rounded-xl p-3 text-center">
           <div className="text-xs text-gray-500 mb-0.5">클랜 포인트 (CP)</div>
           <div className="font-black text-purple-400 text-lg" style={{ textShadow: '0 0 8px rgba(168,85,247,0.4)' }}>
-            {(profile.points || 0).toLocaleString()} CP
+            {(profile.Clan_Point || 0).toLocaleString()} CP
           </div>
         </div>
       )}

@@ -26,16 +26,16 @@ import { useNavigate } from '../hooks/useNavigate';
 
 /**
  * 포인트를 받아 해당하는 래더 티어 이름을 반환합니다.
- * @param {number} points - 플레이어의 MMR 포인트
+ * @param {number} mmr - 플레이어의 MMR 포인트
  * @returns {string} 티어 이름 (예: 'Gold', 'Platinum')
  */
-function getTier(points) {
-  if (points >= 2400) return 'Challenger';
-  if (points >= 2200) return 'Master';
-  if (points >= 1900) return 'Diamond';
-  if (points >= 1600) return 'Platinum';
-  if (points >= 1350) return 'Gold';
-  if (points >= 1100) return 'Silver';
+function getTier(mmr) {
+  if (mmr >= 2400) return 'Challenger';
+  if (mmr >= 2200) return 'Master';
+  if (mmr >= 1900) return 'Diamond';
+  if (mmr >= 1600) return 'Platinum';
+  if (mmr >= 1350) return 'Gold';
+  if (mmr >= 1100) return 'Silver';
   return 'Bronze';
 }
 

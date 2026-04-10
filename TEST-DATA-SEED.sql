@@ -12,7 +12,7 @@ begin
     discord_name,
     "ByID",
     role,
-    points,
+    "Clan_Point",
     race,
     intro,
     Clan_point,
@@ -174,7 +174,7 @@ on conflict (id) do update set
   discord_name = excluded.discord_name,
   "ByID" = excluded."ByID",
   role = excluded.role,
-  points = excluded.points,
+  "Clan_Point" = excluded."Clan_Point",
   race = excluded.race,
   intro = excluded.intro,
   Clan_point = excluded.Clan_point,
@@ -198,10 +198,10 @@ begin
     return;
   end if;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'points') then
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'Clan_Point') then
     update public.profiles
-    set points = coalesce(points, 0)
-    where points is null;
+    set "Clan_Point" = coalesce("Clan_Point", 0)
+    where "Clan_Point" is null;
   end if;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'role') then

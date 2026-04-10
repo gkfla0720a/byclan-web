@@ -54,13 +54,13 @@ const RACE_ICONS = {
 };
 
 /** MMR 수치를 받아 티어 이름 반환 */
-function getTier(points) {
-  if (points >= 2400) return 'Challenger';
-  if (points >= 2200) return 'Master';
-  if (points >= 1900) return 'Diamond';
-  if (points >= 1600) return 'Platinum';
-  if (points >= 1350) return 'Gold';
-  if (points >= 1100) return 'Silver';
+function getTier(mmr) {
+  if (mmr >= 2400) return 'Challenger';
+  if (mmr >= 2200) return 'Master';
+  if (mmr >= 1900) return 'Diamond';
+  if (mmr >= 1600) return 'Platinum';
+  if (mmr >= 1350) return 'Gold';
+  if (mmr >= 1100) return 'Silver';
   return 'Bronze';
 }
 

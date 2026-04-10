@@ -237,7 +237,7 @@ function buildProfiles() {
     discord_name: user.key,
     ByID: `By_${user.key}`,
     role: user.role,
-    points: user.clanPoints,
+    Clan_Point: user.clanPoints,
     race: user.race,
     intro: user.intro,
     Clan_point: user.ladderPoints,

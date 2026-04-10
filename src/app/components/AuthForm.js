@@ -112,6 +112,9 @@ export default function AuthForm() {
     if (isSignUp) {
       if (!isNicknameChecked) return alert("닉네임 중복 확인을 먼저 해주세요.");
       if (password !== confirmPassword) return alert("비밀번호가 서로 일치하지 않습니다.");
+      if (password.length < 8) return alert("비밀번호는 최소 8자 이상이어야 합니다.");
+      if (!/[a-zA-Z]/.test(password)) return alert("비밀번호에 영문자가 포함되어야 합니다.");
+      if (!/[0-9]/.test(password)) return alert("비밀번호에 숫자가 포함되어야 합니다.");
       if (!agreed) return alert("이용약관 및 개인정보 처리방침에 동의해주세요.");
       
       setLoading(true);
@@ -130,7 +133,7 @@ export default function AuthForm() {
           id: data.user.id,
           ByID: `By_${nickname}`,
           role: 'rookie',
-          points: 1000
+          Clan_Point: 1000
         });
 
         if (pError) console.error("프로필 생성 실패:", pError);
@@ -189,9 +192,17 @@ export default function AuthForm() {
           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Password</label>
           <input 
             type="password" value={password} onChange={(e) => setPassword(e.target.value)} 
-            required className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:border-yellow-500 outline-none transition-all" 
-            placeholder="••••••••" 
+            required minLength={8}
+            className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:border-yellow-500 outline-none transition-all" 
+            placeholder="8자 이상, 영문+숫자" 
           />
+          {isSignUp && password && (
+            <div className="flex gap-3 mt-1.5 text-[10px] pl-1">
+              <span className={password.length >= 8 ? 'text-green-400' : 'text-gray-600'}>✓ 8자 이상</span>
+              <span className={/[a-zA-Z]/.test(password) ? 'text-green-400' : 'text-gray-600'}>✓ 영문 포함</span>
+              <span className={/[0-9]/.test(password) ? 'text-green-400' : 'text-gray-600'}>✓ 숫자 포함</span>
+            </div>
+          )}
         </div>
 
         {isSignUp && (

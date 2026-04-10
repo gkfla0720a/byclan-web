@@ -49,7 +49,7 @@ import logger, { Severity } from '../utils/errorLogger';
  *   discord_name:   Discord 사용자 이름 (표시용 이름, 연동 시 저장됨)
  *   discord_id:     Discord 고유 ID (canonical 식별자 – 연동 여부 판단·충돌 감지에 사용)
  *   role:           클랜 역할 (visitor/applicant/rookie/member/elite/admin/master/developer)
- *   points:         클랜 활동 포인트
+ *   Clan_Point:     클랜 재화 포인트 (베팅·상점 등에 사용)
  *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)
  *   intro:          자기소개 문구
  *   Clan_point:  래더 레이팅 포인트 (기본값: 1000)
@@ -71,7 +71,7 @@ export interface UserProfile {
   google_avatar_url?: string | null;
   auth_provider?: string | null;
   role: string;
-  points: number;
+  Clan_Point: number;
   race: string;
   intro: string;
   Clan_point: number;
@@ -156,6 +156,30 @@ export interface UseAuthReturn {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function normalizeProfileRow(profile: Record<string, unknown> | null): UserProfile | null {
+  if (!profile) return null;
+
+  const clanPoint =
+    typeof profile.Clan_Point === 'number'
+      ? profile.Clan_Point
+      : typeof profile.points === 'number'
+        ? profile.points
+        : 0;
+
+  const ladderMMR =
+    typeof profile.Ladder_MMR === 'number'
+      ? profile.Ladder_MMR
+      : typeof profile.ladder_points === 'number'
+        ? profile.ladder_points
+        : 1000;
+
+  return {
+    ...(profile as UserProfile),
+    Clan_Point: clanPoint,
+    Ladder_MMR: ladderMMR,
+  };
+}
 
 function getSocialIdentity(authUser: Record<string, unknown>) {
   const identities = (authUser?.identities as {
@@ -510,7 +534,7 @@ export function useAuth(): UseAuthReturn {
               discord_name: isDiscordProvider ? discordName : null,
               ByID: uniqueByID,
               role: 'visitor',
-              points: 0,
+                Clan_Point: 0,
               race: 'Terran',
               intro: '클랜 방문자',
               Clan_point: 1000,
@@ -542,7 +566,8 @@ export function useAuth(): UseAuthReturn {
           .eq('id', authUser.id)
           .single();
 
-        const syncedProfile = await syncSocialProfileData(authUser, newProfile as UserProfile);
+        const normalizedNewProfile = normalizeProfileRow(newProfile as Record<string, unknown>);
+        const syncedProfile = await syncSocialProfileData(authUser, normalizedNewProfile as UserProfile);
         setProfile(syncedProfile);
         setNeedsSetup(false);
         setAuthLoading(false);
@@ -555,7 +580,7 @@ export function useAuth(): UseAuthReturn {
       return;
     }
 
-    let nextProfile: UserProfile = p as UserProfile;
+    let nextProfile: UserProfile = normalizeProfileRow(p as Record<string, unknown>) as UserProfile;
     nextProfile = await syncSocialProfileData(authUser, nextProfile);
 
     setProfile(nextProfile);
@@ -715,7 +740,7 @@ export function useAuth(): UseAuthReturn {
             }
             return;
           }
-          if (data) setProfile(data);
+          if (data) setProfile(normalizeProfileRow(data as Record<string, unknown>));
         } catch (error) {
           logger.error('프로필 로드 중 오류 발생', error);
           setAuthError('프로필을 불러오는 데 실패했습니다.');
@@ -755,7 +780,7 @@ export function useAuth(): UseAuthReturn {
         }
         return;
       }
-      if (data) setProfile(data);
+      if (data) setProfile(normalizeProfileRow(data as Record<string, unknown>));
     } catch (error) {
       logger.error('프로필 재로드 중 오류 발생', error);
       setAuthError('프로필을 새로고침하는 데 실패했습니다.');
