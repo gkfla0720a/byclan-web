@@ -76,33 +76,34 @@ function applyDemoStreamers(memberList) {
 
 /**
  * 역할 문자열을 UI/권한 체크에 맞는 소문자 형식으로 정규화합니다.
+ * member 자체가 null이면 null을 반환합니다.
  * @param {object} member - profiles 레코드
- * @returns {object}
+ * @returns {object|null}
  */
 function normalizeMemberRole(member) {
+  if (!member) return null;
   const normalizedRole = member?.role?.trim?.().toLowerCase?.();
   return {
     ...member,
-    role: normalizedRole || member?.role,
+    role: normalizedRole || member?.role || '',
   };
 }
 
 /**
  * profiles 조회를 시도하고, streamer 컬럼이 없으면 해당 컬럼을 제외해 재시도합니다.
- * Clan_point 컬럼이 없으면 에러를 그대로 반환합니다.
  * @returns {{ data: object[]|null, error: object|null }}
  */
 async function fetchMembersWithSchemaFallback() {
-  const queryCandidates = [
+  const candidates = [
     'id, ByID, discord_name, role, race, intro, Clan_point, is_streamer, streamer_platform, streamer_url',
     'id, ByID, discord_name, role, race, intro, Clan_point',
   ];
 
-  for (const selectColumns of queryCandidates) {
+  for (const columns of candidates) {
     const result = await filterVisibleTestAccounts(
       supabase
         .from('profiles')
-        .select(selectColumns)
+        .select(columns)
         .neq('role', 'visitor')
         .neq('role', 'applicant')
         .neq('role', 'expelled')
@@ -125,7 +126,7 @@ async function fetchMembersWithSchemaFallback() {
     }
   }
 
-  return { data: null, error: new Error('profiles schema mismatch: no compatible query found') };
+  return { data: null, error: new Error('profiles 테이블 조회 실패: Clan_point 컬럼을 찾지 못했습니다. CLAN-POINT-COLUMN-RENAME.sql을 실행했는지 확인하세요.') };
 }
 
 /**
@@ -176,7 +177,7 @@ export default function ClanMembers() {
           applyDemoStreamers(
             (data || [])
               .map(normalizeMemberRole)
-              .filter((member) => VISIBLE_MEMBER_ROLES.includes(member.role))
+              .filter((member) => member && member.id && VISIBLE_MEMBER_ROLES.includes(member.role))
           )
         );
       } catch (error) {
@@ -204,7 +205,7 @@ export default function ClanMembers() {
     members: members.filter((member) => section.roles.includes(member.role)),
   })).filter((section) => section.members.length > 0);
 
-  const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role, color: '#C7CEEA', icon: '👤' };
+  const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role || '알 수 없음', color: '#C7CEEA', icon: '👤' };
   const canManageMembers = PermissionChecker.hasPermission(currentRole, 'member.manage');
 
   /**
@@ -248,6 +249,15 @@ export default function ClanMembers() {
 
   if (loading) {
     return <div className="text-center py-12 text-cyan-400 font-mono">[ LOADING CLAN MEMBERS... ]</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12 space-y-2">
+        <p className="text-red-400 font-bold">클랜원 목록을 불러오지 못했습니다.</p>
+        <p className="text-slate-400 text-sm font-mono">{error?.message || String(error)}</p>
+      </div>
+    );
   }
 
   return (
@@ -298,6 +308,7 @@ export default function ClanMembers() {
                 <tbody>
                   {section.members.map((member) => {
                     const roleMeta = getRoleMeta(member.role);
+                    const roleColor = roleMeta.color || '#C7CEEA';
                     const streamerUrl = normalizeUrl(member.streamer_url);
 
                     return (
@@ -313,9 +324,9 @@ export default function ClanMembers() {
                           <span
                             className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold"
                             style={{
-                              backgroundColor: `${roleMeta.color}18`,
-                              color: roleMeta.color,
-                              border: `1px solid ${roleMeta.color}45`,
+                              backgroundColor: `${roleColor}18`,
+                              color: roleColor,
+                              border: `1px solid ${roleColor}45`,
                             }}
                           >
                             {roleMeta.name}
@@ -370,7 +381,6 @@ export default function ClanMembers() {
         ))}
       </div>
 
-      {!loading && error && <div className="text-center py-12 text-red-400">클랜원 목록을 불러오지 못했습니다. 잠시 후 새로고침 해주세요.</div>}
       {!loading && !error && members.length === 0 && <div className="text-center py-12 text-gray-500">클랜원이 없습니다.</div>}
     </div>
   );
