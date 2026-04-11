@@ -7,7 +7,7 @@
  *   실제 래더 기능은 잠금(블러) 처리되고, 가입/로그인을 유도합니다.
  *
  * 주요 기능:
- *   - Supabase에서 대기열 또는 상위 래더 플레이어를 최대 5명 불러옴
+ *   - Supabase profiles에서 대기열 또는 상위 래더 플레이어를 최대 5명 불러옴
  *   - 불러온 플레이어 정보를 블러(흐림) 처리된 UI로 표시
  *   - 사용자 상태(게스트 / 등급 부족)에 따라 다른 안내 메시지 표시
  *   - 래더 시스템의 주요 기능(랭킹, 베팅, 대기열)을 카드로 소개
@@ -85,32 +85,27 @@ export default function LadderPreview({ isGuest }) {
         const queueResult = await filterVisibleTestAccounts(
           supabase
             .from('profiles')
-            .select('id, by_id, race, clan_point, is_in_queue')
+            .select('id, by_id, race, ladder_mmr, is_in_queue')
             .eq('is_in_queue', true)
-            .order('clan_point', { ascending: false })
+            .order('ladder_mmr', { ascending: false })
             .limit(5)
         );
 
         let rows = queueResult.data || [];
 
         if (rows.length === 0) {
-          // 2단계: 대기열이 비어 있으면 ladders 테이블에서 상위 5명 조회
-          const ladderResult = await filterVisibleTestData(
+          // 2단계: 대기열이 비어 있으면 profiles 기준 상위 5명 조회
+          const profileResult = await filterVisibleTestData(
             supabase
-              .from('ladders')
-              .select('*')
-              .order('rank', { ascending: true })
+              .from('profiles')
+              .select('id, by_id, race, ladder_mmr, is_in_queue')
+              .neq('role', 'visitor')
+              .neq('role', 'applicant')
+              .neq('role', 'expelled')
+              .order('ladder_mmr', { ascending: false })
               .limit(5)
           );
-
-          // ladders 테이블 컬럼명이 profiles와 다를 수 있어 통일된 구조로 변환
-          rows = (ladderResult.data || []).map((row, index) => ({
-            id: row.id || `ladder-${index}`,
-            by_id: row.nickname || row.name || row.by_id,
-            race: row.race,
-            clan_point: row.ladder_mmr ?? 1000,
-            is_in_queue: false,
-          }));
+          rows = profileResult.data || [];
         }
 
         // 화면에 표시할 형태로 데이터 가공 후 상태에 저장
@@ -118,8 +113,8 @@ export default function LadderPreview({ isGuest }) {
           rows.map((player, index) => ({
             id: player.id || `preview-${index}`,
             name: player.by_id || '[by_id 없음]',
-            tier: getTier(player.clan_point || 1000),
-            pts: player.clan_point || 1000,
+            tier: getTier(player.ladder_mmr || 1000),
+            pts: player.ladder_mmr || 1000,
             race: getRaceLabel(player.race),
             isInQueue: Boolean(player.is_in_queue),
           }))

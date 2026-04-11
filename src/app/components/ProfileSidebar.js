@@ -159,7 +159,7 @@ export default function ProfileSidebar({ profile, user }) {
     );
   }
 
-  const tier = getTier(profile.clan_point || 1000);
+  const tier = getTier(profile.ladder_mmr || 1000);
   const tierColor = TIER_COLORS[tier] || 'text-gray-400';
   const winRate = getWinRate(profile.wins, profile.losses);
   const race = RACE_LABELS[profile.race] || profile.race || '—';
@@ -188,7 +188,7 @@ export default function ProfileSidebar({ profile, user }) {
           <div className="flex justify-between items-center">
             <span className="text-gray-500">MMR</span>
             <span className="font-black text-yellow-400 text-sm" style={{ textShadow: '0 0 6px rgba(245,158,11,0.5)' }}>
-              {profile.clan_point ?? 1000}점
+              {profile.ladder_mmr ?? 1000}점
             </span>
           </div>
           <div className="flex justify-between items-center">

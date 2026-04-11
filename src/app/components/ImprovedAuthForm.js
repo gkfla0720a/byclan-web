@@ -173,6 +173,9 @@ function EmailLoginForm({ onSuccess }) {
               by_id: byId,
               role: 'applicant',
               clan_point: 0,
+              ladder_mmr: 1000,
+              wins: 0,
+              losses: 0,
               race: 'Terran',
               intro: '새로운 클랜원입니다.'
             });

@@ -39,18 +39,18 @@ export default function RankingBoard() {
   /**
    * 컴포넌트가 처음 화면에 나타날 때 랭킹 데이터를 한 번 불러옵니다.
    * - visitor(방문자), applicant(지원자), expelled(강퇴) 역할은 제외합니다.
-   * - clan_point(MMR) 내림차순으로 정렬합니다.
+  * - ladder_mmr(MMR) 내림차순으로 정렬합니다.
    */
   useEffect(() => {
     const fetchRankings = async () => {
       try {
         const { data, error: fetchError } = await filterVisibleTestData(supabase
           .from('profiles')
-          .select('id, by_id, race, clan_point, wins, losses')
+          .select('id, by_id, race, ladder_mmr, wins, losses')
           .neq('role', 'visitor')
           .neq('role', 'applicant')
           .neq('role', 'expelled')
-          .order('clan_point', { ascending: false }));
+          .order('ladder_mmr', { ascending: false }));
         if (fetchError) throw fetchError;
         setRankings(data || []);
       } catch (err) {
@@ -107,13 +107,15 @@ export default function RankingBoard() {
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-cyan-400 hidden sm:table-cell">{player.race}</td>
                 <td className="py-3 px-4 text-center font-bold text-cyan-300 text-sm sm:text-base drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
-                  {player.clan_point}점
+                  {player.ladder_mmr ?? 1000}점
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-gray-400 hidden md:table-cell">
                   <span className="text-emerald-400">{player.wins ?? 0}W</span> / <span className="text-red-400">{player.losses ?? 0}L</span>
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-cyan-500 hidden sm:table-cell">
-                  {(player.wins + player.losses) === 0 ? '0.0' : ((player.wins / (player.wins + player.losses)) * 100).toFixed(1)}%
+                  {(((player.wins ?? 0) + (player.losses ?? 0)) === 0)
+                    ? '0.0'
+                    : (((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100).toFixed(1)}%
                 </td>
               </tr>
             ))}
