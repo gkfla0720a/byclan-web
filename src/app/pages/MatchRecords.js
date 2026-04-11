@@ -8,7 +8,7 @@
  * 주요 기능:
  *   - ladder_matches 테이블에서 완료·진행중 경기를 최신순으로 불러옵니다.
  *   - 각 경기의 날짜, 종류, 상태, 스코어, 참여 인원을 표시합니다.
- *   - 참여자 프로필(ByID)을 비동기로 조회하여 팀 명단을 표시합니다.
+ *   - 참여자 프로필(by_id)을 비동기로 조회하여 팀 명단을 표시합니다.
  *   - 경기 행 클릭 시 상세 팝업을 표시합니다.
  *
  * 접근 권한: 전체 공개 (비로그인 포함)
@@ -62,7 +62,7 @@ function raceCardsLabel(cards) {
  * @param {object} props
  * @param {Array}  props.matches      - 전체 경기 목록
  * @param {number} props.index        - 현재 표시 중인 경기의 인덱스
- * @param {object} props.profileCache - id → ByID 매핑
+ * @param {object} props.profileCache - id → by_id 매핑
  * @param {Function} props.onClose    - 닫기 콜백
  * @param {Function} props.onPrev     - 이전 경기 이동 콜백
  * @param {Function} props.onNext     - 다음 경기 이동 콜백
@@ -293,7 +293,7 @@ export default function MatchRecords() {
 /**
  * MatchRecords 프로필 캐시
  * 키: user.id (Supabase UUID — 불변 식별자)
- * 값: 표시명 (ByID, 없으면 '알 수 없음')
+ * 값: 표시명 (by_id, 없으면 '알 수 없음')
  */
   const [profileCache, setProfileCache] = useState({});
 
@@ -330,11 +330,11 @@ export default function MatchRecords() {
       if (allIds.size > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, ByID')
+          .select('id, by_id')
           .in('id', Array.from(allIds));
         const cache = {};
         (profiles || []).forEach((p) => {
-          cache[p.id] = p.ByID || '알 수 없음';
+          cache[p.id] = p.by_id || '알 수 없음';
         });
         setProfileCache(cache);
       }

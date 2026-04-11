@@ -87,7 +87,7 @@ export default function GuildManagement() {
       // 2주 이상 된 rookie 목록 조회
       const { data: rookies } = await supabase
         .from('profiles')
-        .select('id, ByID, rookie_since')
+        .select('id, by_id, rookie_since')
         .eq('role', 'rookie')
         .not('rookie_since', 'is', null)
         .lte('rookie_since', twoWeeksAgo);
@@ -118,7 +118,7 @@ export default function GuildManagement() {
         const notifRows = admins.map((admin) => ({
           user_id: admin.id,
           title: notifTitle,
-          message: `신입 길드원 ${rookie.ByID}님의 2주 수습 기간이 완료되었습니다.\n클랜 생활 지속 여부를 결정해주세요.\n\n• 승인 → 길드원 관리에서 등급 변경\n• 거부 → 길드원 관리에서 제명 처리`,
+          message: `신입 길드원 ${rookie.by_id}님의 2주 수습 기간이 완료되었습니다.\n클랜 생활 지속 여부를 결정해주세요.\n\n• 승인 → 길드원 관리에서 등급 변경\n• 거부 → 길드원 관리에서 제명 처리`,
         }));
 
         await supabase.from('notifications').insert(notifRows);
@@ -247,7 +247,7 @@ export default function GuildManagement() {
    * @param {object} member - 승급 대상 길드원 객체
    */
   const handleForcePromoteToMember = async (member) => {
-    if (!window.confirm(`${member.ByID}님을 수습 기간에 관계없이 즉시 정회원으로 승급하시겠습니까?`)) return;
+    if (!window.confirm(`${member.by_id}님을 수습 기간에 관계없이 즉시 정회원으로 승급하시겠습니까?`)) return;
     try {
       const { error } = await supabase
         .from('profiles')
@@ -263,7 +263,7 @@ export default function GuildManagement() {
       });
 
       await fetchMembers();
-      alert(`${member.ByID}님이 정회원으로 승급되었습니다.`);
+      alert(`${member.by_id}님이 정회원으로 승급되었습니다.`);
     } catch (error) {
       alert('승급 실패: ' + error.message);
     }
@@ -585,7 +585,7 @@ export default function GuildManagement() {
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{getRoleIcon(member.role)}</span>
                       <div>
-                        <div className="text-white font-medium flex items-center gap-2">{member.ByID}{isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}</div>
+                        <div className="text-white font-medium flex items-center gap-2">{member.by_id}{isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}</div>
                         <div className="text-gray-400 text-sm">{member.discord_id || '-'}</div>
                       </div>
                     </div>
@@ -670,7 +670,7 @@ export default function GuildManagement() {
             {actionModal.action === 'role' ? (
               <div className="space-y-3">
                 <p className="text-gray-300">
-                  {actionModal.member.ByID}님의 등급을 변경합니다.
+                  {actionModal.member.by_id}님의 등급을 변경합니다.
                 </p>
                 <select 
                   className="w-full p-2 bg-gray-800 border border-gray-700 rounded text-white"
@@ -704,7 +704,7 @@ export default function GuildManagement() {
             ) : (
               <div className="space-y-3">
                 <p className="text-gray-300">
-                  {actionModal.member.ByID}님을 제명하시겠습니까?
+                  {actionModal.member.by_id}님을 제명하시겠습니까?
                   <br />
                   <span className="text-red-400">이 작업은 되돌릴 수 없습니다.</span>
                 </p>
@@ -734,7 +734,7 @@ export default function GuildManagement() {
           <div className="bg-gray-900 border border-yellow-500/30 rounded-xl p-6 max-w-lg w-full shadow-2xl">
             <h3 className="text-xl font-bold text-yellow-400 mb-4">👑 마스터 위임</h3>
             <p className="text-gray-300 mb-4 leading-relaxed">
-              <span className="text-white font-semibold">{masterDelegation.member?.ByID || '[ByID 없음]'}</span> 님에게 마스터 권한을 위임합니다.
+              <span className="text-white font-semibold">{masterDelegation.member?.by_id || '[by_id 없음]'}</span> 님에게 마스터 권한을 위임합니다.
               <br />
               <span className="text-yellow-400">위임 전에 현재 로그인한 운영 계정으로 본인 재인증을 완료해야 합니다.</span>
             </p>

@@ -58,7 +58,7 @@ const TERMS_OF_SERVICE = `ByClan 서비스 이용약관
 제2조 (개인정보 수집 및 이용)
 클랜은 서비스 제공을 위하여 다음 정보를 수집합니다.
 - 이메일 주소: 계정 인증 및 안내 메일 발송
-- 클랜 아이디(ByID): 서비스 내 식별자
+- 클랜 아이디(by_id): 서비스 내 식별자
 - 디스코드 계정: 래더 시스템 참여 시 연동 (선택)
 수집된 개인정보는 서비스 제공 목적으로만 이용되며 제3자에게 제공되지 않습니다.
 
@@ -135,13 +135,13 @@ function EmailLoginForm({ onSuccess }) {
           return;
         }
 
-        const byID = `By_${userId}`;
+        const byId = `By_${userId}`;
 
         // 아이디 중복 확인
         const { data: existing } = await supabase
           .from('profiles')
           .select('id')
-          .eq('ByID', byID)
+          .eq('by_id', byId)
           .maybeSingle();
 
         if (existing) {
@@ -156,7 +156,7 @@ function EmailLoginForm({ onSuccess }) {
           password,
           options: {
             data: {
-              by_id: byID,
+              by_id: byId,
               role: 'applicant'
             }
           }
@@ -170,9 +170,9 @@ function EmailLoginForm({ onSuccess }) {
             .from('profiles')
             .insert({
               id: data.user.id,
-              ByID: byID,
+              by_id: byId,
               role: 'applicant',
-              Clan_Point: 0,
+              clan_point: 0,
               race: 'Terran',
               intro: '새로운 클랜원입니다.'
             });

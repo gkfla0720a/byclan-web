@@ -46,12 +46,12 @@ const checkMyProfile = async () => {
           .upsert({
             id: user.id,
             discord_name: user.email?.split('@')[0] || 'User',
-            ByID: `By_${user.email?.split('@')[0] || 'User'}`,
+            by_id: `By_${user.email?.split('@')[0] || 'User'}`,
             role: 'developer', // 개발자 역할로 직접 설정
-            Clan_Point: 100,
+            clan_point: 100,
             race: 'Terran',
             intro: '시스템 개발자',
-            Clan_point: 1500,
+            clan_point: 1500,
             is_in_queue: false,
             vote_to_start: false
           }, { onConflict: 'id' })

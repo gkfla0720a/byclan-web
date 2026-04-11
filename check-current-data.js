@@ -34,7 +34,7 @@ const checkCurrentData = async () => {
       .neq('role', 'visitor')
       .neq('role', 'applicant')
       .neq('role', 'expelled')
-      .order('Clan_point', { ascending: false });
+      .order('clan_point', { ascending: false });
     
     if (guildError) {
       console.error('❌ 길드원 조회 실패:', guildError);
@@ -45,10 +45,10 @@ const checkCurrentData = async () => {
       // 랭킹별 정렬
       const rankedMembers = guildMembers.map((member, index) => ({
         rank: index + 1,
-        ByID: member.ByID,
+        by_id: member.by_id,
         discord_name: member.discord_name,
         role: member.role,
-        Clan_point: member.Clan_point || 1000,
+        clan_point: member.clan_point || 1000,
         race: member.race || 'Terran'
       }));
       console.log('🏆 랭킹별 길드원:', rankedMembers);

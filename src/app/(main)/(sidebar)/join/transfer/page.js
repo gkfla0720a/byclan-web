@@ -41,7 +41,7 @@ export default function JoinTransferPage() {
 
         const { data: p } = await supabase
           .from('profiles')
-          .select('id, ByID, role, rookie_since')
+          .select('id, by_id, role, rookie_since')
           .eq('id', user.id)
           .single();
 
@@ -125,7 +125,7 @@ export default function JoinTransferPage() {
         .in('role', ['admin', 'master', 'developer']);
 
       const notifTitle = `📋 정회원전환신청:${profile.id}`;
-      const notifMessage = `신입 길드원 ${profile.ByID}님이 정회원 전환을 신청했습니다.\n수습 시작일: ${rookieSince?.toLocaleDateString('ko-KR')}\n\n승인 또는 거부를 위해 길드원 관리 페이지에서 등급을 변경해 주세요.`;
+      const notifMessage = `신입 길드원 ${profile.by_id}님이 정회원 전환을 신청했습니다.\n수습 시작일: ${rookieSince?.toLocaleDateString('ko-KR')}\n\n승인 또는 거부를 위해 길드원 관리 페이지에서 등급을 변경해 주세요.`;
 
       // 운영진 전원에게 알림 발송
       const adminNotifs = (admins || []).map((admin) => ({

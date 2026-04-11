@@ -10,9 +10,9 @@ const checkDatabaseStatus = async () => {
     // 1. profiles 테이블 확인
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, ByID, discord_name, role, Clan_point')
+      .select('id, by_id, discord_name, role, clan_point')
       .neq('role', 'visitor')
-      .order('Clan_point', { ascending: false });
+      .order('clan_point', { ascending: false });
     
     if (profilesError) {
       console.error('❌ profiles 테이블 조회 실패:', profilesError);

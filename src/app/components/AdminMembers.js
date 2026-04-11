@@ -48,7 +48,7 @@ export default function AdminBoard() {
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, ByID, role') // nickname 대신 ByID 사용 (DB 구조에 맞춤)
+          .select('id, by_id, role') // nickname 대신 by_id 사용 (DB 구조에 맞춤)
           .eq('id', user.id)
           .single();
         
@@ -78,7 +78,7 @@ export default function AdminBoard() {
 
   /**
    * Supabase에서 기밀 게시글 목록을 불러옵니다.
-   * 작성자 정보(ByID, role)를 JOIN하여 가져오며,
+   * 작성자 정보(by_id, role)를 JOIN하여 가져오며,
    * 관계 에러 발생 시 작성자 정보 없이 폴백 쿼리를 실행합니다.
    * @async
    */
@@ -90,7 +90,7 @@ export default function AdminBoard() {
         title, 
         content, 
         created_at,
-        profiles:author_id ( ByID, role ) 
+        profiles:author_id ( by_id, role ) 
       `)
       .order('created_at', { ascending: false }); 
 
@@ -225,7 +225,7 @@ export default function AdminBoard() {
               <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${roleStyles[post.profiles?.role] || 'bg-gray-700'}`}>
                 {roleLabels[post.profiles?.role] || "Unknown"}
               </span>
-              <span className="text-xs text-gray-500 font-bold">Writer: {post.profiles?.ByID}</span>
+              <span className="text-xs text-gray-500 font-bold">Writer: {post.profiles?.by_id}</span>
             </div>
           </div>
         ))}

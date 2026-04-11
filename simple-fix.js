@@ -11,12 +11,12 @@ supabase
   .upsert({
     id: userId,
     discord_name: 'halim0720',
-    ByID: 'By_halim0720',
+    by_id: 'By_halim0720',
     role: 'developer',
-    Clan_Point: 100,
+    clan_point: 100,
     race: 'Terran',
     intro: '시스템 개발자',
-    Clan_point: 1500,
+    clan_point: 1500,
     is_in_queue: false,
     vote_to_start: false
   })

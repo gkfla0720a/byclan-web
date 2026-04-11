@@ -94,14 +94,14 @@ export default function ProfileSidebar({ profile, user }) {
   const isActiveMember =
     profile && ['member', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 
-  // 로그인은 되었지만 ByID/전적/주종/포인트가 비어 있는 경우도 빈 프로필 카드로 취급합니다.
+  // 로그인은 되었지만 by_id/전적/주종/포인트가 비어 있는 경우도 빈 프로필 카드로 취급합니다.
   const hasProfileData = Boolean(
-    profile?.ByID ||
+    profile?.by_id ||
     profile?.race ||
-    profile?.Clan_Point !== undefined ||
+    profile?.clan_point !== undefined ||
     profile?.wins !== undefined ||
     profile?.losses !== undefined ||
-    profile?.Clan_Point !== undefined
+    profile?.clan_point !== undefined
   );
 
   if (!user || !profile || !isActiveMember || !hasProfileData) {
@@ -159,7 +159,7 @@ export default function ProfileSidebar({ profile, user }) {
     );
   }
 
-  const tier = getTier(profile.Clan_Point || 1000);
+  const tier = getTier(profile.clan_point || 1000);
   const tierColor = TIER_COLORS[tier] || 'text-gray-400';
   const winRate = getWinRate(profile.wins, profile.losses);
   const race = RACE_LABELS[profile.race] || profile.race || '—';
@@ -179,7 +179,7 @@ export default function ProfileSidebar({ profile, user }) {
             {profile.race === 'Terran' ? '🔧' : profile.race === 'Protoss' ? '✨' : profile.race === 'Zerg' ? '🦠' : '🎮'}
           </div>
           <span className="font-black text-sm text-cyan-400 truncate max-w-full" style={{ textShadow: '0 0 8px rgba(0,212,255,0.4)' }}>
-            {profile.ByID || 'By_????'}
+            {profile.by_id || 'By_????'}
           </span>
         </div>
 
@@ -188,7 +188,7 @@ export default function ProfileSidebar({ profile, user }) {
           <div className="flex justify-between items-center">
             <span className="text-gray-500">MMR</span>
             <span className="font-black text-yellow-400 text-sm" style={{ textShadow: '0 0 6px rgba(245,158,11,0.5)' }}>
-              {profile.Clan_Point ?? 1000}점
+              {profile.clan_point ?? 1000}점
             </span>
           </div>
           <div className="flex justify-between items-center">
@@ -219,11 +219,11 @@ export default function ProfileSidebar({ profile, user }) {
       </div>
 
       {/* 클랜 포인트 */}
-      {profile.Clan_Point !== undefined && (
+      {profile.clan_point !== undefined && (
         <div className="cyber-card rounded-xl p-3 text-center">
           <div className="text-xs text-gray-500 mb-0.5">클랜 포인트 (CP)</div>
           <div className="font-black text-purple-400 text-lg" style={{ textShadow: '0 0 8px rgba(168,85,247,0.4)' }}>
-            {(profile.Clan_Point || 0).toLocaleString()} CP
+            {(profile.clan_point || 0).toLocaleString()} CP
           </div>
         </div>
       )}

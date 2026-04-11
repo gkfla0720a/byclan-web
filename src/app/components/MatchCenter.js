@@ -114,14 +114,14 @@ export default function MatchCenter({ matchId, onExit }) {
    */
   const [selectedEntryByTeam, setSelectedEntryByTeam] = useState({
     A: [
-      { id: '', ByID: '', race: '' },
-      { id: '', ByID: '', race: '' },
-      { id: '', ByID: '', race: '' },
+      { id: '', by_id: '', race: '' },
+      { id: '', by_id: '', race: '' },
+      { id: '', by_id: '', race: '' },
     ],
     B: [
-      { id: '', ByID: '', race: '' },
-      { id: '', ByID: '', race: '' },
-      { id: '', ByID: '', race: '' },
+      { id: '', by_id: '', race: '' },
+      { id: '', by_id: '', race: '' },
+      { id: '', by_id: '', race: '' },
     ],
   });
   /** 베팅할 팀 ('A' | 'B' | null). null이면 미선택. */
@@ -159,7 +159,7 @@ export default function MatchCenter({ matchId, onExit }) {
     const { data: prof } = await supabase
       .from('profiles').select('*').eq('id', user.id).single();
     if (prof) {
-      setMyClanPoint(prof.Clan_Point ?? 0);
+      setMyClanPoint(prof.clan_point ?? 0);
       setMyRole(prof.role || null);
     }
 
@@ -310,7 +310,7 @@ export default function MatchCenter({ matchId, onExit }) {
 
     setSelectedEntryByTeam((prev) => {
       const nextEntry = [...prev[teamLetter]];
-      nextEntry[idx] = { id: playerId, ByID: player?.ByID || '', race };
+      nextEntry[idx] = { id: playerId, by_id: player?.by_id || '', race };
       return { ...prev, [teamLetter]: nextEntry };
     });
   };
@@ -409,7 +409,7 @@ export default function MatchCenter({ matchId, onExit }) {
       // 포인트 차감
       const { error: deductError } = await supabase
         .from('profiles')
-        .update({ Clan_Point: myClanPoint - betAmount })
+        .update({ clan_point: myClanPoint - betAmount })
         .eq('id', user.id);
       if (deductError) throw deductError;
 
@@ -665,7 +665,7 @@ export default function MatchCenter({ matchId, onExit }) {
                   <div className="space-y-2">
                     {teamEntry.length > 0 ? teamEntry.map((p, i) => (
                       <div key={i} className="bg-gray-900/60 p-2.5 rounded-lg border border-gray-800 text-xs text-center text-white font-bold">
-                        {p.ByID}
+                        {p.by_id}
                         <span className="text-cyan-400 ml-2">({RACE_ICONS[p.race] || p.race})</span>
                       </div>
                     )) : (
@@ -753,7 +753,7 @@ export default function MatchCenter({ matchId, onExit }) {
                             const isAlreadySelected = tEntry.some((se, i) => i !== idx && se.id === member.id);
                             return (
                               <option key={member.id} value={member.id} disabled={isAlreadySelected || !canRest} className="bg-gray-900">
-                                {member.ByID} ({count}회){isAlreadySelected ? ' [이미선택]' : ''}{!canRest ? ' [한도]' : ''}
+                                {member.by_id} ({count}회){isAlreadySelected ? ' [이미선택]' : ''}{!canRest ? ' [한도]' : ''}
                               </option>
                             );
                           })}
@@ -799,7 +799,7 @@ export default function MatchCenter({ matchId, onExit }) {
                         disabled={isAlreadySelected || !canRest}
                         className="bg-gray-900"
                       >
-                        {member.ByID} (휴식: {count}회)
+                        {member.by_id} (휴식: {count}회)
                         {isAlreadySelected ? ' [선택됨]' : ''}
                         {!canRest ? ' [휴식 한도]' : ''}
                       </option>
