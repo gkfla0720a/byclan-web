@@ -9,7 +9,7 @@ as $$
 begin
   insert into public.profiles (
     id,
-    discord_name,
+    discord_id,
     "ByID",
     role,
     "Clan_Point",
@@ -156,7 +156,7 @@ on conflict (key) do update set
   updated_at = now();
 
 insert into public.profiles (
-  id, discord_name, "ByID", role, points, race, intro, Clan_point,
+  id, discord_id, "ByID", role, points, race, intro, Clan_point,
   is_in_queue, vote_to_start, is_test_account, is_test_account_active
 )
 values
@@ -171,7 +171,7 @@ values
   ('99999999-9999-4999-8999-999999999999', 'test9', 'By_test9', 'rookie', 1800, 'Protoss', '가입 직후 흐름을 검증하기 위한 테스트 신입 계정입니다.', 1320, false, false, true, true),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'test10', 'By_test10', 'developer', 1600, 'Terran', '테스트 모드와 개발자 화면 확인용 계정입니다.', 1260, false, false, true, true)
 on conflict (id) do update set
-  discord_name = excluded.discord_name,
+  discord_id = excluded.discord_id,
   "ByID" = excluded."ByID",
   role = excluded.role,
   "Clan_Point" = excluded."Clan_Point",
@@ -210,10 +210,10 @@ begin
     where role is null or role = '';
   end if;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'discord_name')
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'discord_id')
      and exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'ByID') then
     update public.profiles
-    set "ByID" = 'By_' || regexp_replace(coalesce(nullif(discord_name, ''), 'guest'), '[^A-Za-z0-9_]', '', 'g')
+    set "ByID" = 'By_' || regexp_replace(coalesce(nullif(discord_id, ''), 'guest'), '[^A-Za-z0-9_]', '', 'g')
     where "ByID" is null or "ByID" = '';
   end if;
 
@@ -276,7 +276,7 @@ begin
   where table_schema = 'public'
     and table_name = 'ladders'
     and column_name = any (array[
-      'id', 'user_id', 'nickname', 'name', 'ByID', 'discord_name', 'race', 'rank',
+      'id', 'user_id', 'nickname', 'name', 'ByID', 'discord_id', 'race', 'rank',
       'points', 'ladders_points', 'win', 'lose', 'is_test_data', 'is_test_data_active'
     ]);
 
@@ -340,7 +340,7 @@ begin
         nickname text,
         name text,
         "ByID" text,
-        discord_name text,
+        discord_id text,
         race text,
         rank integer,
         points integer,
@@ -356,16 +356,16 @@ begin
     overriding_clause,
     select_columns,
     '[
-      {"uuid_id":"21111111-1111-4111-8111-111111111111","numeric_id":900001,"uuid_user_id":"11111111-1111-4111-8111-111111111111","numeric_user_id":1001,"nickname":"By_test1","name":"By_test1","ByID":"By_test1","discord_name":"test1","race":"Terran","rank":1,"points":2240,"ladders_points":2240,"win":42,"lose":12,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"32222222-2222-4222-8222-222222222222","numeric_id":900002,"uuid_user_id":"22222222-2222-4222-8222-222222222222","numeric_user_id":1002,"nickname":"By_test2","name":"By_test2","ByID":"By_test2","discord_name":"test2","race":"Protoss","rank":2,"points":2120,"ladders_points":2120,"win":38,"lose":16,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"43333333-3333-4333-8333-333333333333","numeric_id":900003,"uuid_user_id":"33333333-3333-4333-8333-333333333333","numeric_user_id":1003,"nickname":"By_test3","name":"By_test3","ByID":"By_test3","discord_name":"test3","race":"Zerg","rank":3,"points":2010,"ladders_points":2010,"win":34,"lose":17,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"54444444-4444-4444-8444-444444444444","numeric_id":900004,"uuid_user_id":"44444444-4444-4444-8444-444444444444","numeric_user_id":1004,"nickname":"By_test4","name":"By_test4","ByID":"By_test4","discord_name":"test4","race":"Terran","rank":4,"points":1880,"ladders_points":1880,"win":31,"lose":18,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"65555555-5555-4555-8555-555555555555","numeric_id":900005,"uuid_user_id":"55555555-5555-4555-8555-555555555555","numeric_user_id":1005,"nickname":"By_test5","name":"By_test5","ByID":"By_test5","discord_name":"test5","race":"Protoss","rank":5,"points":1760,"ladders_points":1760,"win":28,"lose":21,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"76666666-6666-4666-8666-666666666666","numeric_id":900006,"uuid_user_id":"66666666-6666-4666-8666-666666666666","numeric_user_id":1006,"nickname":"By_test6","name":"By_test6","ByID":"By_test6","discord_name":"test6","race":"Random","rank":6,"points":1650,"ladders_points":1650,"win":25,"lose":22,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"87777777-7777-4777-8777-777777777777","numeric_id":900007,"uuid_user_id":"77777777-7777-4777-8777-777777777777","numeric_user_id":1007,"nickname":"By_test7","name":"By_test7","ByID":"By_test7","discord_name":"test7","race":"Zerg","rank":7,"points":1520,"ladders_points":1520,"win":20,"lose":19,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"98888888-8888-4888-8888-888888888888","numeric_id":900008,"uuid_user_id":"88888888-8888-4888-8888-888888888888","numeric_user_id":1008,"nickname":"By_test8","name":"By_test8","ByID":"By_test8","discord_name":"test8","race":"Terran","rank":8,"points":1430,"ladders_points":1430,"win":18,"lose":20,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"a9999999-9999-4999-8999-999999999999","numeric_id":900009,"uuid_user_id":"99999999-9999-4999-8999-999999999999","numeric_user_id":1009,"nickname":"By_test9","name":"By_test9","ByID":"By_test9","discord_name":"test9","race":"Protoss","rank":9,"points":1320,"ladders_points":1320,"win":14,"lose":21,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"baaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_id":900010,"uuid_user_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_user_id":1010,"nickname":"By_test10","name":"By_test10","ByID":"By_test10","discord_name":"test10","race":"Terran","rank":10,"points":1260,"ladders_points":1260,"win":12,"lose":23,"is_test_data":true,"is_test_data_active":true}
+      {"uuid_id":"21111111-1111-4111-8111-111111111111","numeric_id":900001,"uuid_user_id":"11111111-1111-4111-8111-111111111111","numeric_user_id":1001,"nickname":"By_test1","name":"By_test1","ByID":"By_test1","discord_id":"test1","race":"Terran","rank":1,"points":2240,"ladders_points":2240,"win":42,"lose":12,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"32222222-2222-4222-8222-222222222222","numeric_id":900002,"uuid_user_id":"22222222-2222-4222-8222-222222222222","numeric_user_id":1002,"nickname":"By_test2","name":"By_test2","ByID":"By_test2","discord_id":"test2","race":"Protoss","rank":2,"points":2120,"ladders_points":2120,"win":38,"lose":16,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"43333333-3333-4333-8333-333333333333","numeric_id":900003,"uuid_user_id":"33333333-3333-4333-8333-333333333333","numeric_user_id":1003,"nickname":"By_test3","name":"By_test3","ByID":"By_test3","discord_id":"test3","race":"Zerg","rank":3,"points":2010,"ladders_points":2010,"win":34,"lose":17,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"54444444-4444-4444-8444-444444444444","numeric_id":900004,"uuid_user_id":"44444444-4444-4444-8444-444444444444","numeric_user_id":1004,"nickname":"By_test4","name":"By_test4","ByID":"By_test4","discord_id":"test4","race":"Terran","rank":4,"points":1880,"ladders_points":1880,"win":31,"lose":18,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"65555555-5555-4555-8555-555555555555","numeric_id":900005,"uuid_user_id":"55555555-5555-4555-8555-555555555555","numeric_user_id":1005,"nickname":"By_test5","name":"By_test5","ByID":"By_test5","discord_id":"test5","race":"Protoss","rank":5,"points":1760,"ladders_points":1760,"win":28,"lose":21,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"76666666-6666-4666-8666-666666666666","numeric_id":900006,"uuid_user_id":"66666666-6666-4666-8666-666666666666","numeric_user_id":1006,"nickname":"By_test6","name":"By_test6","ByID":"By_test6","discord_id":"test6","race":"Random","rank":6,"points":1650,"ladders_points":1650,"win":25,"lose":22,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"87777777-7777-4777-8777-777777777777","numeric_id":900007,"uuid_user_id":"77777777-7777-4777-8777-777777777777","numeric_user_id":1007,"nickname":"By_test7","name":"By_test7","ByID":"By_test7","discord_id":"test7","race":"Zerg","rank":7,"points":1520,"ladders_points":1520,"win":20,"lose":19,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"98888888-8888-4888-8888-888888888888","numeric_id":900008,"uuid_user_id":"88888888-8888-4888-8888-888888888888","numeric_user_id":1008,"nickname":"By_test8","name":"By_test8","ByID":"By_test8","discord_id":"test8","race":"Terran","rank":8,"points":1430,"ladders_points":1430,"win":18,"lose":20,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"a9999999-9999-4999-8999-999999999999","numeric_id":900009,"uuid_user_id":"99999999-9999-4999-8999-999999999999","numeric_user_id":1009,"nickname":"By_test9","name":"By_test9","ByID":"By_test9","discord_id":"test9","race":"Protoss","rank":9,"points":1320,"ladders_points":1320,"win":14,"lose":21,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"baaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_id":900010,"uuid_user_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_user_id":1010,"nickname":"By_test10","name":"By_test10","ByID":"By_test10","discord_id":"test10","race":"Terran","rank":10,"points":1260,"ladders_points":1260,"win":12,"lose":23,"is_test_data":true,"is_test_data_active":true}
     ]',
     conflict_action
   );
@@ -587,8 +587,8 @@ begin
     row3_sql := row3_sql || ', ' || quote_literal('22222222-2222-4222-8222-222222222222');
   end if;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'applications' and column_name = 'discord_name') then
-    columns_sql := columns_sql || ', discord_name';
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'applications' and column_name = 'discord_id') then
+    columns_sql := columns_sql || ', discord_id';
     row1_sql := row1_sql || ', ' || quote_literal('test9');
     row2_sql := row2_sql || ', ' || quote_literal('test10');
     row3_sql := row3_sql || ', ' || quote_literal('test8');
@@ -1125,7 +1125,7 @@ order by email;
 -- 2. 테스트 프로필 생성 여부 확인
 select
   p.id,
-  p.discord_name,
+  p.discord_id,
   p."ByID",
   p.role,
   to_jsonb(p)->>'discord_id' as discord_id,
@@ -1134,13 +1134,13 @@ select
   p.Clan_point
 from public.profiles p
 where is_test_account = true
-order by discord_name;
+order by discord_id;
 
 -- 3. 래더 랭킹 반영 여부 확인
 select
   nullif(to_jsonb(l)->>'rank', '')::integer as rank,
   coalesce(to_jsonb(l)->>'nickname', to_jsonb(l)->>'name', to_jsonb(l)->>'ByID') as nickname,
-  to_jsonb(l)->>'discord_name' as discord_name,
+  to_jsonb(l)->>'discord_id' as discord_id,
   coalesce(
     nullif(to_jsonb(l)->>'points', '')::integer,
     nullif(to_jsonb(l)->>'ladders_points', '')::integer
@@ -1166,7 +1166,7 @@ select 'ladder_matches' as table_name, count(*) as seeded_count from public.ladd
 
 -- 5. 테스트 계정별 래더 진입 준비 상태 확인
 select
-  p.discord_name,
+  p.discord_id,
   p."ByID",
   p.role,
   to_jsonb(p)->>'discord_id' as discord_id,
@@ -1181,7 +1181,7 @@ from public.profiles p
 left join public.system_settings s
   on s.key = 'test_accounts_enabled'
 where p.is_test_account = true
-order by p.discord_name;
+order by p.discord_id;
 
 -- 6. 필요 시 전체 테스트 계정 숨김
 -- update public.system_settings
