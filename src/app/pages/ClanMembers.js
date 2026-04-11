@@ -95,8 +95,8 @@ function normalizeMemberRole(member) {
  */
 async function fetchMembersWithSchemaFallback() {
   const candidates = [
-    'id, ByID, discord_id, role, race, intro, Clan_Point, is_streamer, streamer_platform, streamer_url',
-    'id, ByID, discord_id, role, race, intro, Clan_Point',
+    'id, by_id, discord_id, role, race, intro, clan_point, is_streamer, streamer_platform, streamer_url',
+    'id, by_id, discord_id, role, race, intro, clan_point',
   ];
 
   for (const columns of candidates) {
@@ -107,7 +107,7 @@ async function fetchMembersWithSchemaFallback() {
         .neq('role', 'visitor')
         .neq('role', 'applicant')
         .neq('role', 'expelled')
-        .order('Clan_Point', { ascending: false })
+        .order('clan_point', { ascending: false })
     );
 
     if (!result.error) {
@@ -126,7 +126,7 @@ async function fetchMembersWithSchemaFallback() {
     }
   }
 
-  return { data: null, error: new Error('profiles 테이블 조회 실패: Clan_Point 컬럼을 찾지 못했습니다. CLAN-POINT-COLUMN-RENAME.sql을 실행했는지 확인하세요.') };
+  return { data: null, error: new Error('profiles 테이블 조회 실패: clan_point 컬럼을 찾지 못했습니다. CLAN-POINT-COLUMN-RENAME.sql을 실행했는지 확인하세요.') };
 }
 
 /**
@@ -227,7 +227,7 @@ export default function ClanMembers() {
       return;
     }
 
-    const confirmed = window.confirm(`${member.ByID || '[ByID 없음]'}의 등급을 ${ROLE_PERMISSIONS[nextRole]?.name || nextRole}(으)로 변경하시갬습니까?`);
+    const confirmed = window.confirm(`${member.by_id || '[by_id 없음]'}의 등급을 ${ROLE_PERMISSIONS[nextRole]?.name || nextRole}(으)로 변경하시갬습니까?`);
     if (!confirmed) return;
 
     try {
@@ -315,7 +315,7 @@ export default function ClanMembers() {
                       <tr key={member.id} className="hover:bg-cyan-400/4 transition-colors">
                         <td className="px-4 py-3 text-white font-semibold align-middle">
                           <div className="flex items-center gap-2">
-                            <span className="truncate">{member.ByID || <span className="text-red-400 text-xs">[ByID 없음]</span>}</span>
+                            <span className="truncate">{member.by_id || <span className="text-red-400 text-xs">[by_id 없음]</span>}</span>
                             {isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
                           </div>
                         </td>
@@ -333,7 +333,7 @@ export default function ClanMembers() {
                           </span>
                         </td>
                           <td className="px-4 py-3 text-slate-300 align-middle">{member.race || 'Terran'}</td>
-                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.Clan_Point ?? 0}점</td>
+                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.clan_point ?? 0}점</td>
                           <td className="px-4 py-3 text-slate-200 align-middle">
                           {member.is_streamer ? (
                             <div className="flex items-center gap-2">

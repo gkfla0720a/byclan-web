@@ -85,9 +85,9 @@ export default function LadderPreview({ isGuest }) {
         const queueResult = await filterVisibleTestAccounts(
           supabase
             .from('profiles')
-            .select('id, ByID, race, Clan_Point, is_in_queue')
+            .select('id, by_id, race, clan_point, is_in_queue')
             .eq('is_in_queue', true)
-            .order('Clan_Point', { ascending: false })
+            .order('clan_point', { ascending: false })
             .limit(5)
         );
 
@@ -106,9 +106,9 @@ export default function LadderPreview({ isGuest }) {
           // ladders 테이블 컬럼명이 profiles와 다를 수 있어 통일된 구조로 변환
           rows = (ladderResult.data || []).map((row, index) => ({
             id: row.id || `ladder-${index}`,
-            ByID: row.nickname || row.name || row.ByID,
+            by_id: row.nickname || row.name || row.by_id,
             race: row.race,
-            Clan_Point: row.Ladder_MMR ?? 1000,
+            clan_point: row.ladder_mmr ?? 1000,
             is_in_queue: false,
           }));
         }
@@ -117,9 +117,9 @@ export default function LadderPreview({ isGuest }) {
         setPreviewPlayers(
           rows.map((player, index) => ({
             id: player.id || `preview-${index}`,
-            name: player.ByID || '[ByID 없음]',
-            tier: getTier(player.Clan_Point || 1000),
-            pts: player.Clan_Point || 1000,
+            name: player.by_id || '[by_id 없음]',
+            tier: getTier(player.clan_point || 1000),
+            pts: player.clan_point || 1000,
             race: getRaceLabel(player.race),
             isInQueue: Boolean(player.is_in_queue),
           }))

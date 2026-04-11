@@ -64,7 +64,7 @@ export default function AuthForm() {
 
   /**
    * 닉네임 중복 여부를 Supabase에서 확인합니다.
-   * - 입력값 앞에 'By_'를 붙여 ByID 컬럼과 비교합니다.
+   * - 입력값 앞에 'By_'를 붙여 by_id 컬럼과 비교합니다.
    * - 중복 없으면 isNicknameChecked를 true로 설정하여 가입을 허용합니다.
    * - 닉네임 변경 시 isNicknameChecked가 자동으로 false로 리셋됩니다.
    */
@@ -77,7 +77,7 @@ export default function AuthForm() {
     const { count, error } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
-      .eq('ByID', fullID);
+      .eq('by_id', fullID);
 
     if (error) {
       alert("오류 발생: " + error.message);
@@ -131,9 +131,9 @@ export default function AuthForm() {
         // 2. 가입 성공 시 프로필 데이터 생성
         const { error: pError } = await supabase.from('profiles').insert({
           id: data.user.id,
-          ByID: `By_${nickname}`,
+          by_id: `By_${nickname}`,
           role: 'rookie',
-          Clan_Point: 1000
+          clan_point: 1000
         });
 
         if (pError) console.error("프로필 생성 실패:", pError);

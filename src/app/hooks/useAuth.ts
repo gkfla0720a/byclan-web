@@ -45,10 +45,10 @@ import logger, { Severity } from '../utils/errorLogger';
  * - Supabase의 profiles 테이블 한 행(row)에 해당하는 타입입니다.
  * - 각 필드 설명:
  *   id:             Supabase Auth의 사용자 UUID (기본 키)
- *   ByID:           클랜 내 고유 닉네임 (예: 'By_홍길동') – 클랜원이라면 반드시 존재해야 함
+ *   by_id:           클랜 내 고유 닉네임 (예: 'By_홍길동') – 클랜원이라면 반드시 존재해야 함
  *   discord_id:     Discord 고유 ID (연동 식별자 – 연동 여부 판단·충돌 감지·표시에 사용)
  *   role:           클랜 역할 (visitor/applicant/rookie/member/elite/admin/master/developer)
- *   Clan_Point:     클랜 재화 포인트 (베팅·상점 등에 사용, 기본값: 0)
+ *   clan_point:     클랜 재화 포인트 (베팅·상점 등에 사용, 기본값: 0)
  *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)
  *   intro:          자기소개 문구
  *   is_in_queue:    현재 래더 대기열에 있는지 여부
@@ -60,7 +60,7 @@ import logger, { Severity } from '../utils/errorLogger';
 
 export interface UserProfile {
   id: string;
-  ByID: string;
+  by_id: string;
   discord_id?: string | null;
   google_sub?: string | null;
   google_email?: string | null;
@@ -68,7 +68,7 @@ export interface UserProfile {
   google_avatar_url?: string | null;
   auth_provider?: string | null;
   role: string;
-  Clan_Point: number;
+  clan_point: number;
   race: string;
   intro: string;
   is_in_queue: boolean;
@@ -140,8 +140,8 @@ export interface UseAuthReturn {
   setUser: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   needsSetup: boolean;
   setNeedsSetup: React.Dispatch<React.SetStateAction<boolean>>;
-  /** ByID가 비어있거나 없을 때 true. 프로필 설정 페이지로 유도하는 데 사용됩니다. */
-  needsByIDSetup: boolean;
+  /** by_id가 비어있거나 없을 때 true. 프로필 설정 페이지로 유도하는 데 사용됩니다. */
+  needsByIdSetup: boolean;
   authLoading: boolean;
   authError: string | null;
   setAuthError: React.Dispatch<React.SetStateAction<string | null>>;
@@ -156,17 +156,17 @@ export interface UseAuthReturn {
 function normalizeProfileRow(profile: Record<string, unknown> | null): UserProfile | null {
   if (!profile) return null;
 
-  if (typeof profile.Clan_Point !== 'number') {
-    logger.warn('normalizeProfileRow: Clan_Point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
+  if (typeof profile.clan_point !== 'number') {
+    logger.warn('normalizeProfileRow: clan_point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
   }
-  if (typeof profile.Ladder_MMR !== 'number') {
-    logger.warn('normalizeProfileRow: Ladder_MMR 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
+  if (typeof profile.ladder_mmr !== 'number') {
+    logger.warn('normalizeProfileRow: ladder_mmr 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
   }
 
   return {
     ...(profile as UserProfile),
-    Clan_Point: typeof profile.Clan_Point === 'number' ? profile.Clan_Point : 0,
-    Ladder_MMR: typeof profile.Ladder_MMR === 'number' ? profile.Ladder_MMR : 1000,
+    clan_point: typeof profile.clan_point === 'number' ? profile.clan_point : 0,
+    ladder_mmr: typeof profile.ladder_mmr === 'number' ? profile.ladder_mmr : 1000,
   };
 }
 
@@ -249,23 +249,23 @@ function isUniqueViolation(error: unknown): boolean {
   return code === '23505' || /duplicate key/i.test(message);
 }
 
-async function resolveUniqueByID(seed: string, currentUserId?: string): Promise<string> {
+async function resolveUniqueById(seed: string, currentUserId?: string): Promise<string> {
   const base = `By_${sanitizeByIdSeed(seed)}`;
   const candidates = Array.from({ length: 30 }, (_, i) => (i === 0 ? base : `${base}${i + 1}`));
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, ByID')
-    .in('ByID', candidates);
+    .select('id, by_id')
+    .in('by_id', candidates);
 
   if (error) {
-    logger.warn('ByID 후보 조회 실패, 기본값으로 진행', error);
+    logger.warn('by_id 후보 조회 실패, 기본값으로 진행', error);
     return base;
   }
 
   const taken = new Map<string, string>();
-  (data || []).forEach((row: { id: string; ByID: string }) => {
-    taken.set(row.ByID, row.id);
+  (data || []).forEach((row: { id: string; by_id: string }) => {
+    taken.set(row.by_id, row.id);
   });
 
   for (const candidate of candidates) {
@@ -313,9 +313,9 @@ async function syncSocialProfileData(
     updates.auth_provider = authProvider;
   }
 
-  if (!currentProfile.ByID || !currentProfile.ByID.trim()) {
+  if (!currentProfile.by_id || !currentProfile.by_id.trim()) {
     const seed = googleName || discordName || (authUser.email as string)?.split('@')[0] || 'User';
-    updates.ByID = await resolveUniqueByID(seed, authUser.id as string);
+    updates.by_id = await resolveUniqueById(seed, authUser.id as string);
   }
 
   if (Object.keys(updates).length === 0) {
@@ -385,7 +385,7 @@ export function useAuth(): UseAuthReturn {
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // ByID 재확인 진행 상태를 추적하는 ref입니다.
+  // by_id 재확인 진행 상태를 추적하는 ref입니다.
   // state가 아닌 ref를 사용하여 불필요한 재렌더링을 방지합니다.
   const byIDRecheckRef = useRef<'idle' | 'checking'>('idle');
   const [password, setPassword] = useState('');
@@ -405,10 +405,10 @@ export function useAuth(): UseAuthReturn {
     () => false,
   );
 
-  // ─── ByID 유효성 파생 ──────────────────────────────────────────────────────
-  // needsByIDSetup은 profile에서 직접 파생되는 계산값입니다. (별도 state 불필요)
+  // ─── by_id 유효성 파생 ──────────────────────────────────────────────────────
+  // needsByIdSetup은 profile에서 직접 파생되는 계산값입니다. (별도 state 불필요)
   // profile이 null이면 아직 로딩 중이므로 false로 처리합니다.
-  const needsByIDSetup = profile !== null && !(profile.ByID && profile.ByID.trim() !== '');
+  const needsByIdSetup = profile !== null && !(profile.by_id && profile.by_id.trim() !== '');
 
   // Auto-clear authError after 4 seconds
   useEffect(() => {
@@ -417,10 +417,10 @@ export function useAuth(): UseAuthReturn {
     return () => clearTimeout(timer);
   }, [authError]);
 
-  // ─── ByID 안전 재확인 + 자동 로그아웃 ────────────────────────────────────
-  // ByID가 없어 보일 때 즉시 판단하지 않고, 아래 순서로 처리합니다.
+  // ─── by_id 안전 재확인 + 자동 로그아웃 ────────────────────────────────────
+  // by_id가 없어 보일 때 즉시 판단하지 않고, 아래 순서로 처리합니다.
   //   1. 1500ms 대기 (화면 전환·일시적 상태 무시)
-  //   2. DB에서 직접 ByID를 재조회
+  //   2. DB에서 직접 by_id를 재조회
   //   3. 재조회에서도 없으면: 에러 메시지 → 3초 후 로그아웃 + 페이지 새로고침
   //   4. 재조회에서 있으면: 전체 프로필을 다시 로드하고 정상 처리
   useEffect(() => {
@@ -429,9 +429,9 @@ export function useAuth(): UseAuthReturn {
       return;
     }
 
-    const hasValidByID = !!(profile.ByID && profile.ByID.trim() !== '');
-    // ByID가 유효하면 재확인 상태를 초기화하고 종료합니다.
-    if (hasValidByID) {
+    const hasValidById = !!(profile.by_id && profile.by_id.trim() !== '');
+    // by_id가 유효하면 재확인 상태를 초기화하고 종료합니다.
+    if (hasValidById) {
       byIDRecheckRef.current = 'idle';
       return;
     }
@@ -446,16 +446,16 @@ export function useAuth(): UseAuthReturn {
 
       const userId = (user as { id: string }).id;
 
-      // DB에서 최신 ByID를 직접 조회합니다.
+      // DB에서 최신 by_id를 직접 조회합니다.
       const { data: fresh } = await supabase
         .from('profiles')
-        .select('ByID')
+        .select('by_id')
         .eq('id', userId)
         .single();
 
-      const freshHasValidByID = !!(fresh?.ByID && (fresh.ByID as string).trim() !== '');
+      const freshHasValidById = !!(fresh?.by_id && (fresh.by_id as string).trim() !== '');
 
-      if (freshHasValidByID) {
+      if (freshHasValidById) {
         // 일시적인 문제였음 - 전체 프로필을 다시 로드하고 종료합니다.
         byIDRecheckRef.current = 'idle';
         const { data: fullProfile } = await supabase
@@ -467,7 +467,7 @@ export function useAuth(): UseAuthReturn {
         return;
       }
 
-      // 재확인 후에도 ByID가 없음 → 에러 표시 후 자동 로그아웃합니다.
+      // 재확인 후에도 by_id가 없음 → 에러 표시 후 자동 로그아웃합니다.
       setAuthError('By닉네임이 존재하지 않습니다. 아이디를 재설정해주세요.');
       // 에러 메시지를 잠깐 보여준 뒤 로그아웃합니다.
       await new Promise<void>(resolve => setTimeout(resolve, 3000));
@@ -477,7 +477,7 @@ export function useAuth(): UseAuthReturn {
     };
 
     runRecheck().catch(async err => {
-      logger.error('ByID 재확인 중 오류 발생', err);
+      logger.error('by_id 재확인 중 오류 발생', err);
       byIDRecheckRef.current = 'idle';
       // 재확인 중 오류가 발생해도 로그아웃하여 사용자가 엉킨 상태에 머무르지 않도록 합니다.
       try { await supabase.auth.signOut(); } catch (signOutErr) { logger.error('로그아웃 중 오류', signOutErr); }
@@ -514,14 +514,14 @@ export function useAuth(): UseAuthReturn {
 
         let insertError: unknown = null;
         for (let attempt = 0; attempt < 4; attempt += 1) {
-          const uniqueByID = await resolveUniqueByID(`${byIdSeed}${attempt === 0 ? '' : attempt + 1}`, authUser.id as string);
+          const uniqueById = await resolveUniqueById(`${byIdSeed}${attempt === 0 ? '' : attempt + 1}`, authUser.id as string);
           const { error } = await supabase
             .from('profiles')
             .insert({
               id: authUser.id,
-              ByID: uniqueByID,
+              by_id: uniqueById,
               role: 'visitor',
-              Clan_Point: 0,
+              clan_point: 0,
               race: 'Terran',
               intro: '클랜 방문자',
               is_in_queue: false,
@@ -789,7 +789,7 @@ export function useAuth(): UseAuthReturn {
     setUser,
     needsSetup,
     setNeedsSetup,
-    needsByIDSetup,
+    needsByIdSetup,
     authLoading,
     authError,
     setAuthError,

@@ -11,48 +11,48 @@ const createTestData = async () => {
       {
         id: 'test-master-001',
         discord_name: 'TestMaster',
-        ByID: 'By_Master',
+        by_id: 'By_Master',
         role: 'master',
-        Clan_Point: 100,
+        clan_point: 100,
         race: 'Terran',
         intro: '테스트 마스터 계정',
-        Clan_point: 1500,
+        clan_point: 1500,
         is_in_queue: false,
         vote_to_start: false
       },
       {
         id: 'test-admin-001',
         discord_name: 'TestAdmin',
-        ByID: 'By_Admin',
+        by_id: 'By_Admin',
         role: 'admin',
-        Clan_Point: 80,
+        clan_point: 80,
         race: 'Protoss',
         intro: '테스트 관리자 계정',
-        Clan_point: 1400,
+        clan_point: 1400,
         is_in_queue: false,
         vote_to_start: false
       },
       {
         id: 'test-elite-001',
         discord_name: 'TestElite',
-        ByID: 'By_Elite',
+        by_id: 'By_Elite',
         role: 'elite',
-        Clan_Point: 60,
+        clan_point: 60,
         race: 'Zerg',
         intro: '테스트 정예 계정',
-        Clan_point: 1300,
+        clan_point: 1300,
         is_in_queue: false,
         vote_to_start: false
       },
       {
         id: 'test-associate-001',
         discord_name: 'TestAssociate',
-        ByID: 'By_Associate',
+        by_id: 'By_Associate',
         role: 'associate',
-        Clan_Point: 50,
+        clan_point: 50,
         race: 'Terran',
         intro: '테스트 일반 계정',
-        Clan_point: 1200,
+        clan_point: 1200,
         is_in_queue: false,
         vote_to_start: false
       }
@@ -67,7 +67,7 @@ const createTestData = async () => {
       if (error) {
         console.error('데이터 삽입 실패:', error);
       } else {
-        console.log('✅ 데이터 삽입 성공:', member.ByID);
+        console.log('✅ 데이터 삽입 성공:', member.by_id);
       }
     }
 

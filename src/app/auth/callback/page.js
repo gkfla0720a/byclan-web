@@ -47,7 +47,7 @@ async function handleLinkCallback(user, provider) {
     // 다른 계정에 이미 연동된 Discord ID인지 확인
     const { data: conflict } = await supabase
       .from('profiles')
-      .select('id, ByID')
+      .select('id, by_id')
       .eq('discord_id', discordId)
       .neq('id', user.id)
       .maybeSingle();
@@ -92,7 +92,7 @@ async function handleLinkCallback(user, provider) {
     // 다른 계정에 이미 연동된 Google 계정인지 확인
     const { data: conflict } = await supabase
       .from('profiles')
-      .select('id, ByID')
+      .select('id, by_id')
       .eq('google_sub', googleSub)
       .neq('id', user.id)
       .maybeSingle();

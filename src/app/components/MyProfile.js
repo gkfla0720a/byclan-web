@@ -25,15 +25,15 @@ import { useAuthContext } from '../context/AuthContext';
 function normalizeProfileRow(profileData) {
   if (!profileData) return profileData;
   const clanPoint =
-    typeof profileData.Clan_Point === 'number'
-      ? profileData.Clan_Point
+    typeof profileData.clan_point === 'number'
+      ? profileData.clan_point
       : typeof profileData.points === 'number'
         ? profileData.points
         : 0;
 
   return {
     ...profileData,
-    Clan_Point: clanPoint,
+    clan_point: clanPoint,
   };
 }
 
@@ -74,8 +74,8 @@ export default function MyProfile() {
   const [intro, setIntro] = useState('');
   /** 닉네임 중복 확인 통과 여부. false이면 저장 버튼이 비활성화됩니다. */
   const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
-  /** 최초 로드 시 DB에 저장된 원본 ByID 값 (중복 확인 시 본인 닉네임 허용 판단에 사용) */
-  const [originalByID, setOriginalByID] = useState('');
+  /** 최초 로드 시 DB에 저장된 원본 by_id 값 (중복 확인 시 본인 닉네임 허용 판단에 사용) */
+  const [originalById, setOriginalById] = useState('');
 
   // ── 계정 보안 (이메일/비밀번호 변경) ─────────────────────────────────────
   /** 이메일 변경 입력값 */
@@ -131,16 +131,16 @@ export default function MyProfile() {
         setRace(profileData.race || '미지정');
         setIntro(profileData.intro || '');
         
-        const currentByID = profileData.ByID || '';
-        if (currentByID.startsWith('By_')) {
-          setClanNameInput(currentByID.replace('By_', ''));
-          setOriginalByID(currentByID);
+        const currentById = profileData.by_id || '';
+        if (currentById.startsWith('By_')) {
+          setClanNameInput(currentById.replace('By_', ''));
+          setOriginalById(currentById);
           setIsNicknameAvailable(true); // 기존에 By_ 닉네임이 있으면 일단 활성화
         }
 
         // 래더 데이터 가져오기
-        if (currentByID.startsWith('By_')) {
-          const { data: ladder } = await supabase.from('ladders').select('*').eq('nickname', currentByID).maybeSingle();
+        if (currentById.startsWith('By_')) {
+          const { data: ladder } = await supabase.from('ladders').select('*').eq('nickname', currentById).maybeSingle();
           if (ladder) setLadderData(ladder);
         }
       }
@@ -311,7 +311,7 @@ export default function MyProfile() {
     const value = e.target.value.replace(/\s/g, ''); // 공백 제거
     setClanNameInput(value);
     // 입력값이 바뀌면 다시 중복 확인을 하도록 설정 (단, 원래 자기 닉네임이면 허용)
-    setIsNicknameAvailable(`By_${value}` === originalByID);
+    setIsNicknameAvailable(`By_${value}` === originalById);
   };
 
   /**
@@ -324,7 +324,7 @@ export default function MyProfile() {
     if (!clanNameInput.trim()) return alert('닉네임을 입력해 주세요.');
     const fullNickname = `By_${clanNameInput}`;
 
-    if (fullNickname === originalByID) {
+    if (fullNickname === originalById) {
       alert('현재 사용 중인 본인의 닉네임입니다.');
       setIsNicknameAvailable(true);
       return;
@@ -334,7 +334,7 @@ export default function MyProfile() {
       const { count } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .eq('ByID', fullNickname);
+        .eq('by_id', fullNickname);
 
       if (count > 0) {
         alert(`'${fullNickname}'은(는) 이미 다른 유저가 사용 중입니다.`);
@@ -364,7 +364,7 @@ export default function MyProfile() {
     setIsUpdating(true);
     try {
       const { error } = await supabase.from('profiles').update({ 
-        ByID: `By_${clanNameInput}`,
+        by_id: `By_${clanNameInput}`,
         race: race,
         intro: intro,
       }).eq('id', profile.id);
@@ -509,8 +509,8 @@ export default function MyProfile() {
         {/* 왼쪽 섹션: 회원 정보 수정 폼 */}
         <div className="lg:col-span-2 bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-700 shadow-xl space-y-6">
           
-        {/* ByID 미설정 경고 배너 */}
-          {!originalByID && (
+        {/* by_id 미설정 경고 배너 */}
+          {!originalById && (
             <div className="bg-red-900/30 border border-red-500/50 rounded-xl px-4 py-3 text-red-300 text-sm font-bold flex items-center gap-2">
               ⚠️ By닉네임이 설정되지 않았습니다. 아이디를 입력하고 중복 확인 후 저장해주세요.
             </div>
@@ -704,7 +704,7 @@ export default function MyProfile() {
              <h3 className="text-white font-black text-xs mb-4 border-b border-gray-700/50 pb-2 uppercase tracking-[0.2em]">Clan Assets</h3>
              <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">보유 클랜 포인트</p>
              <p className="text-2xl font-black text-emerald-400 flex items-center gap-2">
-               💰 {profile.Clan_Point?.toLocaleString() || 0} <span className="text-xs text-gray-500 font-normal">CP</span>
+               💰 {profile.clan_point?.toLocaleString() || 0} <span className="text-xs text-gray-500 font-normal">CP</span>
              </p>
           </div>
 

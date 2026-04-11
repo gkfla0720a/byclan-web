@@ -8,7 +8,7 @@
  *   - 히어로 배너: 배경 이미지와 사이버 그리드 오버레이로 꾸민 환영 섹션
  *   - 모바일 전용 프로필 카드: 로그인한 활성 클랜원에게만 히어로 배너 아래 표시
  *   - 클랜 소개 카드: 클랜 성향·관전 재미·가입 동선을 3열로 소개
- *   - 랭킹 미리보기: Clan_Point 기준 상위 3인 표시 (클릭 시 랭킹 페이지 이동)
+ *   - 랭킹 미리보기: clan_point 기준 상위 3인 표시 (클릭 시 랭킹 페이지 이동)
  *   - 최신 소식: 최근 공지사항 3건 미리보기 (클릭 시 공지 페이지 이동)
  *   - 매치 현황·활동 로그: HomeSections의 MatchStatus, ActivityLog 컴포넌트 사용
  *   - 빠른 접근 버튼: 가입안내·매치·커뮤니티·랭킹 4가지 바로가기
@@ -81,7 +81,7 @@ function MobileProfileCard({ profile, user, navigateTo }) {
 
   if (!user || !isActiveMember) return null;
 
-  const tier = getTier(profile.Clan_Point || 1000);
+  const tier = getTier(profile.clan_point || 1000);
   const tierColor = TIER_COLORS[tier] || 'text-gray-400';
   const winRate = getWinRate(profile.wins, profile.losses);
   const race = RACE_LABELS[profile.race] || profile.race || '—';
@@ -99,7 +99,7 @@ function MobileProfileCard({ profile, user, navigateTo }) {
       {/* 닉네임 + 티어 */}
       <div className="flex flex-col min-w-0">
         <span className="font-black text-sm text-cyan-400 truncate" style={{ textShadow: '0 0 8px rgba(0,212,255,0.4)' }}>
-          {profile.ByID || 'By_????'}
+          {profile.by_id || 'By_????'}
         </span>
         <span className={`text-xs font-bold ${tierColor}`}>{tier}</span>
       </div>
@@ -107,7 +107,7 @@ function MobileProfileCard({ profile, user, navigateTo }) {
       <div className="ml-auto flex gap-4 text-xs text-right shrink-0">
         <div>
           <div className="text-gray-500">MMR</div>
-          <div className="font-black text-yellow-400">{profile.Clan_Point ?? 1000}</div>
+          <div className="font-black text-yellow-400">{profile.clan_point ?? 1000}</div>
         </div>
         <div>
           <div className="text-gray-500">승률</div>
@@ -164,11 +164,11 @@ function HomeContent({ profile = null, user = null }) {
 
       const { data: rankData } = await filterVisibleTestData(supabase
         .from('profiles')
-        .select('id, ByID, Clan_Point')
+        .select('id, by_id, clan_point')
         .neq('role', 'visitor')
         .neq('role', 'applicant')
         .neq('role', 'expelled')
-        .order('Clan_Point', { ascending: false })
+        .order('clan_point', { ascending: false })
         .limit(3));
 
       const { data: noticeData } = await filterVisibleTestData(supabase
@@ -285,10 +285,10 @@ function HomeContent({ profile = null, user = null }) {
              topRankers.map((p, index) => (
                <div key={`${p.id ?? index}`} className="flex items-center justify-between bg-slate-950/55 px-3 py-2 rounded-lg border border-cyan-400/10">
                  <span className="text-slate-100 font-semibold text-sm">
-                   <span className="text-yellow-500 mr-1">{index + 1}위</span> {p.ByID || '[ByID 없음]'}
+                   <span className="text-yellow-500 mr-1">{index + 1}위</span> {p.by_id || '[by_id 없음]'}
                    {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
                  </span>
-                 <span className="font-bold text-cyan-400 text-sm">MMR {p.Clan_Point}점</span>
+                 <span className="font-bold text-cyan-400 text-sm">MMR {p.clan_point}점</span>
                </div>
              ))
             }

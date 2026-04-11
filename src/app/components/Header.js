@@ -25,7 +25,7 @@
  *   user:                로그인한 사용자 객체 (null이면 비로그인)
  *   role:                사용자 역할 문자열
  *   unreadCount:         읽지 않은 알림 수
- *   nickname:            표시할 닉네임 (ByID 필수, 없으면 오류)
+ *   nickname:            표시할 닉네임 (by_id 필수, 없으면 오류)
  * =====================================================================
  */
 'use client';
@@ -65,7 +65,7 @@ export default function Header() {
   const navigateTo = useNavigate();
   // AuthContext에서 전역 인증 상태를 가져옵니다.
   // Header가 독립적인 auth 상태를 관리하지 않고 전역 상태를 공유하여 OAuth 리다이렉트 후에도 올바른 상태를 표시합니다.
-  const { user, profile, authLoading, needsByIDSetup, authError, reloadProfile } = useAuthContext();
+  const { user, profile, authLoading, needsByIdSetup, authError, reloadProfile } = useAuthContext();
   
   // navRef: 헤더 <nav> 요소의 참조. 외부 클릭 감지에 사용됩니다.
   const navRef = useRef(null);
@@ -80,11 +80,11 @@ export default function Header() {
 
   // profile에서 역할과 닉네임을 파생합니다.
   const role = profile?.role || null;
-  // ByID 없을 때 표시할 에러 메시지 (데스크톱/모바일 공통으로 사용)
+  // by_id 없을 때 표시할 에러 메시지 (데스크톱/모바일 공통으로 사용)
   const NO_BYID_MESSAGE = 'By닉네임이 없습니다. 재설정해주세요.';
-  // ByID만 사용합니다. 없으면 null로 처리하며 폴백 닉네임을 사용하지 않습니다.
-  const hasValidByID = !!(profile?.ByID && profile.ByID.trim() !== '');
-  const nickname = hasValidByID ? profile.ByID : null;
+  // by_id만 사용합니다. 없으면 null로 처리하며 폴백 닉네임을 사용하지 않습니다.
+  const hasValidById = !!(profile?.by_id && profile.by_id.trim() !== '');
+  const nickname = hasValidById ? profile.by_id : null;
 
   // 권한 체크: 역할 문자열을 소문자로 정규화하여 비교합니다
   // 🛡️ 권한 체크 로직 (소문자 및 공백 완벽 제거)
@@ -126,13 +126,13 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ByID가 없는 경우 즉시 프로필 설정 페이지로 이동하여 아이디를 등록하도록 유도합니다.
+  // by_id가 없는 경우 즉시 프로필 설정 페이지로 이동하여 아이디를 등록하도록 유도합니다.
   // (자동 로그아웃은 useAuth.ts의 재확인 로직에서 처리합니다.)
   useEffect(() => {
-    if (user && !authLoading && needsByIDSetup) {
+    if (user && !authLoading && needsByIdSetup) {
       navigateTo('프로필');
     }
-  }, [user, authLoading, needsByIDSetup, navigateTo]);
+  }, [user, authLoading, needsByIdSetup, navigateTo]);
 
   const handleLogout = async () => {
     try {

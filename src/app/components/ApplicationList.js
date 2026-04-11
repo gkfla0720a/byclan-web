@@ -95,7 +95,7 @@ export default function ApplicationList() {
         // 환경 확인 후 권한이 있으면 신청서 목록을 불러옵니다.
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, ByID, role')
+          .select('id, by_id, role')
           .eq('id', user.id)
           .single();
         
@@ -176,7 +176,7 @@ export default function ApplicationList() {
   const confirmProcess = async () => {
     const { app, status, feedback } = modalData;
     const isPass = status === '합격';
-    const testerName = myProfile.ByID || '[ByID 없음]';
+    const testerName = myProfile.by_id || '[by_id 없음]';
 
     try {
       setProcessingId(app.id);
@@ -291,7 +291,7 @@ export default function ApplicationList() {
                 {/* 디스코드 이름 표시 (있는 경우) */}
                 {app.applicant && (
                   <span className="text-sm text-gray-500 mb-1">
-                    (Discord: {app.applicant.ByID || '[ByID 없음]'})
+                    (Discord: {app.applicant.by_id || '[by_id 없음]'})
                   </span>
                 )}
               </div>
@@ -342,7 +342,7 @@ export default function ApplicationList() {
                   <div className="text-sm">
                     {app.tester_id ? (
                       <span className="text-yellow-400 font-bold flex items-center gap-2">
-                        ⚔️ 테스트 담당: {app.tester?.ByID || '[ByID 없음]'}
+                        ⚔️ 테스트 담당: {app.tester?.by_id || '[by_id 없음]'}
                         {app.tester_id === myProfile.id && <span className="text-xs bg-yellow-900/50 border border-yellow-700 px-2 py-0.5 rounded-full">나의 임무</span>}
                       </span>
                     ) : (

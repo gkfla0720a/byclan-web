@@ -37,7 +37,7 @@ export default function AdminBoard() {
   const [isAdmin, setIsAdmin] = useState(false);
   /** 데이터를 불러오는 중인지 여부 (로딩 스피너 표시에 사용) */
   const [loading, setLoading] = useState(true);
-  /** 현재 로그인한 유저의 프로필 정보 (id, ByID, role 등) */
+  /** 현재 로그인한 유저의 프로필 정보 (id, by_id, role 등) */
   const [myProfile, setMyProfile] = useState(null);
 
   // 글쓰기 상태 관리
@@ -60,7 +60,7 @@ export default function AdminBoard() {
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, ByID, role')
+          .select('id, by_id, role')
           .eq('id', user.id)
           .single();
 
@@ -110,7 +110,7 @@ export default function AdminBoard() {
         title, 
         content, 
         created_at,
-        profiles:author_id ( ByID, role ) 
+        profiles:author_id ( by_id, role ) 
       `)
       .order('created_at', { ascending: false })); 
 
@@ -300,7 +300,7 @@ export default function AdminBoard() {
                 {getRoleMeta(post.profiles?.role).name}
               </span>
               <span className="font-semibold text-gray-200 text-sm">
-                작성자: {post.profiles?.ByID || '[ByID 없음]'}
+                작성자: {post.profiles?.by_id || '[by_id 없음]'}
               </span>
             </div>
           </div>

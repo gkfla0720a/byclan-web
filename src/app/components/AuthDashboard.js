@@ -234,7 +234,7 @@ function ProfileSetup({ user, onComplete }) {
       const { error } = await supabase
         .from('profiles')
         .update({
-          ByID: formData.by_id,
+          by_id: formData.by_id,
           race: formData.race,
           intro: formData.intro
         })
