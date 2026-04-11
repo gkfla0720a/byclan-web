@@ -726,7 +726,7 @@ export default function LadderDashboard({ onMatchEnter }) {
             <div>
               <p className="text-gray-500 text-[10px] uppercase tracking-wider">MMR</p>
               <p className="text-yellow-400 font-bold text-xl drop-shadow-[0_0_5px_rgba(234,179,8,0.6)]">
-                {myProfile?.Clan_Point ?? myStats?.ladders_points ?? 1000}점
+                {myProfile?.Ladder_MMR ?? myStats?.Ladder_MMR ?? 1000}점
               </p>
             </div>
             <div>

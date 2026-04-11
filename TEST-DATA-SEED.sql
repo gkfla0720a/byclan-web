@@ -277,7 +277,7 @@ begin
     and table_name = 'ladders'
     and column_name = any (array[
       'id', 'user_id', 'nickname', 'name', 'ByID', 'discord_id', 'race', 'rank',
-      'points', 'ladders_points', 'win', 'lose', 'is_test_data', 'is_test_data_active'
+      'Ladder_MMR', 'win', 'lose', 'is_test_data', 'is_test_data_active'
     ]);
 
   if ladder_columns is null or not ('id' = any(ladder_columns)) then
@@ -343,8 +343,7 @@ begin
         discord_id text,
         race text,
         rank integer,
-        points integer,
-        ladders_points integer,
+        "Ladder_MMR" integer,
         win integer,
         lose integer,
         is_test_data boolean,
@@ -356,16 +355,16 @@ begin
     overriding_clause,
     select_columns,
     '[
-      {"uuid_id":"21111111-1111-4111-8111-111111111111","numeric_id":900001,"uuid_user_id":"11111111-1111-4111-8111-111111111111","numeric_user_id":1001,"nickname":"By_test1","name":"By_test1","ByID":"By_test1","discord_id":"test1","race":"Terran","rank":1,"points":2240,"ladders_points":2240,"win":42,"lose":12,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"32222222-2222-4222-8222-222222222222","numeric_id":900002,"uuid_user_id":"22222222-2222-4222-8222-222222222222","numeric_user_id":1002,"nickname":"By_test2","name":"By_test2","ByID":"By_test2","discord_id":"test2","race":"Protoss","rank":2,"points":2120,"ladders_points":2120,"win":38,"lose":16,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"43333333-3333-4333-8333-333333333333","numeric_id":900003,"uuid_user_id":"33333333-3333-4333-8333-333333333333","numeric_user_id":1003,"nickname":"By_test3","name":"By_test3","ByID":"By_test3","discord_id":"test3","race":"Zerg","rank":3,"points":2010,"ladders_points":2010,"win":34,"lose":17,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"54444444-4444-4444-8444-444444444444","numeric_id":900004,"uuid_user_id":"44444444-4444-4444-8444-444444444444","numeric_user_id":1004,"nickname":"By_test4","name":"By_test4","ByID":"By_test4","discord_id":"test4","race":"Terran","rank":4,"points":1880,"ladders_points":1880,"win":31,"lose":18,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"65555555-5555-4555-8555-555555555555","numeric_id":900005,"uuid_user_id":"55555555-5555-4555-8555-555555555555","numeric_user_id":1005,"nickname":"By_test5","name":"By_test5","ByID":"By_test5","discord_id":"test5","race":"Protoss","rank":5,"points":1760,"ladders_points":1760,"win":28,"lose":21,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"76666666-6666-4666-8666-666666666666","numeric_id":900006,"uuid_user_id":"66666666-6666-4666-8666-666666666666","numeric_user_id":1006,"nickname":"By_test6","name":"By_test6","ByID":"By_test6","discord_id":"test6","race":"Random","rank":6,"points":1650,"ladders_points":1650,"win":25,"lose":22,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"87777777-7777-4777-8777-777777777777","numeric_id":900007,"uuid_user_id":"77777777-7777-4777-8777-777777777777","numeric_user_id":1007,"nickname":"By_test7","name":"By_test7","ByID":"By_test7","discord_id":"test7","race":"Zerg","rank":7,"points":1520,"ladders_points":1520,"win":20,"lose":19,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"98888888-8888-4888-8888-888888888888","numeric_id":900008,"uuid_user_id":"88888888-8888-4888-8888-888888888888","numeric_user_id":1008,"nickname":"By_test8","name":"By_test8","ByID":"By_test8","discord_id":"test8","race":"Terran","rank":8,"points":1430,"ladders_points":1430,"win":18,"lose":20,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"a9999999-9999-4999-8999-999999999999","numeric_id":900009,"uuid_user_id":"99999999-9999-4999-8999-999999999999","numeric_user_id":1009,"nickname":"By_test9","name":"By_test9","ByID":"By_test9","discord_id":"test9","race":"Protoss","rank":9,"points":1320,"ladders_points":1320,"win":14,"lose":21,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"baaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_id":900010,"uuid_user_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_user_id":1010,"nickname":"By_test10","name":"By_test10","ByID":"By_test10","discord_id":"test10","race":"Terran","rank":10,"points":1260,"ladders_points":1260,"win":12,"lose":23,"is_test_data":true,"is_test_data_active":true}
+      {"uuid_id":"21111111-1111-4111-8111-111111111111","numeric_id":900001,"uuid_user_id":"11111111-1111-4111-8111-111111111111","numeric_user_id":1001,"nickname":"By_test1","name":"By_test1","ByID":"By_test1","discord_id":"test1","race":"Terran","rank":1,"Ladder_MMR":2240,"win":42,"lose":12,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"32222222-2222-4222-8222-222222222222","numeric_id":900002,"uuid_user_id":"22222222-2222-4222-8222-222222222222","numeric_user_id":1002,"nickname":"By_test2","name":"By_test2","ByID":"By_test2","discord_id":"test2","race":"Protoss","rank":2,"Ladder_MMR":2120,"win":38,"lose":16,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"43333333-3333-4333-8333-333333333333","numeric_id":900003,"uuid_user_id":"33333333-3333-4333-8333-333333333333","numeric_user_id":1003,"nickname":"By_test3","name":"By_test3","ByID":"By_test3","discord_id":"test3","race":"Zerg","rank":3,"Ladder_MMR":2010,"win":34,"lose":17,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"54444444-4444-4444-8444-444444444444","numeric_id":900004,"uuid_user_id":"44444444-4444-4444-8444-444444444444","numeric_user_id":1004,"nickname":"By_test4","name":"By_test4","ByID":"By_test4","discord_id":"test4","race":"Terran","rank":4,"Ladder_MMR":1880,"win":31,"lose":18,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"65555555-5555-4555-8555-555555555555","numeric_id":900005,"uuid_user_id":"55555555-5555-4555-8555-555555555555","numeric_user_id":1005,"nickname":"By_test5","name":"By_test5","ByID":"By_test5","discord_id":"test5","race":"Protoss","rank":5,"Ladder_MMR":1760,"win":28,"lose":21,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"76666666-6666-4666-8666-666666666666","numeric_id":900006,"uuid_user_id":"66666666-6666-4666-8666-666666666666","numeric_user_id":1006,"nickname":"By_test6","name":"By_test6","ByID":"By_test6","discord_id":"test6","race":"Random","rank":6,"Ladder_MMR":1650,"win":25,"lose":22,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"87777777-7777-4777-8777-777777777777","numeric_id":900007,"uuid_user_id":"77777777-7777-4777-8777-777777777777","numeric_user_id":1007,"nickname":"By_test7","name":"By_test7","ByID":"By_test7","discord_id":"test7","race":"Zerg","rank":7,"Ladder_MMR":1520,"win":20,"lose":19,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"98888888-8888-4888-8888-888888888888","numeric_id":900008,"uuid_user_id":"88888888-8888-4888-8888-888888888888","numeric_user_id":1008,"nickname":"By_test8","name":"By_test8","ByID":"By_test8","discord_id":"test8","race":"Terran","rank":8,"Ladder_MMR":1430,"win":18,"lose":20,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"a9999999-9999-4999-8999-999999999999","numeric_id":900009,"uuid_user_id":"99999999-9999-4999-8999-999999999999","numeric_user_id":1009,"nickname":"By_test9","name":"By_test9","ByID":"By_test9","discord_id":"test9","race":"Protoss","rank":9,"Ladder_MMR":1320,"win":14,"lose":21,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"baaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_id":900010,"uuid_user_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_user_id":1010,"nickname":"By_test10","name":"By_test10","ByID":"By_test10","discord_id":"test10","race":"Terran","rank":10,"Ladder_MMR":1260,"win":12,"lose":23,"is_test_data":true,"is_test_data_active":true}
     ]',
     conflict_action
   );
@@ -1141,17 +1140,14 @@ select
   nullif(to_jsonb(l)->>'rank', '')::integer as rank,
   coalesce(to_jsonb(l)->>'nickname', to_jsonb(l)->>'name', to_jsonb(l)->>'ByID') as nickname,
   to_jsonb(l)->>'discord_id' as discord_id,
-  coalesce(
-    nullif(to_jsonb(l)->>'points', '')::integer,
-    nullif(to_jsonb(l)->>'ladders_points', '')::integer
-  ) as points,
+  nullif(to_jsonb(l)->>'Ladder_MMR', '')::integer as "Ladder_MMR",
   nullif(to_jsonb(l)->>'win', '')::integer as win,
   nullif(to_jsonb(l)->>'lose', '')::integer as lose,
   l.is_test_data,
   l.is_test_data_active
 from public.ladders l
 where is_test_data = true
-order by rank asc nulls last, points desc;
+order by rank asc nulls last, "Ladder_MMR" desc;
 
 -- 4. 게시글/신청서/알림/매치 집계 확인
 select 'admin_posts' as table_name, count(*) as seeded_count from public.admin_posts where is_test_data = true

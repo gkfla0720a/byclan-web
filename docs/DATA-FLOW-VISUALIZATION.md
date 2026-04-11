@@ -281,7 +281,7 @@ UI 에러 표시
   → 3명 이상 대기 시 매치 자동 생성 또는 vote_to_start
   → ladder_matches 테이블에 매치 생성
   → 결과 입력: score_a, score_b 업데이트
-  → ladder_points 증감
+  → Ladder_MMR 증감
 ```
 
 ### 프로필 편집

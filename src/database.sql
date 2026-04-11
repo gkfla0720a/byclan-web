@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS public.ladders (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   rank integer,
   nickname text,
-  points integer,
+  "Ladder_MMR" integer,
   race text,
   win integer,
   lose integer,

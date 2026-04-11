@@ -512,7 +512,7 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 
 | 테이블 | 주요 컬럼 | 용도 |
 |--------|----------|------|
-| `profiles` | id, ByID, role, race, points, ladder_points, discord_name, discord_id, wins, losses, is_in_queue | 사용자 프로필 |
+| `profiles` | id, ByID, role, race, Clan_Point, Ladder_MMR, discord_name, discord_id, wins, losses, is_in_queue | 사용자 프로필 |
 | `ladder_matches` | id, status, match_type, team_a_ids, team_b_ids, score_a, score_b, created_by | 래더 매치 기록 |
 | `notifications` | id, user_id, title, message, is_read | 사용자 알림 |
 | `applications` | id, user_id, status, ... | 가입 신청 |

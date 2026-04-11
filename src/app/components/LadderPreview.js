@@ -108,7 +108,7 @@ export default function LadderPreview({ isGuest }) {
             id: row.id || `ladder-${index}`,
             ByID: row.nickname || row.name || row.ByID,
             race: row.race,
-            Clan_Point: row.points ?? row.ladders_points ?? 1000,
+            Clan_Point: row.Ladder_MMR ?? 1000,
             is_in_queue: false,
           }));
         }
