@@ -156,7 +156,7 @@ on conflict (key) do update set
   updated_at = now();
 
 insert into public.profiles (
-  id, discord_id, "ByID", role, points, race, intro, Clan_point,
+  id, discord_id, "ByID", role, Ladder_MMR, race, intro, Clan_point,
   is_in_queue, vote_to_start, is_test_account, is_test_account_active
 )
 values
