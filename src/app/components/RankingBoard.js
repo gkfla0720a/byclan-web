@@ -113,7 +113,9 @@ export default function RankingBoard() {
                   <span className="text-emerald-400">{player.wins ?? 0}W</span> / <span className="text-red-400">{player.losses ?? 0}L</span>
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-cyan-500 hidden sm:table-cell">
-                  {(player.wins + player.losses) === 0 ? '0.0' : ((player.wins / (player.wins + player.losses)) * 100).toFixed(1)}%
+                  {(((player.wins ?? 0) + (player.losses ?? 0)) === 0)
+                    ? '0.0'
+                    : (((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100).toFixed(1)}%
                 </td>
               </tr>
             ))}

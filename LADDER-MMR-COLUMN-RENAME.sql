@@ -41,7 +41,6 @@ alter table public.profiles
 alter table public.profiles
   alter column ladder_mmr set default 1000;
 
--- 3) 기존 NULL 값 보정
 update public.profiles
   set ladder_mmr = 1000
   where ladder_mmr is null;

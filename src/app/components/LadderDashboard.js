@@ -313,8 +313,6 @@ export default function LadderDashboard({ onMatchEnter }) {
   const [user, setUser] = useState(null);
   /** 현재 유저의 profiles 테이블 데이터 (닉네임, 종족, MMR 등) */
   const [myProfile, setMyProfile] = useState(null);
-  /** 현재 유저의 ladders 테이블 통계 데이터 (승/패 등). 없을 수 있음. */
-  const [myStats, setMyStats] = useState(null);
   /** 현재 대기열에 있는 플레이어 목록 (참가 시간 오름차순 정렬) */
   const [queuePlayers, setQueuePlayers] = useState([]);
   /** 진행 중(진행중/제안중) 래더 매치 목록 (최대 8개) */
@@ -372,10 +370,6 @@ export default function LadderDashboard({ onMatchEnter }) {
         setMyProfile(profile);
         setInQueue(profile.is_in_queue || false);
       }
-
-      const { data: stats } = await supabase
-        .from('ladders').select('*').eq('user_id', authUser.id).maybeSingle();
-      if (stats) setMyStats(stats);
 
       const { data: queue } = await filterVisibleTestAccounts(supabase
         .from('profiles')
@@ -711,7 +705,7 @@ export default function LadderDashboard({ onMatchEnter }) {
       </div>
 
       {/* 내 통계 */}
-      {(myStats || myProfile) && (
+      {myProfile && (
         <div className="bg-[#0A1128] border border-cyan-500/30 rounded-xl p-5 mb-4 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
           <p className="text-cyan-600 text-xs mb-3 uppercase tracking-widest">{'//'} MY STATS</p>
           <div className="flex flex-wrap gap-6">
@@ -735,13 +729,13 @@ export default function LadderDashboard({ onMatchEnter }) {
                 {getTier(myProfile?.clan_point ?? 1000)}
               </p>
             </div>
-            {(myProfile?.wins !== undefined || myStats?.win !== undefined) && (
+            {(myProfile?.wins !== undefined || myProfile?.losses !== undefined) && (
               <div>
                 <p className="text-gray-500 text-[10px] uppercase tracking-wider">전적</p>
                 <p className="font-bold">
-                  <span className="text-emerald-400">{myProfile?.wins ?? myStats?.win ?? 0}W</span>
+                  <span className="text-emerald-400">{myProfile?.wins ?? 0}W</span>
                   <span className="text-gray-600 mx-1">/</span>
-                  <span className="text-red-400">{myProfile?.losses ?? myStats?.lose ?? 0}L</span>
+                  <span className="text-red-400">{myProfile?.losses ?? 0}L</span>
                 </p>
               </div>
             )}

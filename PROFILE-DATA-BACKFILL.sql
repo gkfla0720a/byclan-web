@@ -1,24 +1,11 @@
--- ByClan 프로필 데이터 보정 SQL
--- Supabase SQL Editor에서 그대로 실행할 수 있습니다.
+-- ByClan profiles 데이터 보정 SQL (snake_case 기준)
 -- 목적:
 -- 1) profiles 테이블에 비어 있는 기본 데이터를 채움
 -- 2) wins / losses 컬럼이 없으면 생성
 -- 3) clan_point가 비어 있으면 자연스러운 구간값으로 채움
 -- 4) 승률/전적이 비어 있으면 포인트 구간 기준으로 보정
 
-do $$
-begin
-  if exists (
-    select 1
-    from information_schema.tables
-    where table_schema = 'public'
-      and table_name = 'profiles'
-  ) then
-    alter table public.profiles add column if not exists wins integer;
-    alter table public.profiles add column if not exists losses integer;
-  end if;
-end
-$$;
+begin;
 
 do $$
 begin
@@ -28,11 +15,10 @@ begin
     where clan_point is null;
   end if;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'role') then
-    update public.profiles
-    set role = 'member'
-    where role is null or btrim(role) = '';
-  end if;
+alter table public.profiles alter column clan_point set default 0;
+alter table public.profiles alter column ladder_mmr set default 1000;
+alter table public.profiles alter column wins set default 0;
+alter table public.profiles alter column losses set default 0;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'discord_id')
      and exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'by_id') then
@@ -60,11 +46,9 @@ begin
     where p.id = r.id;
   end if;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'intro') then
-    update public.profiles
-    set intro = '최근 래더와 클랜 활동을 시작한 멤버입니다. 같이 편하게 게임해요.'
-    where intro is null or btrim(intro) = '';
-  end if;
+update public.profiles
+set wins = 0
+where wins is null;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'clan_point') then
     with ranked as (

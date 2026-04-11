@@ -37,6 +37,16 @@ function normalizeProfileRow(profileData) {
   };
 }
 
+function getTier(mmr) {
+  if (mmr >= 2400) return 'Challenger';
+  if (mmr >= 2200) return 'Master';
+  if (mmr >= 1900) return 'Diamond';
+  if (mmr >= 1600) return 'Platinum';
+  if (mmr >= 1350) return 'Gold';
+  if (mmr >= 1100) return 'Silver';
+  return 'Bronze';
+}
+
 /**
  * MyProfile 컴포넌트
  * 현재 로그인한 유저가 자신의 클랜 프로필을 확인하고 수정할 수 있는 페이지입니다.
@@ -50,8 +60,6 @@ export default function MyProfile() {
   const [profile, setProfile] = useState(null);
   /** 현재 유저의 이메일 주소 (Supabase Auth에서 가져옴) */
   const [email, setEmail] = useState('');
-  /** ladders 테이블에서 불러온 래더 전적 데이터 (포인트, 티어, 승/패) */
-  const [ladderData, setLadderData] = useState(null);
   /** 프로필 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
   /** 프로필 저장 요청이 진행 중인지 여부 (버튼 중복 클릭 방지) */
@@ -474,6 +482,11 @@ export default function MyProfile() {
   if (loading) return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">LOADING...</div>;
   if (!profile) return <div className="text-center py-24 text-red-500">프로필 정보를 찾을 수 없습니다.</div>;
 
+  const ladderMmr = profile.ladder_mmr ?? 1000;
+  const ladderTier = getTier(ladderMmr);
+  const ladderWins = profile.wins ?? 0;
+  const ladderLosses = profile.losses ?? 0;
+
   // 권한 체크: 소문자로 변환하여 정확히 비교
   const currentRole = profile.role?.trim().toLowerCase();
   /** 현재 유저가 개발자 등급인지 여부 (개발자 콘솔 버튼 표시 여부 결정) */
@@ -684,16 +697,16 @@ export default function MyProfile() {
             <div className="space-y-5">
               <div>
                 <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">Rating Points</p>
-                <p className="text-4xl font-black text-cyan-400">{ladderData?.points || 0} <span className="text-xs text-gray-500 font-normal">PTS</span></p>
+                <p className="text-4xl font-black text-cyan-400">{ladderMmr} <span className="text-xs text-gray-500 font-normal">PTS</span></p>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">Tier</p>
-                  <p className="text-white font-bold italic">{ladderData?.tier || 'Unranked'}</p>
+                  <p className="text-white font-bold italic">{ladderTier}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">W / L</p>
-                  <p className="text-white font-bold">{ladderData?.win || 0}승 {ladderData?.lose || 0}패</p>
+                  <p className="text-white font-bold">{ladderWins}승 {ladderLosses}패</p>
                 </div>
               </div>
             </div>
