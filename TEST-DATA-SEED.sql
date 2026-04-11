@@ -1137,7 +1137,7 @@ select
   p.clan_point
 from public.profiles p
 where is_test_account = true
-order by discord_id;
+  order by p.discord_id;
 
 -- 3. 래더 랭킹 반영 여부 확인
 select
