@@ -2,11 +2,11 @@
  * 파일명: ImprovedAuthForm.js
  *
  * 역할:
- *   이메일/비밀번호 로그인·회원가입과 Discord OAuth 로그인을 모두 지원하는
+ *   아이디/비밀번호 로그인·회원가입과 Discord OAuth 로그인을 모두 지원하는
  *   통합 인증 폼 컴포넌트 모음입니다.
  *
  * 주요 기능:
- *   - EmailLoginForm: 이메일+비밀번호 로그인 및 회원가입 폼 (아이디 유효성 검사, 중복 확인, 이용약관 포함)
+ *   - EmailLoginForm: 아이디+비밀번호 로그인 및 회원가입 폼 (아이디 유효성 검사, 중복 확인, 이용약관 포함)
  *   - DiscordLoginForm: Discord OAuth 로그인 버튼 폼
  *   - ImprovedAuthForm: 위 두 폼을 loginMethod 상태로 전환하는 최상위 컨테이너
  *   - 회원가입 시 profiles 테이블에 기본 프로필을 자동 생성합니다.
@@ -19,6 +19,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
+import { buildInternalAuthEmail, getLoginEmailFromInput, isLegacyEmailLogin, normalizeAccountId } from '../utils/accountId';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
 // ── 유효성 검사 헬퍼 ─────────────────────────────────────────────────────────
@@ -57,7 +58,7 @@ const TERMS_OF_SERVICE = `ByClan 서비스 이용약관
 
 제2조 (개인정보 수집 및 이용)
 클랜은 서비스 제공을 위하여 다음 정보를 수집합니다.
-- 이메일 주소: 계정 인증 및 안내 메일 발송
+- 로그인 아이디: 계정 식별용 아이디
 - 클랜 아이디(by_id): 서비스 내 식별자
 - 디스코드 계정: 래더 시스템 참여 시 연동 (선택)
 수집된 개인정보는 서비스 제공 목적으로만 이용되며 제3자에게 제공되지 않습니다.
@@ -76,22 +77,20 @@ const TERMS_OF_SERVICE = `ByClan 서비스 이용약관
 제5조 (개인정보 보유 및 파기)
 회원 탈퇴 시 관련 정보는 즉시 파기됩니다. 단, 관련 법령에 의해 보존이 필요한 경우 해당 기간 동안 보존합니다.`;
 
-// ── 이메일 로그인/가입 ────────────────────────────────────────────────────────
+// ── 아이디 로그인/가입 ────────────────────────────────────────────────────────
 /**
  * EmailLoginForm 컴포넌트
  *
- * 이메일+비밀번호로 로그인하거나 새 계정을 가입하는 폼입니다.
+ * 아이디+비밀번호로 로그인하거나 새 계정을 가입하는 폼입니다.
  * isSignUp 상태로 로그인 모드와 가입 모드를 전환합니다.
  * 폼 하단에 Discord OAuth 로그인 버튼이 함께 표시됩니다.
  *
  * @param {function} onSuccess - 로그인 성공 시 호출되는 콜백. 인자로 user 객체를 전달합니다.
- * @returns {JSX.Element} 이메일 인증 폼 UI (Discord 로그인 옵션 포함)
+ * @returns {JSX.Element} 아이디 인증 폼 UI (Discord 로그인 옵션 포함)
  */
 function EmailLoginForm({ onSuccess }) {
-  /** 클랜 아이디 입력값 (가입 시에만 사용, By_ 접두사 제외) */
+  /** 로그인 아이디 입력값 (가입 시에는 클랜 아이디와 동일하게 사용) */
   const [userId, setUserId] = useState('');
-  /** 이메일 입력값 */
-  const [email, setEmail] = useState('');
   /** 비밀번호 입력값 */
   const [password, setPassword] = useState('');
   /** API 요청 처리 중 여부 (true: 버튼 비활성화) */
@@ -112,7 +111,7 @@ function EmailLoginForm({ onSuccess }) {
   /**
    * 폼 제출 핸들러입니다.
    * - isSignUp이 true면 아이디 중복 확인 → 회원가입 → 프로필 생성 순으로 처리합니다.
-   * - isSignUp이 false면 이메일+비밀번호로 로그인합니다.
+   * - isSignUp이 false면 아이디+비밀번호로 로그인합니다.
    * @param {React.FormEvent} e - 폼 submit 이벤트
    */
   const handleAuth = async (e) => {
@@ -121,9 +120,11 @@ function EmailLoginForm({ onSuccess }) {
     setError(null);
 
     try {
+      const normalizedUserId = normalizeAccountId(userId);
+
       if (isSignUp) {
         // 유효성 검사
-        const userIdErr = validateUserId(userId);
+        const userIdErr = validateUserId(normalizedUserId);
         if (userIdErr) { setError(userIdErr); setLoading(false); return; }
 
         const pwErr = validatePassword(password);
@@ -135,7 +136,8 @@ function EmailLoginForm({ onSuccess }) {
           return;
         }
 
-        const byId = `By_${userId}`;
+        const byId = `By_${normalizedUserId}`;
+        const internalEmail = buildInternalAuthEmail(normalizedUserId);
 
         // 아이디 중복 확인
         const { data: existing } = await supabase
@@ -152,10 +154,11 @@ function EmailLoginForm({ onSuccess }) {
 
         // 회원가입
         const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
+          email: internalEmail,
           password,
           options: {
             data: {
+              login_id: normalizedUserId,
               by_id: byId,
               role: 'applicant'
             }
@@ -182,15 +185,30 @@ function EmailLoginForm({ onSuccess }) {
           }
         }
 
-        alert('회원가입이 완료되었습니다! 이메일 인증 후 로그인하세요.');
+        alert('회원가입이 완료되었습니다. 입력한 아이디로 로그인하세요.');
         setIsSignUp(false);
         setUserId('');
         setPassword('');
         setTermsAccepted(false);
       } else {
         // 로그인
+        if (!userId.trim()) {
+          setError('아이디를 입력하세요.');
+          setLoading(false);
+          return;
+        }
+
+        if (!isLegacyEmailLogin(userId)) {
+          const userIdErr = validateUserId(normalizedUserId);
+          if (userIdErr) {
+            setError(userIdErr);
+            setLoading(false);
+            return;
+          }
+        }
+
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
+          email: getLoginEmailFromInput(userId),
           password
         });
 
@@ -256,45 +274,40 @@ function EmailLoginForm({ onSuccess }) {
       {error && <ErrorMessage message={error} />}
 
       <form onSubmit={handleAuth} className="space-y-4">
-        {/* 아이디 필드 (가입 시만) */}
-        {isSignUp && (
-          <div>
-            <label htmlFor="clan-user-id" className="block text-gray-300 text-sm font-medium mb-1">
-              클랜 아이디 <span className="text-gray-500 text-xs">(영문 필수, 숫자 조합 선택, 3~20자)</span>
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500 font-bold text-sm pointer-events-none">By_</span>
-              <input
-                id="clan-user-id"
-                type="text"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
-                placeholder="YourID"
-                className="w-full pl-10 pr-3 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30"
-                maxLength={20}
-                required
-              />
-            </div>
-            {userId && (
-              <p className="text-xs mt-1 text-gray-400">
-                클랜 아이디: <span className="text-cyan-400 font-bold">By_{userId}</span>
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* 이메일 */}
         <div>
-          <label className="block text-gray-300 text-sm font-medium mb-1">이메일</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30"
-            required
-          />
+          <label htmlFor="account-id" className="block text-gray-300 text-sm font-medium mb-1">
+            로그인 아이디
+            <span className="text-gray-500 text-xs ml-1">
+              {isSignUp ? '(영문 시작, 영문/숫자 3~20자, 소문자 저장)' : '(기존 이메일 계정도 로그인 가능)'}
+            </span>
+          </label>
+          <div className="relative">
+            {isSignUp && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500 font-bold text-sm pointer-events-none">By_</span>}
+            <input
+              id="account-id"
+              type="text"
+              value={userId}
+              onChange={(e) => setUserId(isSignUp ? normalizeAccountId(e.target.value) : e.target.value.trimStart())}
+              placeholder={isSignUp ? 'yourid' : '아이디 또는 기존 이메일'}
+              className={`w-full py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 ${isSignUp ? 'pl-10 pr-3' : 'px-3'}`}
+              maxLength={isSignUp ? 20 : 80}
+              autoCapitalize="none"
+              autoCorrect="off"
+              required
+            />
+          </div>
+          {isSignUp && userId && (
+            <p className="text-xs mt-1 text-gray-400">
+              생성될 클랜 아이디: <span className="text-cyan-400 font-bold">By_{userId}</span>
+            </p>
+          )}
         </div>
+
+        {!isSignUp && (
+          <p className="text-[11px] text-gray-500 -mt-2">
+            새 계정은 아이디로 로그인합니다. 예전 이메일 계정은 이메일 그대로 로그인할 수 있습니다.
+          </p>
+        )}
 
         {/* 비밀번호 */}
         <div>
@@ -395,7 +408,7 @@ function EmailLoginForm({ onSuccess }) {
 /**
  * ImprovedAuthForm 컴포넌트 (기본 내보내기)
  *
- * 이메일/비밀번호 로그인과 Discord 로그인 옵션이 한 화면에 표시되는 인증 컨테이너입니다.
+ * 아이디/비밀번호 로그인과 Discord 로그인 옵션이 한 화면에 표시되는 인증 컨테이너입니다.
  * 배경 그라디언트와 브랜드 헤더가 포함된 전체 화면 레이아웃을 제공합니다.
  *
  * @param {function} onSuccess - 인증 성공 시 호출되는 콜백. 인자로 user 객체를 전달합니다.

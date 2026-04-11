@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
+import { isInternalAuthEmail } from '@/app/utils/accountId';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
 
@@ -53,8 +54,8 @@ export default function GuildManagement() {
   const [members, setMembers] = useState([]);
   /** 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
-  /** 현재 로그인한 관리자 정보 (id, role, email, phone) */
-  const [currentManager, setCurrentManager] = useState({ id: null, role: null, email: '', phone: '' });
+  /** 현재 로그인한 관리자 정보 (id, role, 공개 이메일, 내부 인증 이메일, phone) */
+  const [currentManager, setCurrentManager] = useState({ id: null, role: null, email: '', authEmail: '', phone: '' });
   /**
    * 등급 변경 또는 제명 모달 상태
    * - isOpen: 모달 열림 여부
@@ -149,13 +150,17 @@ export default function GuildManagement() {
       if (error) throw error;
 
       const role = profile?.role?.trim?.().toLowerCase?.() || null;
+      const authEmail = user.email || '';
+      const hasPublicEmail = authEmail && !isInternalAuthEmail(authEmail);
+
       setCurrentManager({
         id: user.id,
         role,
-        email: user.email || '',
+        email: hasPublicEmail ? authEmail : '',
+        authEmail,
         phone: user.phone || '',
       });
-      setDelegationVerification(createVerificationState(user.email || '', user.phone || ''));
+      setDelegationVerification(createVerificationState(hasPublicEmail ? authEmail : '', user.phone || ''));
 
       // admin 이상 직급이면 수습 기간 알림 확인
       if (['admin', 'master', 'developer'].includes(role)) {
@@ -356,7 +361,7 @@ export default function GuildManagement() {
       return;
     }
 
-    const identifier = currentManager.email || currentManager.phone;
+    const identifier = currentManager.authEmail || currentManager.phone;
     if (!identifier) {
       setDelegationVerification((prev) => ({
         ...prev,
@@ -369,8 +374,8 @@ export default function GuildManagement() {
     try {
       setDelegationVerification((prev) => ({ ...prev, verifying: true, error: '', success: '' }));
 
-      const credentials = currentManager.email
-        ? { email: currentManager.email, password: delegationVerification.password }
+      const credentials = currentManager.authEmail
+        ? { email: currentManager.authEmail, password: delegationVerification.password }
         : { phone: currentManager.phone, password: delegationVerification.password };
 
       const { data, error } = await supabase.auth.signInWithPassword(credentials);

@@ -20,6 +20,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
+import { buildInternalAuthEmail, getLoginEmailFromInput, normalizeAccountId } from '@/app/utils/accountId';
 
 /**
  * 로그인/회원가입 폼 컴포넌트
@@ -30,8 +31,8 @@ import { supabase } from '@/supabase';
 export default function AuthForm() {
   /** 현재 모드: false = 로그인, true = 회원가입 */
   const [isSignUp, setIsSignUp] = useState(false);
-  /** 이메일 입력값 */
-  const [email, setEmail] = useState('');
+  /** 로그인 아이디 입력값 */
+  const [accountId, setAccountId] = useState('');
   /** 비밀번호 입력값 */
   const [password, setPassword] = useState('');
   /** 비밀번호 확인 입력값 (회원가입 모드에서만 사용) */
@@ -54,7 +55,7 @@ export default function AuthForm() {
   // [수정] 모드 전환 시 모든 상태값 초기화
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
-    setEmail('');
+    setAccountId('');
     setPassword('');
     setConfirmPassword('');
     setNickname('');
@@ -119,10 +120,11 @@ export default function AuthForm() {
       
       setLoading(true);
       // 1. 회원가입 (이메일 인증을 켰다면 가입 직후 로그인이 안 될 수 있음)
+      const normalizedNickname = normalizeAccountId(nickname);
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: buildInternalAuthEmail(normalizedNickname),
         password,
-        options: { data: { display_name: nickname } }
+        options: { data: { display_name: nickname, login_id: normalizedNickname } }
       });
 
       if (error) {
@@ -142,7 +144,7 @@ export default function AuthForm() {
       }
     } else {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email: getLoginEmailFromInput(accountId), password });
       if (error) alert("로그인 정보가 정확하지 않습니다.");
       else window.location.reload();
     }
@@ -180,11 +182,11 @@ export default function AuthForm() {
         )}
 
         <div>
-          <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Email</label>
+          <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Login ID</label>
           <input 
-            type="email" value={email} onChange={(e) => setEmail(e.target.value)} 
+            type="text" value={accountId} onChange={(e) => setAccountId(isSignUp ? normalizeAccountId(e.target.value) : e.target.value)} 
             required className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:border-yellow-500 outline-none transition-all font-medium" 
-            placeholder="example@clan.com" 
+            placeholder={isSignUp ? 'yourid' : '아이디 또는 기존 이메일'} 
           />
         </div>
 
@@ -261,7 +263,7 @@ export default function AuthForm() {
           </div>
           <div className="flex-1 bg-gray-950 p-4 rounded-xl border border-gray-800 overflow-y-auto text-[10px] text-gray-400 leading-relaxed space-y-4">
             <p className="text-yellow-500 font-bold">[개인정보 수집 및 이용 동의]</p>
-            <p>1. 수집항목: 이메일, 비밀번호, 클랜 닉네임<br/>2. 수집목적: 회원식별 및 래더 시스템 운영<br/>3. 보유기간: 회원 탈퇴 시 즉시 파기</p>
+            <p>1. 수집항목: 로그인 아이디, 비밀번호, 클랜 닉네임<br/>2. 수집목적: 회원식별 및 래더 시스템 운영<br/>3. 보유기간: 회원 탈퇴 시 즉시 파기</p>
             <p className="text-yellow-500 font-bold">[클랜 수칙]</p>
             <p>1. 타 유저에 대한 비방 및 욕설 금지<br/>2. 핵/불법 프로그램 사용 금지<br/>3. 운영진의 정당한 지시 이행</p>
           </div>

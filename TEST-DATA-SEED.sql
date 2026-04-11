@@ -45,7 +45,7 @@ $$;
 -- 1) 전체 파일 실행
 -- 2) 맨 아래 '점검용 쿼리' 섹션으로 상태 확인
 -- 3) 아래 auth bootstrap 블록이 test1~test10용 auth 계정을 먼저 생성합니다.
---    임시 로그인 정보: test1@byclan.local ~ test10@byclan.local / ByClanTest123!
+--    임시 로그인 정보: test1 ~ test10 / ByClanTest123!
 
 insert into auth.users (
   instance_id,
@@ -65,16 +65,16 @@ insert into auth.users (
   recovery_token
 )
 values
-  ('00000000-0000-0000-0000-000000000000', '11111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'test1@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test1","test_account":true}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'test2@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test2","test_account":true}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '33333333-3333-4333-8333-333333333333', 'authenticated', 'authenticated', 'test3@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test3","test_account":true}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '44444444-4444-4444-8444-444444444444', 'authenticated', 'authenticated', 'test4@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test4","test_account":true}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '55555555-5555-4555-8555-555555555555', 'authenticated', 'authenticated', 'test5@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test5","test_account":true}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '66666666-6666-4666-8666-666666666666', 'authenticated', 'authenticated', 'test6@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test6","test_account":true}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '77777777-7777-4777-8777-777777777777', 'authenticated', 'authenticated', 'test7@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test7","test_account":true}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '88888888-8888-4888-8888-888888888888', 'authenticated', 'authenticated', 'test8@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test8","test_account":true}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '99999999-9999-4999-8999-999999999999', 'authenticated', 'authenticated', 'test9@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test9","test_account":true}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'authenticated', 'authenticated', 'test10@byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test10","test_account":true}', now(), now(), '', '', '', '')
+  ('00000000-0000-0000-0000-000000000000', '11111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'login.test1@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test1","login_id":"test1","test_account":true}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'login.test2@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test2","login_id":"test2","test_account":true}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '33333333-3333-4333-8333-333333333333', 'authenticated', 'authenticated', 'login.test3@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test3","login_id":"test3","test_account":true}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '44444444-4444-4444-8444-444444444444', 'authenticated', 'authenticated', 'login.test4@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test4","login_id":"test4","test_account":true}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '55555555-5555-4555-8555-555555555555', 'authenticated', 'authenticated', 'login.test5@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test5","login_id":"test5","test_account":true}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '66666666-6666-4666-8666-666666666666', 'authenticated', 'authenticated', 'login.test6@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test6","login_id":"test6","test_account":true}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '77777777-7777-4777-8777-777777777777', 'authenticated', 'authenticated', 'login.test7@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test7","login_id":"test7","test_account":true}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '88888888-8888-4888-8888-888888888888', 'authenticated', 'authenticated', 'login.test8@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test8","login_id":"test8","test_account":true}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '99999999-9999-4999-8999-999999999999', 'authenticated', 'authenticated', 'login.test9@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test9","login_id":"test9","test_account":true}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'authenticated', 'authenticated', 'login.test10@auth.byclan.local', crypt('ByClanTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"test10","login_id":"test10","test_account":true}', now(), now(), '', '', '', '')
 on conflict (id) do update set
   email = excluded.email,
   encrypted_password = excluded.encrypted_password,
@@ -94,16 +94,16 @@ insert into auth.identities (
   updated_at
 )
 values
-  ('11111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111111', '{"sub":"11111111-1111-4111-8111-111111111111","email":"test1@byclan.local","email_verified":true}', 'email', 'test1@byclan.local', now(), now(), now()),
-  ('22222222-2222-4222-8222-222222222222', '22222222-2222-4222-8222-222222222222', '{"sub":"22222222-2222-4222-8222-222222222222","email":"test2@byclan.local","email_verified":true}', 'email', 'test2@byclan.local', now(), now(), now()),
-  ('33333333-3333-4333-8333-333333333333', '33333333-3333-4333-8333-333333333333', '{"sub":"33333333-3333-4333-8333-333333333333","email":"test3@byclan.local","email_verified":true}', 'email', 'test3@byclan.local', now(), now(), now()),
-  ('44444444-4444-4444-8444-444444444444', '44444444-4444-4444-8444-444444444444', '{"sub":"44444444-4444-4444-8444-444444444444","email":"test4@byclan.local","email_verified":true}', 'email', 'test4@byclan.local', now(), now(), now()),
-  ('55555555-5555-4555-8555-555555555555', '55555555-5555-4555-8555-555555555555', '{"sub":"55555555-5555-4555-8555-555555555555","email":"test5@byclan.local","email_verified":true}', 'email', 'test5@byclan.local', now(), now(), now()),
-  ('66666666-6666-4666-8666-666666666666', '66666666-6666-4666-8666-666666666666', '{"sub":"66666666-6666-4666-8666-666666666666","email":"test6@byclan.local","email_verified":true}', 'email', 'test6@byclan.local', now(), now(), now()),
-  ('77777777-7777-4777-8777-777777777777', '77777777-7777-4777-8777-777777777777', '{"sub":"77777777-7777-4777-8777-777777777777","email":"test7@byclan.local","email_verified":true}', 'email', 'test7@byclan.local', now(), now(), now()),
-  ('88888888-8888-4888-8888-888888888888', '88888888-8888-4888-8888-888888888888', '{"sub":"88888888-8888-4888-8888-888888888888","email":"test8@byclan.local","email_verified":true}', 'email', 'test8@byclan.local', now(), now(), now()),
-  ('99999999-9999-4999-8999-999999999999', '99999999-9999-4999-8999-999999999999', '{"sub":"99999999-9999-4999-8999-999999999999","email":"test9@byclan.local","email_verified":true}', 'email', 'test9@byclan.local', now(), now(), now()),
-  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","email":"test10@byclan.local","email_verified":true}', 'email', 'test10@byclan.local', now(), now(), now())
+  ('11111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111111', '{"sub":"11111111-1111-4111-8111-111111111111","email":"login.test1@auth.byclan.local","email_verified":true}', 'email', 'login.test1@auth.byclan.local', now(), now(), now()),
+  ('22222222-2222-4222-8222-222222222222', '22222222-2222-4222-8222-222222222222', '{"sub":"22222222-2222-4222-8222-222222222222","email":"login.test2@auth.byclan.local","email_verified":true}', 'email', 'login.test2@auth.byclan.local', now(), now(), now()),
+  ('33333333-3333-4333-8333-333333333333', '33333333-3333-4333-8333-333333333333', '{"sub":"33333333-3333-4333-8333-333333333333","email":"login.test3@auth.byclan.local","email_verified":true}', 'email', 'login.test3@auth.byclan.local', now(), now(), now()),
+  ('44444444-4444-4444-8444-444444444444', '44444444-4444-4444-8444-444444444444', '{"sub":"44444444-4444-4444-8444-444444444444","email":"login.test4@auth.byclan.local","email_verified":true}', 'email', 'login.test4@auth.byclan.local', now(), now(), now()),
+  ('55555555-5555-4555-8555-555555555555', '55555555-5555-4555-8555-555555555555', '{"sub":"55555555-5555-4555-8555-555555555555","email":"login.test5@auth.byclan.local","email_verified":true}', 'email', 'login.test5@auth.byclan.local', now(), now(), now()),
+  ('66666666-6666-4666-8666-666666666666', '66666666-6666-4666-8666-666666666666', '{"sub":"66666666-6666-4666-8666-666666666666","email":"login.test6@auth.byclan.local","email_verified":true}', 'email', 'login.test6@auth.byclan.local', now(), now(), now()),
+  ('77777777-7777-4777-8777-777777777777', '77777777-7777-4777-8777-777777777777', '{"sub":"77777777-7777-4777-8777-777777777777","email":"login.test7@auth.byclan.local","email_verified":true}', 'email', 'login.test7@auth.byclan.local', now(), now(), now()),
+  ('88888888-8888-4888-8888-888888888888', '88888888-8888-4888-8888-888888888888', '{"sub":"88888888-8888-4888-8888-888888888888","email":"login.test8@auth.byclan.local","email_verified":true}', 'email', 'login.test8@auth.byclan.local', now(), now(), now()),
+  ('99999999-9999-4999-8999-999999999999', '99999999-9999-4999-8999-999999999999', '{"sub":"99999999-9999-4999-8999-999999999999","email":"login.test9@auth.byclan.local","email_verified":true}', 'email', 'login.test9@auth.byclan.local', now(), now(), now()),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","email":"login.test10@auth.byclan.local","email_verified":true}', 'email', 'login.test10@auth.byclan.local', now(), now(), now())
 on conflict (provider, provider_id) do update set
   user_id = excluded.user_id,
   identity_data = excluded.identity_data,

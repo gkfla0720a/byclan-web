@@ -14,6 +14,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
+import { extractAccountIdFromAuthUser } from '@/app/utils/accountId';
 import { ErrorMessage } from './UIStates';
 import { useNavigate } from '../hooks/useNavigate';
 
@@ -369,8 +370,11 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
   /** 제출 성공 여부 (true면 완료 화면 표시) */
   const [success, setSuccess] = useState(false);
 
-  /** 화면에 표시할 사용자 이름 (by_id > 이메일 기반 > 기본값) */
-  const displayName = profile?.by_id || (user?.email ? `By_${user.email.split('@')[0]}` : 'By_Visitor');
+  /** 화면에 표시할 사용자 이름 (by_id > 로그인 아이디 기반 > 기본값) */
+  const displayName = profile?.by_id || (() => {
+    const accountId = extractAccountIdFromAuthUser(user, profile);
+    return accountId ? `By_${accountId}` : 'By_Visitor';
+  })();
   /** 현재 사용자 역할 (소문자 정규화) */
   const currentRole = profile?.role?.trim?.().toLowerCase?.() || 'guest';
   /** 이미 가입 신청 완료 여부 */

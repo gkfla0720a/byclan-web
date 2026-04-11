@@ -6,6 +6,9 @@ const { createClient } = require('@supabase/supabase-js');
 
 const TEST_MODE_SETTING_KEY = 'test_mode_active';
 const TEST_ACCOUNT_SETTING_KEY = 'test_accounts_enabled';
+const INTERNAL_AUTH_DOMAIN = 'auth.byclan.local';
+const INTERNAL_AUTH_PREFIX = 'login.';
+const TEST_ACCOUNT_PASSWORD = 'ByClanTest123!';
 
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -106,6 +109,10 @@ async function tryStrategies(supabase, table, strategies) {
 
 function daysAgo(days) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function buildInternalAuthEmail(accountId) {
+  return `${INTERNAL_AUTH_PREFIX}${accountId}@${INTERNAL_AUTH_DOMAIN}`;
 }
 
 const TEST_USERS = [
@@ -606,6 +613,32 @@ async function main() {
 
   console.log('ByClan 테스트 데이터 시드를 시작합니다.');
   console.log(`대상 계정: ${TEST_USERS.map((user) => user.key).join(', ')}`);
+
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    printSection('auth.users reset');
+    for (const user of TEST_USERS) {
+      const { error } = await supabase.auth.admin.updateUserById(user.id, {
+        email: buildInternalAuthEmail(user.key),
+        password: TEST_ACCOUNT_PASSWORD,
+        email_confirm: true,
+        user_metadata: {
+          display_name: user.key,
+          login_id: user.key,
+          test_account: true,
+        },
+        app_metadata: {
+          provider: 'email',
+          providers: ['email'],
+        },
+      });
+
+      if (error) {
+        console.warn(`- ${user.key}: auth 계정 갱신 실패 (${error.message})`);
+      } else {
+        console.log(`- ${user.key}: 숨김 이메일 로그인 형식으로 auth 계정 갱신 완료`);
+      }
+    }
+  }
 
   printSection('system_settings');
   await upsertRows(supabase, 'system_settings', buildSystemSettings(), { onConflict: 'key', ignoreMissingRelation: true });

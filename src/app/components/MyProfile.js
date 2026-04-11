@@ -18,6 +18,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
+import { extractAccountIdFromAuthUser, isInternalAuthEmail } from '@/app/utils/accountId';
 import { isMarkedTestAccount } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 import { useAuthContext } from '../context/AuthContext';
@@ -58,8 +59,12 @@ export default function MyProfile() {
   const { reloadProfile } = useAuthContext();
   /** Supabase profiles 테이블에서 불러온 전체 프로필 데이터 */
   const [profile, setProfile] = useState(null);
-  /** 현재 유저의 이메일 주소 (Supabase Auth에서 가져옴) */
-  const [email, setEmail] = useState('');
+  /** 현재 계정의 내부 인증 이메일 (재인증용) */
+  const [authEmail, setAuthEmail] = useState('');
+  /** 현재 유저에게 표시할 로그인 아이디 */
+  const [accountId, setAccountId] = useState('');
+  /** 숨김 이메일 기반 로컬 계정 여부 */
+  const [usesInternalLogin, setUsesInternalLogin] = useState(false);
   /** 프로필 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
   /** 프로필 저장 요청이 진행 중인지 여부 (버튼 중복 클릭 방지) */
@@ -85,7 +90,7 @@ export default function MyProfile() {
   /** 최초 로드 시 DB에 저장된 원본 by_id 값 (중복 확인 시 본인 닉네임 허용 판단에 사용) */
   const [originalById, setOriginalById] = useState('');
 
-  // ── 계정 보안 (이메일/비밀번호 변경) ─────────────────────────────────────
+  // ── 계정 보안 (아이디/비밀번호 변경) ─────────────────────────────────────
   /** 이메일 변경 입력값 */
   const [newEmail, setNewEmail] = useState('');
   /** 현재 비밀번호 (비밀번호 변경 재인증에 사용) */
@@ -129,7 +134,8 @@ export default function MyProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      setEmail(user.email);
+      setAuthEmail(user.email || '');
+      setUsesInternalLogin(isInternalAuthEmail(user.email || ''));
 
       const { data: profileDataRaw } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       const profileData = normalizeProfileRow(profileDataRaw);
@@ -145,6 +151,8 @@ export default function MyProfile() {
           setOriginalById(currentById);
           setIsNicknameAvailable(true); // 기존에 By_ 닉네임이 있으면 일단 활성화
         }
+
+        setAccountId(extractAccountIdFromAuthUser(user, profileData));
 
         // 래더 데이터 가져오기
         if (currentById.startsWith('By_')) {
@@ -423,7 +431,7 @@ export default function MyProfile() {
   const handleEmailChange = async () => {
     if (!newEmail.trim()) return setSecurityMsg({ type: 'error', text: '새 이메일 주소를 입력하세요.' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return setSecurityMsg({ type: 'error', text: '올바른 이메일 형식이 아닙니다.' });
-    if (newEmail === email) return setSecurityMsg({ type: 'error', text: '현재 이메일과 동일합니다.' });
+    if (newEmail === authEmail) return setSecurityMsg({ type: 'error', text: '현재 이메일과 동일합니다.' });
 
     setSecurityLoading(true);
     setSecurityMsg(null);
@@ -432,7 +440,7 @@ export default function MyProfile() {
       if (error) throw error;
       setSecurityMsg({
         type: 'success',
-        text: `확인 이메일이 발송되었습니다. 기존 주소(${email})와 새 주소(${newEmail}) 양쪽의 링크를 모두 클릭해야 변경이 완료됩니다.`,
+        text: `확인 이메일이 발송되었습니다. 기존 주소(${authEmail})와 새 주소(${newEmail}) 양쪽의 링크를 모두 클릭해야 변경이 완료됩니다.`,
       });
       setNewEmail('');
     } catch (err) {
@@ -459,7 +467,7 @@ export default function MyProfile() {
     try {
       // 1단계: 현재 비밀번호로 재인증
       const { error: reAuthError } = await supabase.auth.signInWithPassword({
-        email,
+        email: authEmail,
         password: currentPassword,
       });
       if (reAuthError) throw new Error('현재 비밀번호가 올바르지 않습니다.');
@@ -745,33 +753,49 @@ export default function MyProfile() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* 이메일 변경 */}
+          {/* 계정 아이디 / 이메일 변경 */}
           <div className="space-y-4">
-            <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest">이메일 변경</h4>
-            <div>
-              <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">현재 이메일</label>
-              <input type="text" value={email} disabled className="w-full p-3 rounded-xl bg-gray-900/50 border border-gray-700 text-gray-500 cursor-not-allowed text-sm" />
-            </div>
-            <div>
-              <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">새 이메일</label>
-              <input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="new@example.com"
-                className="w-full p-3 rounded-xl bg-gray-900 border border-gray-600 text-white text-sm focus:border-cyan-500 focus:outline-none transition-all"
-              />
-            </div>
-            <p className="text-gray-600 text-[10px] leading-relaxed">
-              변경 시 기존 이메일과 새 이메일 양쪽 모두에 확인 링크가 발송됩니다. 두 링크를 모두 클릭해야 변경이 완료됩니다.
-            </p>
-            <button
-              onClick={handleEmailChange}
-              disabled={securityLoading || !newEmail}
-              className="w-full py-3 bg-cyan-700/30 hover:bg-cyan-700/50 border border-cyan-500/40 text-cyan-300 text-xs font-black rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {securityLoading ? '처리 중...' : '이메일 변경 요청'}
-            </button>
+            <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest">
+              {usesInternalLogin ? '로그인 아이디' : '이메일 변경'}
+            </h4>
+            {usesInternalLogin ? (
+              <>
+                <div>
+                  <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">현재 로그인 아이디</label>
+                  <input type="text" value={accountId} disabled className="w-full p-3 rounded-xl bg-gray-900/50 border border-gray-700 text-gray-300 cursor-not-allowed text-sm" />
+                </div>
+                <p className="text-gray-600 text-[10px] leading-relaxed">
+                  일반 아이디 로그인 계정은 내부 인증용 이메일을 별도로 사용합니다. 현재 버전에서는 로그인 아이디 변경을 지원하지 않습니다.
+                </p>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">현재 이메일</label>
+                  <input type="text" value={authEmail} disabled className="w-full p-3 rounded-xl bg-gray-900/50 border border-gray-700 text-gray-500 cursor-not-allowed text-sm" />
+                </div>
+                <div>
+                  <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase">새 이메일</label>
+                  <input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="new@example.com"
+                    className="w-full p-3 rounded-xl bg-gray-900 border border-gray-600 text-white text-sm focus:border-cyan-500 focus:outline-none transition-all"
+                  />
+                </div>
+                <p className="text-gray-600 text-[10px] leading-relaxed">
+                  변경 시 기존 이메일과 새 이메일 양쪽 모두에 확인 링크가 발송됩니다. 두 링크를 모두 클릭해야 변경이 완료됩니다.
+                </p>
+                <button
+                  onClick={handleEmailChange}
+                  disabled={securityLoading || !newEmail}
+                  className="w-full py-3 bg-cyan-700/30 hover:bg-cyan-700/50 border border-cyan-500/40 text-cyan-300 text-xs font-black rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {securityLoading ? '처리 중...' : '이메일 변경 요청'}
+                </button>
+              </>
+            )}
           </div>
 
           {/* 비밀번호 변경 */}

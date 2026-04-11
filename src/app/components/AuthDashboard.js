@@ -21,6 +21,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
+import { extractAccountIdFromAuthUser } from '@/app/utils/accountId';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
 /**
@@ -209,14 +210,14 @@ function ProfileSetup({ user, onComplete }) {
   });
 
   /**
-   * user가 변경될 때 이메일에서 사용자명을 추출하여 기본 클랜 ID를 자동 설정합니다.
-   * 예: "john@gmail.com" → "By_john"
+   * user가 변경될 때 로그인 아이디 또는 이메일에서 기본 클랜 ID를 자동 설정합니다.
    */
   useEffect(() => {
+    const accountId = extractAccountIdFromAuthUser(user);
     // 기본값 설정
     setFormData(prev => ({
       ...prev,
-      by_id: `By_${user.email?.split('@')[0] || 'User'}`
+      by_id: `By_${accountId || user.email?.split('@')[0] || 'User'}`
     }));
   }, [user]);
 

@@ -27,6 +27,11 @@ npm run seed:test-data
 
 스크립트 파일은 `seed-test-data.cjs`이며, 동일한 ID로 `upsert`하므로 다시 실행해도 테스트 데이터가 갱신됩니다.
 
+서비스 롤 키가 함께 설정되어 있으면 테스트 auth 계정도 같이 갱신합니다. 기본 로그인 정보는 다음과 같습니다.
+
+- 로그인 아이디: `test1` ~ `test10`
+- 비밀번호: `ByClanTest123!`
+
 `auth.users` 생성 전략은 `AUTH-TEST-ACCOUNT-STRATEGY.md` 문서에 정리했습니다. 핵심은 `auth.users`에 직접 SQL insert 하지 말고, Supabase Dashboard 또는 Service Role 기반 Admin API를 사용해 계정을 만든 뒤 현재 시드와 동일한 UUID로 `profiles`를 맞추는 방식입니다.
 
 Next.js 16과 Tailwind 4 조합에서는 오래된 Node 버전이나 불완전한 `node_modules` 상태에서 빌드가 실패할 수 있습니다.

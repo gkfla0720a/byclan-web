@@ -34,6 +34,7 @@
  */
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
+import { extractAccountIdFromAuthUser } from '../utils/accountId';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { withRetry, isRetryableError } from '../utils/retry';
 import logger, { Severity } from '../utils/errorLogger';
@@ -314,7 +315,8 @@ async function syncSocialProfileData(
   }
 
   if (!currentProfile.by_id || !currentProfile.by_id.trim()) {
-    const seed = googleName || discordName || (authUser.email as string)?.split('@')[0] || 'User';
+    const loginId = extractAccountIdFromAuthUser(authUser, currentProfile);
+    const seed = googleName || discordName || loginId || (authUser.email as string)?.split('@')[0] || 'User';
     updates.by_id = await resolveUniqueById(seed, authUser.id as string);
   }
 
@@ -506,11 +508,12 @@ export function useAuth(): UseAuthReturn {
     if (profileError) {
       if (profileError.code === 'PGRST116') {
         // 프로필 없음 – visitor 기본 프로필 생성
+        const loginId = extractAccountIdFromAuthUser(authUser);
         const byIdSeed = isGoogleProvider
           ? (googleName || (googleEmail || '').split('@')[0] || 'User')
           : (isDiscordProvider
             ? discordName
-            : ((authUser.email as string)?.split('@')[0] || 'User'));
+            : (loginId || ((authUser.email as string)?.split('@')[0] || 'User')));
 
         let insertError: unknown = null;
         for (let attempt = 0; attempt < 4; attempt += 1) {
