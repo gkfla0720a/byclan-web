@@ -41,6 +41,18 @@ function formatDate(dateStr) {
   return `${mm}.${dd} ${hh}:${min}`;
 }
 
+/** 종족 이름을 한글 약어로 변환합니다. */
+function raceLabel(race) {
+  const map = { Terran: '테', Protoss: '프', Zerg: '저', Random: '랜' };
+  return map[race] || '';
+}
+
+/** race_cards 배열을 한글 문자열로 변환합니다. (예: ['Protoss','Protoss','Terran'] → '프·프·테') */
+function raceCardsLabel(cards) {
+  if (!Array.isArray(cards) || cards.length === 0) return '';
+  return cards.map(raceLabel).join('·');
+}
+
 /**
  * MatchDetailModal 컴포넌트
  *
@@ -58,6 +70,23 @@ function formatDate(dateStr) {
 function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNext }) {
   const m = matches[index];
   const overlayRef = useRef(null);
+  /** 현재 경기의 세트별 결과 */
+  const [sets, setSets] = useState([]);
+
+  // 경기가 바뀔 때마다 match_sets 조회
+  useEffect(() => {
+    if (!m?.id || !isSupabaseConfigured) return;
+    let cancelled = false;
+    supabase
+      .from('match_sets')
+      .select('set_number, winner_team, race_cards, status')
+      .eq('match_id', m.id)
+      .order('set_number', { ascending: true })
+      .then(({ data }) => {
+        if (!cancelled) setSets(data || []);
+      });
+    return () => { cancelled = true; };
+  }, [m?.id]);
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -81,7 +110,10 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
   const isOngoing = m.status === '진행중';
   const teamA = m.team_a_ids || [];
   const teamB = m.team_b_ids || [];
+  const teamARaces = m.team_a_races || [];
+  const teamBRaces = m.team_b_races || [];
   const maxRows = Math.max(teamA.length, teamB.length);
+  const matchFormat = m.match_type === '5v5' ? 'BO7 (4선승)' : 'BO5 (3선승)';
 
   // 승패 계산 (완료 경기만)
   let resultLabel = null;
@@ -104,7 +136,7 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
         {/* 상단 바 */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-cyan-500/30 bg-cyan-950/20">
           <span className="text-cyan-400 text-xs tracking-widest">
-            [ {m.match_type || '-'} ] {formatDate(m.created_at)}
+            [ {m.match_type || '-'} · {matchFormat} ] {formatDate(m.created_at)}
           </span>
           <button
             onClick={onClose}
@@ -145,8 +177,8 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
           )}
         </div>
 
-        {/* 팀 목록 */}
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 px-4 pb-4 mt-1">
+        {/* 팀 목록 (종족 포함) */}
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 px-4 pb-2 mt-1">
           {/* A팀 헤더 */}
           <div className="text-cyan-400 text-xs text-center font-bold pb-1 border-b border-cyan-500/20">A팀</div>
           <div className="border-b border-transparent pb-1" />
@@ -156,8 +188,13 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
           {/* 가운데 VS 세로선 */}
           {Array.from({ length: maxRows }).map((_, i) => (
             <React.Fragment key={i}>
-              <div className="py-1 text-center text-slate-200 text-sm leading-snug">
-                {profileCache[teamA[i]] ?? (teamA[i] ? '…' : '')}
+              <div className="py-1 text-center leading-snug">
+                {teamARaces[i] && (
+                  <span className="text-yellow-500/80 text-[10px] mr-1">[{raceLabel(teamARaces[i])}]</span>
+                )}
+                <span className="text-slate-200 text-sm">
+                  {profileCache[teamA[i]] ?? (teamA[i] ? '…' : '')}
+                </span>
               </div>
               <div className="py-1 flex items-center justify-center">
                 {i === Math.floor(maxRows / 2) ? (
@@ -166,8 +203,13 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
                   <span className="text-gray-700 text-xs px-1">│</span>
                 )}
               </div>
-              <div className="py-1 text-center text-slate-200 text-sm leading-snug">
-                {profileCache[teamB[i]] ?? (teamB[i] ? '…' : '')}
+              <div className="py-1 text-center leading-snug">
+                <span className="text-slate-200 text-sm">
+                  {profileCache[teamB[i]] ?? (teamB[i] ? '…' : '')}
+                </span>
+                {teamBRaces[i] && (
+                  <span className="text-yellow-500/80 text-[10px] ml-1">[{raceLabel(teamBRaces[i])}]</span>
+                )}
               </div>
             </React.Fragment>
           ))}
@@ -176,6 +218,36 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
             <div className="col-span-3 text-center text-gray-600 text-xs py-4">참여 정보 없음</div>
           )}
         </div>
+
+        {/* 세트별 결과 */}
+        {sets.length > 0 && (
+          <div className="px-4 pb-3 pt-2 border-t border-cyan-500/10 mx-4">
+            <div className="text-cyan-500/70 text-[9px] font-bold tracking-widest mb-1.5">SET RESULTS</div>
+            <div className="flex flex-wrap gap-1.5">
+              {sets.map((s) => {
+                const isActive = !s.winner_team;
+                const isA = s.winner_team === 'A';
+                const isB = s.winner_team === 'B';
+                return (
+                  <div
+                    key={s.set_number}
+                    className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border ${
+                      isA ? 'bg-blue-900/40 text-blue-300 border-blue-500/30' :
+                      isB ? 'bg-red-900/40 text-red-300 border-red-500/30' :
+                      'bg-gray-900/40 text-gray-400 border-gray-600/30 animate-pulse'
+                    }`}
+                  >
+                    <span className="text-gray-500">{s.set_number}</span>
+                    <span>{isActive ? '진행중' : isA ? '●A' : '●B'}</span>
+                    {s.race_cards?.length > 0 && (
+                      <span className="text-gray-500 font-normal">{raceCardsLabel(s.race_cards)}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* 좌우 네비게이션 버튼 */}
         <button
@@ -241,7 +313,7 @@ export default function MatchRecords() {
       const { data, error: fetchError } = await filterVisibleTestData(
         supabase
           .from('ladder_matches')
-          .select('id, match_type, status, score_a, score_b, team_a_ids, team_b_ids, created_at')
+          .select('id, match_type, status, score_a, score_b, team_a_ids, team_b_ids, team_a_races, team_b_races, created_at')
           .in('status', ['완료', '진행중', '제안중'])
           .order('created_at', { ascending: false })
           .limit(50)
