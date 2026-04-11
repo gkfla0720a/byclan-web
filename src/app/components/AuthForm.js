@@ -133,10 +133,7 @@ export default function AuthForm() {
           id: data.user.id,
           by_id: `By_${nickname}`,
           role: 'rookie',
-          clan_point: 0,
-          ladder_mmr: 1000,
-          wins: 0,
-          losses: 0
+          clan_point: 1000
         });
 
         if (pError) console.error("프로필 생성 실패:", pError);

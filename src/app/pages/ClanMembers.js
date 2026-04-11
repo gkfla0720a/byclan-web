@@ -95,8 +95,8 @@ function normalizeMemberRole(member) {
  */
 async function fetchMembersWithSchemaFallback() {
   const candidates = [
-    'id, by_id, discord_id, role, race, intro, ladder_mmr, is_streamer, streamer_platform, streamer_url',
-    'id, by_id, discord_id, role, race, intro, ladder_mmr',
+    'id, by_id, discord_id, role, race, intro, clan_point, is_streamer, streamer_platform, streamer_url',
+    'id, by_id, discord_id, role, race, intro, clan_point',
   ];
 
   for (const columns of candidates) {
@@ -107,7 +107,7 @@ async function fetchMembersWithSchemaFallback() {
         .neq('role', 'visitor')
         .neq('role', 'applicant')
         .neq('role', 'expelled')
-        .order('ladder_mmr', { ascending: false })
+        .order('clan_point', { ascending: false })
     );
 
     if (!result.error) {
@@ -126,7 +126,7 @@ async function fetchMembersWithSchemaFallback() {
     }
   }
 
-  return { data: null, error: new Error('profiles 테이블 조회 실패: ladder_mmr 컬럼을 찾지 못했습니다. LADDER-MMR-COLUMN-RENAME.sql을 실행했는지 확인하세요.') };
+  return { data: null, error: new Error('profiles 테이블 조회 실패: clan_point 컬럼을 찾지 못했습니다. CLAN-POINT-COLUMN-RENAME.sql을 실행했는지 확인하세요.') };
 }
 
 /**
@@ -333,7 +333,7 @@ export default function ClanMembers() {
                           </span>
                         </td>
                           <td className="px-4 py-3 text-slate-300 align-middle">{member.race || 'Terran'}</td>
-                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.ladder_mmr ?? 1000}점</td>
+                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.clan_point ?? 0}점</td>
                           <td className="px-4 py-3 text-slate-200 align-middle">
                           {member.is_streamer ? (
                             <div className="flex items-center gap-2">

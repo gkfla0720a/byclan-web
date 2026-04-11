@@ -69,7 +69,6 @@ export interface UserProfile {
   auth_provider?: string | null;
   role: string;
   clan_point: number;
-  ladder_mmr: number;
   race: string;
   intro: string;
   is_in_queue: boolean;
@@ -523,7 +522,6 @@ export function useAuth(): UseAuthReturn {
               by_id: uniqueById,
               role: 'visitor',
               clan_point: 0,
-              ladder_mmr: 1000,
               race: 'Terran',
               intro: '클랜 방문자',
               is_in_queue: false,

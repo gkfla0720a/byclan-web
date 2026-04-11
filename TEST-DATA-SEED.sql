@@ -4,20 +4,22 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   insert into public.profiles (
     id,
     discord_id,
-    "ByID",
+    by_id,
     role,
-    "clan_point",
+    clan_point,
     race,
     intro,
-    clan_point,
+    ladder_mmr,
     is_in_queue,
-    vote_to_start
+    vote_to_start,
+    wins,
+    losses
   )
   values (
     new.id,
@@ -25,11 +27,13 @@ begin
     'By_' || coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1), 'user'),
     'visitor',
     0,
-    'Terran',
-    '클랜 방문자',
+    '미지정',
+    '',
     1000,
     false,
-    false
+    false,
+    0,
+    0
   )
   on conflict (id) do nothing;
 
@@ -156,7 +160,7 @@ on conflict (key) do update set
   updated_at = now();
 
 insert into public.profiles (
-  id, discord_id, "ByID", role, ladder_mmr, race, intro, clan_point,
+  id, discord_id, by_id, role, ladder_mmr, race, intro, clan_point,
   is_in_queue, vote_to_start, is_test_account, is_test_account_active
 )
 values
@@ -172,12 +176,12 @@ values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'test10', 'By_test10', 'developer', 1600, 'Terran', '테스트 모드와 개발자 화면 확인용 계정입니다.', 1260, false, false, true, true)
 on conflict (id) do update set
   discord_id = excluded.discord_id,
-  "ByID" = excluded."ByID",
+  by_id = excluded.by_id,
   role = excluded.role,
-  "clan_point" = excluded."clan_point",
+  clan_point = excluded.clan_point,
   race = excluded.race,
   intro = excluded.intro,
-  clan_point = excluded.clan_point,
+  ladder_mmr = excluded.ladder_mmr,
   is_in_queue = excluded.is_in_queue,
   vote_to_start = excluded.vote_to_start,
   is_test_account = true,
@@ -200,8 +204,8 @@ begin
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'clan_point') then
     update public.profiles
-    set "clan_point" = coalesce("clan_point", 0)
-    where "clan_point" is null;
+    set clan_point = coalesce(clan_point, 0)
+    where clan_point is null;
   end if;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'role') then
@@ -211,10 +215,10 @@ begin
   end if;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'discord_id')
-     and exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'ByID') then
+     and exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'by_id') then
     update public.profiles
-    set "ByID" = 'By_' || regexp_replace(coalesce(nullif(discord_id, ''), 'guest'), '[^A-Za-z0-9_]', '', 'g')
-    where "ByID" is null or "ByID" = '';
+    set by_id = 'By_' || regexp_replace(coalesce(nullif(discord_id, ''), 'guest'), '[^A-Za-z0-9_]', '', 'g')
+    where by_id is null or by_id = '';
   end if;
 
   if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'race') then
@@ -276,7 +280,7 @@ begin
   where table_schema = 'public'
     and table_name = 'ladders'
     and column_name = any (array[
-      'id', 'user_id', 'nickname', 'name', 'ByID', 'discord_id', 'race', 'rank',
+      'id', 'user_id', 'nickname', 'name', 'by_id', 'discord_id', 'race', 'rank',
       'ladder_mmr', 'win', 'lose', 'is_test_data', 'is_test_data_active'
     ]);
 
@@ -339,11 +343,11 @@ begin
         numeric_user_id bigint,
         nickname text,
         name text,
-        "ByID" text,
+        by_id text,
         discord_id text,
         race text,
         rank integer,
-        "ladder_mmr" integer,
+        ladder_mmr integer,
         win integer,
         lose integer,
         is_test_data boolean,
@@ -355,16 +359,16 @@ begin
     overriding_clause,
     select_columns,
     '[
-      {"uuid_id":"21111111-1111-4111-8111-111111111111","numeric_id":900001,"uuid_user_id":"11111111-1111-4111-8111-111111111111","numeric_user_id":1001,"nickname":"By_test1","name":"By_test1","ByID":"By_test1","discord_id":"test1","race":"Terran","rank":1,"ladder_mmr":2240,"win":42,"lose":12,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"32222222-2222-4222-8222-222222222222","numeric_id":900002,"uuid_user_id":"22222222-2222-4222-8222-222222222222","numeric_user_id":1002,"nickname":"By_test2","name":"By_test2","ByID":"By_test2","discord_id":"test2","race":"Protoss","rank":2,"ladder_mmr":2120,"win":38,"lose":16,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"43333333-3333-4333-8333-333333333333","numeric_id":900003,"uuid_user_id":"33333333-3333-4333-8333-333333333333","numeric_user_id":1003,"nickname":"By_test3","name":"By_test3","ByID":"By_test3","discord_id":"test3","race":"Zerg","rank":3,"ladder_mmr":2010,"win":34,"lose":17,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"54444444-4444-4444-8444-444444444444","numeric_id":900004,"uuid_user_id":"44444444-4444-4444-8444-444444444444","numeric_user_id":1004,"nickname":"By_test4","name":"By_test4","ByID":"By_test4","discord_id":"test4","race":"Terran","rank":4,"ladder_mmr":1880,"win":31,"lose":18,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"65555555-5555-4555-8555-555555555555","numeric_id":900005,"uuid_user_id":"55555555-5555-4555-8555-555555555555","numeric_user_id":1005,"nickname":"By_test5","name":"By_test5","ByID":"By_test5","discord_id":"test5","race":"Protoss","rank":5,"ladder_mmr":1760,"win":28,"lose":21,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"76666666-6666-4666-8666-666666666666","numeric_id":900006,"uuid_user_id":"66666666-6666-4666-8666-666666666666","numeric_user_id":1006,"nickname":"By_test6","name":"By_test6","ByID":"By_test6","discord_id":"test6","race":"Random","rank":6,"ladder_mmr":1650,"win":25,"lose":22,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"87777777-7777-4777-8777-777777777777","numeric_id":900007,"uuid_user_id":"77777777-7777-4777-8777-777777777777","numeric_user_id":1007,"nickname":"By_test7","name":"By_test7","ByID":"By_test7","discord_id":"test7","race":"Zerg","rank":7,"ladder_mmr":1520,"win":20,"lose":19,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"98888888-8888-4888-8888-888888888888","numeric_id":900008,"uuid_user_id":"88888888-8888-4888-8888-888888888888","numeric_user_id":1008,"nickname":"By_test8","name":"By_test8","ByID":"By_test8","discord_id":"test8","race":"Terran","rank":8,"ladder_mmr":1430,"win":18,"lose":20,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"a9999999-9999-4999-8999-999999999999","numeric_id":900009,"uuid_user_id":"99999999-9999-4999-8999-999999999999","numeric_user_id":1009,"nickname":"By_test9","name":"By_test9","ByID":"By_test9","discord_id":"test9","race":"Protoss","rank":9,"ladder_mmr":1320,"win":14,"lose":21,"is_test_data":true,"is_test_data_active":true},
-      {"uuid_id":"baaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_id":900010,"uuid_user_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_user_id":1010,"nickname":"By_test10","name":"By_test10","ByID":"By_test10","discord_id":"test10","race":"Terran","rank":10,"ladder_mmr":1260,"win":12,"lose":23,"is_test_data":true,"is_test_data_active":true}
+      {"uuid_id":"21111111-1111-4111-8111-111111111111","numeric_id":900001,"uuid_user_id":"11111111-1111-4111-8111-111111111111","numeric_user_id":1001,"nickname":"By_test1","name":"By_test1","by_id":"By_test1","discord_id":"test1","race":"Terran","rank":1,"ladder_mmr":2240,"win":42,"lose":12,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"32222222-2222-4222-8222-222222222222","numeric_id":900002,"uuid_user_id":"22222222-2222-4222-8222-222222222222","numeric_user_id":1002,"nickname":"By_test2","name":"By_test2","by_id":"By_test2","discord_id":"test2","race":"Protoss","rank":2,"ladder_mmr":2120,"win":38,"lose":16,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"43333333-3333-4333-8333-333333333333","numeric_id":900003,"uuid_user_id":"33333333-3333-4333-8333-333333333333","numeric_user_id":1003,"nickname":"By_test3","name":"By_test3","by_id":"By_test3","discord_id":"test3","race":"Zerg","rank":3,"ladder_mmr":2010,"win":34,"lose":17,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"54444444-4444-4444-8444-444444444444","numeric_id":900004,"uuid_user_id":"44444444-4444-4444-8444-444444444444","numeric_user_id":1004,"nickname":"By_test4","name":"By_test4","by_id":"By_test4","discord_id":"test4","race":"Terran","rank":4,"ladder_mmr":1880,"win":31,"lose":18,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"65555555-5555-4555-8555-555555555555","numeric_id":900005,"uuid_user_id":"55555555-5555-4555-8555-555555555555","numeric_user_id":1005,"nickname":"By_test5","name":"By_test5","by_id":"By_test5","discord_id":"test5","race":"Protoss","rank":5,"ladder_mmr":1760,"win":28,"lose":21,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"76666666-6666-4666-8666-666666666666","numeric_id":900006,"uuid_user_id":"66666666-6666-4666-8666-666666666666","numeric_user_id":1006,"nickname":"By_test6","name":"By_test6","by_id":"By_test6","discord_id":"test6","race":"Random","rank":6,"ladder_mmr":1650,"win":25,"lose":22,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"87777777-7777-4777-8777-777777777777","numeric_id":900007,"uuid_user_id":"77777777-7777-4777-8777-777777777777","numeric_user_id":1007,"nickname":"By_test7","name":"By_test7","by_id":"By_test7","discord_id":"test7","race":"Zerg","rank":7,"ladder_mmr":1520,"win":20,"lose":19,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"98888888-8888-4888-8888-888888888888","numeric_id":900008,"uuid_user_id":"88888888-8888-4888-8888-888888888888","numeric_user_id":1008,"nickname":"By_test8","name":"By_test8","by_id":"By_test8","discord_id":"test8","race":"Terran","rank":8,"ladder_mmr":1430,"win":18,"lose":20,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"a9999999-9999-4999-8999-999999999999","numeric_id":900009,"uuid_user_id":"99999999-9999-4999-8999-999999999999","numeric_user_id":1009,"nickname":"By_test9","name":"By_test9","by_id":"By_test9","discord_id":"test9","race":"Protoss","rank":9,"ladder_mmr":1320,"win":14,"lose":21,"is_test_data":true,"is_test_data_active":true},
+      {"uuid_id":"baaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_id":900010,"uuid_user_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","numeric_user_id":1010,"nickname":"By_test10","name":"By_test10","by_id":"By_test10","discord_id":"test10","race":"Terran","rank":10,"ladder_mmr":1260,"win":12,"lose":23,"is_test_data":true,"is_test_data_active":true}
     ]',
     conflict_action
   );
@@ -909,185 +913,185 @@ begin
   -- ── 경기1 (3v3, A 3:1, 4세트) ── test1·3·5 vs test2·4·6 ──
   ('e1110001-1111-4111-8111-111111111111'::uuid, 'c1111111-1111-4111-8111-111111111111'::uuid,
    1, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Terran"}]'::jsonb,
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Terran"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '7 days'),
   ('e1110002-1111-4111-8111-111111111111'::uuid, 'c1111111-1111-4111-8111-111111111111'::uuid,
    2, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Zerg"}]'::jsonb,
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Zerg"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Zerg"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Zerg"}]'::jsonb,
    'B', '완료', true, true, now() - interval '7 days' + interval '30 minutes'),
   ('e1110003-1111-4111-8111-111111111111'::uuid, 'c1111111-1111-4111-8111-111111111111'::uuid,
    3, array['Protoss','Zerg','Terran']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Zerg"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Terran"}]'::jsonb,
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Zerg"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Zerg"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Terran"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Zerg"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '7 days' + interval '60 minutes'),
   ('e1110004-1111-4111-8111-111111111111'::uuid, 'c1111111-1111-4111-8111-111111111111'::uuid,
    4, array['Protoss','Protoss','Protoss']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"}]'::jsonb,
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"}]'::jsonb,
    'A', '완료', true, true, now() - interval '7 days' + interval '90 minutes'),
 
   -- ── 경기2 (3v3, B 2:3, 5세트) ── test4·6·8 vs test1·3·7 ──
   ('e2220001-2222-4222-8222-222222222222'::uuid, 'c2222222-2222-4222-8222-222222222222'::uuid,
    1, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Zerg"}]'::jsonb,
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Zerg"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Zerg"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Zerg"}]'::jsonb,
    'A', '완료', true, true, now() - interval '6 days'),
   ('e2220002-2222-4222-8222-222222222222'::uuid, 'c2222222-2222-4222-8222-222222222222'::uuid,
    2, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Terran"}]'::jsonb,
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Terran"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Terran"}]'::jsonb,
    'B', '완료', true, true, now() - interval '6 days' + interval '30 minutes'),
   ('e2220003-2222-4222-8222-222222222222'::uuid, 'c2222222-2222-4222-8222-222222222222'::uuid,
    3, array['Protoss','Zerg','Terran']::text[],
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Zerg"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Terran"}]'::jsonb,
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Zerg"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Terran"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Zerg"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Zerg"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Terran"}]'::jsonb,
    'B', '완료', true, true, now() - interval '6 days' + interval '60 minutes'),
   ('e2220004-2222-4222-8222-222222222222'::uuid, 'c2222222-2222-4222-8222-222222222222'::uuid,
    4, array['Protoss','Protoss','Protoss']::text[],
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Protoss"}]'::jsonb,
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Protoss"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"}]'::jsonb,
    'A', '완료', true, true, now() - interval '6 days' + interval '90 minutes'),
   ('e2220005-2222-4222-8222-222222222222'::uuid, 'c2222222-2222-4222-8222-222222222222'::uuid,
    5, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Zerg"}]'::jsonb,
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Zerg"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Zerg"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Zerg"}]'::jsonb,
    'B', '완료', true, true, now() - interval '6 days' + interval '120 minutes'),
 
   -- ── 경기3 (4v4, A 3:0, 3세트) ── test1·2·3·4 vs test5·6·7·8 ──
   -- 4v4: 세트당 3명 출전 (1명 휴식), 로테이션 적용
   ('e3330001-3333-4333-8333-333333333333'::uuid, 'c3333333-3333-4333-8333-333333333333'::uuid,
    1, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Terran"}]'::jsonb,
-   '[{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Terran"}]'::jsonb,
+   '[{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '5 days'),
   ('e3330002-3333-4333-8333-333333333333'::uuid, 'c3333333-3333-4333-8333-333333333333'::uuid,
    2, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Zerg"}]'::jsonb,
-   '[{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Zerg"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Zerg"}]'::jsonb,
+   '[{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Zerg"}]'::jsonb,
    'A', '완료', true, true, now() - interval '5 days' + interval '30 minutes'),
   ('e3330003-3333-4333-8333-333333333333'::uuid, 'c3333333-3333-4333-8333-333333333333'::uuid,
    3, array['Protoss','Zerg','Terran']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Zerg"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Terran"}]'::jsonb,
-   '[{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Zerg"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Zerg"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Terran"}]'::jsonb,
+   '[{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Zerg"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '5 days' + interval '60 minutes'),
 
   -- ── 경기4 (3v3, A 3:2, 5세트) ── test2·5·9 vs test4·7·10 ──
   ('e4440001-4444-4444-8444-444444444444'::uuid, 'c4444444-4444-4444-8444-444444444444'::uuid,
    1, array['Protoss','Protoss','Protoss']::text[],
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Protoss"}]'::jsonb,
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Protoss"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Protoss"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Protoss"}]'::jsonb,
    'B', '완료', true, true, now() - interval '4 days'),
   ('e4440002-4444-4444-8444-444444444444'::uuid, 'c4444444-4444-4444-8444-444444444444'::uuid,
    2, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Terran"}]'::jsonb,
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Terran"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Terran"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '4 days' + interval '30 minutes'),
   ('e4440003-4444-4444-8444-444444444444'::uuid, 'c4444444-4444-4444-8444-444444444444'::uuid,
    3, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Zerg"}]'::jsonb,
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Zerg"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Zerg"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Zerg"}]'::jsonb,
    'A', '완료', true, true, now() - interval '4 days' + interval '60 minutes'),
   ('e4440004-4444-4444-8444-444444444444'::uuid, 'c4444444-4444-4444-8444-444444444444'::uuid,
    4, array['Protoss','Zerg','Terran']::text[],
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Zerg"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Terran"}]'::jsonb,
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Zerg"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Terran"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Zerg"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Terran"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Zerg"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Terran"}]'::jsonb,
    'B', '완료', true, true, now() - interval '4 days' + interval '90 minutes'),
   ('e4440005-4444-4444-8444-444444444444'::uuid, 'c4444444-4444-4444-8444-444444444444'::uuid,
    5, array['Protoss','Protoss','Protoss']::text[],
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Protoss"}]'::jsonb,
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Protoss"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Protoss"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Protoss"}]'::jsonb,
    'A', '완료', true, true, now() - interval '4 days' + interval '120 minutes'),
 
   -- ── 경기5 (5v5, A 4:2, 6세트 BO7) ── test1~5 vs test6~10 ──
   -- 5v5: 세트당 3명 출전 (2명 휴식), 로테이션 적용
   ('e5550001-5555-4555-8555-555555555555'::uuid, 'c5555555-5555-4555-8555-555555555555'::uuid,
    1, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Terran"}]'::jsonb,
-   '[{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Terran"}]'::jsonb,
+   '[{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '3 days'),
   ('e5550002-5555-4555-8555-555555555555'::uuid, 'c5555555-5555-4555-8555-555555555555'::uuid,
    2, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Zerg"}]'::jsonb,
-   '[{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Zerg"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Zerg"}]'::jsonb,
+   '[{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Zerg"}]'::jsonb,
    'B', '완료', true, true, now() - interval '3 days' + interval '30 minutes'),
   ('e5550003-5555-4555-8555-555555555555'::uuid, 'c5555555-5555-4555-8555-555555555555'::uuid,
    3, array['Protoss','Zerg','Terran']::text[],
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Zerg"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Terran"}]'::jsonb,
-   '[{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Zerg"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Terran"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Zerg"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Terran"}]'::jsonb,
+   '[{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Zerg"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '3 days' + interval '60 minutes'),
   ('e5550004-5555-4555-8555-555555555555'::uuid, 'c5555555-5555-4555-8555-555555555555'::uuid,
    4, array['Protoss','Protoss','Protoss']::text[],
-   '[{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"}]'::jsonb,
-   '[{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"}]'::jsonb,
+   '[{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"}]'::jsonb,
+   '[{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"}]'::jsonb,
    'A', '완료', true, true, now() - interval '3 days' + interval '90 minutes'),
   ('e5550005-5555-4555-8555-555555555555'::uuid, 'c5555555-5555-4555-8555-555555555555'::uuid,
    5, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Zerg"}]'::jsonb,
-   '[{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Zerg"}]'::jsonb,
+   '[{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Zerg"}]'::jsonb,
+   '[{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Zerg"}]'::jsonb,
    'B', '완료', true, true, now() - interval '3 days' + interval '120 minutes'),
   ('e5550006-5555-4555-8555-555555555555'::uuid, 'c5555555-5555-4555-8555-555555555555'::uuid,
    6, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Terran"}]'::jsonb,
-   '[{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Terran"}]'::jsonb,
+   '[{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '3 days' + interval '150 minutes'),
 
   -- ── 경기6 (3v3, B 0:3, 3세트) ── test8·9·10 vs test2·5·6 ──
   ('e6660001-6666-4666-8666-666666666666'::uuid, 'c6666666-6666-4666-8666-666666666666'::uuid,
    1, array['Protoss','Protoss','Protoss']::text[],
-   '[{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Protoss"}]'::jsonb,
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"}]'::jsonb,
+   '[{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Protoss"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"}]'::jsonb,
    'B', '완료', true, true, now() - interval '2 days'),
   ('e6660002-6666-4666-8666-666666666666'::uuid, 'c6666666-6666-4666-8666-666666666666'::uuid,
    2, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Terran"}]'::jsonb,
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Terran"}]'::jsonb,
+   '[{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Terran"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Terran"}]'::jsonb,
    'B', '완료', true, true, now() - interval '2 days' + interval '30 minutes'),
   ('e6660003-6666-4666-8666-666666666666'::uuid, 'c6666666-6666-4666-8666-666666666666'::uuid,
    3, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Zerg"}]'::jsonb,
-   '[{"id":"22222222-2222-4222-8222-222222222222","ByID":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Zerg"}]'::jsonb,
+   '[{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Zerg"}]'::jsonb,
+   '[{"id":"22222222-2222-4222-8222-222222222222","by_id":"By_test2","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Zerg"}]'::jsonb,
    'B', '완료', true, true, now() - interval '2 days' + interval '60 minutes'),
 
   -- ── 경기7 (4v4, B 1:3, 4세트) ── test3·6·8·9 vs test1·4·7·10 ──
   ('e7770001-7777-4777-8777-777777777777'::uuid, 'c7777777-7777-4777-8777-777777777777'::uuid,
    1, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Terran"}]'::jsonb,
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Terran"}]'::jsonb,
+   '[{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '1 day'),
   ('e7770002-7777-4777-8777-777777777777'::uuid, 'c7777777-7777-4777-8777-777777777777'::uuid,
    2, array['Protoss','Zerg','Terran']::text[],
-   '[{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Zerg"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Terran"}]'::jsonb,
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Zerg"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Terran"}]'::jsonb,
+   '[{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Zerg"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Zerg"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Terran"}]'::jsonb,
    'B', '완료', true, true, now() - interval '1 day' + interval '30 minutes'),
   ('e7770003-7777-4777-8777-777777777777'::uuid, 'c7777777-7777-4777-8777-777777777777'::uuid,
    3, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Zerg"}]'::jsonb,
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Zerg"}]'::jsonb,
+   '[{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Zerg"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Zerg"}]'::jsonb,
    'B', '완료', true, true, now() - interval '1 day' + interval '60 minutes'),
   ('e7770004-7777-4777-8777-777777777777'::uuid, 'c7777777-7777-4777-8777-777777777777'::uuid,
    4, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"66666666-6666-4666-8666-666666666666","ByID":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","ByID":"By_test9","race":"Terran"}]'::jsonb,
-   '[{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","ByID":"By_test10","race":"Terran"}]'::jsonb,
+   '[{"id":"66666666-6666-4666-8666-666666666666","by_id":"By_test6","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Protoss"},{"id":"99999999-9999-4999-8999-999999999999","by_id":"By_test9","race":"Terran"}]'::jsonb,
+   '[{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Protoss"},{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","by_id":"By_test10","race":"Terran"}]'::jsonb,
    'B', '완료', true, true, now() - interval '1 day' + interval '90 minutes'),
 
   -- ── 경기8 (3v3, 진행중 A:1 B:2) ── test1·5·7 vs test3·4·8 ──
   -- 완료된 세트 3개 + 현재 진행 중인 세트 1개
   ('e8880001-8888-4888-8888-888888888888'::uuid, 'c8888888-8888-4888-8888-888888888888'::uuid,
    1, array['Protoss','Protoss','Zerg']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Zerg"}]'::jsonb,
-   '[{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Zerg"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Zerg"}]'::jsonb,
+   '[{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Zerg"}]'::jsonb,
    'B', '완료', true, true, now() - interval '30 minutes'),
   ('e8880002-8888-4888-8888-888888888888'::uuid, 'c8888888-8888-4888-8888-888888888888'::uuid,
    2, array['Protoss','Protoss','Terran']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Terran"}]'::jsonb,
-   '[{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Protoss"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Terran"}]'::jsonb,
+   '[{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Protoss"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Terran"}]'::jsonb,
    'A', '완료', true, true, now() - interval '20 minutes'),
   ('e8880003-8888-4888-8888-888888888888'::uuid, 'c8888888-8888-4888-8888-888888888888'::uuid,
    3, array['Protoss','Zerg','Terran']::text[],
-   '[{"id":"11111111-1111-4111-8111-111111111111","ByID":"By_test1","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","ByID":"By_test5","race":"Zerg"},{"id":"77777777-7777-4777-8777-777777777777","ByID":"By_test7","race":"Terran"}]'::jsonb,
-   '[{"id":"33333333-3333-4333-8333-333333333333","ByID":"By_test3","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","ByID":"By_test4","race":"Zerg"},{"id":"88888888-8888-4888-8888-888888888888","ByID":"By_test8","race":"Terran"}]'::jsonb,
+   '[{"id":"11111111-1111-4111-8111-111111111111","by_id":"By_test1","race":"Protoss"},{"id":"55555555-5555-4555-8555-555555555555","by_id":"By_test5","race":"Zerg"},{"id":"77777777-7777-4777-8777-777777777777","by_id":"By_test7","race":"Terran"}]'::jsonb,
+   '[{"id":"33333333-3333-4333-8333-333333333333","by_id":"By_test3","race":"Protoss"},{"id":"44444444-4444-4444-8444-444444444444","by_id":"By_test4","race":"Zerg"},{"id":"88888888-8888-4888-8888-888888888888","by_id":"By_test8","race":"Terran"}]'::jsonb,
    'B', '완료', true, true, now() - interval '10 minutes'),
   ('e8880004-8888-4888-8888-888888888888'::uuid, 'c8888888-8888-4888-8888-888888888888'::uuid,
    4, array['Protoss','Protoss','Protoss']::text[],
@@ -1125,7 +1129,7 @@ order by email;
 select
   p.id,
   p.discord_id,
-  p."ByID",
+  p.by_id,
   p.role,
   to_jsonb(p)->>'discord_id' as discord_id,
   p.is_test_account,
@@ -1138,7 +1142,7 @@ order by discord_id;
 -- 3. 래더 랭킹 반영 여부 확인
 select
   nullif(to_jsonb(l)->>'rank', '')::integer as rank,
-  coalesce(to_jsonb(l)->>'nickname', to_jsonb(l)->>'name', to_jsonb(l)->>'ByID') as nickname,
+  coalesce(to_jsonb(l)->>'nickname', to_jsonb(l)->>'name', to_jsonb(l)->>'by_id') as nickname,
   to_jsonb(l)->>'discord_id' as discord_id,
   nullif(to_jsonb(l)->>'ladder_mmr', '')::integer as "ladder_mmr",
   nullif(to_jsonb(l)->>'win', '')::integer as win,
@@ -1147,7 +1151,7 @@ select
   l.is_test_data_active
 from public.ladders l
 where is_test_data = true
-order by rank asc nulls last, "ladder_mmr" desc;
+order by rank asc nulls last, ladder_mmr desc;
 
 -- 4. 게시글/신청서/알림/매치 집계 확인
 select 'admin_posts' as table_name, count(*) as seeded_count from public.admin_posts where is_test_data = true
@@ -1163,7 +1167,7 @@ select 'ladder_matches' as table_name, count(*) as seeded_count from public.ladd
 -- 5. 테스트 계정별 래더 진입 준비 상태 확인
 select
   p.discord_id,
-  p."ByID",
+  p.by_id,
   p.role,
   to_jsonb(p)->>'discord_id' as discord_id,
   p.is_test_account_active,

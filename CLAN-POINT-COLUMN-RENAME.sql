@@ -1,11 +1,12 @@
--- profiles 포인트 컬럼명을 snake_case 표준으로 정리합니다.
--- 대상: points / "Clan_Point" -> clan_point
--- 추가: "ByID" -> by_id 보정 + 신규유저 트리거 최신화
+-- profiles 컬럼명을 snake_case 표준으로 정리합니다.
+-- 대상: points / "Clan_Point" -> clan_point, "ByID" -> by_id
+-- Supabase SQL Editor에서 실행하세요.
 
 begin;
 
 do $$
 begin
+  -- points -> clan_point
   if exists (
     select 1
     from information_schema.columns
@@ -16,6 +17,7 @@ begin
     alter table public.profiles rename column points to clan_point;
   end if;
 
+  -- "Clan_Point" -> clan_point
   if exists (
     select 1
     from information_schema.columns
@@ -26,6 +28,7 @@ begin
     alter table public.profiles rename column "Clan_Point" to clan_point;
   end if;
 
+  -- "ByID" -> by_id
   if exists (
     select 1
     from information_schema.columns
@@ -77,8 +80,8 @@ begin
     'visitor',
     0,
     1000,
-    'Terran',
-    '클랜 방문자',
+    '미지정',
+    '',
     false,
     false,
     0,

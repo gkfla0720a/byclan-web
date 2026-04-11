@@ -34,7 +34,6 @@ function normalizeProfileRow(profileData) {
   return {
     ...profileData,
     clan_point: clanPoint,
-    ladder_mmr: typeof profileData.ladder_mmr === 'number' ? profileData.ladder_mmr : 1000,
   };
 }
 
@@ -147,6 +146,11 @@ export default function MyProfile() {
           setIsNicknameAvailable(true); // 기존에 By_ 닉네임이 있으면 일단 활성화
         }
 
+        // 래더 데이터 가져오기
+        if (currentById.startsWith('By_')) {
+          const { data: ladder } = await supabase.from('ladders').select('*').eq('nickname', currentById).maybeSingle();
+          if (ladder) setLadderData(ladder);
+        }
       }
     } catch (error) {
       console.error("데이터 로드 에러:", error);
