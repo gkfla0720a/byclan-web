@@ -18,6 +18,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
 /**
  * ByClanLogo()
@@ -26,13 +27,14 @@ import React from 'react';
  */
 // === 로고 컴포넌트 === 
 function ByClanLogo() {
-  const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repository/main/ByLogo.png";
   return (
     <div className="flex items-center justify-center cursor-pointer group w-12 h-12 relative">
-      <img 
-        src={logoUrl} 
+      <Image 
+        src="/ByClanLogo.png" 
         alt="ByClan Logo" 
-        className="w-full h-full object-contain transition-all duration-300 group-hover:scale-110 group-hover:brightness-110" 
+        width={48}
+        height={48}
+        className="object-contain transition-all duration-300 group-hover:scale-110 group-hover:brightness-110" 
         style={{ filter: "drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.9)) drop-shadow(0px 0px 12px rgba(0, 0, 0, 0.6))" }} 
       />
     </div>

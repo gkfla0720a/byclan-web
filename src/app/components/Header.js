@@ -31,6 +31,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '../hooks/useNavigate';
 import { useAuthContext } from '../context/AuthContext';
@@ -38,14 +39,13 @@ import { useAuthContext } from '../context/AuthContext';
 /**
  * ByClanLogo()
  * - ByClan 클랜 로고 이미지를 표시하는 내부 컴포넌트입니다.
- * - GitHub에서 로고 이미지를 불러옵니다.
+ * - public 폴더의 로고 이미지를 Next.js Image로 최적화하여 불러옵니다.
  * - 마우스 오버 시 살짝 확대되는 효과가 있습니다.
  */
 function ByClanLogo() {
-  const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repository/main/ByLogo.png";
   return (
     <div className="flex items-center justify-center cursor-pointer group w-12 h-12 relative">
-      <img src={logoUrl} alt="ByClan Logo" className="w-full h-full object-contain transition-all duration-300 group-hover:scale-110 group-hover:brightness-110" style={{ filter: "drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.9)) drop-shadow(0px 0px 12px rgba(0, 0, 0, 0.6))" }} />
+      <Image src="/ByClanLogo.png" alt="ByClan Logo" width={48} height={48} className="object-contain transition-all duration-300 group-hover:scale-110 group-hover:brightness-110" style={{ filter: "drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.9)) drop-shadow(0px 0px 12px rgba(0, 0, 0, 0.6))" }} />
     </div>
   );
 }
