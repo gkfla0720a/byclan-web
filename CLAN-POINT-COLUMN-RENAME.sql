@@ -39,7 +39,7 @@ begin
     "Clan_Point",
     race,
     intro,
-    ladder_points,
+    "Ladder_MMR",
     is_in_queue,
     vote_to_start
   )

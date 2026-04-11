@@ -68,7 +68,7 @@ ByClan 클랜원의 모든 정보를 저장합니다.
 | `points` | INT | 클랜 활동 포인트 | `150` |
 | `race` | TEXT | 스타크래프트 종족 | `Terran`, `Zerg`, `Protoss` |
 | `intro` | TEXT | 자기소개 문구 | `안녕하세요!` |
-| `ladder_points` | INT | 래더 레이팅 (기본값: 1000) | `1250` |
+| `Ladder_MMR` | INT | 래더 레이팅 (기본값: 1000) | `1250` |
 | `is_in_queue` | BOOL | 현재 래더 대기열 참여 중 여부 | `true` / `false` |
 | `vote_to_start` | BOOL | 래더 시작 투표 여부 | `true` / `false` |
 | `wins` | INT | 래더 승리 수 | `30` |
@@ -312,7 +312,7 @@ CREATE TABLE profiles_backup AS SELECT * FROM profiles;
 3. useAuth.ts → profiles 테이블에 없으면 자동 생성
    - role: 'visitor'
    - discord_name, discord_id 자동 설정
-   - ladder_points: 1000 (기본값)
+   - Ladder_MMR: 1000 (기본값)
    ↓
 4. 사용자가 가입 신청 → applications 테이블에 저장
    ↓
@@ -333,7 +333,7 @@ CREATE TABLE profiles_backup AS SELECT * FROM profiles;
 4. 게임 결과 입력 → score_a, score_b 업데이트
    - status: '완료'
    ↓
-5. 참가자 ladder_points, wins/losses 업데이트
+5. 참가자 Ladder_MMR, wins/losses 업데이트
 ```
 
 ---
@@ -420,9 +420,9 @@ const { data, error } = await supabase
 // 특정 조건으로 조회
 const { data } = await supabase
   .from('profiles')
-  .select('ByID, role, ladder_points')  // 특정 컬럼만
+  .select('ByID, role, Ladder_MMR')  // 특정 컬럼만
   .eq('role', 'elite')                  // role = 'elite'인 행만
-  .order('ladder_points', { ascending: false })  // 래더 포인트 내림차순
+  .order('Ladder_MMR', { ascending: false })  // 래더 MMR 내림차순
   .limit(10);                           // 최대 10개만
 ```
 
@@ -434,7 +434,7 @@ const { error } = await supabase
     id: userId,
     ByID: 'By_홍길동',
     role: 'visitor',
-    ladder_points: 1000,
+    Ladder_MMR: 1000,
   });
 ```
 
@@ -516,7 +516,7 @@ const channel = supabase
 |------|------|-----------|
 | **team_ids 배열** | GIN 인덱스는 B-Tree보다 느림 (write 시) | 별도 team_members 테이블 분리 고려 |
 | **테스트 데이터 미분리** | is_test_data 컬럼 미구현으로 실데이터 혼용 가능 | DB 컬럼 추가 후 filterVisibleTestData 활성화 |
-| **ladder_points 기본값** | 모두 1000으로 시작해 초기 랭킹 의미 없음 | 첫 게임 후 포인트 계산 보정 알고리즘 도입 |
+| **Ladder_MMR 기본값** | 모두 1000으로 시작해 초기 랭킹 의미 없음 | 첫 게임 후 MMR 계산 보정 알고리즘 도입 |
 | **역할 경로 불일치** | ROLE_CHANGE_RULES의 'guest' vs DB의 'visitor' | 코드와 DB 역할명 통일 필요 |
 | **joinProcess.js 미구현** | 가입 처리 로직이 비어 있음 | 구현 필요 |
 | **백업 자동화 없음** | 수동 쿼리로만 백업 가능 | Supabase Point-in-Time Recovery 활성화 |

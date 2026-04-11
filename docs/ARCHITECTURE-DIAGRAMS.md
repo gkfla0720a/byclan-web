@@ -304,7 +304,7 @@ ByClan Web 상태 관리 전략
 │   ─── role          역할 (8가지)         │
 │   ─── discord_id    Discord 고유 ID     │
 │   ─── discord_name  Discord 표시 이름   │
-│   ─── ladder_points 래더 레이팅 (기본 1000)│
+│   ─── Ladder_MMR    래더 레이팅 (기본 1000)│
 │   ─── is_in_queue   래더 대기열 상태     │
 │   ─── vote_to_start 시작 투표 여부       │
 │   ─── points        클랜 활동 포인트     │

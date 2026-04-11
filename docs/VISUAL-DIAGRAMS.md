@@ -276,7 +276,7 @@ erDiagram
         string role "역할 (developer~visitor)"
         string discord_id "Discord 고유 ID"
         string discord_name "Discord 유저명"
-        int ladder_points "래더 레이팅"
+        int Ladder_MMR "래더 레이팅"
         bool is_in_queue "래더 대기 상태"
         bool vote_to_start "대기열 투표 여부"
         int points "활동 포인트"
