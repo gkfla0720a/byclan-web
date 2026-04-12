@@ -20,8 +20,8 @@ export type UserRole =
 
 export type RaceCode = 'Terran' | 'Zerg' | 'Protoss' | 'Random' | '미지정' | string;
 export type ApplicationStatus = '대기중' | '합격' | '불합격' | string;
-export type LadderMatchStatus = '모집중' | '진행중' | '종료' | '취소' | string;
-export type MatchSetStatus = '엔트리제출중' | '진행중' | '종료' | '취소' | string;
+export type LadderMatchStatus = '모집중' | '제안중' | '진행중' | '완료' | '거절됨' | string;
+export type MatchSetStatus = '엔트리제출중' | '진행중' | '완료' | string;
 export type WinningSide = 'team_a' | 'team_b' | '무승부' | string;
 
 export interface TestDataFlags {

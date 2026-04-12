@@ -552,6 +552,8 @@ export default function LadderDashboard({ onMatchEnter }) {
           score_a: 0,
           score_b: 0,
           created_by: user.id,
+          is_test_data: Boolean(myProfile?.is_test_account),
+          is_test_data_active: Boolean(myProfile?.is_test_account),
         })
         .select().single();
       if (error) throw error;

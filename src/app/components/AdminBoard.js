@@ -158,7 +158,9 @@ export default function AdminBoard() {
         .insert({ 
           title: newPost.title, 
           content: newPost.content,
-          author_id: myProfile.id
+          author_id: myProfile.id,
+          is_test_data: Boolean(myProfile?.is_test_account),
+          is_test_data_active: Boolean(myProfile?.is_test_account),
         });
 
       if (error) throw error;

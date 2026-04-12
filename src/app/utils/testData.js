@@ -8,18 +8,15 @@
  *   실제 서비스와 테스트 데이터가 섞이지 않도록, 테스트 계정/데이터를
  *   별도로 표시하고 필터링하는 기능을 제공합니다.
  *
- * ■ 주의사항
- *   filterVisibleTestAccounts()와 filterVisibleTestData()는 현재 아무 동작도
- *   하지 않는 "no-op(빈 함수)" 상태입니다.
- *   DB에 is_test_account, is_test_data 컬럼이 추가될 때 실제 필터링이 활성화됩니다.
- *
- * ■ 테스트 계정 이름 목록
- *   test1 ~ test10 (TEST_ACCOUNT_NAMES 배열에 정의)
- *
- * ■ 사용 방법
- *   import { isMarkedTestAccount, shouldBypassDiscordForTestAccount } from '@/app/utils/testData';
+ * ■ 동작 원칙
+ *   - 테스트 계정 사용자는 테스트 계정/테스트 데이터만 조회합니다.
+ *   - 실제 계정 사용자는 테스트 데이터가 켜져 있어도 실제 데이터만 조회합니다.
+ *   - 테스트 계정 토글은 is_test_account_active / is_test_data_active 플래그로
+ *     테스트 샌드박스 노출 여부를 제어합니다.
  * =====================================================================
  */
+
+export const CURRENT_VIEWER_TEST_ACCOUNT_KEY = 'byclan_current_is_test_account';
 
 /**
  * TEST_MODE_SETTING_KEY
@@ -46,14 +43,18 @@ export const TEST_ACCOUNT_SETTING_EVENT = 'byclan:test-account-setting-changed';
  * - Supabase 쿼리에서 테스트 계정을 필터링할 때 사용하는 조건 문자열입니다.
  * - 현재 미사용 상태 (DB 컬럼 추가 후 활성화 예정)
  */
-export const TEST_ACCOUNT_FILTER = 'is_test_account.is.null,is_test_account_active.eq.true';
+export const TEST_ACCOUNT_FILTER = 'is_test_account.eq.true,is_test_account_active.eq.true';
 
 /**
  * TEST_DATA_FILTER
  * - Supabase 쿼리에서 테스트 데이터를 필터링할 때 사용하는 조건 문자열입니다.
  * - 현재 미사용 상태 (DB 컬럼 추가 후 활성화 예정)
  */
-export const TEST_DATA_FILTER = 'is_test_data.is.null,is_test_data_active.eq.true';
+export const TEST_DATA_FILTER = 'is_test_data.eq.true,is_test_data_active.eq.true';
+
+export const NON_TEST_ACCOUNT_FILTER = 'is_test_account.is.null,is_test_account.eq.false';
+
+export const NON_TEST_DATA_FILTER = 'is_test_data.is.null,is_test_data.eq.false';
 
 /**
  * TEST_ACCOUNT_NAMES
@@ -73,6 +74,25 @@ export const TEST_ACCOUNT_NAMES = [
   'test10',
 ];
 
+function isBrowser() {
+  return typeof window !== 'undefined';
+}
+
+export function setCurrentViewerTestAccountFlag(isTestAccount) {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(CURRENT_VIEWER_TEST_ACCOUNT_KEY, isTestAccount ? 'true' : 'false');
+}
+
+export function clearCurrentViewerTestAccountFlag() {
+  if (!isBrowser()) return;
+  window.localStorage.removeItem(CURRENT_VIEWER_TEST_ACCOUNT_KEY);
+}
+
+export function isCurrentViewerTestAccount() {
+  if (!isBrowser()) return false;
+  return window.localStorage.getItem(CURRENT_VIEWER_TEST_ACCOUNT_KEY) === 'true';
+}
+
 /**
  * filterVisibleTestAccounts(query)
  * - Supabase 쿼리에서 테스트 계정을 숨기는 필터를 적용합니다.
@@ -85,10 +105,10 @@ export const TEST_ACCOUNT_NAMES = [
  * 반환값: 필터가 적용된 쿼리 (현재는 입력 그대로 반환)
  */
 export function filterVisibleTestAccounts(query) {
-  // NOTE: Filtering requires `is_test_account` and `is_test_account_active` columns
-  // in the profiles table. Until those columns are added to the DB, this function
-  // is intentionally a no-op so that queries are not broken by missing columns.
-  return query;
+  if (isCurrentViewerTestAccount()) {
+    return query.eq('is_test_account', true).eq('is_test_account_active', true);
+  }
+  return query.or(NON_TEST_ACCOUNT_FILTER);
 }
 
 /**
@@ -103,10 +123,10 @@ export function filterVisibleTestAccounts(query) {
  * 반환값: 필터가 적용된 쿼리 (현재는 입력 그대로 반환)
  */
 export function filterVisibleTestData(query) {
-  // NOTE: Filtering requires `is_test_data` and `is_test_data_active` columns in
-  // the relevant tables. Until those columns are added to the DB, this function
-  // is intentionally a no-op so that queries are not broken by missing columns.
-  return query;
+  if (isCurrentViewerTestAccount()) {
+    return query.eq('is_test_data', true).eq('is_test_data_active', true);
+  }
+  return query.or(NON_TEST_DATA_FILTER);
 }
 
 /**

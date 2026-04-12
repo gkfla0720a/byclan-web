@@ -38,6 +38,7 @@ import type { AuthProfile as UserProfile } from '@/types/domain';
 import { extractAccountIdFromAuthUser } from '../utils/accountId';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { withRetry, isRetryableError } from '../utils/retry';
+import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '../utils/testData';
 import logger, { Severity } from '../utils/errorLogger';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -357,6 +358,15 @@ function _updateHomeGateStore(value: boolean): void {
   _homeGateListeners.forEach(l => l());
 }
 
+function syncViewerTestAccountFlag(profile: UserProfile | null): void {
+  if (typeof window === 'undefined') return;
+  if (!profile) {
+    clearCurrentViewerTestAccountFlag();
+    return;
+  }
+  setCurrentViewerTestAccountFlag(Boolean(profile.is_test_account));
+}
+
 // homeGateReady never changes after mount (client = true, server = false),
 // so no subscription is needed; this noop satisfies the useSyncExternalStore API.
 const _noopSubscribe = () => () => {};
@@ -474,6 +484,7 @@ export function useAuth(): UseAuthReturn {
     if (!authUser) {
       setUser(null);
       setProfile(null);
+      syncViewerTestAccountFlag(null);
       setAuthLoading(false);
       return;
     }
@@ -540,6 +551,7 @@ export function useAuth(): UseAuthReturn {
         const normalizedNewProfile = normalizeProfileRow(newProfile as Record<string, unknown>);
         const syncedProfile = await syncSocialProfileData(authUser, normalizedNewProfile as UserProfile);
         setProfile(syncedProfile);
+        syncViewerTestAccountFlag(syncedProfile);
         setNeedsSetup(false);
         setAuthLoading(false);
         return;
@@ -555,6 +567,7 @@ export function useAuth(): UseAuthReturn {
     nextProfile = await syncSocialProfileData(authUser, nextProfile);
 
     setProfile(nextProfile);
+    syncViewerTestAccountFlag(nextProfile);
 
     if (nextProfile.role === 'visitor' || nextProfile.role === 'applicant') {
       setNeedsSetup(false);
@@ -600,6 +613,7 @@ export function useAuth(): UseAuthReturn {
       if (error || !data?.user) {
         setUser(null);
         setProfile(null);
+        syncViewerTestAccountFlag(null);
         setActiveMatchId(null);
         setAuthLoading(false);
         return;
@@ -630,6 +644,7 @@ export function useAuth(): UseAuthReturn {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
+        syncViewerTestAccountFlag(null);
         setActiveMatchId(null);
         setAuthLoading(false);
         return;
@@ -711,7 +726,11 @@ export function useAuth(): UseAuthReturn {
             }
             return;
           }
-          if (data) setProfile(normalizeProfileRow(data as Record<string, unknown>));
+          if (data) {
+            const nextProfile = normalizeProfileRow(data as Record<string, unknown>);
+            setProfile(nextProfile);
+            syncViewerTestAccountFlag(nextProfile);
+          }
         } catch (error) {
           logger.error('프로필 로드 중 오류 발생', error);
           setAuthError('프로필을 불러오는 데 실패했습니다.');
@@ -751,7 +770,11 @@ export function useAuth(): UseAuthReturn {
         }
         return;
       }
-      if (data) setProfile(normalizeProfileRow(data as Record<string, unknown>));
+      if (data) {
+        const nextProfile = normalizeProfileRow(data as Record<string, unknown>);
+        setProfile(nextProfile);
+        syncViewerTestAccountFlag(nextProfile);
+      }
     } catch (error) {
       logger.error('프로필 재로드 중 오류 발생', error);
       setAuthError('프로필을 새로고침하는 데 실패했습니다.');

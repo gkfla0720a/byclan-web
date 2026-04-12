@@ -21,7 +21,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
+import { filterVisibleTestAccounts } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
 /**
@@ -95,7 +95,7 @@ export default function LadderPreview({ isGuest }) {
 
         if (rows.length === 0) {
           // 2단계: 대기열이 비어 있으면 profiles 기준 상위 5명 조회
-          const profileResult = await filterVisibleTestData(
+          const profileResult = await filterVisibleTestAccounts(
             supabase
               .from('profiles')
               .select('id, by_id, race, ladder_mmr, is_in_queue')
@@ -107,9 +107,9 @@ export default function LadderPreview({ isGuest }) {
           );
 
           // ladders 테이블 컬럼명이 profiles와 다를 수 있어 통일된 구조로 변환
-          rows = (ladderResult.data || []).map((row, index) => ({
+          rows = (profileResult.data || []).map((row, index) => ({
             id: row.id || `ladder-${index}`,
-            by_id: row.nickname || row.name || row.by_id,
+            by_id: row.by_id,
             race: row.race,
             clan_point: row.ladder_mmr ?? 1000,
             is_in_queue: false,

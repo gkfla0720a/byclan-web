@@ -126,6 +126,7 @@ export default function CommunityBoard() {
     }
 
     const discordName = user.user_metadata?.full_name || user.user_metadata?.name || '바클유저';
+    const isTestAuthor = Boolean(profile?.is_test_account);
 
     const { error } = await supabase
       .from('posts')
@@ -134,7 +135,9 @@ export default function CommunityBoard() {
           title: title, 
           content: content, 
           user_id: user.id,
-          author_name: discordName
+          author_name: discordName,
+          is_test_data: isTestAuthor,
+          is_test_data_active: isTestAuthor,
         }
       ]);
 

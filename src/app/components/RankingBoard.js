@@ -20,7 +20,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase'; // ✅ 수정1
-import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
+import { filterVisibleTestAccounts, isMarkedTestData } from '@/app/utils/testData';
 
 /**
  * 래더 랭킹 보드 컴포넌트
@@ -44,7 +44,7 @@ export default function RankingBoard() {
   useEffect(() => {
     const fetchRankings = async () => {
       try {
-        const { data, error: fetchError } = await filterVisibleTestData(supabase
+        const { data, error: fetchError } = await filterVisibleTestAccounts(supabase
           .from('profiles')
           .select('id, by_id, race, clan_point, wins, losses')
           .neq('role', 'visitor')
