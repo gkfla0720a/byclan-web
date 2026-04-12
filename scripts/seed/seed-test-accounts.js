@@ -327,7 +327,11 @@ async function run() {
       const hash = await bcrypt.hash(t.password, 10);
       const now  = new Date().toISOString();
       const authEmail = buildAuthEmail(t.login_id);
-      const metaJson = JSON.stringify({ discord_name: t.discord }).replace(/'/g, "''");
+      const metaJson = JSON.stringify({
+        discord_name: t.discord,
+        login_id: t.login_id,
+        display_name: t.by_id,
+      }).replace(/'/g, "''");
       const identityJson = JSON.stringify({
         sub: t.id, email: authEmail, email_verified: true,
       }).replace(/'/g, "''");
@@ -362,11 +366,19 @@ async function run() {
           '${now}'::timestamptz, '${now}'::timestamptz
         )
         ON CONFLICT (id) DO UPDATE
-          SET encrypted_password = EXCLUDED.encrypted_password,
+          SET email = EXCLUDED.email,
+              encrypted_password = EXCLUDED.encrypted_password,
+              raw_user_meta_data = EXCLUDED.raw_user_meta_data,
               updated_at = NOW()
       `);
 
-      // auth.identities
+      // auth.identities: 사용자당 email identity를 1개로 유지
+      await client.query(`
+        DELETE FROM auth.identities
+        WHERE user_id = '${t.id}'::uuid
+          AND provider = 'email'
+      `);
+
       await client.query(`
         INSERT INTO auth.identities (
           id, provider_id, user_id,
@@ -377,7 +389,6 @@ async function run() {
           '${identityJson}'::jsonb, 'email',
           '${now}'::timestamptz, '${now}'::timestamptz, '${now}'::timestamptz
         )
-        ON CONFLICT (provider, provider_id) DO NOTHING
       `);
 
       console.log(`  ✓ ${t.login_id}  (${t.by_id} / ${t.role})`);
