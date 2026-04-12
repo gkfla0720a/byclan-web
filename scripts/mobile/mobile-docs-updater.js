@@ -12,7 +12,7 @@ export function updateMobileGuide() {
 
 ### 1. 프로젝트 상황 파악
 \`\`\`javascript
-// mobile-analyzer.js 파일 열고 확인
+// scripts/mobile/mobile-analyzer.js 파일 열고 확인
 import { PROJECT_INFO, CURRENT_STATUS } from './mobile-analyzer.js';
 console.log(PROJECT_INFO);
 console.log(CURRENT_STATUS);

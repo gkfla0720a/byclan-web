@@ -33,8 +33,8 @@ ByClan Web 프로젝트를 단계별로 학습하기 위한 가이드입니다. 
 | 순서 | 파일 | 핵심 내용 |
 |------|------|--------|
 | 1 | `README.md` | 프로젝트 소개 및 빠른 시작 |
-| 2 | `ENVIRONMENT-SETUP.md` | 로컬 개발 환경 설정 |
-| 3 | `CODE-STRUCTURE.md` | 전체 파일 구조 설명 |
+| 2 | `docs/guides/ENVIRONMENT-SETUP.md` | 로컬 개발 환경 설정 |
+| 3 | `docs/CODE-STRUCTURE.md` | 전체 파일 구조 설명 |
 | 4 | `docs/ARCHITECTURE-DIAGRAMS.md` | 시각화된 아키텍처 |
 | 5 | `package.json` | 사용 중인 라이브러리 목록 |
 | 6 | `next.config.mjs` | Next.js 설정 |
@@ -312,11 +312,11 @@ npm run build
 
 | 문서 | 내용 |
 |------|------|
-| `DATABASE-GUIDE.md` | DB 스키마, RLS 정책, 쿼리 예시 |
-| `DATABASE-QUERIES.sql` | 자주 쓰는 SQL 쿼리 모음 |
-| `AUTH-TEST-ACCOUNT-STRATEGY.md` | 테스트 계정 사용 전략 |
-| `MOBILE-GUIDE.md` | 모바일 반응형 개발 가이드 |
-| `WORKLOG_NEXT_STEPS.txt` | 진행 중인 작업 및 다음 단계 |
+| `docs/guides/DATABASE-GUIDE.md` | DB 스키마, RLS 정책, 쿼리 예시 |
+| `sql/queries/DATABASE-QUERIES.sql` | 자주 쓰는 SQL 쿼리 모음 |
+| `docs/guides/AUTH-TEST-ACCOUNT-STRATEGY.md` | 테스트 계정 사용 전략 |
+| `docs/guides/MOBILE-GUIDE.md` | 모바일 반응형 개발 가이드 |
+| `docs/worklog/WORKLOG_NEXT_STEPS.txt` | 진행 중인 작업 및 다음 단계 |
 
 ---
 

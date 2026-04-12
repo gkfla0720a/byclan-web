@@ -25,7 +25,7 @@ async function main() {
     `);
 
     if (testProfiles.rows.length < 5) {
-      throw new Error('테스트 계정 5개가 필요합니다. seed-test-accounts.js를 먼저 실행하세요.');
+      throw new Error('테스트 계정 5개가 필요합니다. scripts/seed/seed-test-accounts.js를 먼저 실행하세요.');
     }
 
     const [T1, T2, T3, T4, T5] = testProfiles.rows.map(r => r.id);

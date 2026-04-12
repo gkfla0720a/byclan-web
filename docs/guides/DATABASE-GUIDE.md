@@ -9,7 +9,7 @@
 1. [데이터베이스란?](#1-데이터베이스란)
 2. [ByClan이 사용하는 Supabase란?](#2-byclan이-사용하는-supabase란)
 3. [테이블 구조 상세 설명](#3-테이블-구조-상세-설명)
-4. [SQL 쿼리 파일 분석 (DATABASE-QUERIES.sql)](#4-sql-쿼리-파일-분석)
+4. [SQL 쿼리 파일 분석 (sql/queries/DATABASE-QUERIES.sql)](#4-sql-쿼리-파일-분석)
 5. [데이터 흐름 (어떻게 연결되나?)](#5-데이터-흐름)
 6. [RLS (행 수준 보안) 이해하기](#6-rls-행-수준-보안)
 7. [인덱스 (성능 최적화)](#7-인덱스)
@@ -154,7 +154,7 @@ ByClan 클랜원의 모든 정보를 저장합니다.
 
 ### 3-5. `promotion_logs` 테이블 (승격 기록)
 
-역할 변경 이력을 저장합니다. (DATABASE-QUERIES.sql에서 생성)
+역할 변경 이력을 저장합니다. (`sql/queries/DATABASE-QUERIES.sql`에서 생성)
 
 | 컬럼명 | 타입 | 설명 |
 |--------|------|------|
@@ -197,7 +197,7 @@ ByClan 클랜원의 모든 정보를 저장합니다.
 
 ## 4. SQL 쿼리 파일 분석
 
-### DATABASE-QUERIES.sql 섹션별 설명
+### sql/queries/DATABASE-QUERIES.sql 섹션별 설명
 
 이 파일은 **Supabase SQL Editor**에서 직접 실행하는 관리용 쿼리 모음입니다.
 
@@ -348,7 +348,7 @@ CREATE TABLE profiles_backup AS SELECT * FROM profiles;
 - 다른 사람의 비밀 데이터는 볼 수 없음
 - 관리자는 모든 데이터 조회 가능
 
-### MATCH-BETS-RLS.sql 분석
+### sql/policies/MATCH-BETS-RLS.sql 분석
 
 ```sql
 -- match_bets 테이블에 RLS 활성화
@@ -551,20 +551,20 @@ const channel = supabase
 
 | 파일명 | 역할 | 실행 시점 |
 |--------|------|-----------|
-| `DATABASE-QUERIES.sql` | 구조 확인, 컬럼 추가, 인덱스 생성, 데이터 조회 등 일반 관리 쿼리 모음 | 필요할 때마다 |
-| `MATCH-BETS-RLS.sql` | match_bets 테이블 RLS(보안 정책) 설정 | 최초 1회 |
-| `TEST-DATA-SEED.sql` | 개발용 테스트 계정(test1~test10) 및 데이터 생성 | 개발 환경에서만 |
-| `STREAMER-FIELDS-MIGRATION.sql` | 스트리머 관련 필드 추가 마이그레이션 | 해당 기능 배포 시 |
-| `PROFILE-DATA-BACKFILL.sql` | 기존 프로필 데이터 보완/정리 | 데이터 정합성 작업 시 |
+| `sql/queries/DATABASE-QUERIES.sql` | 구조 확인, 컬럼 추가, 인덱스 생성, 데이터 조회 등 일반 관리 쿼리 모음 | 필요할 때마다 |
+| `sql/policies/MATCH-BETS-RLS.sql` | match_bets 테이블 RLS(보안 정책) 설정 | 최초 1회 |
+| `sql/migrations/TEST-DATA-SEED.sql` | 개발용 테스트 계정 및 데이터 생성 | 개발 환경에서만 |
+| `sql/migrations/STREAMER-FIELDS-MIGRATION.sql` | 스트리머 관련 필드 추가 마이그레이션 | 해당 기능 배포 시 |
+| `sql/migrations/PROFILE-DATA-BACKFILL.sql` | 기존 프로필 데이터 보완/정리 | 데이터 정합성 작업 시 |
 
 ### 실행 권장 순서 (처음 설정할 때)
 
 ```
-1단계: DATABASE-QUERIES.sql (섹션 1,3,5) - 현재 구조 확인
-2단계: DATABASE-QUERIES.sql (섹션 2,5)  - 필요한 테이블/컬럼 추가
-3단계: MATCH-BETS-RLS.sql               - 보안 정책 설정
-4단계: DATABASE-QUERIES.sql (섹션 10)   - 인덱스 생성
-5단계: TEST-DATA-SEED.sql               - 개발용 테스트 데이터 (개발 환경만)
+1단계: sql/queries/DATABASE-QUERIES.sql (섹션 1,3,5) - 현재 구조 확인
+2단계: sql/queries/DATABASE-QUERIES.sql (섹션 2,5)  - 필요한 테이블/컬럼 추가
+3단계: sql/policies/MATCH-BETS-RLS.sql               - 보안 정책 설정
+4단계: sql/queries/DATABASE-QUERIES.sql (섹션 10)   - 인덱스 생성
+5단계: sql/migrations/TEST-DATA-SEED.sql             - 개발용 테스트 데이터 (개발 환경만)
 ```
 
 > ⚠️ **주의:** 섹션 11 (데이터 삭제), 섹션 15 (백업)은 반드시 데이터 상태를 확인 후 신중하게 실행하세요.

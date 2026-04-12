@@ -1,5 +1,5 @@
 /**
- * seed-test-accounts.js
+ * scripts/seed/seed-test-accounts.js
  * ─────────────────────────────────────────────────────────────────────────────
  * 로그인 가능한 테스트 계정 30개 생성 + 3v3/4v4 경기 기록 + 샘플 데이터 시딩
  *
@@ -9,8 +9,8 @@
  *
  * 내부 Auth 이메일은 자동으로 <아이디>@auth.byclan.local 형식으로 생성됩니다.
  *
- * 실행: node seed-test-accounts.js
- * 초기화: node seed-test-accounts.js --reset
+ * 실행: node scripts/seed/seed-test-accounts.js
+ * 초기화: node scripts/seed/seed-test-accounts.js --reset
  * ─────────────────────────────────────────────────────────────────────────────
  */
 

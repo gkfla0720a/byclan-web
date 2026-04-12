@@ -188,10 +188,10 @@ byclan-web/
 ├── 📁 src/database.sql                  ← DB 초기화 스크립트
 ├── 📁 public/                           ← 정적 파일
 │
-├── 📄 docs/                             ← 개발 문서 (현재 위치)
-├── 📄 CODE-STRUCTURE.md                 ← 전체 파일 구조 설명
-├── 📄 DATABASE-GUIDE.md                 ← DB 스키마 및 RLS 가이드
-├── 📄 ENVIRONMENT-SETUP.md              ← 로컬 환경 설정
+├── 📄 docs/                             ← 개발 문서 루트
+├── 📄 docs/CODE-STRUCTURE.md            ← 전체 파일 구조 설명
+├── 📄 docs/guides/DATABASE-GUIDE.md     ← DB 스키마 및 RLS 가이드
+├── 📄 docs/guides/ENVIRONMENT-SETUP.md  ← 로컬 환경 설정
 ├── 📄 package.json                      ← 프로젝트 의존성
 ├── 📄 next.config.mjs                   ← Next.js 설정
 ├── 📄 tsconfig.json                     ← TypeScript 설정 (allowJs: true, strict: false — JS→TS 점진적 마이그레이션 중)
@@ -324,4 +324,4 @@ ByClan Web 상태 관리 전략
   └──────────────────┘
 ```
 
-> 📘 더 자세한 스키마: [DATABASE-GUIDE.md](../DATABASE-GUIDE.md)
+> 📘 더 자세한 스키마: [guides/DATABASE-GUIDE.md](./guides/DATABASE-GUIDE.md)

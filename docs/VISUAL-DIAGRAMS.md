@@ -22,9 +22,9 @@ GitHub에서 자동으로 렌더링되며, 별도 도구 없이 바로 확인할
 
 | 문서 | 설명 |
 |------|------|
-| [CODE-STRUCTURE.md](../CODE-STRUCTURE.md) | 전체 코드 구조 (텍스트) |
-| [DATABASE-GUIDE.md](../DATABASE-GUIDE.md) | DB 스키마 및 쿼리 가이드 |
-| [ENVIRONMENT-SETUP.md](../ENVIRONMENT-SETUP.md) | 개발 환경 설정 |
+| [CODE-STRUCTURE.md](./CODE-STRUCTURE.md) | 전체 코드 구조 (텍스트) |
+| [guides/DATABASE-GUIDE.md](./guides/DATABASE-GUIDE.md) | DB 스키마 및 쿼리 가이드 |
+| [guides/ENVIRONMENT-SETUP.md](./guides/ENVIRONMENT-SETUP.md) | 개발 환경 설정 |
 
 ---
 

@@ -6,7 +6,7 @@ Completed in this phase
 - Verified production build success with npm run build.
 
 2) Supabase seed/data hardening
-- Hardened TEST-DATA-SEED.sql and related seed paths against schema drift.
+- Hardened sql/migrations/TEST-DATA-SEED.sql and related seed paths against schema drift.
 - Added safer backfill/default handling for profiles and related tables.
 - Improved compatibility for running SQL directly in Supabase SQL Editor.
 
@@ -51,7 +51,7 @@ Completed in this phase
 - Kept developer role immutable in management flows.
 
 10) Security and privileged-action hardening
-- Added MATCH-BETS-RLS.sql to enable RLS on public.match_bets and restrict access to the authenticated owner.
+- Added sql/policies/MATCH-BETS-RLS.sql to enable RLS on public.match_bets and restrict access to the authenticated owner.
 - Updated GuildManagement so master delegation now requires recent step-up verification before execution.
 - Supported two delegation verification paths in the client flow: password re-check and email OTP verification.
 - Removed direct master promotion from the normal role-change dropdown to avoid bypassing the delegation flow.
@@ -66,7 +66,7 @@ Important files touched recently
 - src/app/components/ProfileSidebar.js
 - src/app/components/VisitorWelcome.js
 - src/app/components/MyProfile.js
-- MATCH-BETS-RLS.sql
+- sql/policies/MATCH-BETS-RLS.sql
 
 Recommended next work
 1) Validate the new master delegation flow with real accounts.
@@ -78,7 +78,7 @@ Recommended next work
 - Current client flow improves UX/security gating, but final authority is still DB-policy dependent.
 - A server-side verified action would be the stronger long-term model for master delegation and high-risk role changes.
 
-3) Apply MATCH-BETS-RLS.sql in Supabase SQL Editor if not already executed.
+3) Apply sql/policies/MATCH-BETS-RLS.sql in Supabase SQL Editor if not already executed.
 - Re-test betting create/read behavior after enabling RLS.
 - Add update/delete policies only if the product truly needs them.
 
@@ -109,13 +109,13 @@ ByClan OAuth handoff note (2026-04-04)
 Test data SQL hardening note (2026-04-05)
 
 Done today
-1) TEST-DATA-SEED.sql was hardened against schema drift across profiles, ladders, admin_posts, posts, applications, notifications, ladder_matches.
+1) sql/migrations/TEST-DATA-SEED.sql was hardened against schema drift across profiles, ladders, admin_posts, posts, applications, notifications, ladder_matches.
 2) Most content seed blocks now inspect information_schema.columns before building inserts.
 3) Check/query sections at the bottom now avoid hard dependency on optional columns like discord_id and discord_name.
 4) Added a profiles backfill block so existing real accounts also receive safe defaults for ByID, role, race, intro, ladder_points, queue flags, and test flags when values are missing.
 
 Before next test
-1) Run the full TEST-DATA-SEED.sql again in Supabase SQL Editor.
+1) Run the full sql/migrations/TEST-DATA-SEED.sql again in Supabase SQL Editor.
 2) If it fails, capture the exact table name, constraint name, and failing column/value.
 3) Verify bottom inspection queries complete without column errors.
 

@@ -11,7 +11,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:test-data": "node seed-test-data.cjs"
+    "seed:test-data": "node scripts/seed/seed-test-data.cjs",
+    "seed:test-accounts": "node scripts/seed/seed-test-accounts.js",
+    "seed:test-accounts:reset": "node scripts/seed/seed-test-accounts.js --reset",
+    "verify:mmr-workflow": "node scripts/verification/simulate-workflow-and-mmr.js"
   },
   "dependencies": {
     "@sentry/browser": "^10.47.0",

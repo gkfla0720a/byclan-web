@@ -15,7 +15,7 @@ ByClan Web 프로젝트의 코드 품질 및 주석 분석 리포트입니다.
 | **타입 안정성** | ⭐⭐⭐⭐ | TypeScript 사용 + 인터페이스 정의 |
 | **권한 관리** | ⭐⭐⭐⭐⭐ | 중앙 관리식 (ROLE_PERMISSIONS) |
 | **에러 처리** | ⭐⭐⭐⭐ | errorLogger + retry 로직 |
-| **문서화** | ⭐⭐⭐⭐⭐ | CODE-STRUCTURE.md 완비 |
+| **문서화** | ⭐⭐⭐⭐⭐ | docs/CODE-STRUCTURE.md 완비 |
 | **가독성** | ⭐⭐⭐⭐⭐ | 명확한 변수명과 한글 주석 |
 | **재사용성** | ⭐⭐⭐⭐ | Context/Hooks 패턴 일관 적용 |
 
