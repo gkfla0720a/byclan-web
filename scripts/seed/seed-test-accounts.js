@@ -25,7 +25,7 @@ const DB_URL = process.env.DB_URL ||
 const IS_RESET = process.argv.includes('--reset');
 
 function buildAuthEmail(loginId) {
-  return `${loginId}@auth.byclan.local`;
+  return `login.${loginId.toLowerCase().replace(/[^a-z0-9]/g, '')}@auth.byclan.local`;
 }
 
 function pad2(n) {
