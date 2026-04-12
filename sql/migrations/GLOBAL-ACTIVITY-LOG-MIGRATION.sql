@@ -214,9 +214,16 @@ SET search_path = public
 AS $$
 DECLARE
   v_user_id uuid;
+  v_row     jsonb;
 BEGIN
-  -- posts.user_id / admin_posts.author_id 공통 처리
-  v_user_id := COALESCE(NEW.user_id, NEW.author_id);
+  -- posts(user_id) / admin_posts(author_id) 공통 처리
+  -- NEW.column 직접 접근 시 존재하지 않는 컬럼이면 오류가 발생하므로
+  -- row_to_json() 으로 변환 후 안전하게 추출한다.
+  v_row := row_to_json(NEW)::jsonb;
+  v_user_id := COALESCE(
+    (v_row->>'user_id')::uuid,
+    (v_row->>'author_id')::uuid
+  );
 
   INSERT INTO public.activity_logs (
     category, action_type, source_type,
@@ -226,7 +233,7 @@ BEGIN
     'post', 'post_create', 'trigger',
     v_user_id, TG_TABLE_NAME, NEW.id::text,
     '게시글 작성',
-    to_jsonb(NEW)
+    v_row
   );
 
   RETURN NEW;
