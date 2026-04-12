@@ -34,6 +34,7 @@
  */
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
+import type { AuthProfile as UserProfile } from '@/types/domain';
 import { extractAccountIdFromAuthUser } from '../utils/accountId';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { withRetry, isRetryableError } from '../utils/retry';
@@ -59,26 +60,7 @@ import logger, { Severity } from '../utils/errorLogger';
  *   queue_joined_at: 대기열 합류 시간 (선택)
  */
 
-export interface UserProfile {
-  id: string;
-  by_id: string;
-  discord_id?: string | null;
-  google_sub?: string | null;
-  google_email?: string | null;
-  google_name?: string | null;
-  google_avatar_url?: string | null;
-  auth_provider?: string | null;
-  role: string;
-  clan_point: number;
-  race: string;
-  intro: string;
-  is_in_queue: boolean;
-  vote_to_start: boolean;
-  wins?: number;
-  losses?: number;
-  queue_joined_at?: string | null;
-  [key: string]: unknown;
-}
+export type { UserProfile };
 
 /**
  * AuthPermissions
