@@ -377,6 +377,53 @@ export default function MatchCenter({ matchId, onExit }) {
     if (error) alert('강제 철회 실패: ' + error.message);
   };
 
+  const handleSetWin = async (winnerTeam) => {
+    if (!currentSet || !isManagementRole) return;
+    try {
+      const { error } = await supabase
+        .from('match_sets')
+        .update({
+          winner_team: winnerTeam,
+          status: '완료',
+          team_a_ready: false,
+          team_b_ready: false,
+          team_a_withdraw_req: false,
+          team_b_withdraw_req: false,
+        })
+        .eq('id', currentSet.id);
+
+      if (error) throw error;
+
+      const needWins = Number(match?.match_type) >= 5 ? 4 : 3;
+      const nextA = (match?.score_a || 0) + (winnerTeam === 'A' ? 1 : 0);
+      const nextB = (match?.score_b || 0) + (winnerTeam === 'B' ? 1 : 0);
+      const matchEnded = nextA >= needWins || nextB >= needWins;
+
+      if (!matchEnded) {
+        const nextSetNo = (match?.match_sets?.length || 0) + 1;
+        const { error: insertErr } = await supabase
+          .from('match_sets')
+          .insert({
+            match_id: matchId,
+            set_number: nextSetNo,
+            race_type: match?.match_type || '4v4',
+            status: '엔트리제출중',
+            race_cards: getRaceCards(raceCombo),
+            team_a_ready: false,
+            team_b_ready: false,
+          });
+        if (insertErr && !String(insertErr.message || '').includes('duplicate')) {
+          throw insertErr;
+        }
+      }
+
+      await fetchMatchData();
+      alert(`세트 결과 반영 완료: TEAM ${winnerTeam} 승리`);
+    } catch (err) {
+      alert('세트 결과 반영 실패: ' + err.message);
+    }
+  };
+
   /**
    * 포인트 베팅을 처리합니다.
    * - 자신의 팀에는 베팅할 수 없습니다.
@@ -815,6 +862,28 @@ export default function MatchCenter({ matchId, onExit }) {
             >
               {selectedEntry.every((e) => e.id) ? '엔트리 최종 제출 →' : '모든 슬롯에 선수를 배치하세요'}
             </button>
+          </div>
+        )}
+
+        {isManagementRole && (
+          <div className="mt-5 pt-4 border-t border-gray-700/50">
+            <p className="text-[10px] text-orange-400 font-bold mb-2 uppercase tracking-wider">운영진 세트 결과 처리</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                onClick={() => handleSetWin('A')}
+                disabled={!currentSet || currentSet?.status === '완료'}
+                className="py-2 rounded-lg bg-blue-900/50 border border-blue-700 text-blue-300 font-bold text-xs disabled:opacity-30"
+              >
+                TEAM A 세트 승리 확정
+              </button>
+              <button
+                onClick={() => handleSetWin('B')}
+                disabled={!currentSet || currentSet?.status === '완료'}
+                className="py-2 rounded-lg bg-red-900/50 border border-red-700 text-red-300 font-bold text-xs disabled:opacity-30"
+              >
+                TEAM B 세트 승리 확정
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -81,7 +81,8 @@ function MobileProfileCard({ profile, user, navigateTo }) {
 
   if (!user || !isActiveMember) return null;
 
-  const tier = getTier(profile.clan_point || 1000);
+  const totalMmr = profile.total_mmr ?? ((profile.ladder_mmr ?? 1500) + (profile.team_mmr ?? 0));
+  const tier = getTier(totalMmr || 1000);
   const tierColor = TIER_COLORS[tier] || 'text-gray-400';
   const winRate = getWinRate(profile.wins, profile.losses);
   const race = RACE_LABELS[profile.race] || profile.race || '—';
@@ -107,7 +108,7 @@ function MobileProfileCard({ profile, user, navigateTo }) {
       <div className="ml-auto flex gap-4 text-xs text-right shrink-0">
         <div>
           <div className="text-gray-500">MMR</div>
-          <div className="font-black text-yellow-400">{profile.clan_point ?? 1000}</div>
+          <div className="font-black text-yellow-400">{totalMmr}</div>
         </div>
         <div>
           <div className="text-gray-500">승률</div>
@@ -164,11 +165,11 @@ function HomeContent({ profile = null, user = null }) {
 
       const { data: rankData } = await filterVisibleTestAccounts(supabase
         .from('profiles')
-        .select('id, by_id, clan_point')
+        .select('id, by_id, total_mmr, ladder_mmr, team_mmr')
         .neq('role', 'visitor')
         .neq('role', 'applicant')
         .neq('role', 'expelled')
-        .order('clan_point', { ascending: false })
+        .order('total_mmr', { ascending: false })
         .limit(3));
 
       const { data: noticeData } = await filterVisibleTestData(supabase
@@ -288,7 +289,7 @@ function HomeContent({ profile = null, user = null }) {
                    <span className="text-yellow-500 mr-1">{index + 1}위</span> {p.by_id || '[by_id 없음]'}
                    {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
                  </span>
-                 <span className="font-bold text-cyan-400 text-sm">MMR {p.clan_point}점</span>
+                 <span className="font-bold text-cyan-400 text-sm">MMR {p.total_mmr ?? ((p.ladder_mmr ?? 1500) + (p.team_mmr ?? 0))}점</span>
                </div>
              ))
             }

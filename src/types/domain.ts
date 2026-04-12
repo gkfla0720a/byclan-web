@@ -39,6 +39,8 @@ export interface ProfileRow extends TestDataFlags {
   race: RaceCode | null;
   intro: string | null;
   ladder_mmr: number | null;
+  team_mmr?: number | null;
+  total_mmr?: number | null;
   is_in_queue: boolean | null;
   vote_to_start: boolean | null;
   is_test_account: boolean | null;

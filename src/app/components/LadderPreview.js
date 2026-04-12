@@ -98,11 +98,11 @@ export default function LadderPreview({ isGuest }) {
           const profileResult = await filterVisibleTestAccounts(
             supabase
               .from('profiles')
-              .select('id, by_id, race, ladder_mmr, is_in_queue')
+              .select('id, by_id, race, ladder_mmr, team_mmr, total_mmr, is_in_queue')
               .neq('role', 'visitor')
               .neq('role', 'applicant')
               .neq('role', 'expelled')
-              .order('ladder_mmr', { ascending: false })
+              .order('total_mmr', { ascending: false })
               .limit(5)
           );
 
@@ -111,7 +111,7 @@ export default function LadderPreview({ isGuest }) {
             id: row.id || `ladder-${index}`,
             by_id: row.by_id,
             race: row.race,
-            clan_point: row.ladder_mmr ?? 1000,
+            clan_point: row.total_mmr ?? ((row.ladder_mmr ?? 1500) + (row.team_mmr ?? 0)),
             is_in_queue: false,
           }));
         }

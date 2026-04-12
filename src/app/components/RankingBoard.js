@@ -46,11 +46,11 @@ export default function RankingBoard() {
       try {
         const { data, error: fetchError } = await filterVisibleTestAccounts(supabase
           .from('profiles')
-          .select('id, by_id, race, clan_point, wins, losses')
+          .select('id, by_id, race, ladder_mmr, team_mmr, total_mmr, wins, losses')
           .neq('role', 'visitor')
           .neq('role', 'applicant')
           .neq('role', 'expelled')
-          .order('clan_point', { ascending: false }));
+          .order('total_mmr', { ascending: false }));
         if (fetchError) throw fetchError;
         setRankings(data || []);
       } catch (err) {
@@ -80,7 +80,7 @@ export default function RankingBoard() {
               <th className="py-3 px-4 text-center w-[12%]">순위</th>
               <th className="py-3 px-4 w-[28%]">플레이어</th>
               <th className="py-3 px-4 text-center w-[14%]">종족</th>
-              <th className="py-3 px-4 text-center w-[16%]">MMR</th>
+              <th className="py-3 px-4 text-center w-[16%]">MMR(개인/팀/합산)</th>
               <th className="py-3 px-4 text-center w-[16%]">전적</th>
               <th className="py-3 px-4 text-center w-[14%]">승률</th>
             </tr>
@@ -106,8 +106,12 @@ export default function RankingBoard() {
                   </div>
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-cyan-400 hidden sm:table-cell">{player.race}</td>
-                <td className="py-3 px-4 text-center font-bold text-cyan-300 text-sm sm:text-base drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
-                  {player.clan_point}점
+                <td className="py-3 px-4 text-center font-bold text-cyan-300 text-[11px] sm:text-sm drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
+                  <span className="text-cyan-200">{player.ladder_mmr ?? 1500}</span>
+                  <span className="text-gray-500 mx-1">/</span>
+                  <span className="text-purple-300">{player.team_mmr ?? 0}</span>
+                  <span className="text-gray-500 mx-1">/</span>
+                  <span className="text-yellow-300">{player.total_mmr ?? ((player.ladder_mmr ?? 1500) + (player.team_mmr ?? 0))}</span>
                 </td>
                 <td className="py-3 px-4 text-center text-sm text-gray-400 hidden md:table-cell">
                   <span className="text-emerald-400">{player.wins ?? 0}W</span> / <span className="text-red-400">{player.losses ?? 0}L</span>
