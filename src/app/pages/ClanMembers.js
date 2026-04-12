@@ -27,9 +27,11 @@ const ROLE_SECTIONS = [
   { key: 'leadership', title: '운영진', roles: ['developer', 'master', 'admin'] },
   { key: 'elite', title: '정예 길드원', roles: ['elite'] },
   { key: 'members', title: '길드원', roles: ['member', 'rookie', 'associate'] },
+  { key: 'applicants', title: '가입 신청자', roles: ['applicant'] },
+  { key: 'visitors', title: '방문자', roles: ['visitor'] },
 ];
 
-const VISIBLE_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie', 'associate'];
+const VISIBLE_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie', 'associate', 'applicant', 'visitor'];
 const INLINE_ROLE_OPTIONS = [
   { value: 'applicant', label: '신규 가입자' },
   { value: 'member', label: '일반 클랜원' },
@@ -104,8 +106,6 @@ async function fetchMembersWithSchemaFallback() {
       supabase
         .from('profiles')
         .select(columns)
-        .neq('role', 'visitor')
-        .neq('role', 'applicant')
         .neq('role', 'expelled')
         .order('clan_point', { ascending: false })
     );
