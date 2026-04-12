@@ -19,6 +19,8 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
+const PAGE_SIZE = 30;
+
 /** 경기 상태별 배지 스타일 클래스를 반환합니다. */
 function getStatusStyle(status) {
   switch (status) {
@@ -53,6 +55,46 @@ function raceCardsLabel(cards) {
   return cards.map(raceLabel).join('·');
 }
 
+/** race_cards 배열을 영문 조합코드(PPP/PPT/PPZ/PZT/OTHER)로 변환합니다. */
+function raceComboCode(cards) {
+  if (!Array.isArray(cards) || cards.length !== 3) return 'OTHER';
+  const map = { Protoss: 'P', Terran: 'T', Zerg: 'Z' };
+  const code = cards
+    .map((r) => map[r] || 'X')
+    .sort()
+    .join('');
+  if (['PPP', 'PPT', 'PPZ', 'PTZ'].includes(code)) return code === 'PTZ' ? 'PZT' : code;
+  return 'OTHER';
+}
+
+function normalizeSetEntry(entry) {
+  if (!entry) return [];
+  if (Array.isArray(entry)) {
+    return entry
+      .map((e) => ({
+        id: e?.id || e?.user_id || null,
+        by_id: e?.by_id || null,
+        race: e?.race || null,
+      }))
+      .filter((e) => e.id);
+  }
+
+  if (Array.isArray(entry.players) && Array.isArray(entry.races)) {
+    return entry.players.map((id, idx) => ({
+      id,
+      by_id: null,
+      race: entry.races[idx] || null,
+    })).filter((e) => e.id);
+  }
+
+  const singleId = entry.id || entry.user_id;
+  if (singleId) {
+    return [{ id: singleId, by_id: entry.by_id || null, race: entry.race || null }];
+  }
+
+  return [];
+}
+
 /**
  * MatchDetailModal 컴포넌트
  *
@@ -72,6 +114,7 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
   const overlayRef = useRef(null);
   /** 현재 경기의 세트별 결과 */
   const [sets, setSets] = useState([]);
+  const [expandedSetNo, setExpandedSetNo] = useState(null);
 
   // 경기가 바뀔 때마다 match_sets 조회
   useEffect(() => {
@@ -79,11 +122,15 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
     let cancelled = false;
     supabase
       .from('match_sets')
-      .select('set_number, winner_team, race_cards, status')
+      .select('set_number, winner_team, race_cards, combo_code, status, team_a_entry, team_b_entry')
       .eq('match_id', m.id)
       .order('set_number', { ascending: true })
       .then(({ data }) => {
-        if (!cancelled) setSets(data || []);
+        if (!cancelled) {
+          const list = data || [];
+          setSets(list);
+          setExpandedSetNo(list[0]?.set_number || null);
+        }
       });
     return () => { cancelled = true; };
   }, [m?.id]);
@@ -128,10 +175,10 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-2 sm:px-4"
       onClick={handleOverlayClick}
     >
-      <div className="relative w-full max-w-lg bg-[#0A1128] border border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.25)] rounded-sm font-mono select-none">
+      <div className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-[#0A1128] border border-cyan-500/50 shadow-[0_0_40px_rgba(6,182,212,0.3)] rounded-sm font-mono select-none">
 
         {/* 상단 바 */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-cyan-500/30 bg-cyan-950/20">
@@ -178,7 +225,7 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
         </div>
 
         {/* 팀 목록 (종족 포함) */}
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 px-4 pb-2 mt-1">
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 px-4 pb-3 mt-1">
           {/* A팀 헤더 */}
           <div className="text-cyan-400 text-xs text-center font-bold pb-1 border-b border-cyan-500/20">A팀</div>
           <div className="border-b border-transparent pb-1" />
@@ -219,28 +266,66 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
           )}
         </div>
 
-        {/* 세트별 결과 */}
+        {/* 세트별 결과 + 클릭 상세 */}
         {sets.length > 0 && (
-          <div className="px-4 pb-3 pt-2 border-t border-cyan-500/10 mx-4">
-            <div className="text-cyan-500/70 text-[9px] font-bold tracking-widest mb-1.5">SET RESULTS</div>
-            <div className="flex flex-wrap gap-1.5">
+          <div className="px-4 pb-4 pt-3 border-t border-cyan-500/10 mx-4">
+            <div className="text-cyan-500/70 text-[10px] font-bold tracking-widest mb-2">SET RESULTS (조합 클릭 시 엔트리 확인)</div>
+            <div className="space-y-1.5">
               {sets.map((s) => {
                 const isActive = !s.winner_team;
                 const isA = s.winner_team === 'A';
                 const isB = s.winner_team === 'B';
+                const combo = s.combo_code || raceComboCode(s.race_cards);
+                const expanded = expandedSetNo === s.set_number;
+                const teamAEntry = normalizeSetEntry(s.team_a_entry);
+                const teamBEntry = normalizeSetEntry(s.team_b_entry);
                 return (
-                  <div
-                    key={s.set_number}
-                    className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border ${
-                      isA ? 'bg-blue-900/40 text-blue-300 border-blue-500/30' :
-                      isB ? 'bg-red-900/40 text-red-300 border-red-500/30' :
-                      'bg-gray-900/40 text-gray-400 border-gray-600/30 animate-pulse'
-                    }`}
-                  >
-                    <span className="text-gray-500">{s.set_number}</span>
-                    <span>{isActive ? '진행중' : isA ? '●A' : '●B'}</span>
-                    {s.race_cards?.length > 0 && (
-                      <span className="text-gray-500 font-normal">{raceCardsLabel(s.race_cards)}</span>
+                  <div key={s.set_number} className="rounded border border-cyan-500/15 bg-slate-950/40">
+                    <div className="flex items-center justify-between px-2 py-1.5 text-[11px]">
+                      <span className="text-slate-500">SET {s.set_number}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`px-1.5 py-0.5 rounded ${isA ? 'bg-blue-900/40 text-blue-300' : 'text-slate-500'}`}>A</span>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedSetNo(expanded ? null : s.set_number)}
+                          className="px-2 py-0.5 rounded border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/20 transition"
+                        >
+                          {combo}
+                        </button>
+                        <span className={`px-1.5 py-0.5 rounded ${isB ? 'bg-red-900/40 text-red-300' : 'text-slate-500'}`}>B</span>
+                      </div>
+                      <span className="text-slate-500">{isActive ? '진행중' : raceCardsLabel(s.race_cards)}</span>
+                    </div>
+
+                    {expanded && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-cyan-500/10 p-2 text-xs">
+                        <div className="rounded border border-blue-500/20 bg-blue-950/10 p-2">
+                          <div className="text-blue-300 text-[11px] font-bold mb-1">A팀 엔트리</div>
+                          {teamAEntry.length === 0 ? (
+                            <div className="text-slate-500">기록 없음</div>
+                          ) : (
+                            teamAEntry.map((e) => (
+                              <div key={`A-${s.set_number}-${e.id}`} className="flex items-center justify-between py-0.5">
+                                <span className="text-slate-200">{e.by_id || profileCache[e.id] || '...'}</span>
+                                <span className="text-yellow-400">{raceLabel(e.race)}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        <div className="rounded border border-red-500/20 bg-red-950/10 p-2">
+                          <div className="text-red-300 text-[11px] font-bold mb-1">B팀 엔트리</div>
+                          {teamBEntry.length === 0 ? (
+                            <div className="text-slate-500">기록 없음</div>
+                          ) : (
+                            teamBEntry.map((e) => (
+                              <div key={`B-${s.set_number}-${e.id}`} className="flex items-center justify-between py-0.5">
+                                <span className="text-slate-200">{e.by_id || profileCache[e.id] || '...'}</span>
+                                <span className="text-yellow-400">{raceLabel(e.race)}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 );
@@ -290,6 +375,7 @@ export default function MatchRecords() {
   const [error, setError] = useState(null);
   /** 상세 팝업에서 현재 선택된 경기 인덱스 (null이면 닫힘) */
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 /**
  * MatchRecords 프로필 캐시
  * 키: user.id (Supabase UUID — 불변 식별자)
@@ -298,7 +384,7 @@ export default function MatchRecords() {
   const [profileCache, setProfileCache] = useState({});
 
   /**
-   * ladder_matches 테이블에서 최신 경기 50건을 불러옵니다.
+  * ladder_matches 테이블에서 최신 경기 목록을 불러옵니다.
    * '완료', '진행중', '제안중' 상태만 표시합니다.
    */
   const fetchMatches = useCallback(async () => {
@@ -316,10 +402,11 @@ export default function MatchRecords() {
           .select('id, match_type, status, score_a, score_b, team_a_ids, team_b_ids, team_a_races, team_b_races, created_at')
           .in('status', ['완료', '진행중', '제안중'])
           .order('created_at', { ascending: false })
-          .limit(50)
+            .limit(300)
       );
       if (fetchError) throw fetchError;
       setMatches(data || []);
+          setCurrentPage(1);
 
       // 경기에 참여한 모든 사용자 ID를 모아 프로필 일괄 조회
       const allIds = new Set();
@@ -360,6 +447,10 @@ export default function MatchRecords() {
       </span>
     ));
   };
+
+  const totalPages = Math.max(1, Math.ceil(matches.length / PAGE_SIZE));
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const pagedMatches = matches.slice(pageStart, pageStart + PAGE_SIZE);
 
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono">
@@ -409,7 +500,7 @@ export default function MatchRecords() {
                 </tr>
               </thead>
               <tbody>
-                {matches.map((m, idx) => (
+                {pagedMatches.map((m, idx) => (
                   <tr
                     key={m.id}
                     onClick={() => setSelectedIndex(idx)}
@@ -442,7 +533,7 @@ export default function MatchRecords() {
 
             {/* 모바일 카드 */}
             <div className="sm:hidden flex flex-col divide-y divide-cyan-500/10">
-              {matches.map((m, idx) => (
+              {pagedMatches.map((m, idx) => (
                 <div
                   key={m.id}
                   onClick={() => setSelectedIndex(idx)}
@@ -473,6 +564,28 @@ export default function MatchRecords() {
                 </div>
               ))}
             </div>
+
+            <div className="flex items-center justify-between px-4 py-3 border-t border-cyan-500/15 bg-slate-950/50">
+              <span className="text-[11px] text-slate-500">페이지 {currentPage} / {totalPages} · 총 {matches.length}경기</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="px-2.5 py-1 text-xs rounded border border-cyan-500/20 text-cyan-300 disabled:text-slate-600 disabled:border-slate-700"
+                >
+                  이전
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="px-2.5 py-1 text-xs rounded border border-cyan-500/20 text-cyan-300 disabled:text-slate-600 disabled:border-slate-700"
+                >
+                  다음
+                </button>
+              </div>
+            </div>
           </>
         )}
       </div>
@@ -480,12 +593,12 @@ export default function MatchRecords() {
       {/* 경기 상세 팝업 */}
       {selectedIndex !== null && (
         <MatchDetailModal
-          matches={matches}
+          matches={pagedMatches}
           index={selectedIndex}
           profileCache={profileCache}
           onClose={() => setSelectedIndex(null)}
           onPrev={() => setSelectedIndex((i) => Math.max(0, i - 1))}
-          onNext={() => setSelectedIndex((i) => Math.min(matches.length - 1, i + 1))}
+          onNext={() => setSelectedIndex((i) => Math.min(pagedMatches.length - 1, i + 1))}
         />
       )}
     </div>

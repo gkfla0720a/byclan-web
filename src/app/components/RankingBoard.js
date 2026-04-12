@@ -30,12 +30,6 @@ const COMBO_LABELS = {
   PZT: 'PZT',
   OTHER: '기타종족',
 };
-const SAMPLE_WEIGHTS_BY_RACE = {
-  Protoss: { PPP: 0.34, PPT: 0.24, PPZ: 0.18, PZT: 0.14, OTHER: 0.10 },
-  Terran: { PPP: 0.12, PPT: 0.30, PPZ: 0.10, PZT: 0.30, OTHER: 0.18 },
-  Zerg: { PPP: 0.08, PPT: 0.14, PPZ: 0.30, PZT: 0.24, OTHER: 0.24 },
-  default: { PPP: 0.20, PPT: 0.20, PPZ: 0.20, PZT: 0.20, OTHER: 0.20 },
-};
 const MAIN_RACE_LABELS = {
   Protoss: '프로토스',
   Terran: '테란',
@@ -43,14 +37,6 @@ const MAIN_RACE_LABELS = {
   Random: '랜덤',
   미지정: '미지정',
 };
-
-function hashString(value = '') {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = ((hash << 5) - hash + value.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
 
 function getTierMeta(score) {
   return TIER_META.find((tier) => score >= tier.min) || TIER_META[TIER_META.length - 1];
@@ -87,62 +73,17 @@ function coerceComboStats(rawStats) {
   return foundValue ? normalized : null;
 }
 
-function distributeCount(total, keys, weights, seed) {
-  const base = {};
-  const entries = keys.map((key, index) => {
-    const weighted = total * (weights[key] ?? 0);
-    const floorValue = Math.floor(weighted);
-    base[key] = floorValue;
-    return {
-      key,
-      remainder: weighted - floorValue + (((seed >> (index * 3)) & 7) / 100),
-    };
-  });
-
-  let assigned = keys.reduce((sum, key) => sum + base[key], 0);
-  entries.sort((a, b) => b.remainder - a.remainder);
-
-  for (let i = 0; assigned < total; i += 1) {
-    const nextKey = entries[i % entries.length]?.key;
-    if (!nextKey) break;
-    base[nextKey] += 1;
-    assigned += 1;
-  }
-
-  return base;
-}
-
-function buildSampleComboStats(player) {
-  const seed = hashString(`${player.id || ''}:${player.by_id || ''}:${player.race || ''}`);
-  const actualGames = (player.wins ?? 0) + (player.losses ?? 0);
-  const totalGames = Math.max(actualGames, 8 + (seed % 11));
-  const winRateBase = actualGames > 0
-    ? (player.wins ?? 0) / Math.max(actualGames, 1)
-    : 0.46 + ((seed % 17) - 8) / 100;
-  const sampleWins = Math.max(0, Math.min(totalGames, Math.round(totalGames * winRateBase)));
-  const sampleLosses = Math.max(0, totalGames - sampleWins);
-  const weights = SAMPLE_WEIGHTS_BY_RACE[player.race] || SAMPLE_WEIGHTS_BY_RACE.default;
-  const winSplit = distributeCount(sampleWins, COMBO_KEYS, weights, seed);
-  const lossSplit = distributeCount(sampleLosses, COMBO_KEYS, weights, seed >> 1);
-
-  return Object.fromEntries(
-    COMBO_KEYS.map((key) => [key, { wins: winSplit[key] || 0, losses: lossSplit[key] || 0 }])
-  );
-}
-
 function getComboStats(player) {
-  return coerceComboStats(player.race_combo_stats) || buildSampleComboStats(player);
+  const stats = coerceComboStats(player.race_combo_stats);
+  if (stats) return stats;
+  return Object.fromEntries(COMBO_KEYS.map((key) => [key, { wins: 0, losses: 0 }]));
 }
 
 function getRecentDelta(player) {
   if (player.recent_total_delta !== null && player.recent_total_delta !== undefined) {
     return Number(player.recent_total_delta);
   }
-
-  const seed = hashString(player.id || player.by_id || '');
-  const magnitudes = [0, 10, 20, 30, 40, 50, 60];
-  const sign = seed % 3 === 0 ? 1 : seed % 3 === 1 ? -1 : 0;
-  return sign * magnitudes[seed % magnitudes.length];
+  return 0;
 }
 
 function formatRecentDelta(delta) {
