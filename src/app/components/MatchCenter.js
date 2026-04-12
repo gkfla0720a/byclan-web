@@ -26,8 +26,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 
-/** 베팅 가능한 포인트 단위 목록 (가장 작은 단위부터 큰 단위 순) */
-const BET_AMOUNTS = [100, 500, 1000, 5000, 10000];
+/** 베팅 가능한 포인트 단위 목록 (1,000/5,000/10,000 CP 세 가지 선택지) */
+const BET_AMOUNTS = [1000, 5000, 10000];
 /** 세트 시작 후 베팅 가능한 시간(초). 5분 = 300초. */
 const BET_WINDOW_SECONDS = 300; // 5분
 
@@ -132,6 +132,8 @@ export default function MatchCenter({ matchId, onExit }) {
   const [bettingDone, setBettingDone] = useState(false);
   /** 베팅 API 요청 처리 중 여부 */
   const [bettingLoading, setBettingLoading] = useState(false);
+  /** 현재 매치의 팀별 실시간 배팅 현황 { total_a, total_b, count_a, count_b, odds_a, odds_b } */
+  const [betOdds, setBetOdds] = useState({ total_a: 0, total_b: 0, count_a: 0, count_b: 0, odds_a: 0, odds_b: 0 });
   /** 현재 유저의 보유 클랜 포인트. 베팅 가능 금액 표시 및 제한에 사용. */
   const [myClanPoint, setMyClanPoint] = useState(0);
   /** 선택된 종족 조합 ID (기본값: 프프테) */
@@ -179,6 +181,18 @@ export default function MatchCenter({ matchId, onExit }) {
       const remaining = Math.max(0, BET_WINDOW_SECONDS - elapsed);
       setBetTimer(remaining);
       setBetTimerActive(remaining > 0);
+    }
+
+    // 실시간 배당 현황 조회 (v_match_bet_odds 뷰)
+    try {
+      const { data: oddsData } = await supabase
+        .from('v_match_bet_odds')
+        .select('*')
+        .eq('match_id', matchId)
+        .maybeSingle();
+      if (oddsData) setBetOdds(oddsData);
+    } catch {
+      // 뷰가 아직 없는 환경에서는 무시
     }
   }, [matchId]);
 
@@ -251,6 +265,10 @@ export default function MatchCenter({ matchId, onExit }) {
   }, [betTimer, betTimerActive]);
 
   const isManagementRole = ['admin', 'master', 'developer'].includes((myRole || '').trim().toLowerCase());
+  const teamACaptainId = match?.team_a_ids?.[0] || null;
+  const teamBCaptainId = match?.team_b_ids?.[0] || null;
+  const isTeamCaptain = (myUserId && (myUserId === teamACaptainId || myUserId === teamBCaptainId)) || false;
+  const canReportSetResult = Boolean(isManagementRole || isTeamCaptain);
   // 관리모드 ON → 'D팀' (양 팀 동시 시야/수정), 아니면 내 팀 또는 관전자(C)
   const perspectiveTeam = (managementMode && isManagementRole) ? 'D' : (myTeam || 'C');
 
@@ -378,7 +396,7 @@ export default function MatchCenter({ matchId, onExit }) {
   };
 
   const handleSetWin = async (winnerTeam) => {
-    if (!currentSet || !isManagementRole) return;
+    if (!currentSet || !canReportSetResult) return;
     try {
       const { error } = await supabase
         .from('match_sets')
@@ -437,32 +455,51 @@ export default function MatchCenter({ matchId, onExit }) {
       alert('자신의 팀에는 베팅할 수 없습니다. 상대편에 베팅하세요.');
       return;
     }
+    if (betAmount > myClanPoint) {
+      alert('보유 클랜 포인트가 부족합니다.');
+      return;
+    }
     setBettingLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // 베팅 기록 먼저 시도 (match_bets 테이블이 없으면 skip하고 포인트만 차감)
-      const { error: betError } = await supabase.from('match_bets').insert({
-        match_id: matchId,
-        user_id: user.id,
-        bet_team: betTeam,
-        amount: betAmount,
-      });
-      // 테이블이 없어도 포인트 차감은 진행 (베타 환경 대응)
-      if (betError && !betError.message?.includes('does not exist') && !betError.code?.startsWith('42')) {
-        throw betError;
-      }
-
-      // 포인트 차감
+      // 포인트 선차감 (정산 시 승리팀 배팅자에게 비율 지급, 패배팀은 몰수)
+      const newBalance = myClanPoint - betAmount;
       const { error: deductError } = await supabase
         .from('profiles')
-        .update({ clan_point: myClanPoint - betAmount })
+        .update({ clan_point: newBalance })
         .eq('id', user.id);
       if (deductError) throw deductError;
 
-      setMyClanPoint(p => p - betAmount);
+      // point_logs 기록
+      await supabase.from('point_logs').insert({
+        user_id: user.id,
+        amount: -betAmount,
+        reason: `배팅 차감 (${betTeam}팀) — 매치 ${matchId}`,
+        type: 'bet_deduct',
+        balance_after: newBalance,
+        related_id: matchId,
+      }).catch(() => {});
+
+      // match_bets 기록 (DB 컬럼: team_choice, bet_amount)
+      const { error: betError } = await supabase.from('match_bets').insert({
+        match_id: matchId,
+        user_id: user.id,
+        team_choice: betTeam,
+        bet_amount: betAmount,
+        status: 'pending',
+      });
+      if (betError) {
+        // match_bets 저장 실패 시 포인트 원복
+        await supabase.from('profiles').update({ clan_point: myClanPoint }).eq('id', user.id);
+        throw betError;
+      }
+
+      setMyClanPoint(newBalance);
       setBettingDone(true);
-      alert(`${betTeam}팀에 ${betAmount.toLocaleString()}P 베팅 완료!`);
+      // 배당 현황 갱신
+      await fetchMatchData();
+      alert(`✅ ${betTeam}팀에 ${betAmount.toLocaleString()} CP 배팅 완료!\n매치 종료 후 결과에 따라 자동 정산됩니다.`);
     } catch (err) {
       alert('베팅 실패: ' + err.message);
     } finally {
@@ -528,6 +565,22 @@ export default function MatchCenter({ matchId, onExit }) {
           )}
         </div>
 
+        {/* 실시간 배당 현황 */}
+        {(betOdds.total_a > 0 || betOdds.total_b > 0) && (
+          <div className="grid grid-cols-2 gap-2 mb-4 text-center">
+            <div className="bg-blue-950/20 border border-blue-900/40 rounded-xl p-3">
+              <p className="text-blue-400 text-[10px] font-bold uppercase tracking-wider mb-1">TEAM A 배팅 현황</p>
+              <p className="text-white font-black text-sm">{Number(betOdds.total_a).toLocaleString()} CP</p>
+              <p className="text-gray-500 text-[10px]">{betOdds.count_a}명 · 배당 <span className="text-blue-300 font-bold">{Number(betOdds.odds_a || 0).toFixed(2)}x</span></p>
+            </div>
+            <div className="bg-red-950/20 border border-red-900/40 rounded-xl p-3">
+              <p className="text-red-400 text-[10px] font-bold uppercase tracking-wider mb-1">TEAM B 배팅 현황</p>
+              <p className="text-white font-black text-sm">{Number(betOdds.total_b).toLocaleString()} CP</p>
+              <p className="text-gray-500 text-[10px]">{betOdds.count_b}명 · 배당 <span className="text-red-300 font-bold">{Number(betOdds.odds_b || 0).toFixed(2)}x</span></p>
+            </div>
+          </div>
+        )}
+
         {betTimerActive && !bettingDone && (
           <>
             <p className="text-gray-500 text-xs mb-3 font-sans">
@@ -540,6 +593,7 @@ export default function MatchCenter({ matchId, onExit }) {
               {['A', 'B'].map(team => {
                 const canBet = team === 'A' ? canBetOnA : canBetOnB;
                 const selected = betTeam === team;
+                const teamOdds = team === 'A' ? Number(betOdds.odds_a || 0) : Number(betOdds.odds_b || 0);
                 return (
                   <button
                     key={team}
@@ -558,13 +612,14 @@ export default function MatchCenter({ matchId, onExit }) {
                     }`}
                   >
                     {team === 'A' ? '🔵 TEAM A' : '🔴 TEAM B'}
+                    {teamOdds > 0 && <div className="text-[10px] font-normal mt-0.5 opacity-70">{teamOdds.toFixed(2)}x 배당</div>}
                     {!canBet && <div className="text-[10px] font-normal mt-0.5">내 팀</div>}
                   </button>
                 );
               })}
             </div>
 
-            {/* 금액 선택 */}
+            {/* 금액 선택 — 1,000 / 5,000 / 10,000 CP */}
             <div className="flex flex-wrap gap-2 mb-4">
               {BET_AMOUNTS.map(amt => (
                 <button
@@ -865,9 +920,11 @@ export default function MatchCenter({ matchId, onExit }) {
           </div>
         )}
 
-        {isManagementRole && (
+        {canReportSetResult && (
           <div className="mt-5 pt-4 border-t border-gray-700/50">
-            <p className="text-[10px] text-orange-400 font-bold mb-2 uppercase tracking-wider">운영진 세트 결과 처리</p>
+            <p className="text-[10px] text-orange-400 font-bold mb-2 uppercase tracking-wider">
+              {isManagementRole ? '운영진 세트 결과 처리' : '팀 캡틴 세트 결과 처리'}
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 onClick={() => handleSetWin('A')}
@@ -884,6 +941,11 @@ export default function MatchCenter({ matchId, onExit }) {
                 TEAM B 세트 승리 확정
               </button>
             </div>
+            {!isManagementRole && (
+              <p className="text-[10px] text-gray-500 mt-2">
+                팀 캡틴만 세트 결과를 확정할 수 있습니다. (A팀 캡틴: 첫 번째 A팀 인원, B팀 캡틴: 첫 번째 B팀 인원)
+              </p>
+            )}
           </div>
         )}
       </div>

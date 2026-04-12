@@ -18,6 +18,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { isInternalAuthEmail } from '@/app/utils/accountId';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
+import { grantRankPromotionBonus } from '../utils/pointSystem';
 import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
 
 /** 마스터 위임 재인증의 유효 시간: 5분 (밀리초 단위) */
@@ -236,7 +237,24 @@ export default function GuildManagement() {
         .eq('id', memberId);
 
       if (error) throw error;
-      
+
+      // 직급 승급/승격 포인트 보상 지급
+      const promotionRoles = ['rookie', 'member', 'elite', 'admin'];
+      if (promotionRoles.includes(newRole)) {
+        // 대상 유저의 테스트 계정 여부 확인
+        const { data: targetProf } = await supabase
+          .from('profiles')
+          .select('is_test_account')
+          .eq('id', memberId)
+          .single();
+        await grantRankPromotionBonus(
+          supabase,
+          memberId,
+          newRole,
+          Boolean(targetProf?.is_test_account),
+        );
+      }
+
       await fetchMembers();
       setPendingRole('member');
       setActionModal({ isOpen: false, action: '', member: null });
@@ -259,6 +277,14 @@ export default function GuildManagement() {
         .update({ role: 'member', rookie_since: null })
         .eq('id', member.id);
       if (error) throw error;
+
+      // 정회원 승급 포인트 보상
+      await grantRankPromotionBonus(
+        supabase,
+        member.id,
+        'member',
+        Boolean(member?.is_test_account),
+      );
 
       // 대상 길드원에게 승급 알림 발송
       await supabase.from('notifications').insert({

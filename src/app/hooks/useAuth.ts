@@ -40,6 +40,7 @@ import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { withRetry, isRetryableError } from '../utils/retry';
 import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '../utils/testData';
 import logger, { Severity } from '../utils/errorLogger';
+import { checkAndGrantDailyBonus } from '../utils/pointSystem';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -576,6 +577,16 @@ export function useAuth(): UseAuthReturn {
     }
 
     setNeedsSetup(false);
+
+    // 일별 첫 로그인 출석 보상 (500 CP) — 백그라운드 실행, 실패해도 무시
+    const clanMemberRoles = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'];
+    if (clanMemberRoles.includes(nextProfile.role)) {
+      checkAndGrantDailyBonus(
+        supabase,
+        (authUser.id as string),
+        Boolean((nextProfile as UserProfile).is_test_account),
+      ).catch(() => {});
+    }
 
     // 진행 중인 래더 매치 확인 (래더 플레이 가능 역할 전체)
     if (['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
