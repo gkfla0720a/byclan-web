@@ -183,16 +183,13 @@ export default function MatchCenter({ matchId, onExit }) {
       setBetTimerActive(remaining > 0);
     }
 
-    // 실시간 배당 현황 조회 (v_match_bet_odds 뷰)
+    // 실시간 배당 현황 조회 (RPC 함수)
     try {
       const { data: oddsData } = await supabase
-        .from('v_match_bet_odds')
-        .select('*')
-        .eq('match_id', matchId)
-        .maybeSingle();
+        .rpc('fn_get_match_bet_odds', { p_match_id: matchId });
       if (oddsData) setBetOdds(oddsData);
     } catch {
-      // 뷰가 아직 없는 환경에서는 무시
+      // 함수가 아직 없는 환경에서는 무시
     }
   }, [matchId]);
 

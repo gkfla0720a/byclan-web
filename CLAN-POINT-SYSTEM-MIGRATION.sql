@@ -61,7 +61,11 @@ WHERE is_test_account = true;
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.fn_settle_match_bets()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_winning_team text;
   v_total_winner_bets bigint;
@@ -241,7 +245,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 트리거 등록
 DROP TRIGGER IF EXISTS trg_ladder_matches_settle_bets ON public.ladder_matches;
@@ -250,32 +254,53 @@ CREATE TRIGGER trg_ladder_matches_settle_bets
   FOR EACH ROW EXECUTE FUNCTION public.fn_settle_match_bets();
 
 -- ============================================================
--- 6. 실시간 배당 계산 뷰 (MatchCenter에서 SELECT)
+-- 6. 실시간 배당 계산 함수 (MatchCenter에서 RPC 호출)
 -- ============================================================
 
-CREATE OR REPLACE VIEW public.v_match_bet_odds AS
-SELECT
-  match_id,
-  COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'A'), 0) AS total_a,
-  COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'B'), 0) AS total_b,
-  COUNT(*) FILTER (WHERE team_choice = 'A') AS count_a,
-  COUNT(*) FILTER (WHERE team_choice = 'B') AS count_b,
-  COALESCE(SUM(bet_amount), 0) AS total_pool,
-  ROUND(
-    CASE WHEN COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'A'), 0) > 0
-    THEN (COALESCE(SUM(bet_amount), 0)::numeric / (SUM(bet_amount) FILTER (WHERE team_choice = 'A'))::numeric)
-    ELSE 0 END,
-    2
-  ) AS odds_a,
-  ROUND(
-    CASE WHEN COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'B'), 0) > 0
-    THEN (COALESCE(SUM(bet_amount), 0)::numeric / (SUM(bet_amount) FILTER (WHERE team_choice = 'B'))::numeric)
-    ELSE 0 END,
-    2
-  ) AS odds_b
-FROM public.match_bets
-WHERE status = 'pending'
-GROUP BY match_id;
+DROP VIEW IF EXISTS public.v_match_bet_odds;
+
+CREATE OR REPLACE FUNCTION public.fn_get_match_bet_odds(p_match_id uuid)
+RETURNS TABLE (
+  match_id uuid,
+  total_a bigint,
+  total_b bigint,
+  count_a bigint,
+  count_b bigint,
+  total_pool bigint,
+  odds_a numeric,
+  odds_b numeric
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT
+    p_match_id AS match_id,
+    COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'A'), 0) AS total_a,
+    COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'B'), 0) AS total_b,
+    COUNT(*) FILTER (WHERE team_choice = 'A') AS count_a,
+    COUNT(*) FILTER (WHERE team_choice = 'B') AS count_b,
+    COALESCE(SUM(bet_amount), 0) AS total_pool,
+    ROUND(
+      CASE WHEN COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'A'), 0) > 0
+      THEN (COALESCE(SUM(bet_amount), 0)::numeric / (SUM(bet_amount) FILTER (WHERE team_choice = 'A'))::numeric)
+      ELSE 0 END,
+      2
+    ) AS odds_a,
+    ROUND(
+      CASE WHEN COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'B'), 0) > 0
+      THEN (COALESCE(SUM(bet_amount), 0)::numeric / (SUM(bet_amount) FILTER (WHERE team_choice = 'B'))::numeric)
+      ELSE 0 END,
+      2
+    ) AS odds_b
+  FROM public.match_bets
+  WHERE status = 'pending'
+    AND match_id = p_match_id
+$$;
+
+REVOKE ALL ON FUNCTION public.fn_get_match_bet_odds(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.fn_get_match_bet_odds(uuid) TO authenticated;
 
 -- ============================================================
 -- 완료 확인

@@ -203,7 +203,8 @@ where is_read = true
 -- E. 단계적 강제 전환을 위한 검증 뷰
 -- ----------------------------------------------------------------------------
 
-create or replace view public.v_integrity_gaps as
+create or replace view public.v_integrity_gaps
+with (security_invoker = true) as
 select 'ladders.user_id_missing' as check_name, count(*)::bigint as issue_count
 from public.ladders where user_id is null
 union all

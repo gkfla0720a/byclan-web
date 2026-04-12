@@ -39,8 +39,9 @@ CREATE INDEX IF NOT EXISTS idx_activity_logs_category ON public.activity_logs(ca
 CREATE INDEX IF NOT EXISTS idx_activity_logs_target_user ON public.activity_logs(target_user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_manual ON public.activity_logs(is_manual, created_at DESC);
 
--- 수동 변경 재검토용 뷰
-CREATE OR REPLACE VIEW public.v_manual_activity_review AS
+-- 수동 변경 재검토용 뷰 (security invoker)
+CREATE OR REPLACE VIEW public.v_manual_activity_review
+WITH (security_invoker = true) AS
 SELECT
   id,
   created_at,
@@ -62,7 +63,11 @@ ORDER BY created_at DESC;
 
 -- 3) profiles 변경 트리거 함수 (CP/MMR/닉네임/등급/접속)
 CREATE OR REPLACE FUNCTION public.fn_log_profile_changes()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   IF OLD.clan_point IS DISTINCT FROM NEW.clan_point THEN
     INSERT INTO public.activity_logs (
@@ -138,7 +143,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_profiles_activity_log ON public.profiles;
 CREATE TRIGGER trg_profiles_activity_log
@@ -147,7 +152,11 @@ FOR EACH ROW EXECUTE FUNCTION public.fn_log_profile_changes();
 
 -- 4) 경기기록 트리거 함수 (생성/수정/삭제)
 CREATE OR REPLACE FUNCTION public.fn_log_ladder_match_changes()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     INSERT INTO public.activity_logs (
@@ -189,7 +198,7 @@ BEGIN
   END IF;
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_ladder_matches_activity_log ON public.ladder_matches;
 CREATE TRIGGER trg_ladder_matches_activity_log
@@ -198,7 +207,11 @@ FOR EACH ROW EXECUTE FUNCTION public.fn_log_ladder_match_changes();
 
 -- 5) 게시판 작성 트리거 함수 (posts/admin_posts)
 CREATE OR REPLACE FUNCTION public.fn_log_post_create()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_user_id uuid;
 BEGIN
@@ -218,7 +231,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_posts_activity_log ON public.posts;
 CREATE TRIGGER trg_posts_activity_log

@@ -31,6 +31,7 @@ set ladder_mmr = 1500,
 create or replace function public.fn_sync_total_mmr()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.total_mmr := coalesce(new.ladder_mmr, 1500) + coalesce(new.team_mmr, 0);
@@ -49,6 +50,7 @@ execute function public.fn_sync_total_mmr();
 create or replace function public.fn_apply_match_team_mmr()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 declare
   winner_ids uuid[];
@@ -104,6 +106,7 @@ execute function public.fn_apply_match_team_mmr();
 create or replace function public.fn_apply_set_mmr_and_progress_match()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 declare
   m public.ladder_matches%rowtype;
