@@ -18,6 +18,26 @@ ALTER TABLE public.point_logs ADD COLUMN IF NOT EXISTS is_test_data boolean DEFA
 -- 3. profiles 출석 보상 날짜 컬럼 추가
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_daily_bonus_at date;
 
+-- 3-1. 관리자 감사 로그 테이블 생성
+CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  actor_id uuid,
+  actor_by_id text,
+  actor_role text,
+  action_type text NOT NULL,
+  target_table text NOT NULL,
+  target_id text,
+  before_data jsonb,
+  after_data jsonb,
+  note text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  is_test_data boolean DEFAULT false,
+  CONSTRAINT admin_audit_logs_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.profiles(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_created_at ON public.admin_audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_target ON public.admin_audit_logs(target_table, target_id);
+
 -- 4. 테스트 계정에 50,000 CP 지급
 UPDATE public.profiles
 SET clan_point = 50000
@@ -47,6 +67,7 @@ DECLARE
   v_total_winner_bets bigint;
   v_total_all_bets bigint;
   v_bet RECORD;
+  v_player_id uuid;
   v_payout integer;
   v_new_balance integer;
 BEGIN
@@ -55,9 +76,68 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- 매치 종료 참여 보상 (500 CP): 팀 A/B 모든 참가자에게 1회 지급
+  FOREACH v_player_id IN ARRAY COALESCE(NEW.team_a_ids, '{}'::uuid[])
+  LOOP
+    SELECT COALESCE(clan_point, 0) INTO v_new_balance
+    FROM public.profiles WHERE id = v_player_id;
+
+    v_new_balance := v_new_balance + 500;
+
+    UPDATE public.profiles
+    SET clan_point = v_new_balance
+    WHERE id = v_player_id;
+
+    INSERT INTO public.point_logs (user_id, amount, reason, type, balance_after, related_id)
+    VALUES (
+      v_player_id,
+      500,
+      '매치 참여 보상 (종료 정산): ' || NEW.id::text,
+      'match_reward',
+      v_new_balance,
+      NEW.id::text
+    );
+
+    INSERT INTO public.notifications (user_id, title, message)
+    VALUES (
+      v_player_id,
+      '🎮 매치 참여 보상 지급',
+      '매치 종료 정산으로 500CP가 지급되었습니다. 현재 잔액: ' || v_new_balance || 'CP'
+    );
+  END LOOP;
+
+  FOREACH v_player_id IN ARRAY COALESCE(NEW.team_b_ids, '{}'::uuid[])
+  LOOP
+    SELECT COALESCE(clan_point, 0) INTO v_new_balance
+    FROM public.profiles WHERE id = v_player_id;
+
+    v_new_balance := v_new_balance + 500;
+
+    UPDATE public.profiles
+    SET clan_point = v_new_balance
+    WHERE id = v_player_id;
+
+    INSERT INTO public.point_logs (user_id, amount, reason, type, balance_after, related_id)
+    VALUES (
+      v_player_id,
+      500,
+      '매치 참여 보상 (종료 정산): ' || NEW.id::text,
+      'match_reward',
+      v_new_balance,
+      NEW.id::text
+    );
+
+    INSERT INTO public.notifications (user_id, title, message)
+    VALUES (
+      v_player_id,
+      '🎮 매치 참여 보상 지급',
+      '매치 종료 정산으로 500CP가 지급되었습니다. 현재 잔액: ' || v_new_balance || 'CP'
+    );
+  END LOOP;
+
   v_winning_team := NEW.winning_team;
 
-  -- winning_team 이 없으면 정산 불가
+  -- winning_team 이 없으면 베팅 정산은 생략 (참여보상은 이미 지급됨)
   IF v_winning_team IS NULL OR v_winning_team = '' THEN
     RETURN NEW;
   END IF;
@@ -183,13 +263,13 @@ SELECT
   COALESCE(SUM(bet_amount), 0) AS total_pool,
   ROUND(
     CASE WHEN COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'A'), 0) > 0
-    THEN (COALESCE(SUM(bet_amount), 0)::float8 / SUM(bet_amount) FILTER (WHERE team_choice = 'A'))
+    THEN (COALESCE(SUM(bet_amount), 0)::numeric / (SUM(bet_amount) FILTER (WHERE team_choice = 'A'))::numeric)
     ELSE 0 END,
     2
   ) AS odds_a,
   ROUND(
     CASE WHEN COALESCE(SUM(bet_amount) FILTER (WHERE team_choice = 'B'), 0) > 0
-    THEN (COALESCE(SUM(bet_amount), 0)::float8 / SUM(bet_amount) FILTER (WHERE team_choice = 'B'))
+    THEN (COALESCE(SUM(bet_amount), 0)::numeric / (SUM(bet_amount) FILTER (WHERE team_choice = 'B'))::numeric)
     ELSE 0 END,
     2
   ) AS odds_b

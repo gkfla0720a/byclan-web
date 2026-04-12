@@ -14,6 +14,8 @@
 import React, { useState } from 'react';
 import AdminBoard from '../../components/AdminBoard';
 import AdminPointManager from '../../components/AdminPointManager';
+import AdminMatchManager from '../../components/AdminMatchManager';
+import AdminActivityLogViewer from '../../components/AdminActivityLogViewer';
 import PagePlaceholder from '../../pages/PagePlaceholder';
 import { useAuthContext } from '../../context/AuthContext';
 import { SectionErrorBoundary } from '../../components/ErrorBoundary';
@@ -21,6 +23,8 @@ import { SectionErrorBoundary } from '../../components/ErrorBoundary';
 const TABS = [
   { id: 'board', label: '🔐 기밀 게시판' },
   { id: 'points', label: '💰 포인트 관리' },
+  { id: 'matches', label: '🗂 경기기록 관리' },
+  { id: 'activity', label: '🧾 전역 이력 로그' },
 ];
 
 /**
@@ -56,6 +60,8 @@ export default function AdminPage() {
             <SectionErrorBoundary name="관리자">
               {activeTab === 'board' && <AdminBoard />}
               {activeTab === 'points' && <AdminPointManager />}
+              {activeTab === 'matches' && <AdminMatchManager />}
+              {activeTab === 'activity' && <AdminActivityLogViewer />}
             </SectionErrorBoundary>
           </>
         ) : (

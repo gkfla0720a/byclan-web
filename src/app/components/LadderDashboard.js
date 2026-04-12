@@ -26,7 +26,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
-import { grantMatchParticipationBonus } from '@/app/utils/pointSystem';
 
 // ── 상수 ─────────────────────────────────────────────────────────────
 /** 지원하는 매치 유형 정보. 키는 선택 값, 값은 레이블·최소 인원·포맷 등을 담습니다. */
@@ -593,14 +592,6 @@ export default function LadderDashboard({ onMatchEnter }) {
         .eq('id', activeProposal.matchId);
       const allIds = [...activeProposal.teamA, ...activeProposal.teamB].map(p => p.id);
       await supabase.from('profiles').update({ is_in_queue: false }).in('id', allIds);
-
-      // 매치 참여 보상: 모든 참여 선수에게 500 CP 지급 (백그라운드)
-      const isTest = Boolean(myProfile?.is_test_account);
-      Promise.all(
-        allIds.map(uid =>
-          grantMatchParticipationBonus(supabase, uid, activeProposal.matchId, isTest)
-        )
-      ).catch(() => {});
 
       const mid = activeProposal.matchId;
       setActiveProposal(null);

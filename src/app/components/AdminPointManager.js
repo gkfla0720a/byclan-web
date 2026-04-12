@@ -13,6 +13,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { grantPoints, deductPoints } from '@/app/utils/pointSystem';
+import { recordAdminAudit } from '@/app/utils/adminAudit';
 
 /** 포인트 거래 유형 한국어 레이블 */
 const TYPE_LABEL = {
@@ -83,7 +84,7 @@ export default function AdminPointManager() {
       // 클랜원 목록 로드
       const { data: mems } = await supabase
         .from('profiles')
-        .select('id, by_id, role, clan_point')
+        .select('id, by_id, role, clan_point, is_test_account')
         .not('role', 'eq', 'visitor')
         .order('by_id');
       setMembers(mems || []);
@@ -144,14 +145,64 @@ export default function AdminPointManager() {
       return;
     }
 
+    const targetMember = members.find(m => m.id === selectedUserId);
+    const actionLabel = isDeduct ? '회수' : '지급';
+    const guideText = [
+      '[관리자 데이터 변경 안내]',
+      `${targetMember?.by_id || '대상유저'}에게 ${amount.toLocaleString()} CP를 ${actionLabel}합니다.`,
+      '변경 내역은 로그 및 알림으로 기록됩니다.',
+      '계속하려면 아래 입력창에 정확히 확인 을 입력하세요.',
+    ].join('\n');
+    const typed = window.prompt(guideText, '');
+    if ((typed || '').trim() !== '확인') {
+      alert('취소되었습니다. 확인 문자열이 일치하지 않습니다.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const isTest = Boolean(members.find(m => m.id === selectedUserId)?.is_test_account);
+      const { data: targetBefore } = await supabase
+        .from('profiles')
+        .select('id, by_id, role, clan_point, is_test_account')
+        .eq('id', selectedUserId)
+        .single();
+
+      const isTest = Boolean(targetMember?.is_test_account);
       const fn = isDeduct ? deductPoints : grantPoints;
       const type = isDeduct ? 'admin_deduct' : 'admin_grant';
       const result = await fn(supabase, selectedUserId, amount, grantReason.trim(), type, null, isTest);
 
       if (result.ok) {
+        const { data: targetAfter } = await supabase
+          .from('profiles')
+          .select('id, by_id, role, clan_point, is_test_account')
+          .eq('id', selectedUserId)
+          .single();
+
+        await recordAdminAudit(supabase, {
+          actorId: myProfile?.id,
+          actorById: myProfile?.by_id,
+          actorRole: myProfile?.role,
+          category: 'admin',
+          actionType: isDeduct ? 'point_deduct' : 'point_grant',
+          targetTable: 'profiles',
+          targetId: selectedUserId,
+          targetUserId: selectedUserId,
+          beforeData: {
+            clan_point: targetBefore?.clan_point,
+            by_id: targetBefore?.by_id,
+            role: targetBefore?.role,
+          },
+          afterData: {
+            clan_point: targetAfter?.clan_point,
+            by_id: targetAfter?.by_id,
+            role: targetAfter?.role,
+          },
+          summary: `${targetMember?.by_id || '대상유저'} 포인트 ${isDeduct ? '회수' : '지급'} ${amount}CP`,
+          note: `${isDeduct ? '포인트 회수' : '포인트 지급'} ${amount}CP / 사유: ${grantReason.trim()}`,
+          isTestData: isTest,
+        });
+
         alert(`✅ ${isDeduct ? '차감' : '지급'} 완료. 변경 후 잔액: ${result.newBalance.toLocaleString()} CP`);
         setGrantAmount('');
         setGrantReason('');

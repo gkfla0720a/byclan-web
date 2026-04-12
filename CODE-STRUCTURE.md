@@ -572,13 +572,14 @@ NEXT_PUBLIC_SENTRY_DSN=...                 # Sentry 오류 추적 (선택)
 | 파일 | 용도 |
 |------|------|
 | `seed-test-data.cjs` | 테스트 데이터 Supabase에 주입 (`npm run seed:test-data`) |
-| `check-database.js` | DB 연결 및 스키마 확인 |
-| `check-current-data.js` | 현재 DB 데이터 검증 |
-| `create-test-data.js` | 테스트 레코드 생성 |
-| `fix-my-profile.js` | 프로필 데이터 복구 유틸리티 |
+| `seed-test-accounts.js` | 테스트용 Auth/프로필 계정 생성 및 리셋 |
+| `seed-real-users.js` | 실사용자 샘플 시드 주입 |
+| `simulate-workflow-and-mmr.js` | 매치/세트/MMR/정산 E2E 시뮬레이션 검증 |
+| `CLAN-POINT-SYSTEM-MIGRATION.sql` | 포인트/배팅/관리 감사 로그 스키마 및 트리거 |
+| `GLOBAL-ACTIVITY-LOG-MIGRATION.sql` | 전역 활동 로그(경기/CP/MMR/접속/게시글/닉네임/등급) 트리거 |
+| `MMR-SCORING-SYSTEM.sql` | 개인/팀/합산 MMR 정산 트리거 |
 | `mobile-analyzer.js` | 모바일 반응형 분석 |
 | `mobile-docs-updater.js` | 모바일 문서 자동 업데이트 |
-| `simple-fix.js` | 간단한 데이터 수정 스크립트 |
 
 ---
 
@@ -590,6 +591,7 @@ NEXT_PUBLIC_SENTRY_DSN=...                 # Sentry 오류 추적 (선택)
 | [`docs/VISUAL-DIAGRAMS.md`](docs/VISUAL-DIAGRAMS.md) | 📊 Mermaid 시각화 다이어그램 8종 (인증 흐름, 역할 상태, 라우팅 트리 등) |
 | [`docs/DIAGRAMS-INTERACTIVE.html`](docs/DIAGRAMS-INTERACTIVE.html) | 🖥️ 인터랙티브 다이어그램 뷰어 (다크 테마) |
 | [`docs/diagram-gallery/`](docs/diagram-gallery/) | 🖼️ SVG 다이어그램 이미지 (인증 흐름, 역할 계층, 컴포넌트 의존성, 데이터 레이어) |
+| `GLOBAL-ACTIVITY-LOG-MIGRATION.sql` | 전역 활동 로그 DB 마이그레이션 (수동 변경 특수표시 포함) |
 | `ENVIRONMENT-SETUP.md` | 환경 변수 설정 및 개발 환경 구성 |
 | `DATABASE-GUIDE.md` | Supabase SQL Editor 사용법 및 쿼리 참고 |
 | `DATABASE-QUERIES.sql` | 개발용 SQL 쿼리 모음 |

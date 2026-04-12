@@ -111,11 +111,52 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   CONSTRAINT notifications_pkey PRIMARY KEY (id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  actor_id uuid,
+  actor_by_id text,
+  actor_role text,
+  action_type text NOT NULL,
+  target_table text NOT NULL,
+  target_id text,
+  before_data jsonb,
+  after_data jsonb,
+  note text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  is_test_data boolean DEFAULT false,
+  CONSTRAINT admin_audit_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT admin_audit_logs_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE IF NOT EXISTS public.activity_logs (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  category text NOT NULL,
+  action_type text NOT NULL,
+  source_type text NOT NULL DEFAULT 'system'::text,
+  is_manual boolean NOT NULL DEFAULT false,
+  actor_id uuid,
+  actor_by_id text,
+  actor_role text,
+  target_user_id uuid,
+  target_table text,
+  target_id text,
+  summary text,
+  before_data jsonb,
+  after_data jsonb,
+  meta jsonb,
+  CONSTRAINT activity_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT activity_logs_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.profiles(id),
+  CONSTRAINT activity_logs_target_user_id_fkey FOREIGN KEY (target_user_id) REFERENCES public.profiles(id)
+);
 CREATE TABLE IF NOT EXISTS public.point_logs (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   user_id uuid,
   amount integer,
   reason text,
+  type text DEFAULT 'manual'::text,
+  balance_after integer,
+  related_id text,
+  is_test_data boolean DEFAULT false,
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT point_logs_pkey PRIMARY KEY (id),
   CONSTRAINT point_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
@@ -143,6 +184,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   by_id text,
   race text DEFAULT '미지정'::text,
   intro text DEFAULT ''::text,
+  last_login_at timestamp with time zone,
   is_in_queue boolean DEFAULT false,
   vote_to_start boolean DEFAULT false,
   is_test_account boolean DEFAULT false,

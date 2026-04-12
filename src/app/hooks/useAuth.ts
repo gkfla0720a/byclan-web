@@ -368,6 +368,24 @@ function syncViewerTestAccountFlag(profile: UserProfile | null): void {
   setCurrentViewerTestAccountFlag(Boolean(profile.is_test_account));
 }
 
+async function recordLoginTimestamp(userId: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  if (!userId) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `byclan_login_recorded_${userId}_${today}`;
+  if (window.sessionStorage.getItem(key) === '1') return;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ last_login_at: new Date().toISOString() })
+    .eq('id', userId);
+
+  if (!error) {
+    window.sessionStorage.setItem(key, '1');
+  }
+}
+
 // homeGateReady never changes after mount (client = true, server = false),
 // so no subscription is needed; this noop satisfies the useSyncExternalStore API.
 const _noopSubscribe = () => () => {};
@@ -569,6 +587,8 @@ export function useAuth(): UseAuthReturn {
 
     setProfile(nextProfile);
     syncViewerTestAccountFlag(nextProfile);
+
+    recordLoginTimestamp(authUser.id as string).catch(() => {});
 
     if (nextProfile.role === 'visitor' || nextProfile.role === 'applicant') {
       setNeedsSetup(false);
