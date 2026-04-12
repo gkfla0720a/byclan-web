@@ -155,7 +155,7 @@ export default function RankingBoard() {
   });
 
   return (
-    <div className="w-full max-w-[1500px] mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono space-y-4">
+    <div className="w-full mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono space-y-4">
       <div className="flex flex-col gap-3 rounded-3xl border border-cyan-500/20 bg-slate-950/70 px-5 py-4 shadow-[0_0_30px_rgba(8,145,178,0.12)] sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-black tracking-[0.2em] text-cyan-300">RANKING</h2>
@@ -169,23 +169,23 @@ export default function RankingBoard() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-3xl border border-cyan-500/20 bg-slate-950/80 shadow-[0_0_24px_rgba(6,182,212,0.12)]">
-        <table className="min-w-[1480px] w-full table-fixed text-left">
+      <div className="rounded-3xl border border-cyan-500/20 bg-slate-950/80 shadow-[0_0_24px_rgba(6,182,212,0.12)]">
+        <table className="w-full table-fixed text-left">
           <thead className="bg-cyan-950/30 text-[11px] uppercase tracking-[0.18em] text-cyan-300">
             <tr className="border-b border-cyan-500/20">
-              <th className="px-3 py-4 text-center w-[72px]">순위</th>
-              <th className="px-3 py-4 w-[240px]">플레이어</th>
-              <th className="px-3 py-4 text-center w-[140px]">레더점수</th>
-              <th className="px-3 py-4 text-center w-[110px]">최근 변동</th>
-              <th className="px-3 py-4 text-center w-[96px]">승률</th>
-              <th className="px-3 py-4 text-center w-[96px]">팀점수</th>
-              <th className="px-3 py-4 text-center w-[96px]">총점수</th>
-              <th className="px-3 py-4 text-center w-[90px]">PPP</th>
-              <th className="px-3 py-4 text-center w-[90px]">PPT</th>
-              <th className="px-3 py-4 text-center w-[90px]">PPZ</th>
-              <th className="px-3 py-4 text-center w-[90px]">PZT</th>
-              <th className="px-3 py-4 text-center w-[110px]">기타종족</th>
-              <th className="px-3 py-4 text-center w-[100px]">주 종족</th>
+              <th className="px-2 py-4 text-center w-[6%]">순위</th>
+              <th className="px-2 py-4 w-[20%]">플레이어</th>
+              <th className="px-2 py-4 text-center w-[9%]">레더점수</th>
+              <th className="px-2 py-4 text-center w-[8%]">최근 변동</th>
+              <th className="px-2 py-4 text-center w-[7%]">승률</th>
+              <th className="px-2 py-4 text-center w-[7%]">팀점수</th>
+              <th className="px-2 py-4 text-center w-[8%]">총점수</th>
+              <th className="px-2 py-4 text-center w-[6%]">PPP</th>
+              <th className="px-2 py-4 text-center w-[6%]">PPT</th>
+              <th className="px-2 py-4 text-center w-[6%]">PPZ</th>
+              <th className="px-2 py-4 text-center w-[6%]">PZT</th>
+              <th className="px-2 py-4 text-center w-[6%]">기타종족</th>
+              <th className="px-2 py-4 text-center w-[6%]">주 종족</th>
             </tr>
           </thead>
           <tbody>

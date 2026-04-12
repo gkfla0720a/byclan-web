@@ -72,6 +72,10 @@ function getWinRate(wins, losses) {
   return `${Math.round(((wins || 0) / total) * 100)}%`;
 }
 
+function getProfileMmr(profile) {
+  return profile?.total_mmr ?? profile?.ladder_mmr ?? 1000;
+}
+
 /**
  * 홈 좌측 프로필 사이드바 컴포넌트
  *
@@ -100,8 +104,7 @@ export default function ProfileSidebar({ profile, user }) {
     profile?.race ||
     profile?.clan_point !== undefined ||
     profile?.wins !== undefined ||
-    profile?.losses !== undefined ||
-    profile?.clan_point !== undefined
+    profile?.losses !== undefined
   );
 
   if (!user || !profile || !isActiveMember || !hasProfileData) {
@@ -159,7 +162,8 @@ export default function ProfileSidebar({ profile, user }) {
     );
   }
 
-  const tier = getTier(profile.clan_point || 1000);
+  const mmr = getProfileMmr(profile);
+  const tier = getTier(mmr);
   const tierColor = TIER_COLORS[tier] || 'text-gray-400';
   const winRate = getWinRate(profile.wins, profile.losses);
   const race = RACE_LABELS[profile.race] || profile.race || '—';
@@ -188,7 +192,7 @@ export default function ProfileSidebar({ profile, user }) {
           <div className="flex justify-between items-center">
             <span className="text-gray-500">MMR</span>
             <span className="font-black text-yellow-400 text-sm" style={{ textShadow: '0 0 6px rgba(245,158,11,0.5)' }}>
-              {profile.clan_point ?? 1000}점
+              {mmr}점
             </span>
           </div>
           <div className="flex justify-between items-center">
