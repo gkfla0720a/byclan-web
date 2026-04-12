@@ -1,14 +1,13 @@
 /**
  * seed-test-accounts.js
  * ─────────────────────────────────────────────────────────────────────────────
- * 로그인 가능한 테스트 계정 5개 생성 + 3v3/4v4 경기 기록 + 샘플 데이터 시딩
+ * 로그인 가능한 테스트 계정 30개 생성 + 3v3/4v4 경기 기록 + 샘플 데이터 시딩
  *
- * 테스트 계정 정보 (이메일/비밀번호 로그인):
- *   tester01@byclan.gg  / Byclan01!
- *   tester02@byclan.gg  / Byclan02!
- *   tester03@byclan.gg  / Byclan03!
- *   tester04@byclan.gg  / Byclan04!
- *   tester05@byclan.gg  / Byclan05!
+ * 테스트 계정 정보 (아이디/비밀번호 로그인):
+ *   tester01 ~ tester30
+ *   비밀번호: Byclan01! ~ Byclan30!
+ *
+ * 내부 Auth 이메일은 자동으로 <아이디>@auth.byclan.local 형식으로 생성됩니다.
  *
  * 실행: node seed-test-accounts.js
  * 초기화: node seed-test-accounts.js --reset
@@ -25,6 +24,19 @@ const DB_URL = process.env.DB_URL ||
 
 const IS_RESET = process.argv.includes('--reset');
 
+function buildAuthEmail(loginId) {
+  return `${loginId}@auth.byclan.local`;
+}
+
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
+function buildTesterUuid(n) {
+  const suffix = String(n).padStart(12, '0');
+  return `cc0000${pad2(n)}-0000-4000-8000-${suffix}`;
+}
+
 // ── 실제 유저 UUID ─────────────────────────────────────────────────────────────
 const REAL = {
   A: '057c4bc1-8067-406b-ad40-efe6125a3d1f', // By_Developer  (developer)
@@ -32,79 +44,97 @@ const REAL = {
   C: '04aa3e91-5d67-4dc8-afc1-b313a9d4995c', // By_Master     (master)
 };
 
-// ── 테스트 계정 정의 ───────────────────────────────────────────────────────────
-const TESTERS = [
-  {
-    id:       'cc000001-0000-4000-8000-000000000001',
-    email:    'tester01@byclan.gg',
-    password: 'Byclan01!',
-    discord:  'tester01',
-    by_id:    'By_Tester01',
-    role:     'admin',
-    race:     'Terran',
-    mmr:      1400,
-    wins:     0, losses: 0, clan_point: 2000,
-    intro:    '테스트 관리자 계정입니다.',
-  },
-  {
-    id:       'cc000002-0000-4000-8000-000000000002',
-    email:    'tester02@byclan.gg',
-    password: 'Byclan02!',
-    discord:  'tester02',
-    by_id:    'By_Tester02',
-    role:     'elite',
-    race:     'Zerg',
-    mmr:      1300,
-    wins:     0, losses: 0, clan_point: 1800,
-    intro:    '테스트 엘리트 계정입니다.',
-  },
-  {
-    id:       'cc000003-0000-4000-8000-000000000003',
-    email:    'tester03@byclan.gg',
-    password: 'Byclan03!',
-    discord:  'tester03',
-    by_id:    'By_Tester03',
-    role:     'associate',
-    race:     'Protoss',
-    mmr:      1200,
-    wins:     0, losses: 0, clan_point: 1500,
-    intro:    '테스트 준회원 계정입니다.',
-  },
-  {
-    id:       'cc000004-0000-4000-8000-000000000004',
-    email:    'tester04@byclan.gg',
-    password: 'Byclan04!',
-    discord:  'tester04',
-    by_id:    'By_Tester04',
-    role:     'member',
-    race:     'Terran',
-    mmr:      1100,
-    wins:     0, losses: 0, clan_point: 1200,
-    intro:    '테스트 일반 멤버 계정입니다.',
-  },
-  {
-    id:       'cc000005-0000-4000-8000-000000000005',
-    email:    'tester05@byclan.gg',
-    password: 'Byclan05!',
-    discord:  'tester05',
-    by_id:    'By_Tester05',
-    role:     'rookie',
-    race:     'Zerg',
-    mmr:      1000,
-    wins:     0, losses: 0, clan_point: 1000,
-    intro:    '테스트 루키 계정입니다.',
-  },
+// ── 테스트 계정 정의 (총 30명) ───────────────────────────────────────────────
+// 조건:
+// - developer/master 제외
+// - 모든 직급 2명 이상
+// - 일반 길드원(member) 다수
+// - 래더 가능 직급(admin/elite/member/rookie) 최소 14명 이상
+const ROLE_BLUEPRINT = [
+  { role: 'admin', count: 2, mmr: 1450, point: 2600, intro: '테스트 관리자 계정입니다.' },
+  { role: 'elite', count: 4, mmr: 1350, point: 2200, intro: '테스트 정예 계정입니다.' },
+  { role: 'member', count: 16, mmr: 1250, point: 2000, intro: '테스트 일반 길드원 계정입니다.' },
+  { role: 'rookie', count: 4, mmr: 1120, point: 1500, intro: '테스트 루키 계정입니다.' },
+  { role: 'applicant', count: 2, mmr: 1000, point: 1000, intro: '테스트 가입 신청자 계정입니다.' },
+  { role: 'visitor', count: 2, mmr: 1000, point: 1000, intro: '테스트 방문자 계정입니다.' },
 ];
+
+const RACES = ['Terran', 'Zerg', 'Protoss'];
+
+function buildTesters() {
+  const testers = [];
+  let idx = 1;
+
+  for (const spec of ROLE_BLUEPRINT) {
+    for (let i = 0; i < spec.count; i += 1) {
+      const no = pad2(idx);
+      testers.push({
+        id: buildTesterUuid(idx),
+        login_id: `tester${no}`,
+        password: `Byclan${no}!`,
+        discord: `tester${no}`,
+        by_id: `By_Tester${no}`,
+        role: spec.role,
+        race: RACES[(idx - 1) % RACES.length],
+        mmr: spec.mmr,
+        wins: 0,
+        losses: 0,
+        clan_point: spec.point,
+        intro: spec.intro,
+      });
+      idx += 1;
+    }
+  }
+
+  return testers;
+}
+
+const TESTERS = buildTesters();
+
+function validateTesterComposition(testers) {
+  if (testers.length !== 30) {
+    throw new Error(`테스트 계정 수가 30명이 아닙니다. 현재: ${testers.length}`);
+  }
+
+  const disallowed = testers.filter(t => ['developer', 'master'].includes(t.role));
+  if (disallowed.length > 0) {
+    throw new Error('developer/master 직급이 포함되어 있습니다.');
+  }
+
+  const roleCounts = testers.reduce((acc, t) => {
+    acc[t.role] = (acc[t.role] || 0) + 1;
+    return acc;
+  }, {});
+
+  const requiredRoles = ['admin', 'elite', 'member', 'rookie', 'applicant', 'visitor'];
+  for (const role of requiredRoles) {
+    if ((roleCounts[role] || 0) < 2) {
+      throw new Error(`${role} 직급이 2명 미만입니다.`);
+    }
+  }
+
+  const ladderEligibleRoles = new Set(['admin', 'elite', 'member', 'rookie']);
+  const eligibleCount = testers.filter(t => ladderEligibleRoles.has(t.role)).length;
+  if (eligibleCount < 14) {
+    throw new Error(`래더 매칭 가능 인원이 14명 미만입니다. 현재: ${eligibleCount}`);
+  }
+
+  if ((roleCounts.member || 0) <= 10) {
+    throw new Error('일반 길드원(member) 비중이 충분하지 않습니다.');
+  }
+}
+
+validateTesterComposition(TESTERS);
 
 // ── 단축 ID 참조 (이후 경기 구성에서 사용) ────────────────────────────────────
 const A = REAL.A;   // By_Developer
 const B = REAL.B;   // By_gkfla
 const C = REAL.C;   // By_Master
-const T1 = TESTERS[0].id;  // By_Tester01 (admin)
-const T2 = TESTERS[1].id;  // By_Tester02 (elite)
-const T3 = TESTERS[2].id;  // By_Tester03 (associate)
-const T4 = TESTERS[3].id;  // By_Tester04 (member)
-const T5 = TESTERS[4].id;  // By_Tester05 (rookie)
+const T1 = TESTERS[0].id;  // By_Tester01
+const T2 = TESTERS[1].id;  // By_Tester02
+const T3 = TESTERS[2].id;  // By_Tester03
+const T4 = TESTERS[3].id;  // By_Tester04
+const T5 = TESTERS[4].id;  // By_Tester05
 
 // ── 3v3 / 4v4 경기 목록 (12경기) ──────────────────────────────────────────────
 // winner: 'A' or 'B'  → winning_team
@@ -296,9 +326,10 @@ async function run() {
     for (const t of TESTERS) {
       const hash = await bcrypt.hash(t.password, 10);
       const now  = new Date().toISOString();
+      const authEmail = buildAuthEmail(t.login_id);
       const metaJson = JSON.stringify({ discord_name: t.discord }).replace(/'/g, "''");
       const identityJson = JSON.stringify({
-        sub: t.id, email: t.email, email_verified: true,
+        sub: t.id, email: authEmail, email_verified: true,
       }).replace(/'/g, "''");
       const identityId = crypto.randomUUID();
       const hashEsc = hash.replace(/'/g, "''");
@@ -318,7 +349,7 @@ async function run() {
           created_at, updated_at
         ) VALUES (
           '${t.id}'::uuid, '00000000-0000-0000-0000-000000000000'::uuid,
-          'authenticated', 'authenticated', '${t.email}',
+          'authenticated', 'authenticated', '${authEmail}',
           '${hashEsc}',
           '${now}'::timestamptz, '',
           '', '', '', '',
@@ -342,14 +373,14 @@ async function run() {
           identity_data, provider,
           last_sign_in_at, created_at, updated_at
         ) VALUES (
-          '${identityId}'::uuid, '${t.email}', '${t.id}'::uuid,
+          '${identityId}'::uuid, '${authEmail}', '${t.id}'::uuid,
           '${identityJson}'::jsonb, 'email',
           '${now}'::timestamptz, '${now}'::timestamptz, '${now}'::timestamptz
         )
         ON CONFLICT (provider, provider_id) DO NOTHING
       `);
 
-      console.log(`  ✓ ${t.email}  (${t.by_id} / ${t.role})`);
+      console.log(`  ✓ ${t.login_id}  (${t.by_id} / ${t.role})`);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -621,7 +652,7 @@ async function run() {
 
     console.log('\n🔑 테스트 계정 로그인 정보:');
     TESTERS.forEach(t =>
-      console.log(`  ${t.email.padEnd(25)}  /  ${t.password}  (${t.by_id} / ${t.role})`)
+      console.log(`  ${t.login_id.padEnd(12)}  /  ${t.password}  (${t.by_id} / ${t.role})`)
     );
     console.log('\n✅ 모든 작업 완료!\n');
 
