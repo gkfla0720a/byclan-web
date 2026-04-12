@@ -432,7 +432,9 @@ async function run() {
               losses= EXCLUDED.losses,
               ladder_mmr = EXCLUDED.ladder_mmr,
               clan_point = EXCLUDED.clan_point,
-              intro = EXCLUDED.intro
+              intro = EXCLUDED.intro,
+              is_test_account = true,
+              is_test_account_active = true
       `, [t.id, t.discord, t.by_id, t.role, t.race,
           t.wins, t.losses, t.mmr, t.clan_point, t.intro]);
     }
