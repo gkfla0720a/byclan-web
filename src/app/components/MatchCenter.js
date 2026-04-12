@@ -43,6 +43,7 @@ const RACE_COMBOS = [
   { id: 'PZT', label: '프저테', races: ['Protoss', 'Zerg', 'Terran'] },
   { id: 'RANDOM', label: '대포 (랜덤)', races: null },
 ];
+const REQUIRED_RACE_COMBOS = ['PPP', 'PPT', 'PPZ', 'PZT'];
 
 /** 종족 영문명을 한글 아이콘으로 변환하는 매핑 객체 */
 const RACE_ICONS = { Protoss: '프', Terran: '테', Zerg: '저' };
@@ -67,6 +68,32 @@ function getRaceCards(comboId) {
     return result;
   }
   return combo.races;
+}
+
+function getComboIdFromRaceCards(cards) {
+  if (!Array.isArray(cards) || cards.length !== 3) return null;
+  const map = { Protoss: 'P', Terran: 'T', Zerg: 'Z' };
+  const code = cards
+    .map((race) => map[race] || 'X')
+    .sort()
+    .join('');
+  if (code === 'PTZ') return 'PZT';
+  if (REQUIRED_RACE_COMBOS.includes(code)) return code;
+  return null;
+}
+
+function getRemainingRequiredCombos(matchSets) {
+  const used = new Set();
+  (matchSets || []).forEach((setRow) => {
+    const comboFromCode = typeof setRow?.combo_code === 'string' ? setRow.combo_code : null;
+    const normalized = comboFromCode === 'PTZ' ? 'PZT' : comboFromCode;
+    const combo = REQUIRED_RACE_COMBOS.includes(normalized)
+      ? normalized
+      : getComboIdFromRaceCards(setRow?.race_cards);
+    if (combo) used.add(combo);
+  });
+
+  return REQUIRED_RACE_COMBOS.filter((combo) => !used.has(combo));
 }
 
 /**
@@ -279,6 +306,13 @@ export default function MatchCenter({ matchId, onExit }) {
 
   const editingTeam = perspectiveTeam === 'A' || perspectiveTeam === 'B' ? perspectiveTeam : null;
   const selectedEntry = editingTeam ? selectedEntryByTeam[editingTeam] : [];
+  const remainingRequiredCombos = getRemainingRequiredCombos(match?.match_sets);
+
+  useEffect(() => {
+    if (remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(raceCombo)) {
+      setRaceCombo(remainingRequiredCombos[0]);
+    }
+  }, [remainingRequiredCombos, raceCombo]);
 
   const currentTeamEntry = (teamLetter) => currentSet?.[`team_${teamLetter.toLowerCase()}_entry`] || [];
   const currentTeamReady = (teamLetter) => Boolean(currentSet?.[`team_${teamLetter.toLowerCase()}_ready`]);
@@ -415,6 +449,15 @@ export default function MatchCenter({ matchId, onExit }) {
       const matchEnded = nextA >= needWins || nextB >= needWins;
 
       if (!matchEnded) {
+        const remainingCombos = getRemainingRequiredCombos(match?.match_sets);
+        let nextCombo = raceCombo;
+
+        if (remainingCombos.length > 0 && !remainingCombos.includes(nextCombo)) {
+          nextCombo = remainingCombos[0];
+          setRaceCombo(nextCombo);
+          alert(`종족전 규칙 적용: ${remainingCombos.join(', ')} 중 하나를 먼저 사용해야 합니다. 다음 세트는 ${nextCombo}로 생성됩니다.`);
+        }
+
         const nextSetNo = (match?.match_sets?.length || 0) + 1;
         const { error: insertErr } = await supabase
           .from('match_sets')
@@ -423,7 +466,7 @@ export default function MatchCenter({ matchId, onExit }) {
             set_number: nextSetNo,
             race_type: match?.match_type || '4v4',
             status: '엔트리제출중',
-            race_cards: getRaceCards(raceCombo),
+            race_cards: getRaceCards(nextCombo),
             team_a_ready: false,
             team_b_ready: false,
           });
@@ -715,15 +758,25 @@ export default function MatchCenter({ matchId, onExit }) {
         {showRaceSelector && (
           <div className="mb-5 p-4 rounded-xl bg-gray-900/60 border border-gray-700">
             <p className="text-gray-500 text-xs mb-3 uppercase tracking-wider">다음 세트 종족 선택 (패배팀 선택권)</p>
+            {remainingRequiredCombos.length > 0 && (
+              <p className="text-[11px] text-yellow-500 mb-3">
+                필수 종족전 우선 규칙: {remainingRequiredCombos.join(', ')} 먼저 진행 후 재선택 가능
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               {RACE_COMBOS.map(combo => (
                 <button
                   key={combo.id}
+                  disabled={remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(combo.id)}
                   onClick={() => { setRaceCombo(combo.id); setShowRaceSelector(false); }}
                   className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
                     raceCombo === combo.id
                       ? 'border-cyan-500 bg-cyan-950/30 text-cyan-300'
                       : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                  } ${
+                    remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(combo.id)
+                      ? 'opacity-35 cursor-not-allowed hover:border-gray-700'
+                      : ''
                   }`}
                 >
                   {combo.label}

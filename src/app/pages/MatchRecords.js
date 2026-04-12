@@ -15,7 +15,7 @@
  */
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
@@ -96,10 +96,10 @@ function normalizeSetEntry(entry) {
 }
 
 /**
- * MatchDetailModal 컴포넌트
+ * MatchDetailPanel 컴포넌트
  *
- * 경기 상세 정보를 팝업으로 표시합니다.
- * 좌우 화살표로 이전/다음 경기를 탐색하고, 우상단 ✕ 버튼으로 닫습니다.
+ * 경기 상세 정보를 기록 항목 바로 아래 인라인 패널로 표시합니다.
+ * 좌우 화살표 또는 버튼으로 이전/다음 경기를 탐색하고 닫을 수 있습니다.
  *
  * @param {object} props
  * @param {Array}  props.matches      - 전체 경기 목록
@@ -109,9 +109,8 @@ function normalizeSetEntry(entry) {
  * @param {Function} props.onPrev     - 이전 경기 이동 콜백
  * @param {Function} props.onNext     - 다음 경기 이동 콜백
  */
-function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNext }) {
+function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNext }) {
   const m = matches[index];
-  const overlayRef = useRef(null);
   /** 현재 경기의 세트별 결과 */
   const [sets, setSets] = useState([]);
   const [expandedSetNo, setExpandedSetNo] = useState(null);
@@ -146,11 +145,6 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
     return () => window.removeEventListener('keydown', handleKey);
   }, [onClose, onPrev, onNext]);
 
-  // 오버레이 바깥 클릭으로 닫기
-  const handleOverlayClick = (e) => {
-    if (e.target === overlayRef.current) onClose();
-  };
-
   if (!m) return null;
 
   const isFinished = m.status === '완료';
@@ -173,59 +167,72 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
   }
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-2 sm:px-4"
-      onClick={handleOverlayClick}
-    >
-      <div className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-[#0A1128] border border-cyan-500/50 shadow-[0_0_40px_rgba(6,182,212,0.3)] rounded-sm font-mono select-none">
+    <div className="w-full max-h-[75vh] overflow-y-auto bg-[#0A1128] border border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.2)] rounded-sm font-mono select-none">
 
-        {/* 상단 바 */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-cyan-500/30 bg-cyan-950/20">
-          <span className="text-cyan-400 text-xs tracking-widest">
-            [ {m.match_type || '-'} · {matchFormat} ] {formatDate(m.created_at)}
-          </span>
+      {/* 상단 바 */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-cyan-500/30 bg-cyan-950/20">
+        <span className="text-cyan-400 text-xs tracking-widest">
+          [ {m.match_type || '-'} · {matchFormat} ] {formatDate(m.created_at)}
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onPrev}
+            disabled={index <= 0}
+            aria-label="이전 경기"
+            className="px-2.5 py-1 text-xs rounded border border-cyan-500/30 text-cyan-300 disabled:text-slate-600 disabled:border-slate-700"
+          >
+            이전
+          </button>
+          <button
+            onClick={onNext}
+            disabled={index >= matches.length - 1}
+            aria-label="다음 경기"
+            className="px-2.5 py-1 text-xs rounded border border-cyan-500/30 text-cyan-300 disabled:text-slate-600 disabled:border-slate-700"
+          >
+            다음
+          </button>
           <button
             onClick={onClose}
             aria-label="닫기"
-            className="text-gray-400 hover:text-white transition-colors text-lg leading-none ml-4"
+            className="px-2.5 py-1 text-xs rounded border border-gray-600/60 text-gray-300 hover:text-white hover:border-gray-400"
           >
-            ✕
+            닫기
           </button>
         </div>
+      </div>
 
-        {/* 상태 배지 */}
-        <div className="flex justify-center pt-3 pb-1">
-          <span className={`text-[11px] font-black px-3 py-0.5 rounded-full ${getStatusStyle(m.status)}`}>
-            {isOngoing ? '진행중' : m.status || '-'}
-          </span>
-        </div>
+      {/* 상태 배지 */}
+      <div className="flex justify-center pt-3 pb-1">
+        <span className={`text-[11px] font-black px-3 py-0.5 rounded-full ${getStatusStyle(m.status)}`}>
+          {isOngoing ? '진행중' : m.status || '-'}
+        </span>
+      </div>
 
-        {/* 스코어 */}
-        <div className="flex justify-center items-center gap-4 py-2">
-          {isFinished ? (
-            <>
-              <span className={`text-2xl font-black ${resultLabel?.a === '승' ? 'text-cyan-300' : 'text-gray-500'}`}>
-                {resultLabel?.a}
-              </span>
-              <span className="text-white font-black text-2xl tracking-widest">
-                {m.score_a ?? '-'} : {m.score_b ?? '-'}
-              </span>
-              <span className={`text-2xl font-black ${resultLabel?.b === '승' ? 'text-cyan-300' : 'text-gray-500'}`}>
-                {resultLabel?.b}
-              </span>
-            </>
-          ) : isOngoing ? (
-            <span className="text-red-300 font-black text-xl tracking-widest animate-pulse">
-              {m.score_a ?? 0} : {m.score_b ?? 0} 진행중
+      {/* 스코어 */}
+      <div className="flex justify-center items-center gap-4 py-2">
+        {isFinished ? (
+          <>
+            <span className={`text-2xl font-black ${resultLabel?.a === '승' ? 'text-cyan-300' : 'text-gray-500'}`}>
+              {resultLabel?.a}
             </span>
-          ) : (
-            <span className="text-gray-500 text-sm">VS</span>
-          )}
-        </div>
+            <span className="text-white font-black text-2xl tracking-widest">
+              {m.score_a ?? '-'} : {m.score_b ?? '-'}
+            </span>
+            <span className={`text-2xl font-black ${resultLabel?.b === '승' ? 'text-cyan-300' : 'text-gray-500'}`}>
+              {resultLabel?.b}
+            </span>
+          </>
+        ) : isOngoing ? (
+          <span className="text-red-300 font-black text-xl tracking-widest animate-pulse">
+            {m.score_a ?? 0} : {m.score_b ?? 0} 진행중
+          </span>
+        ) : (
+          <span className="text-gray-500 text-sm">VS</span>
+        )}
+      </div>
 
-        {/* 팀 목록 (종족 포함) */}
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 px-4 pb-3 mt-1">
+      {/* 팀 목록 (종족 포함) */}
+      <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 px-4 pb-3 mt-1">
           {/* A팀 헤더 */}
           <div className="text-cyan-400 text-xs text-center font-bold pb-1 border-b border-cyan-500/20">A팀</div>
           <div className="border-b border-transparent pb-1" />
@@ -264,11 +271,11 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
           {maxRows === 0 && (
             <div className="col-span-3 text-center text-gray-600 text-xs py-4">참여 정보 없음</div>
           )}
-        </div>
+      </div>
 
-        {/* 세트별 결과 + 클릭 상세 */}
-        {sets.length > 0 && (
-          <div className="px-4 pb-4 pt-3 border-t border-cyan-500/10 mx-4">
+      {/* 세트별 결과 + 클릭 상세 */}
+      {sets.length > 0 && (
+        <div className="px-4 pb-4 pt-3 border-t border-cyan-500/10 mx-4">
             <div className="text-cyan-500/70 text-[10px] font-bold tracking-widest mb-2">SET RESULTS (조합 클릭 시 엔트리 확인)</div>
             <div className="space-y-1.5">
               {sets.map((s) => {
@@ -331,31 +338,12 @@ function MatchDetailModal({ matches, index, profileCache, onClose, onPrev, onNex
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {/* 좌우 네비게이션 버튼 */}
-        <button
-          onClick={onPrev}
-          disabled={index <= 0}
-          aria-label="이전 경기"
-          className="absolute top-1/2 -translate-y-1/2 -left-11 text-cyan-400 hover:text-cyan-200 disabled:text-gray-700 disabled:cursor-not-allowed text-3xl transition-colors"
-        >
-          ‹
-        </button>
-        <button
-          onClick={onNext}
-          disabled={index >= matches.length - 1}
-          aria-label="다음 경기"
-          className="absolute top-1/2 -translate-y-1/2 -right-11 text-cyan-400 hover:text-cyan-200 disabled:text-gray-700 disabled:cursor-not-allowed text-3xl transition-colors"
-        >
-          ›
-        </button>
-
-        {/* 페이지 표시 */}
-        <div className="text-center text-gray-600 text-[10px] pb-2 tracking-widest">
-          {index + 1} / {matches.length}
         </div>
+      )}
+
+      {/* 페이지 표시 */}
+      <div className="text-center text-gray-600 text-[10px] pb-2 tracking-widest">
+        {index + 1} / {matches.length}
       </div>
     </div>
   );
@@ -501,32 +489,47 @@ export default function MatchRecords() {
               </thead>
               <tbody>
                 {pagedMatches.map((m, idx) => (
-                  <tr
-                    key={m.id}
-                    onClick={() => setSelectedIndex(idx)}
-                    className={`border-b border-cyan-500/10 transition-colors hover:bg-cyan-950/10 cursor-pointer ${
-                      idx % 2 === 0 ? '' : 'bg-[#0a0f1e]/40'
-                    }`}
-                  >
-                    <td className="py-3 px-4 text-gray-500 text-xs">{formatDate(m.created_at)}</td>
-                    <td className="py-3 px-4 text-cyan-200 text-xs font-bold">{m.match_type || '-'}</td>
-                    <td className="py-3 px-4">
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${getStatusStyle(m.status)}`}>
-                        {m.status || '-'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">{renderTeam(m.team_a_ids)}</td>
-                    <td className="py-3 px-3 text-center">
-                      {m.status === '완료' ? (
-                        <span className="text-white font-black text-sm">
-                          {m.score_a ?? '-'} : {m.score_b ?? '-'}
+                  <React.Fragment key={m.id}>
+                    <tr
+                      onClick={() => setSelectedIndex((prev) => (prev === idx ? null : idx))}
+                      className={`border-b border-cyan-500/10 transition-colors hover:bg-cyan-950/10 cursor-pointer ${
+                        idx % 2 === 0 ? '' : 'bg-[#0a0f1e]/40'
+                      }`}
+                    >
+                      <td className="py-3 px-4 text-gray-500 text-xs">{formatDate(m.created_at)}</td>
+                      <td className="py-3 px-4 text-cyan-200 text-xs font-bold">{m.match_type || '-'}</td>
+                      <td className="py-3 px-4">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${getStatusStyle(m.status)}`}>
+                          {m.status || '-'}
                         </span>
-                      ) : (
-                        <span className="text-gray-600 text-xs">VS</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">{renderTeam(m.team_b_ids)}</td>
-                  </tr>
+                      </td>
+                      <td className="py-3 px-4">{renderTeam(m.team_a_ids)}</td>
+                      <td className="py-3 px-3 text-center">
+                        {m.status === '완료' ? (
+                          <span className="text-white font-black text-sm">
+                            {m.score_a ?? '-'} : {m.score_b ?? '-'}
+                          </span>
+                        ) : (
+                          <span className="text-gray-600 text-xs">VS</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">{renderTeam(m.team_b_ids)}</td>
+                    </tr>
+                    {selectedIndex === idx && (
+                      <tr className="border-b border-cyan-500/10 bg-cyan-950/5">
+                        <td colSpan={6} className="p-3">
+                          <MatchDetailPanel
+                            matches={pagedMatches}
+                            index={selectedIndex}
+                            profileCache={profileCache}
+                            onClose={() => setSelectedIndex(null)}
+                            onPrev={() => setSelectedIndex((i) => Math.max(0, i - 1))}
+                            onNext={() => setSelectedIndex((i) => Math.min(pagedMatches.length - 1, i + 1))}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
@@ -534,34 +537,47 @@ export default function MatchRecords() {
             {/* 모바일 카드 */}
             <div className="sm:hidden flex flex-col divide-y divide-cyan-500/10">
               {pagedMatches.map((m, idx) => (
-                <div
-                  key={m.id}
-                  onClick={() => setSelectedIndex(idx)}
-                  className="px-4 py-4 flex flex-col gap-2 cursor-pointer active:bg-cyan-950/20"
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">{formatDate(m.created_at)}</span>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${getStatusStyle(m.status)}`}>
-                      {m.status || '-'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-cyan-300 text-xs font-bold w-10">{m.match_type}</span>
-                    <div className="flex-1">
-                      <div className="text-[11px] text-gray-400 mb-0.5">A팀</div>
-                      <div className="flex flex-wrap gap-1">{renderTeam(m.team_a_ids)}</div>
-                    </div>
-                    {m.status === '완료' && (
-                      <span className="text-white font-black text-sm mx-1">
-                        {m.score_a ?? '-'} : {m.score_b ?? '-'}
+                <React.Fragment key={m.id}>
+                  <div
+                    onClick={() => setSelectedIndex((prev) => (prev === idx ? null : idx))}
+                    className="px-4 py-4 flex flex-col gap-2 cursor-pointer active:bg-cyan-950/20"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 text-xs">{formatDate(m.created_at)}</span>
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${getStatusStyle(m.status)}`}>
+                        {m.status || '-'}
                       </span>
-                    )}
-                    <div className="flex-1 text-right">
-                      <div className="text-[11px] text-gray-400 mb-0.5">B팀</div>
-                      <div className="flex flex-wrap gap-1 justify-end">{renderTeam(m.team_b_ids)}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-cyan-300 text-xs font-bold w-10">{m.match_type}</span>
+                      <div className="flex-1">
+                        <div className="text-[11px] text-gray-400 mb-0.5">A팀</div>
+                        <div className="flex flex-wrap gap-1">{renderTeam(m.team_a_ids)}</div>
+                      </div>
+                      {m.status === '완료' && (
+                        <span className="text-white font-black text-sm mx-1">
+                          {m.score_a ?? '-'} : {m.score_b ?? '-'}
+                        </span>
+                      )}
+                      <div className="flex-1 text-right">
+                        <div className="text-[11px] text-gray-400 mb-0.5">B팀</div>
+                        <div className="flex flex-wrap gap-1 justify-end">{renderTeam(m.team_b_ids)}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                  {selectedIndex === idx && (
+                    <div className="px-3 pb-3">
+                      <MatchDetailPanel
+                        matches={pagedMatches}
+                        index={selectedIndex}
+                        profileCache={profileCache}
+                        onClose={() => setSelectedIndex(null)}
+                        onPrev={() => setSelectedIndex((i) => Math.max(0, i - 1))}
+                        onNext={() => setSelectedIndex((i) => Math.min(pagedMatches.length - 1, i + 1))}
+                      />
+                    </div>
+                  )}
+                </React.Fragment>
               ))}
             </div>
 
@@ -590,17 +606,6 @@ export default function MatchRecords() {
         )}
       </div>
 
-      {/* 경기 상세 팝업 */}
-      {selectedIndex !== null && (
-        <MatchDetailModal
-          matches={pagedMatches}
-          index={selectedIndex}
-          profileCache={profileCache}
-          onClose={() => setSelectedIndex(null)}
-          onPrev={() => setSelectedIndex((i) => Math.max(0, i - 1))}
-          onNext={() => setSelectedIndex((i) => Math.min(pagedMatches.length - 1, i + 1))}
-        />
-      )}
     </div>
   );
 }
