@@ -41,6 +41,8 @@ export interface ProfileRow extends TestDataFlags {
   ladder_mmr: number | null;
   team_mmr?: number | null;
   total_mmr?: number | null;
+  recent_total_delta?: number | null;
+  race_combo_stats?: JsonValue | null;
   is_in_queue: boolean | null;
   vote_to_start: boolean | null;
   is_test_account: boolean | null;
@@ -135,6 +137,7 @@ export interface MatchSetRow {
   match_id: UUID | null;
   set_number: number | null;
   race_type: string | null;
+  combo_code?: string | null;
   team_a_entry: MatchSetEntry | JsonValue | null;
   team_b_entry: MatchSetEntry | JsonValue | null;
   winner_team: WinningSide | null;

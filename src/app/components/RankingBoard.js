@@ -2,55 +2,198 @@
  * 파일명: RankingBoard.js
  *
  * 역할:
- *   ByClan 래더 MMR(매치메이킹 레이팅) 랭킹을 표 형태로 보여주는 컴포넌트입니다.
- *   Supabase의 profiles 테이블에서 클랜원 이상의 유저 목록을 MMR 내림차순으로 조회하여
- *   순위, 닉네임, 종족, MMR, 전적(승/패), 승률을 표시합니다.
- *
- * 주요 기능:
- *   - profiles 테이블에서 visitor/applicant/expelled 제외 후 순위 표시
- *   - 테스트 계정 데이터 필터링 (filterVisibleTestData 활용)
- *   - 테스트 데이터에는 'TEST' 뱃지 표시
- *   - 로딩 중 / 오류 / 데이터 없음 상태별 메시지 표시
- *
- * 사용 방법:
- *   <RankingBoard />
- *   (별도의 props 없이 독립적으로 사용합니다.)
+ *   ByClan 래더 랭킹을 확장 보드 형태로 보여주는 컴포넌트입니다.
+ *   profiles 테이블에서 점수/전적/조합 통계를 읽고,
+ *   아직 실제 데이터가 없는 항목은 임시 샘플 값으로 보완해 표시합니다.
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/supabase'; // ✅ 수정1
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/supabase';
 import { filterVisibleTestAccounts, isMarkedTestData } from '@/app/utils/testData';
 
-/**
- * 래더 랭킹 보드 컴포넌트
- * Supabase의 profiles 테이블에서 랭킹 데이터를 불러와 표로 표시합니다.
- *
- * @returns {JSX.Element} MMR 랭킹 테이블 UI
- */
-export default function RankingBoard() {
-  /** 랭킹 데이터 배열. 각 항목은 플레이어 프로필 정보를 담습니다. */
-  const [rankings, setRankings] = useState([]);
-  /** 데이터 로딩 중 여부. true이면 "불러오는 중" 메시지를 표시합니다. */
-  const [loading, setLoading] = useState(true);
-  /** 데이터 조회 실패 시 오류 객체를 저장합니다. null이면 오류 없음. */
-  const [error, setError] = useState(null);
+const TIER_META = [
+  { key: 'challenger', label: '챌린저', min: 2400, badge: 'C', tone: 'from-amber-200 via-yellow-400 to-amber-600', ring: 'ring-amber-300/70' },
+  { key: 'master', label: '마스터', min: 2200, badge: 'M', tone: 'from-rose-300 via-pink-500 to-rose-700', ring: 'ring-rose-400/60' },
+  { key: 'diamond', label: '다이아', min: 1900, badge: 'D', tone: 'from-sky-200 via-cyan-400 to-sky-700', ring: 'ring-cyan-400/60' },
+  { key: 'platinum', label: '플래티넘', min: 1600, badge: 'P', tone: 'from-emerald-200 via-teal-400 to-emerald-700', ring: 'ring-emerald-400/60' },
+  { key: 'gold', label: '골드', min: 1350, badge: 'G', tone: 'from-yellow-200 via-yellow-400 to-orange-500', ring: 'ring-yellow-300/60' },
+  { key: 'silver', label: '실버', min: 1100, badge: 'S', tone: 'from-slate-100 via-slate-300 to-slate-500', ring: 'ring-slate-300/60' },
+  { key: 'bronze', label: '브론즈', min: -Infinity, badge: 'B', tone: 'from-orange-200 via-orange-500 to-amber-700', ring: 'ring-orange-400/60' },
+];
 
-  /**
-   * 컴포넌트가 처음 화면에 나타날 때 랭킹 데이터를 한 번 불러옵니다.
-   * - visitor(방문자), applicant(지원자), expelled(강퇴) 역할은 제외합니다.
-   * - clan_point(MMR) 내림차순으로 정렬합니다.
-   */
+const COMBO_KEYS = ['PPP', 'PPT', 'PPZ', 'PZT', 'OTHER'];
+const COMBO_LABELS = {
+  PPP: 'PPP',
+  PPT: 'PPT',
+  PPZ: 'PPZ',
+  PZT: 'PZT',
+  OTHER: '기타종족',
+};
+const SAMPLE_WEIGHTS_BY_RACE = {
+  Protoss: { PPP: 0.34, PPT: 0.24, PPZ: 0.18, PZT: 0.14, OTHER: 0.10 },
+  Terran: { PPP: 0.12, PPT: 0.30, PPZ: 0.10, PZT: 0.30, OTHER: 0.18 },
+  Zerg: { PPP: 0.08, PPT: 0.14, PPZ: 0.30, PZT: 0.24, OTHER: 0.24 },
+  default: { PPP: 0.20, PPT: 0.20, PPZ: 0.20, PZT: 0.20, OTHER: 0.20 },
+};
+const MAIN_RACE_LABELS = {
+  Protoss: '프로토스',
+  Terran: '테란',
+  Zerg: '저그',
+  Random: '랜덤',
+  미지정: '미지정',
+};
+
+function hashString(value = '') {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) - hash + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function getTierMeta(score) {
+  return TIER_META.find((tier) => score >= tier.min) || TIER_META[TIER_META.length - 1];
+}
+
+function getMainRaceLabel(race) {
+  return MAIN_RACE_LABELS[race] || race || '미지정';
+}
+
+function formatPercent(wins, losses) {
+  const total = wins + losses;
+  if (total <= 0) return '0%';
+  return `${((wins / total) * 100).toFixed(1)}%`;
+}
+
+function coerceComboStats(rawStats) {
+  if (!rawStats || typeof rawStats !== 'object' || Array.isArray(rawStats)) {
+    return null;
+  }
+
+  const normalized = {};
+  let foundValue = false;
+
+  COMBO_KEYS.forEach((key) => {
+    const value = rawStats[key];
+    const wins = Number(value?.wins ?? 0);
+    const losses = Number(value?.losses ?? 0);
+    normalized[key] = { wins, losses };
+    if (wins > 0 || losses > 0) {
+      foundValue = true;
+    }
+  });
+
+  return foundValue ? normalized : null;
+}
+
+function distributeCount(total, keys, weights, seed) {
+  const base = {};
+  const entries = keys.map((key, index) => {
+    const weighted = total * (weights[key] ?? 0);
+    const floorValue = Math.floor(weighted);
+    base[key] = floorValue;
+    return {
+      key,
+      remainder: weighted - floorValue + (((seed >> (index * 3)) & 7) / 100),
+    };
+  });
+
+  let assigned = keys.reduce((sum, key) => sum + base[key], 0);
+  entries.sort((a, b) => b.remainder - a.remainder);
+
+  for (let i = 0; assigned < total; i += 1) {
+    const nextKey = entries[i % entries.length]?.key;
+    if (!nextKey) break;
+    base[nextKey] += 1;
+    assigned += 1;
+  }
+
+  return base;
+}
+
+function buildSampleComboStats(player) {
+  const seed = hashString(`${player.id || ''}:${player.by_id || ''}:${player.race || ''}`);
+  const actualGames = (player.wins ?? 0) + (player.losses ?? 0);
+  const totalGames = Math.max(actualGames, 8 + (seed % 11));
+  const winRateBase = actualGames > 0
+    ? (player.wins ?? 0) / Math.max(actualGames, 1)
+    : 0.46 + ((seed % 17) - 8) / 100;
+  const sampleWins = Math.max(0, Math.min(totalGames, Math.round(totalGames * winRateBase)));
+  const sampleLosses = Math.max(0, totalGames - sampleWins);
+  const weights = SAMPLE_WEIGHTS_BY_RACE[player.race] || SAMPLE_WEIGHTS_BY_RACE.default;
+  const winSplit = distributeCount(sampleWins, COMBO_KEYS, weights, seed);
+  const lossSplit = distributeCount(sampleLosses, COMBO_KEYS, weights, seed >> 1);
+
+  return Object.fromEntries(
+    COMBO_KEYS.map((key) => [key, { wins: winSplit[key] || 0, losses: lossSplit[key] || 0 }])
+  );
+}
+
+function getComboStats(player) {
+  return coerceComboStats(player.race_combo_stats) || buildSampleComboStats(player);
+}
+
+function getRecentDelta(player) {
+  if (player.recent_total_delta !== null && player.recent_total_delta !== undefined) {
+    return Number(player.recent_total_delta);
+  }
+
+  const seed = hashString(player.id || player.by_id || '');
+  const magnitudes = [0, 10, 20, 30, 40, 50, 60];
+  const sign = seed % 3 === 0 ? 1 : seed % 3 === 1 ? -1 : 0;
+  return sign * magnitudes[seed % magnitudes.length];
+}
+
+function formatRecentDelta(delta) {
+  if (!delta) {
+    return { text: '-', tone: 'text-slate-500', arrow: '' };
+  }
+  if (delta > 0) {
+    return { text: `+${delta}`, tone: 'text-emerald-400', arrow: '↑' };
+  }
+  return { text: `${delta}`, tone: 'text-rose-400', arrow: '↓' };
+}
+
+function ComboRateCell({ stat }) {
+  return (
+    <td className="px-3 py-4 text-center align-middle">
+      <div className="text-sm font-semibold text-cyan-100">{formatPercent(stat.wins, stat.losses)}</div>
+      <div className="mt-1 text-[11px] text-slate-500">{stat.wins}승 {stat.losses}패</div>
+    </td>
+  );
+}
+
+function TierBadge({ score }) {
+  const tier = getTierMeta(score);
+  return (
+    <div className={`relative h-11 w-11 shrink-0 rounded-2xl bg-gradient-to-br ${tier.tone} p-[1px] shadow-[0_0_20px_rgba(34,211,238,0.18)]`}>
+      <div className={`flex h-full w-full items-center justify-center rounded-2xl bg-slate-950/90 text-sm font-black text-white ring-1 ${tier.ring}`}>
+        {tier.badge}
+      </div>
+    </div>
+  );
+}
+
+export default function RankingBoard() {
+  const [rankings, setRankings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
+
   useEffect(() => {
     const fetchRankings = async () => {
       try {
-        const { data, error: fetchError } = await filterVisibleTestAccounts(supabase
-          .from('profiles')
-          .select('id, by_id, race, ladder_mmr, team_mmr, total_mmr, wins, losses')
-          .neq('role', 'visitor')
-          .neq('role', 'applicant')
-          .neq('role', 'expelled')
-          .order('total_mmr', { ascending: false }));
+        const { data, error: fetchError } = await filterVisibleTestAccounts(
+          supabase
+            .from('profiles')
+            .select('id, by_id, race, ladder_mmr, team_mmr, total_mmr, wins, losses, recent_total_delta, race_combo_stats')
+            .neq('role', 'visitor')
+            .neq('role', 'applicant')
+            .neq('role', 'expelled')
+            .order('total_mmr', { ascending: false })
+        );
+
         if (fetchError) throw fetchError;
         setRankings(data || []);
       } catch (err) {
@@ -60,69 +203,111 @@ export default function RankingBoard() {
         setLoading(false);
       }
     };
+
     fetchRankings();
   }, []);
 
+  const filteredRankings = rankings.filter((player) => {
+    const query = search.trim().toLowerCase();
+    if (!query) return true;
+    return (player.by_id || '').toLowerCase().includes(query);
+  });
+
   return (
-    <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono">
-      {/* 헤더 동일 */}
-      <div className="flex justify-between items-end mb-4 px-2 sm:px-0 border-b border-cyan-500/50 pb-2">
-        <h2 className="text-xl sm:text-2xl font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] tracking-widest">
-          [ SYSTEM: LADDER MMR RANKING ]
-        </h2>
-        <span className="text-cyan-600 text-xs sm:text-sm animate-pulse">SUPABASE CONNECTED //</span>
+    <div className="w-full max-w-[1500px] mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono space-y-4">
+      <div className="flex flex-col gap-3 rounded-3xl border border-cyan-500/20 bg-slate-950/70 px-5 py-4 shadow-[0_0_30px_rgba(8,145,178,0.12)] sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-black tracking-[0.2em] text-cyan-300">RANKING</h2>
+          <p className="mt-2 text-sm text-cyan-100/80">전체 랭킹 ({filteredRankings.length}명)</p>
+        </div>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="닉네임 검색"
+          className="h-11 w-full rounded-xl border border-cyan-500/20 bg-slate-900/90 px-4 text-sm text-cyan-100 outline-none transition focus:border-cyan-400 sm:max-w-xs"
+        />
       </div>
-      
-      <div className="bg-[#0A1128] border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.15)] rounded-sm overflow-hidden relative">
-        <table className="w-full text-left border-collapse relative z-10 table-fixed">
-          <thead>
-            <tr className="border-b border-cyan-500/40 bg-cyan-950/10 text-cyan-300 text-xs uppercase tracking-widest">
-              <th className="py-3 px-4 text-center w-[12%]">순위</th>
-              <th className="py-3 px-4 w-[28%]">플레이어</th>
-              <th className="py-3 px-4 text-center w-[14%]">종족</th>
-              <th className="py-3 px-4 text-center w-[16%]">MMR(개인/팀/합산)</th>
-              <th className="py-3 px-4 text-center w-[16%]">전적</th>
-              <th className="py-3 px-4 text-center w-[14%]">승률</th>
+
+      <div className="overflow-x-auto rounded-3xl border border-cyan-500/20 bg-slate-950/80 shadow-[0_0_24px_rgba(6,182,212,0.12)]">
+        <table className="min-w-[1480px] w-full table-fixed text-left">
+          <thead className="bg-cyan-950/30 text-[11px] uppercase tracking-[0.18em] text-cyan-300">
+            <tr className="border-b border-cyan-500/20">
+              <th className="px-3 py-4 text-center w-[72px]">순위</th>
+              <th className="px-3 py-4 w-[240px]">플레이어</th>
+              <th className="px-3 py-4 text-center w-[140px]">레더점수</th>
+              <th className="px-3 py-4 text-center w-[110px]">최근 변동</th>
+              <th className="px-3 py-4 text-center w-[96px]">승률</th>
+              <th className="px-3 py-4 text-center w-[96px]">팀점수</th>
+              <th className="px-3 py-4 text-center w-[96px]">총점수</th>
+              <th className="px-3 py-4 text-center w-[90px]">PPP</th>
+              <th className="px-3 py-4 text-center w-[90px]">PPT</th>
+              <th className="px-3 py-4 text-center w-[90px]">PPZ</th>
+              <th className="px-3 py-4 text-center w-[90px]">PZT</th>
+              <th className="px-3 py-4 text-center w-[110px]">기타종족</th>
+              <th className="px-3 py-4 text-center w-[100px]">주 종족</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="6" className="text-center py-8 text-cyan-600 animate-pulse">DB 데이터를 불러오는 중입니다...</td></tr>
-            ) : error ? (
-              <tr><td colSpan="6" className="text-center py-8 text-red-400">랭킹 데이터를 불러오지 못했습니다. 잠시 후 새로고침 해주세요.</td></tr>
-            ) : rankings.length === 0 ? (
-              <tr><td colSpan="6" className="text-center py-8 text-cyan-600">등록된 랭킹 데이터가 없습니다.</td></tr>
-            ) : null}
-            {rankings.map((player, index) => (  // ✅ index 추가
-              <tr key={player.id} className="border-b border-cyan-800/50 hover:bg-cyan-900/30 transition-colors">
-                <td className="py-3 px-4 text-center font-bold text-cyan-100">
-                  {index + 1}  {/* ✅ 동적 랭킹 */}
-                </td>
-                <td className="py-3 px-4 font-medium text-cyan-50">
-                  <div className="flex flex-col sm:flex-row gap-1 sm:items-center">
-                    <span className="text-sm sm:text-base tracking-wide">{player.by_id || <span className="text-red-400">[by_id 없음]</span>}</span>
-                    {isMarkedTestData(player) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
-                    <span className="text-[10px] text-cyan-600 sm:hidden">[{player.race}]</span>
-                  </div>
-                </td>
-                <td className="py-3 px-4 text-center text-sm text-cyan-400 hidden sm:table-cell">{player.race}</td>
-                <td className="py-3 px-4 text-center font-bold text-cyan-300 text-[11px] sm:text-sm drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
-                  <span className="text-cyan-200">{player.ladder_mmr ?? 1500}</span>
-                  <span className="text-gray-500 mx-1">/</span>
-                  <span className="text-purple-300">{player.team_mmr ?? 0}</span>
-                  <span className="text-gray-500 mx-1">/</span>
-                  <span className="text-yellow-300">{player.total_mmr ?? ((player.ladder_mmr ?? 1500) + (player.team_mmr ?? 0))}</span>
-                </td>
-                <td className="py-3 px-4 text-center text-sm text-gray-400 hidden md:table-cell">
-                  <span className="text-emerald-400">{player.wins ?? 0}W</span> / <span className="text-red-400">{player.losses ?? 0}L</span>
-                </td>
-                <td className="py-3 px-4 text-center text-sm text-cyan-500 hidden sm:table-cell">
-                  {(((player.wins ?? 0) + (player.losses ?? 0)) === 0)
-                    ? '0.0'
-                    : (((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100).toFixed(1)}%
-                </td>
+              <tr>
+                <td colSpan="13" className="px-4 py-12 text-center text-cyan-500">랭킹 데이터를 불러오는 중입니다...</td>
               </tr>
-            ))}
+            ) : error ? (
+              <tr>
+                <td colSpan="13" className="px-4 py-12 text-center text-rose-400">랭킹 데이터를 불러오지 못했습니다.</td>
+              </tr>
+            ) : filteredRankings.length === 0 ? (
+              <tr>
+                <td colSpan="13" className="px-4 py-12 text-center text-slate-500">표시할 랭킹 데이터가 없습니다.</td>
+              </tr>
+            ) : (
+              filteredRankings.map((player, index) => {
+                const ladderScore = Number(player.ladder_mmr ?? 1500);
+                const teamScore = Number(player.team_mmr ?? 0);
+                const totalScore = Number(player.total_mmr ?? (ladderScore + teamScore));
+                const wins = Number(player.wins ?? 0);
+                const losses = Number(player.losses ?? 0);
+                const totalGames = wins + losses;
+                const winRate = totalGames > 0 ? `${((wins / totalGames) * 100).toFixed(1)}%` : '0.0%';
+                const comboStats = getComboStats(player);
+                const recent = formatRecentDelta(getRecentDelta(player));
+                const tier = getTierMeta(totalScore);
+
+                return (
+                  <tr key={player.id} className="border-b border-cyan-900/30 text-sm text-slate-200 transition hover:bg-cyan-900/10">
+                    <td className="px-3 py-4 text-center text-lg font-black text-slate-100">{index + 1}</td>
+                    <td className="px-3 py-4">
+                      <div className="flex items-center gap-3">
+                        <TierBadge score={totalScore} />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-base font-bold text-white">{player.by_id || '[by_id 없음]'}</span>
+                            {isMarkedTestData(player) && <span className="rounded border border-amber-500/40 px-1.5 py-0.5 text-[10px] text-amber-300">TEST</span>}
+                          </div>
+                          <div className="mt-1 text-[11px] text-slate-500">{tier.label}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-4 text-center">
+                      <div className="text-lg font-black text-cyan-300">{ladderScore}</div>
+                      <div className="mt-1 text-[11px] text-slate-500">{totalGames}전 {wins}승 {losses}패</div>
+                    </td>
+                    <td className={`px-3 py-4 text-center text-base font-bold ${recent.tone}`}>
+                      <div>{recent.arrow ? `${recent.arrow} ${recent.text}` : recent.text}</div>
+                    </td>
+                    <td className="px-3 py-4 text-center">
+                      <div className="text-sm font-semibold text-emerald-300">{winRate}</div>
+                    </td>
+                    <td className="px-3 py-4 text-center text-sm font-semibold text-cyan-200">{teamScore}</td>
+                    <td className="px-3 py-4 text-center text-base font-black text-cyan-100">{totalScore}</td>
+                    {COMBO_KEYS.map((key) => (
+                      <ComboRateCell key={key} stat={comboStats[key]} label={COMBO_LABELS[key]} />
+                    ))}
+                    <td className="px-3 py-4 text-center text-sm font-semibold text-amber-200">{getMainRaceLabel(player.race)}</td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
