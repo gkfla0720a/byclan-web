@@ -333,7 +333,10 @@ async function run() {
         display_name: t.by_id,
       }).replace(/'/g, "''");
       const identityJson = JSON.stringify({
-        sub: t.id, email: authEmail, email_verified: true,
+        sub: t.id,
+        email: authEmail,
+        email_verified: false,
+        phone_verified: false,
       }).replace(/'/g, "''");
       const identityId = crypto.randomUUID();
       const hashEsc = hash.replace(/'/g, "''");
@@ -368,6 +371,15 @@ async function run() {
         ON CONFLICT (id) DO UPDATE
           SET email = EXCLUDED.email,
               encrypted_password = EXCLUDED.encrypted_password,
+              confirmation_token = EXCLUDED.confirmation_token,
+              recovery_token = EXCLUDED.recovery_token,
+              email_change_token_new = EXCLUDED.email_change_token_new,
+              email_change = EXCLUDED.email_change,
+              phone_change = EXCLUDED.phone_change,
+              phone_change_token = EXCLUDED.phone_change_token,
+              email_change_token_current = EXCLUDED.email_change_token_current,
+              reauthentication_token = EXCLUDED.reauthentication_token,
+              raw_app_meta_data = EXCLUDED.raw_app_meta_data,
               raw_user_meta_data = EXCLUDED.raw_user_meta_data,
               updated_at = NOW()
       `);
@@ -385,7 +397,7 @@ async function run() {
           identity_data, provider,
           last_sign_in_at, created_at, updated_at
         ) VALUES (
-          '${identityId}'::uuid, '${authEmail}', '${t.id}'::uuid,
+          '${identityId}'::uuid, '${t.id}', '${t.id}'::uuid,
           '${identityJson}'::jsonb, 'email',
           '${now}'::timestamptz, '${now}'::timestamptz, '${now}'::timestamptz
         )
