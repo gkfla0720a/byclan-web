@@ -264,11 +264,6 @@ export default function ClanMembers() {
       </div>
     );
   }
-  console.log("1. 현재 로그인한 내 ID:", currentUserId);
-    if (members.length > 0) {
-      console.log("2. 리스트 첫 번째 멤버의 ID:", members[0].id);
-      console.log("3. 타입 비교:", typeof currentUserId, "vs", typeof members[0].id);
-    }
 
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
@@ -327,11 +322,6 @@ export default function ClanMembers() {
                         <td className="px-4 py-3 text-white font-semibold align-middle">
                           <div className="flex items-center gap-2">
                             <span className="truncate">{member.by_id || <span className="text-red-400 text-xs">[by_id 없음]</span>}</span>
-                            {/* 임시 디버깅 코드 */}
-                            <span className="text-[10px] text-red-400">
-                              (멤버:{member.id} / 나:{currentUserId})
-                            </span>
-
                             {isMe && (
                               <span className="text-[10px] bg-cyan-500 text-slate-950 px-1.5 py-0.5 rounded font-black animate-pulse">
                                 나
