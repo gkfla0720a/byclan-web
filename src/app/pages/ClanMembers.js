@@ -315,7 +315,7 @@ export default function ClanMembers() {
                     const roleMeta = getRoleMeta(member.role);
                     const roleColor = roleMeta.color || '#C7CEEA';
                     const streamerUrl = normalizeUrl(member.streamer_url);
-                    const isMe = String(member.id) === String(currentUserId); // 현재 행이 로그인한 사용자 자신의 정보인지 여부
+                    const isMe = String(member.id); // 현재 행이 로그인한 사용자 자신의 정보인지 여부
 
                     return (
                       <tr key={member.id} className="hover:bg-cyan-400/4 transition-colors">
