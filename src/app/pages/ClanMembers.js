@@ -138,7 +138,6 @@ async function fetchMembersWithSchemaFallback() {
  * @returns {JSX.Element} 클랜원 명단 UI
  */
 export default function ClanMembers() {
-  console.log("🔥 [1단계] ClanMembers 컴포넌트 렌더링 시작");
   /** DB에서 불러온 멤버 배열 */
   const [members, setMembers] = useState([]);
   /** 데이터 로딩 여부 */
