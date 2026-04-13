@@ -138,6 +138,7 @@ async function fetchMembersWithSchemaFallback() {
  * @returns {JSX.Element} 클랜원 명단 UI
  */
 export default function ClanMembers() {
+  console.log("🔥 [1단계] ClanMembers 컴포넌트 렌더링 시작");
   /** DB에서 불러온 멤버 배열 */
   const [members, setMembers] = useState([]);
   /** 데이터 로딩 여부 */
@@ -148,6 +149,8 @@ export default function ClanMembers() {
   const [currentRole, setCurrentRole] = useState(null);
   /** 현재 등급 변경 처리 중인 멤버의 id (처리 완료 시 null) */
   const [updatingMemberId, setUpdatingMemberId] = useState(null);
+  /** 현재 로그인한 사용자의 ID */
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   /**
    * 컴포넌트 마운트 시 현재 로그인 사용자 역할과 멤버 목록을 병렬로 불러옵니다.
@@ -163,7 +166,8 @@ export default function ClanMembers() {
         .select('role')
         .eq('id', user.id)
         .single();
-
+      // 현재 사용자 ID와 역할을 상태로 저장합니다.
+      setCurrentUserId(user.id);
       setCurrentRole(profile?.role?.trim?.().toLowerCase?.() || null);
     };
 
@@ -247,6 +251,7 @@ export default function ClanMembers() {
     }
   };
 
+
   if (loading) {
     return <div className="text-center py-12 text-cyan-400 font-mono">[ LOADING CLAN MEMBERS... ]</div>;
   }
@@ -259,6 +264,11 @@ export default function ClanMembers() {
       </div>
     );
   }
+  console.log("1. 현재 로그인한 내 ID:", currentUserId);
+    if (members.length > 0) {
+      console.log("2. 리스트 첫 번째 멤버의 ID:", members[0].id);
+      console.log("3. 타입 비교:", typeof currentUserId, "vs", typeof members[0].id);
+    }
 
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
@@ -310,12 +320,23 @@ export default function ClanMembers() {
                     const roleMeta = getRoleMeta(member.role);
                     const roleColor = roleMeta.color || '#C7CEEA';
                     const streamerUrl = normalizeUrl(member.streamer_url);
+                    const isMe = String(member.id) === String(currentUserId); // 현재 행이 로그인한 사용자 자신의 정보인지 여부
 
                     return (
                       <tr key={member.id} className="hover:bg-cyan-400/4 transition-colors">
                         <td className="px-4 py-3 text-white font-semibold align-middle">
                           <div className="flex items-center gap-2">
                             <span className="truncate">{member.by_id || <span className="text-red-400 text-xs">[by_id 없음]</span>}</span>
+                            {/* 임시 디버깅 코드 */}
+                            <span className="text-[10px] text-red-400">
+                              (멤버:{member.id} / 나:{currentUserId})
+                            </span>
+
+                            {isMe && (
+                              <span className="text-[10px] bg-cyan-500 text-slate-950 px-1.5 py-0.5 rounded font-black animate-pulse">
+                                나
+                              </span>
+                            )}
                             {isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
                           </div>
                         </td>
