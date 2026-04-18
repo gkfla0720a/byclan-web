@@ -185,7 +185,7 @@ export default function Header() {
   };
 
   return (
-    <nav ref={navRef} className="relative z-50 border-b border-cyan-400/20 bg-slate-950/70 backdrop-blur-2xl shadow-[0_12px_40px_rgba(15,23,42,0.35)]">
+    <nav ref={navRef} className="relative z-50 border-b border-cyan-400/20 bg-gray-950/70 backdrop-blur-2xl shadow-[0_12px_40px_rgba(15,23,42,0.35)]">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         
         {/* 로고 & 타이틀 */}
@@ -304,7 +304,7 @@ export default function Header() {
 
       {/* 모바일 전용 오버레이 */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-slate-950/95 backdrop-blur-2xl border-b border-cyan-400/15 z-50 flex flex-col max-h-[85vh] overflow-y-auto animate-fade-in-down shadow-[0_24px_60px_rgba(8,15,26,0.55)]">
+        <div className="md:hidden absolute top-full left-0 w-full bg-gray-950/95 backdrop-blur-2xl border-b border-cyan-400/15 z-50 flex flex-col max-h-[85vh] overflow-y-auto animate-fade-in-down shadow-[0_24px_60px_rgba(8,15,26,0.55)]">
           {user && (
             <div className="px-6 py-5 border-b border-cyan-400/10 bg-slate-900/35 flex flex-col gap-4">
               <div className="flex justify-between items-center">
