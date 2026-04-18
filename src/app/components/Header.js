@@ -51,8 +51,8 @@ function ByClanLogo() {
       height={48}
       priority={true} 
       unoptimized={true}
-      className="object-contain transition-all duration-300 group-hover:scale-110 group-hover:brightness-110" 
-      style={{ filter: "drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.9)) drop-shadow(0px 0px 12px rgba(0, 0, 0, 0.6))" }} />
+      className="object-contain transition-all duration-300 group-hover:scale-110 group-hover:brightness-125" 
+      style={{ filter: "drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.4)) drop-shadow(0px 0px 12px rgba(0, 0, 0, 0.6))" }} />
     </div>
   );
 }
@@ -190,14 +190,13 @@ export default function Header() {
         {/* 로고 & 타이틀 */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
           <ByClanLogo />
-          {/* 👇 Footer와 완벽하게 동일한 황금빛 그라데이션 및 그림자 적용! */}
           <span 
-            className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-110"
+            className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-125"
             style={{
               background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              filter: "drop-shadow(0px 1px 0px rgba(200, 162, 102, 0.6)) drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.9))",
+              filter: "drop-shadow(0px 1px 0px rgba(200, 162, 102, 0.6)) drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.4))",
               textShadow: "0px 1px 1px rgba(200, 162, 102, 0.4), 0px 1px 0px rgba(0, 0, 0, 0.3)"
             }}
           >
