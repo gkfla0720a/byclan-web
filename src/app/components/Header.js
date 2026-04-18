@@ -53,6 +53,11 @@ function ByClanLogo() {
         priority={true} 
         unoptimized={true}
         className="object-contain transition-transform duration-300 group-hover:scale-110" 
+        style={{ 
+        // brightness는 1.05~1.1 정도로 아주 미세하게만 올리고, 
+        // 그림자 농도를 0.9에서 0.5 정도로 낮추는 것이 핵심입니다.
+        filter: "brightness(1.1) drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.5)) drop-shadow(0px 0px 12px rgba(0, 0, 0, 0.3))" 
+      }}
       />
     </div>
   );
@@ -185,7 +190,7 @@ export default function Header() {
   };
 
   return (
-    <nav ref={navRef} className="relative z-50 border-b border-cyan-400/20 bg-gray-950/70 backdrop-blur-2xl shadow-[0_12px_40px_rgba(15,23,42,0.35)]">
+    <nav ref={navRef} className="relative z-50 border-b border-cyan-400/20 bg-slate-950/70 backdrop-blur-2xl shadow-[0_12px_40px_rgba(15,23,42,0.35)]">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         
         {/* 로고 & 타이틀 */}
@@ -197,7 +202,7 @@ export default function Header() {
                 background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0px 1px 0px rgba(200, 162, 102, 0.6)) drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.9))",
+                filter: "brightness(1.5) drop-shadow(0px 1px 0px rgba(200, 162, 102, 0.6)) drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.3))",
                 textShadow: "0px 1px 1px rgba(200, 162, 102, 0.4), 0px 1px 0px rgba(0, 0, 0, 0.3)"
               }}
             >
@@ -304,7 +309,7 @@ export default function Header() {
 
       {/* 모바일 전용 오버레이 */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-gray-950/95 backdrop-blur-2xl border-b border-cyan-400/15 z-50 flex flex-col max-h-[85vh] overflow-y-auto animate-fade-in-down shadow-[0_24px_60px_rgba(8,15,26,0.55)]">
+        <div className="md:hidden absolute top-full left-0 w-full bg-slate-950/95 backdrop-blur-2xl border-b border-cyan-400/15 z-50 flex flex-col max-h-[85vh] overflow-y-auto animate-fade-in-down shadow-[0_24px_60px_rgba(8,15,26,0.55)]">
           {user && (
             <div className="px-6 py-5 border-b border-cyan-400/10 bg-slate-900/35 flex flex-col gap-4">
               <div className="flex justify-between items-center">
