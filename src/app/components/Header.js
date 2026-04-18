@@ -45,14 +45,18 @@ import { useAuthContext } from '../context/AuthContext';
 function ByClanLogo() {
   return (
     <div className="flex items-center justify-center cursor-pointer group w-12 h-12 relative">
-      <Image src="/ByClanLogo_WebP.webp" 
-      alt="ByClan Logo" 
-      width={48} 
-      height={48}
-      priority={true} 
-      unoptimized={true}
-      className="object-contain transition-all duration-300 group-hover:scale-110 group-hover:brightness-125" 
-      style={{ filter: "drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.4)) drop-shadow(0px 0px 12px rgba(0, 0, 0, 0.6))" }} />
+      <Image 
+        src="/ByClanLogo_WebP.webp" 
+        alt="ByClan Logo" 
+        width={48} 
+        height={48}
+        priority={true} 
+        unoptimized={true}
+        /* 👇 밝기 150%, 대비 125%, 채도 150%로 황금색을 강제로 터뜨립니다 */
+        className="object-contain transition-all duration-300 brightness-150 contrast-125 saturate-150 group-hover:scale-110" 
+        /* 👇 칙칙함의 원인인 검은 그림자를 아예 0으로 없애버립니다 */
+        style={{ filter: "drop-shadow(0px 0px 0px rgba(0,0,0,0))" }} 
+      />
     </div>
   );
 }
@@ -190,18 +194,20 @@ export default function Header() {
         {/* 로고 & 타이틀 */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
           <ByClanLogo />
-          <span 
-            className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-125"
-            style={{
-              background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              filter: "drop-shadow(0px 1px 0px rgba(200, 162, 102, 0.6)) drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.4))",
-              textShadow: "0px 1px 1px rgba(200, 162, 102, 0.4), 0px 1px 0px rgba(0, 0, 0, 0.3)"
-            }}
-          >
-            ByClan
-          </span>
+            <span 
+              /* 👇 텍스트 밝기도 150%로 강제로 올립니다 */
+              className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 brightness-150"
+              style={{
+                background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                /* 👇 뒤에 깔려있던 검은색(0,0,0) drop-shadow를 아예 지우고, 황금빛 테두리만 남깁니다 */
+                filter: "drop-shadow(0px 1px 2px rgba(200, 162, 102, 0.8))",
+                textShadow: "none" /* 텍스트 섀도우도 간섭할 수 있으니 임시로 끕니다 */
+              }}
+            >
+              ByClan
+            </span>
         </div>
         
         {/* 데스크톱 메뉴 */}
