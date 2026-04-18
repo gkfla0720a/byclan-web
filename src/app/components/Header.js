@@ -192,15 +192,13 @@ export default function Header() {
         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
           <ByClanLogo />
             <span 
-              /* 👇 텍스트 밝기도 150%로 강제로 올립니다 */
-              className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 brightness-150"
+              className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-110"
               style={{
                 background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                /* 👇 뒤에 깔려있던 검은색(0,0,0) drop-shadow를 아예 지우고, 황금빛 테두리만 남깁니다 */
-                filter: "drop-shadow(0px 1px 2px rgba(200, 162, 102, 0.8))",
-                textShadow: "none" /* 텍스트 섀도우도 간섭할 수 있으니 임시로 끕니다 */
+                filter: "drop-shadow(0px 1px 0px rgba(200, 162, 102, 0.6)) drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.9))",
+                textShadow: "0px 1px 1px rgba(200, 162, 102, 0.4), 0px 1px 0px rgba(0, 0, 0, 0.3)"
               }}
             >
               ByClan
