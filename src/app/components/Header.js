@@ -52,10 +52,7 @@ function ByClanLogo() {
         height={48}
         priority={true} 
         unoptimized={true}
-        /* 👇 밝기 150%, 대비 125%, 채도 150%로 황금색을 강제로 터뜨립니다 */
-        className="object-contain transition-all duration-300 brightness-150 contrast-125 saturate-150 group-hover:scale-110" 
-        /* 👇 칙칙함의 원인인 검은 그림자를 아예 0으로 없애버립니다 */
-        style={{ filter: "drop-shadow(0px 0px 0px rgba(0,0,0,0))" }} 
+        className="object-contain transition-transform duration-300 group-hover:scale-110" 
       />
     </div>
   );
