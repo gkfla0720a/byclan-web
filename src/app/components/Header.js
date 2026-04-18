@@ -45,7 +45,7 @@ import { useAuthContext } from '../context/AuthContext';
 function ByClanLogo() {
   return (
     <div className="flex items-center justify-center cursor-pointer group w-12 h-12 relative">
-      <Image src="/ByClanLogo.png" 
+      <Image src="/ByClanLogo_WebP.webp" 
       alt="ByClan Logo" 
       width={48} 
       height={48}
