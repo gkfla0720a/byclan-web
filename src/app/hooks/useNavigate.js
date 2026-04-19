@@ -66,6 +66,7 @@ const VIEW_TO_PATH = {
   '포인트 내역': '/points/history',
   '경기기록': '/matches',
   '로그인': '/login',
+  '외부 레더 기록': '/ladder/external',
 };
 
 /**
