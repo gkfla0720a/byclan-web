@@ -9,7 +9,7 @@ export async function GET() {
     const lastPageToFetch = 3; 
 
     for (let p = 1; p <= lastPageToFetch; p++) {
-      const targetUrl = `https://byclan.net/ladderSystem/?page=records&p=${p}`;
+      const targetUrl = `https://byclan.net/ladderSystem/`;
       const response = await fetch(targetUrl, { cache: 'no-store' });
       const html = await response.text();
       const $ = cheerio.load(html);
