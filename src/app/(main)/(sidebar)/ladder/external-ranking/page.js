@@ -6,12 +6,12 @@ import { SectionErrorBoundary } from '@/app/components/ErrorBoundary';
 
 export default function ExternalLadderPage() {
   return (
-    <SectionErrorBoundary name="외부 레더 기록">
+    <SectionErrorBoundary name="외부 레더 랭킹">
       <div className="p-6">
         <div className="mb-8 border-b border-gray-800 pb-4">
-          <h1 className="text-2xl font-bold text-white">외부 레더 기록</h1>
+          <h1 className="text-2xl font-bold text-white">외부 레더 랭킹</h1>
           <p className="text-sm text-gray-400 mt-1">
-            타 서버의 실시간 경기 현황을 통합하여 보여줍니다.
+            타 서버의 실시간 랭킹 현황을 통합하여 보여줍니다.
           </p>
         </div>
         

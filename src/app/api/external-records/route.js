@@ -1,42 +1,67 @@
+import * as cheerio from 'cheerio';
 import { NextResponse } from 'next/server';
 
-// 보안망 우회
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-export async function GET() {
+export async function GET(request) {
   try {
-    // 1. 랭킹 페이지 HTML 가져오기
-    const targetUrl = `https://byclan.net/ladderSystem/?page=ranking`;
+    // 1. 프론트엔드에서 몇 페이지를 원하는지 번호를 받습니다. (기본값 1)
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page') || '1'; 
+
+    const targetUrl = `https://byclan.net/ladderSystem/?page=records&p=${page}`;
+    
     const response = await fetch(targetUrl, { 
       cache: 'no-store',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
     });
 
-    if (!response.ok) {
-      throw new Error("서버가 응답을 거부했습니다.");
-    }
+    if (!response.ok) throw new Error("서버 응답 거부");
 
     const html = await response.text();
+    const $ = cheerio.load(html);
+    const matches = [];
 
-    // 2. 엑셀의 Text.PositionOf 와 같은 역할 (정규 표현식 사용)
-    // "var RANK_DATA = " 부터 "];" 까지의 문자열을 캡처합니다.
-    const regex = /var\s+RANK_DATA\s*=\s*(\[\s*\{.*?\}\s*\]);/s;
-    const match = html.match(regex);
+    $('.rec-match-card').each((index, element) => {
+      const matchIdText = $(element).find('.rec-match-id').text().trim();
+      const matchId = matchIdText.split(' ')[0];
+      const host = $(element).find('.rec-match-id span').text().replace('호스트:', '').trim();
+      const date = $(element).find('.rec-match-date').text().trim();
+      const status = $(element).find('.rec-match-status').text().trim();
+      const teamAScore = $(element).find('.rec-score-num').first().text().trim();
+      const teamBScore = $(element).find('.rec-score-num').last().text().trim();
 
-    if (!match || !match[1]) {
-      throw new Error("HTML 내에서 RANK_DATA 변수를 찾을 수 없습니다.");
-    }
+      const sets = [];
+      $(element).find('.rec-set-row').each((setIdx, setEl) => {
+        const setNumber = $(setEl).find('.rec-set-num').text().trim();
+        const mmrChange = $(setEl).find('.rec-mmr-val').text().trim();
 
-    // 3. 추출한 순수 텍스트(String)를 완벽한 자바스크립트 객체(JSON)로 변환
-    const rawData = JSON.parse(match[1]);
+        const extractPlayers = (sideClass) => {
+          const players = [];
+          $(setEl).find(sideClass).find('.rec-player').each((pIdx, pEl) => {
+            players.push({
+              name: $(pEl).find('.rec-name').text().trim(),
+              race: $(pEl).find('.rec-race').text().trim(),
+              tier: $(pEl).find('.rec-tier-icon').attr('alt'),
+              isAce: $(pEl).find('.badge-ace').length > 0
+            });
+          });
+          return players;
+        };
 
-    // 4. 추출 성공! 화면으로 데이터 전달
-    return NextResponse.json({ success: true, count: rawData.length, data: rawData });
+        sets.push({
+          setNumber, mmrChange,
+          teamA: extractPlayers('.rec-set-left'),
+          teamB: extractPlayers('.rec-set-right')
+        });
+      });
 
+      matches.push({ matchId, host, date, status, totalScore: { teamA: teamAScore, teamB: teamBScore }, sets });
+    });
+
+    // 해당 페이지에 데이터가 없으면 빈 배열 반환
+    return NextResponse.json({ success: true, data: matches });
   } catch (error) {
-    console.error("데이터 추출 에러:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

@@ -167,7 +167,7 @@ export default function Header() {
   const menuData = [
     { title: '클랜 소개', items: ['가입안내', '정회원 전환신청', '개요'] },
     { title: '클랜원', items: ['클랜원'] },
-    { title: 'BY래더시스템', items: ['대시보드', '랭킹', '경기기록', '외부 레더 기록'] },
+    { title: 'BY래더시스템', items: ['대시보드', '랭킹', '경기기록', '외부 레더 랭킹', '외부 레더 기록'] },
     { title: 'BSL', items: ['BSL 공지사항', 'BSL 경기일정 및 결과'] },
     { title: '토너먼트', items: ['토너먼트 공지', '진행중인 토너먼트'] },
     { title: '커뮤니티', items: ['공지사항', '자유게시판', '클랜원 소식'] },
