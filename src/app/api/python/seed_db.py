@@ -13,7 +13,7 @@ total_saved = 0
 # 1페이지부터 60페이지까지 순회 (데이터가 더 많다면 60을 70으로 늘리세요)
 for page in range(1, 61):
     # 우리가 만든 Next.js API 호출
-    url = f"http://byclan-web.vercel.app/api/export-ml?page={page}"
+    url = f"http://localhost:3000/api/export-ml?page={page}"
     
     try:
         # API를 호출하면, API 내부 로직에 의해 자동으로 Supabase에 Upsert(저장) 됩니다.
@@ -30,7 +30,8 @@ for page in range(1, 61):
                 print("🏁 더 이상 과거 데이터가 없어 수집을 조기 종료합니다.")
                 break
         else:
-            print(f"⚠️ {page}페이지 호출 에러 (상태코드: {response.status_code})")
+            # API가 보내준 진짜 에러 메시지(response.text)를 함께 출력합니다!
+            print(f"⚠️ {page}페이지 호출 에러 (상태코드: {response.status_code}) - 사유: {response.text}")
             
     except Exception as e:
         print(f"🚨 통신 에러 발생: {e}")
