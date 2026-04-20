@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js'; // 설치 필요: npm inst
 // Supabase 설정 (환경변수 권장)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // 쓰기 권한이 있는 키 권장
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY // 쓰기 권한이 있는 키 권장
 );
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
