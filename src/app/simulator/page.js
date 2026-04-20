@@ -166,7 +166,7 @@ export default function ByClanTacticalDashboard() {
           <div className="bg-[#12121e] border border-gray-800 rounded-xl p-4">
             <h2 className="text-md font-bold mb-4 text-cyan-400">🏆 BEST SYNERGY TOP 5</h2>
             <div className="space-y-3">
-              {synergies.slice(0, 5).map((s, i) => (
+              {synergies?.slice(0, 5).map((s, i) => (
                 <div key={i} className="text-[11px] bg-[#1a1a2e] p-2 rounded border-l-2 border-cyan-500">
                   <div className="flex justify-between text-gray-300">
                     <span>{s.player_a} & {s.player_b}</span>
