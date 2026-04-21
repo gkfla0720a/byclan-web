@@ -1,5 +1,12 @@
 import * as cheerio from 'cheerio';
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js'; // 추가된 임포트
+
+// 1. Supabase 설정 (환경변수)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -18,6 +25,7 @@ export async function GET(request) {
     // 핵심: last_id가 있으면 최대 10페이지까지 연속 스캔, page 번호만 있으면 딱 1페이지만 추출
     const maxPagesToFetch = lastId > 0 ? 10 : 1;
 
+    // 2. 외부 사이트에서 데이터 긁어오기 (회원님의 원본 로직)
     while (keepFetching && pagesFetched < maxPagesToFetch) {
       const targetUrl = `https://byclan.net/ladderSystem/?page=records&p=${p}`;
       const response = await fetch(targetUrl, { 
@@ -71,6 +79,39 @@ export async function GET(request) {
       }
     }
 
+    // 🚨 3. [추가된 DB 동기화 로직]
+    if (flatData.length > 0) {
+      // 💡 [핵심 수정] Match_ID가 같은 선수 데이터들을 하나의 매치로 묶어주기
+      const matchGroups = {};
+      
+      flatData.forEach(item => {
+        const id = item.Match_ID;
+        // 해당 매치 번호의 방이 없다면 새로 생성
+        if (!matchGroups[id]) {
+          matchGroups[id] = {
+            match_id: id,
+            host: "Ladder System",
+            match_date: item.Date,
+            raw_data: [] // 선수들의 세부 기록을 담을 배열
+          };
+        }
+        // 생성된 방에 선수 데이터 넣기
+        matchGroups[id].raw_data.push(item);
+      });
+
+      // 묶인 방들을 배열로 변환하여 DB에 쏘기
+      const payload = Object.values(matchGroups);
+
+      const { error: dbError } = await supabase
+        .from('legacy_matches')
+        .upsert(payload, { onConflict: 'match_id' });
+
+      if (dbError) {
+        console.error("DB 저장 실패:", dbError.message);
+      }
+    }
+
+    // 4. 결과 반환
     return NextResponse.json({ success: true, count: flatData.length, data: flatData });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

@@ -90,15 +90,9 @@ export default function ProfileSidebar({ profile, user }) {
   /** 페이지 이동 함수 (훅에서 가져온 navigate 함수) */
   const navigateTo = useNavigate();
 
-  /**
-   * 현재 프로필이 활성 클랜원인지 여부.
-   * 활성 역할 목록에 포함된 경우에만 true가 됩니다.
-   * (applicant·guest 등 비활성 역할이면 false)
-   */
   const isActiveMember =
     profile && ['member', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 
-  // 로그인은 되었지만 by_id/전적/주종/포인트가 비어 있는 경우도 빈 프로필 카드로 취급합니다.
   const hasProfileData = Boolean(
     profile?.by_id ||
     profile?.race ||
@@ -107,37 +101,36 @@ export default function ProfileSidebar({ profile, user }) {
     profile?.losses !== undefined
   );
 
+  // 로그인했지만 프로필이 아직 로딩 중인 경우 → 스켈레톤 표시 (샘플 데이터 없음)
+  if (user && !profile) {
+    return (
+      <aside className="hidden lg:flex flex-col w-56 shrink-0 gap-3">
+        <div className="cyber-card rounded-xl p-4 flex flex-col gap-3 animate-pulse">
+          <div className="flex flex-col items-center gap-2 pb-2 border-b border-gray-800">
+            <div className="w-12 h-12 rounded-full bg-gray-800" />
+            <div className="h-3 w-24 bg-gray-800 rounded" />
+          </div>
+          <div className="space-y-2.5">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex justify-between">
+                <div className="h-2.5 w-10 bg-gray-800 rounded" />
+                <div className="h-2.5 w-14 bg-gray-800 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
   if (!user || !profile || !isActiveMember || !hasProfileData) {
-    // 방문자 / 비로그인 / 프로필 미완성 상태 공통 플레이스홀더
+    // 방문자 / 비로그인 / 프로필 미완성 상태
     return (
       <aside className="hidden lg:flex flex-col w-56 shrink-0 gap-3">
         <div className="cyber-card rounded-xl p-4 flex flex-col gap-3">
           <div className="flex flex-col items-center gap-1.5 pb-2 border-b border-gray-800">
             <div className="w-12 h-12 rounded-full bg-gray-900/70 border border-gray-700 flex items-center justify-center text-xl">👤</div>
-            <span className="font-black text-sm text-gray-400 truncate max-w-full">기록 없음</span>
-          </div>
-
-          <div className="space-y-2 text-xs">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">MMR</span>
-              <span className="font-black text-gray-500 text-sm">-</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">티어</span>
-              <span className="font-semibold text-gray-500">-</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">승률</span>
-              <span className="font-semibold text-gray-500">-</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">주종</span>
-              <span className="font-semibold text-gray-500">-</span>
-            </div>
-            <div className="flex justify-between items-center border-t border-gray-800 pt-2">
-              <span className="text-gray-500">전적</span>
-              <span className="text-gray-500">-</span>
-            </div>
+            <span className="font-black text-sm text-gray-500 truncate max-w-full">비로그인</span>
           </div>
 
           {!user ? (
@@ -231,6 +224,47 @@ export default function ProfileSidebar({ profile, user }) {
           </div>
         </div>
       )}
+
+      {/* Discord 접속 중인 멤버 */}
+      <DiscordOnlinePanel />
     </aside>
+  );
+}
+
+/**
+ * DiscordOnlinePanel
+ * 사이드바 하단에 표시되는 Discord 접속 멤버 목록 패널입니다.
+ * 추후 Discord Bot API 또는 Supabase 연동으로 실시간 데이터를 받을 예정입니다.
+ * 현재는 준비 중 안내 UI를 표시합니다.
+ */
+function DiscordOnlinePanel() {
+  return (
+    <div className="cyber-card rounded-xl p-3 flex flex-col gap-2">
+      {/* 헤더 */}
+      <div className="flex items-center gap-1.5 pb-2 border-b border-gray-800">
+        {/* Discord 로고 색상 원형 */}
+        <span className="w-2 h-2 rounded-full bg-[#5865F2] shrink-0" />
+        <span className="text-xs font-bold text-gray-300 tracking-wide">Discord 접속 중</span>
+      </div>
+
+      {/* 준비 중 안내 — Discord 채널 연동 후 실제 멤버 목록으로 교체 예정 */}
+      <div className="flex flex-col items-center gap-1.5 py-2 text-center">
+        <span className="text-2xl">🔌</span>
+        <p className="text-[11px] text-gray-500 leading-snug">
+          Discord 채널 연동 후<br />
+          접속 멤버가 표시됩니다.
+        </p>
+      </div>
+
+      {/* 하단 Discord 입장 버튼 */}
+      <a
+        href="https://discord.gg/byclan"
+        target="_blank"
+        rel="noreferrer"
+        className="mt-1 w-full py-1.5 rounded-lg text-[11px] font-bold text-center text-[#5865F2] border border-[#5865F2]/30 bg-[#5865F2]/8 hover:bg-[#5865F2]/15 transition-colors"
+      >
+        Discord 입장
+      </a>
+    </div>
   );
 }

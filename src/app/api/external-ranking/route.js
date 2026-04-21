@@ -1,42 +1,72 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-// 보안망 우회
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY // 마스터 키 권장
+);
+
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 export async function GET() {
   try {
-    // 1. 랭킹 페이지 HTML 가져오기
-    const targetUrl = `https://byclan.net/ladderSystem/?page=ranking`;
-    const response = await fetch(targetUrl, { 
-      cache: 'no-store',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
-    });
+    // 1. DB에서 가장 최근에 업데이트된 기록 하나를 가져와 시간을 확인합니다.
+    const { data: lastRecord } = await supabase
+      .from('latest_rankings')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
 
-    if (!response.ok) {
-      throw new Error("서버가 응답을 거부했습니다.");
+    const now = new Date();
+    const lastUpdate = lastRecord ? new Date(lastRecord.updated_at) : new Date(0);
+    const hoursSinceUpdate = (now - lastUpdate) / (1000 * 60 * 60);
+
+    // 2. 마지막 업데이트 후 24시간이 지났거나 데이터가 없는 경우에만 외부 서버 호출
+    if (hoursSinceUpdate >= 24) {
+      console.log("⏳ 데이터가 오래되어 새로 수집을 시작합니다...");
+      
+      const targetUrl = `https://byclan.net/ladderSystem/?page=ranking`;
+      const response = await fetch(targetUrl, { 
+        cache: 'no-store',
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+      });
+      const html = await response.text();
+      const regex = /var\s+RANK_DATA\s*=\s*(\[\s*\{.*?\}\s*\]);/s;
+      const match = html.match(regex);
+      const rawData = JSON.parse(match[1]);
+
+      // Supabase 업데이트
+      await supabase.from('latest_rankings').upsert(
+        rawData.map(r => ({
+          nick: r.nick,
+          mmr: r.mmr,
+          totalmmr: r.totalmmr,
+          wc: r.wc,
+          ppp: r.ppp,
+          ppt: r.ppt,
+          ppz: r.ppz,
+          pzt: r.pzt,
+          other: r.other,
+          race: r.ztpr,
+          updated_at: new Date()
+        })),
+        { onConflict: 'nick' }
+      );
+
+      return NextResponse.json({ success: true, source: 'external', data: rawData });
     }
 
-    const html = await response.text();
+    // 3. 24시간이 지나지 않았다면 DB에서 바로 데이터를 꺼내 반환 (서버 부하 제로)
+    console.log("✅ 신선한 데이터가 DB에 있어 즉시 반환합니다.");
+    const { data: cachedData } = await supabase
+      .from('latest_rankings')
+      .select('*')
+      .order('totalmmr', { ascending: false });
 
-    // 2. 엑셀의 Text.PositionOf 와 같은 역할 (정규 표현식 사용)
-    // "var RANK_DATA = " 부터 "];" 까지의 문자열을 캡처합니다.
-    const regex = /var\s+RANK_DATA\s*=\s*(\[\s*\{.*?\}\s*\]);/s;
-    const match = html.match(regex);
-
-    if (!match || !match[1]) {
-      throw new Error("HTML 내에서 RANK_DATA 변수를 찾을 수 없습니다.");
-    }
-
-    // 3. 추출한 순수 텍스트(String)를 완벽한 자바스크립트 객체(JSON)로 변환
-    const rawData = JSON.parse(match[1]);
-
-    // 4. 추출 성공! 화면으로 데이터 전달
-    return NextResponse.json({ success: true, count: rawData.length, data: rawData });
+    return NextResponse.json({ success: true, source: 'database', data: cachedData });
 
   } catch (error) {
-    console.error("데이터 추출 에러:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

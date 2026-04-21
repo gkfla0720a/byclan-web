@@ -357,6 +357,17 @@ export default function MatchCenter({ matchId, onExit }) {
     const members = getTeamMembersByLetter(teamLetter);
     const player = members.find((m) => m.id === playerId);
 
+    // 종족전 규칙: 해당 슬롯의 race_cards 종족과 선수의 주종이 일치해야 합니다.
+    // Random(랜덤) 종족 선수는 모든 슬롯에 배치 가능합니다.
+    if (player && player.race && player.race !== 'Random' && player.race !== race) {
+      const raceLabel = { Terran: '테란', Protoss: '프로토스', Zerg: '저그' };
+      alert(
+        `종족전 규칙: 이 슬롯은 ${raceLabel[race] || race} 선수만 배치할 수 있습니다.\n` +
+        `${player.by_id}님의 주종은 ${raceLabel[player.race] || player.race}입니다.`
+      );
+      return;
+    }
+
     setSelectedEntryByTeam((prev) => {
       const nextEntry = [...prev[teamLetter]];
       nextEntry[idx] = { id: playerId, by_id: player?.by_id || '', race };
@@ -944,14 +955,17 @@ export default function MatchCenter({ matchId, onExit }) {
                   {getTeamMembersByLetter(editingTeam).map((member) => {
                     const { count, canRest } = getRestStatus(member.id, editingTeam);
                     const isAlreadySelected = selectedEntry.some((se, i) => i !== idx && se.id === member.id);
+                    // 종족전 규칙: 주종이 슬롯 종족과 다른 선수(Random 제외)는 선택 불가
+                    const isWrongRace = member.race && member.race !== 'Random' && member.race !== race;
                     return (
                       <option
                         key={member.id}
                         value={member.id}
-                        disabled={isAlreadySelected || !canRest}
+                        disabled={isAlreadySelected || !canRest || isWrongRace}
                         className="bg-gray-900"
                       >
                         {member.by_id} (휴식: {count}회)
+                        {isWrongRace ? ` [종족 불일치]` : ''}
                         {isAlreadySelected ? ' [선택됨]' : ''}
                         {!canRest ? ' [휴식 한도]' : ''}
                       </option>
