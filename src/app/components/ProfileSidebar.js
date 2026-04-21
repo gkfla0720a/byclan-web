@@ -24,6 +24,7 @@
 
 import React from 'react';
 import { useNavigate } from '../hooks/useNavigate';
+import { useAuthContext } from '../context/AuthContext';
 
 /** 티어별 텍스트 색상 클래스 매핑 (Tailwind CSS 클래스 사용) */
 const TIER_COLORS = {
@@ -86,7 +87,8 @@ function getProfileMmr(profile) {
  * @param {object|null} props.user - Supabase auth 유저 객체 (없으면 null)
  * @returns {JSX.Element} 프로필 사이드바 UI
  */
-export default function ProfileSidebar({ profile, user }) {
+export default function ProfileSidebar() {
+  const { profile, user } = useAuthContext();
   /** 페이지 이동 함수 (훅에서 가져온 navigate 함수) */
   const navigateTo = useNavigate();
 
