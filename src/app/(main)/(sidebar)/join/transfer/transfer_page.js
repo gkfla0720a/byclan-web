@@ -48,13 +48,14 @@ export default function JoinTransferPage() {
         setProfile(p);
 
         if (p?.id) {
-          // 이미 전환 신청 알림이 발송됐는지 확인 (중복 방지)
-          const notifTitle = `📋 정회원전환신청:${p.id}`;
+          // applications 테이블에서 전환 신청 여부 확인
+          // notifications에 의존하던 방식을 제거하고 applications를 단일 출처로 사용합니다.
           const { data: existing } = await supabase
-            .from('notifications')
+            .from('applications')
             .select('id')
-            .eq('user_id', p.id)  // 자신에게 발송된 확인용 알림
-            .eq('title', notifTitle)
+            .eq('user_id', p.id)
+            .eq('status', 'pending')
+            .ilike('btag', 'TRANSFER_%')   // 전환 신청 전용 마커 prefix
             .limit(1);
           setAlreadyApplied(Boolean(existing?.length));
         }
@@ -118,31 +119,38 @@ export default function JoinTransferPage() {
 
     setSubmitting(true);
     try {
-      // admin+ 운영진 전원 조회
+      // 1) applications 테이블에 전환 신청 레코드 저장 (중복 방지의 단일 출처)
+      //    btag 필드에 'TRANSFER_{userId}' 마커를 사용해 일반 가입 신청과 구분합니다.
+      const { error: appError } = await supabase.from('applications').insert({
+        user_id: profile.id,
+        btag: `TRANSFER_${profile.id}`,
+        status: 'pending',
+        intro: `정회원 전환 신청 — 수습 시작일: ${rookieSince?.toLocaleDateString('ko-KR')}`,
+      });
+      if (appError) throw appError;
+
+      // 2) 운영진 전원에게 알림 발송
       const { data: admins } = await supabase
         .from('profiles')
         .select('id')
         .in('role', ['admin', 'master', 'developer']);
 
-      const notifTitle = `📋 정회원전환신청:${profile.id}`;
       const notifMessage = `신입 길드원 ${profile.by_id}님이 정회원 전환을 신청했습니다.\n수습 시작일: ${rookieSince?.toLocaleDateString('ko-KR')}\n\n승인 또는 거부를 위해 길드원 관리 페이지에서 등급을 변경해 주세요.`;
 
-      // 운영진 전원에게 알림 발송
       const adminNotifs = (admins || []).map((admin) => ({
         user_id: admin.id,
-        title: notifTitle,
+        title: '📋 정회원 전환 신청',
         message: notifMessage,
       }));
 
-      // 신청자 본인에게도 접수 확인 알림 (중복 방지용 마커로도 사용)
+      // 3) 신청자 본인에게도 접수 확인 알림
       adminNotifs.push({
         user_id: profile.id,
-        title: notifTitle,
-        message: `정회원 전환 신청이 운영진에게 전달되었습니다. 검토 후 결과를 알림으로 안내드립니다.`,
+        title: '📋 정회원 전환 신청 접수',
+        message: '정회원 전환 신청이 운영진에게 전달되었습니다. 검토 후 결과를 알림으로 안내드립니다.',
       });
 
-      const { error } = await supabase.from('notifications').insert(adminNotifs);
-      if (error) throw error;
+      await supabase.from('notifications').insert(adminNotifs);
 
       setAlreadyApplied(true);
       setResultMsg('✅ 신청이 완료되었습니다. 운영진 검토 후 결과를 알림으로 안내해드립니다.');

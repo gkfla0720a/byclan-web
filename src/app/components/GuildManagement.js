@@ -224,24 +224,19 @@ export default function GuildManagement() {
     }
 
     try {
-      const updates = { role: newRole };
-      if (newRole === 'rookie') {
-        updates.rookie_since = new Date().toISOString();
-      } else if (previousRole === 'rookie') {
-        updates.rookie_since = null;
-      }
-
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', memberId);
+      // 역할 변경은 RPC를 통해서만 허용 (클라이언트 직접 UPDATE 금지)
+      const { data, error } = await supabase.rpc('rpc_update_profile_role', {
+        p_target_id: memberId,
+        p_new_role: newRole,
+        p_note: `등급 변경: ${previousRole} → ${newRole}`,
+      });
 
       if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || '역할 변경 실패');
 
-      // 직급 승급/승격 포인트 보상 지급
+      // 직급 승급 포인트 보상
       const promotionRoles = ['rookie', 'member', 'elite', 'admin'];
       if (promotionRoles.includes(newRole)) {
-        // 대상 유저의 테스트 계정 여부 확인
         const { data: targetProf } = await supabase
           .from('profiles')
           .select('is_test_account')
@@ -272,11 +267,14 @@ export default function GuildManagement() {
   const handleForcePromoteToMember = async (member) => {
     if (!window.confirm(`${member.by_id}님을 수습 기간에 관계없이 즉시 정회원으로 승급하시겠습니까?`)) return;
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: 'member', rookie_since: null })
-        .eq('id', member.id);
+      const { data, error } = await supabase.rpc('rpc_update_profile_role', {
+        p_target_id: member.id,
+        p_new_role: 'member',
+        p_note: '마스터 즉시 승급 (수습 기간 면제)',
+      });
+
       if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || '승급 실패');
 
       // 정회원 승급 포인트 보상
       await grantRankPromotionBonus(
@@ -286,7 +284,6 @@ export default function GuildManagement() {
         Boolean(member?.is_test_account),
       );
 
-      // 대상 길드원에게 승급 알림 발송
       await supabase.from('notifications').insert({
         user_id: member.id,
         title: '🎉 정회원 승급 알림',
@@ -309,13 +306,15 @@ export default function GuildManagement() {
    */
   const handleRemoveMember = async (memberId) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: 'expelled' })
-        .eq('id', memberId);
+      const { data, error } = await supabase.rpc('rpc_update_profile_role', {
+        p_target_id: memberId,
+        p_new_role: 'expelled',
+        p_note: '제명 처리',
+      });
 
       if (error) throw error;
-      
+      if (!data?.ok) throw new Error(data?.error || '제명 처리 실패');
+
       await fetchMembers();
       setActionModal({ isOpen: false, action: '', member: null });
       alert('제명 처리되었습니다.');
@@ -344,17 +343,17 @@ export default function GuildManagement() {
     }
 
     try {
-      // 현재 마스터 찾기
+      // 현재 마스터 → admin 강등, 대상 → master 승격 (RPC 사용)
       const currentMaster = members.find(m => m.role === 'master');
       if (currentMaster) {
-        // 현재 마스터를 관리자로 변경
-        await supabase
-          .from('profiles')
-          .update({ role: 'admin' })
-          .eq('id', currentMaster.id);
+        await supabase.rpc('rpc_update_profile_role', {
+          p_target_id: currentMaster.id,
+          p_new_role: 'admin',
+          p_note: '마스터 위임 — 전임 마스터 admin 강등',
+        });
       }
 
-      // 새 마스터로 변경
+      // master 변경은 특별히 직접 UPDATE 허용 (위임 전용 로직)
       const { error } = await supabase
         .from('profiles')
         .update({ role: 'master' })

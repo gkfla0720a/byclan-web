@@ -94,9 +94,10 @@ function normalizeMemberRole(member) {
  * @returns {{ data: object[]|null, error: object|null }}
  */
 async function fetchMembersWithSchemaFallback() {
+  // discord_id는 UI에 표시하지 않으므로 select에서 제외합니다.
   const candidates = [
-    'id, by_id, discord_id, role, race, intro, clan_point, is_streamer, streamer_platform, streamer_url',
-    'id, by_id, discord_id, role, race, intro, clan_point',
+    'id, by_id, role, race, intro, clan_point, ladder_mmr, total_mmr, is_streamer, streamer_platform, streamer_url',
+    'id, by_id, role, race, intro, clan_point',
   ];
 
   for (const columns of candidates) {
@@ -230,17 +231,20 @@ export default function ClanMembers() {
       return;
     }
 
-    const confirmed = window.confirm(`${member.by_id || '[by_id 없음]'}의 등급을 ${ROLE_PERMISSIONS[nextRole]?.name || nextRole}(으)로 변경하시갬습니까?`);
+    const confirmed = window.confirm(`${member.by_id || '[by_id 없음]'}의 등급을 ${ROLE_PERMISSIONS[nextRole]?.name || nextRole}(으)로 변경하시겠습니까?`);
     if (!confirmed) return;
 
     try {
       setUpdatingMemberId(member.id);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: nextRole })
-        .eq('id', member.id);
+      // 역할 변경은 RPC를 통해서만 허용
+      const { data, error } = await supabase.rpc('rpc_update_profile_role', {
+        p_target_id: member.id,
+        p_new_role: nextRole,
+        p_note: `클랜원 목록에서 등급 변경: ${member.role} → ${nextRole}`,
+      });
 
       if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || '역할 변경 실패');
 
       setMembers((prev) => prev.map((item) => item.id === member.id ? { ...item, role: nextRole } : item));
     } catch (error) {
@@ -290,23 +294,21 @@ export default function ClanMembers() {
             <div className="overflow-x-auto">
               <table className="neon-table min-w-full table-fixed text-sm">
                 <colgroup>
-                  <col className={canManageMembers ? 'w-[18%]' : 'w-[22%]'} />
-                  <col className={canManageMembers ? 'w-[18%]' : 'w-[24%]'} />
-                  <col className={canManageMembers ? 'w-[16%]' : 'w-[18%]'} />
-                  <col className={canManageMembers ? 'w-[10%]' : 'w-[12%]'} />
-                  <col className={canManageMembers ? 'w-[10%]' : 'w-[12%]'} />
-                  <col className={canManageMembers ? 'w-[10%]' : 'w-[12%]'} />
-                  {canManageMembers && <col className="w-[18%]" />}
+                  <col className={canManageMembers ? 'w-[26%]' : 'w-[30%]'} />
+                  <col className={canManageMembers ? 'w-[22%]' : 'w-[28%]'} />
+                  <col className={canManageMembers ? 'w-[14%]' : 'w-[16%]'} />
+                  <col className={canManageMembers ? 'w-[14%]' : 'w-[16%]'} />
+                  <col className={canManageMembers ? 'w-[10%]' : 'w-[10%]'} />
+                  {canManageMembers && <col className="w-[14%]" />}
                 </colgroup>
                 <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left font-bold">닉네임</th>
-                    <th className="px-4 py-3 text-left font-bold">디스코드</th>
-                    <th className="px-4 py-3 text-left font-bold">직책</th>
-                    <th className="px-4 py-3 text-left font-bold">종족</th>
-                    <th className="px-4 py-3 text-left font-bold">MMR</th>
-                    <th className="px-4 py-3 text-left font-bold">BJ</th>
-                    {canManageMembers && <th className="px-4 py-3 text-left font-bold">관리</th>}
+                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">닉네임</th>
+                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">직책</th>
+                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">종족</th>
+                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">MMR</th>
+                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">BJ</th>
+                    {canManageMembers && <th className="px-4 py-3 text-left font-bold whitespace-nowrap">관리</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -319,7 +321,7 @@ export default function ClanMembers() {
                     return (
                       <tr key={member.id} className="hover:bg-cyan-400/4 transition-colors">
                         <td className="px-4 py-3 text-white font-semibold align-middle">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 whitespace-nowrap">
                             <span className="truncate">{member.by_id || <span className="text-red-400 text-xs">[by_id 없음]</span>}</span>
                             {isMe && (
                               <span className="text-[10px] bg-cyan-500 text-slate-950 px-1.5 py-0.5 rounded font-black animate-pulse">
@@ -329,10 +331,9 @@ export default function ClanMembers() {
                             {isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-300 truncate align-middle">{member.discord_id || '-'}</td>
                         <td className="px-4 py-3 align-middle">
                           <span
-                            className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold"
+                            className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap"
                             style={{
                               backgroundColor: `${roleColor}18`,
                               color: roleColor,
@@ -342,9 +343,11 @@ export default function ClanMembers() {
                             {roleMeta.name}
                           </span>
                         </td>
-                          <td className="px-4 py-3 text-slate-300 align-middle">{member.race || 'Terran'}</td>
-                          <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">{member.clan_point ?? 0}점</td>
-                          <td className="px-4 py-3 text-slate-200 align-middle">
+                          <td className="px-4 py-3 text-slate-300 align-middle whitespace-nowrap">{member.race || 'Terran'}</td>
+                        <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">
+                          {(member.total_mmr ?? member.ladder_mmr ?? 0)}점
+                        </td>
+                          <td className="px-4 py-3 text-slate-200 align-middle whitespace-nowrap">
                           {member.is_streamer ? (
                             <div className="flex items-center gap-2">
                               <span className="text-pink-300 font-semibold">BJ</span>

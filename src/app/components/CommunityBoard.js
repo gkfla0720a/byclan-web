@@ -65,7 +65,8 @@ export default function CommunityBoard() {
     try {
       const { data, error } = await filterVisibleTestData(supabase
         .from('posts')
-        .select('id, title, content, user_id, author_name, views, created_at')
+        // author_name 컬럼 대신 profiles 테이블 JOIN으로 최신 닉네임을 가져옵니다.
+        .select('id, title, content, user_id, views, created_at, profiles!user_id(by_id)')
         .order('created_at', { ascending: false }));
 
       if (error) {
@@ -125,17 +126,17 @@ export default function CommunityBoard() {
       return;
     }
 
-    const discordName = user.user_metadata?.full_name || user.user_metadata?.name || '바클유저';
     const isTestAuthor = Boolean(profile?.is_test_account);
 
     const { error } = await supabase
       .from('posts')
       .insert([
-        { 
-          title: title, 
-          content: content, 
+        {
+          title: title,
+          content: content,
           user_id: user.id,
-          author_name: discordName,
+          // author_name은 저장하지 않습니다.
+          // 조회 시 profiles!user_id(by_id) JOIN으로 최신 닉네임을 가져옵니다.
           is_test_data: isTestAuthor,
           is_test_data_active: isTestAuthor,
         }
@@ -214,11 +215,11 @@ export default function CommunityBoard() {
               <div className="flex flex-col gap-1 mb-2 sm:mb-0">
                 <span className="text-gray-200 font-medium group-hover:text-yellow-400 transition-colors">{post.title}</span>
                 <span className="text-xs text-gray-500 sm:hidden">
-                  {post.author_name || '알 수 없음'} | {formatDate(post.created_at)} | 조회 {post.views || 0}
+                  {post.profiles?.by_id || '알 수 없음'} | {formatDate(post.created_at)} | 조회 {post.views || 0}
                 </span>
               </div>
               <div className="hidden sm:flex items-center gap-4 text-sm text-gray-400">
-                <span className="w-24 text-center truncate">{post.author_name || '알 수 없음'}</span>
+                <span className="w-24 text-center truncate">{post.profiles?.by_id || '알 수 없음'}</span>
                 <span className="w-16 text-center">{formatDate(post.created_at)}</span>
                 <span className="w-12 text-center text-xs">👀 {post.views || 0}</span>
               </div>

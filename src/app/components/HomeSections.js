@@ -181,7 +181,7 @@ function ActivityLog() {
         const [postsResult, noticesResult, applicationsResult, matchesResult] = await Promise.all([
           filterVisibleTestData(supabase
             .from('posts')
-            .select('id, title, author_name, created_at')
+            .select('id, title, created_at, profiles!user_id(by_id)')
             .order('created_at', { ascending: false })
             .limit(3)),
           filterVisibleTestData(supabase
@@ -205,7 +205,7 @@ function ActivityLog() {
           ...(postsResult.data || []).map(post => ({
             id: `post-${post.id}`,
             type: '게시글',
-            message: `${post.author_name || '클랜원'}님이 '${post.title}' 글을 남겼습니다.`,
+            message: `${post.profiles?.by_id || '클랜원'}님이 '${post.title}' 글을 남겼습니다.`,
             time: formatRelativeTime(post.created_at),
             createdAt: post.created_at,
             icon: '📝'
