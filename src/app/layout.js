@@ -21,8 +21,6 @@
  * =====================================================================
  */
 
-'use client';
-
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
