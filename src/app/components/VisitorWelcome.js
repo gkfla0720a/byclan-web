@@ -137,16 +137,23 @@ async function submitApplication(userId, applicationData) {
   }
 }
 
-function StepItem({ number, title, description, done = false }) {
+function StepItem({ number, title, description, done = false, active = false }) {
   return (
     <div className="flex items-center space-x-3">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${done ? 'bg-green-500 text-white' : 'bg-yellow-500 text-gray-900'}`}>
-        {number}
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition-all
+        ${done
+          ? 'bg-green-500 text-white ring-2 ring-green-400/40'
+          : active
+            ? 'bg-green-400 text-gray-900 ring-2 ring-green-300/60 animate-pulse'
+            : 'bg-gray-700 text-gray-400 border border-gray-600'
+        }`}>
+        {done ? '✓' : number}
       </div>
       <div className="flex-1">
-        <div className="text-white font-medium">{title}</div>
+        <div className={`font-medium ${done ? 'text-green-300' : active ? 'text-green-200 font-bold' : 'text-white'}`}>{title}</div>
         <div className="text-gray-400 text-sm">{description}</div>
       </div>
+      {active && <span className="text-[10px] bg-green-500/20 text-green-300 border border-green-500/40 px-2 py-0.5 rounded-full font-bold shrink-0">현재</span>}
     </div>
   );
 }
@@ -495,13 +502,21 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
 
         {!isRookieOrHigher && (
           <>
-            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+              <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
               <h3 className="text-xl font-bold text-white mb-4">📋 가입 절차</h3>
               <div className="space-y-3">
-                <StepItem number="1" title="가입 신청" description="기본 정보 제출" />
-                <StepItem number="2" title="테스트 진행" description="실력 테스트 및 면접" />
-                <StepItem number="3" title="신입 길드원" description="Discord 연동 및 2주 활동" />
-                <StepItem number="4" title="정식 길드원" description="모든 클랜 활동 참여 가능" done />
+                <StepItem number="1" title="가입 신청" description="기본 정보 제출"
+                  done={isApplied || isRookieOrHigher}
+                  active={canApply && !isApplied} />
+                <StepItem number="2" title="테스트 진행" description="실력 테스트 및 면접"
+                  done={isRookieOrHigher}
+                  active={isApplied} />
+                <StepItem number="3" title="신입 길드원" description="Discord 연동 및 2주 활동"
+                  done={['member','elite','admin','master','developer'].includes(currentRole)}
+                  active={currentRole === 'rookie'} />
+                <StepItem number="4" title="정식 길드원" description="모든 클랜 활동 참여 가능"
+                  done={['member','elite','admin','master','developer'].includes(currentRole)}
+                  active={false} />
               </div>
             </div>
 

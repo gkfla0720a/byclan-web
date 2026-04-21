@@ -19,16 +19,28 @@ import { SectionErrorBoundary } from '../../components/ErrorBoundary';
 /**
  * ProfilePage - 내 프로필 페이지 컴포넌트
  * 로그인 여부에 따라 프로필 또는 로그인 안내를 렌더링합니다.
+ * visitor를 제외한 모든 로그인 사용자가 자신의 프로필을 볼 수 있습니다.
  */
 export default function ProfilePage() {
-  // 현재 로그인한 사용자 정보 가져오기 (없으면 null)
-  const { user } = useAuthContext();
+  const { user, profile } = useAuthContext();
 
+  // 비로그인 시 로그인 안내
   if (!user) {
     return (
       <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
         <div className="w-full mt-8">
           <PagePlaceholder title="로그인이 필요합니다." />
+        </div>
+      </main>
+    );
+  }
+
+  // visitor 역할은 프로필 접근 불가 (가입 안내로 유도)
+  if (profile?.role === 'visitor') {
+    return (
+      <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
+        <div className="w-full mt-8">
+          <PagePlaceholder title="클랜에 가입한 멤버만 프로필을 이용할 수 있습니다." />
         </div>
       </main>
     );

@@ -196,7 +196,7 @@ export default function Header() {
         {/* 로고 & 타이틀 */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
           <ByClanLogo />
-            <span 
+          <span 
               className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-110"
               style={{
                 background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
@@ -210,13 +210,13 @@ export default function Header() {
             </span>
         </div>
         
-        {/* 데스크톱 메뉴 */}
-        <ul className="hidden md:flex flex-wrap gap-x-4 items-center justify-end w-full">
+        {/* 데스크톱 메뉴 — 항상 한 줄 유지 */}
+        <ul className="hidden md:flex flex-nowrap gap-x-1 items-center justify-end flex-1 overflow-x-auto scrollbar-none">
           {menuData.map((menu, index) => (
             <li key={index} className="relative">
               <button
                 onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)}
-                className="rounded-full border border-cyan-400/15 bg-slate-900/55 px-4 py-2 text-sm font-semibold text-slate-200 transition-all hover:border-cyan-300/45 hover:bg-cyan-400/8 hover:text-cyan-100 hover:shadow-[0_0_18px_rgba(34,211,238,0.12)]"
+                className="rounded-full border border-cyan-400/15 bg-slate-900/55 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-300/45 hover:bg-cyan-400/8 hover:text-cyan-100 hover:shadow-[0_0_18px_rgba(34,211,238,0.12)] whitespace-nowrap"
               >
                 {menu.title}
               </button>
@@ -235,8 +235,8 @@ export default function Header() {
           {/* 🛡️ 가입 심사 버튼 (개발자, 마스터, 어드민, 엘리트) */}
           {isDevOrHigher && (
             <li>
-              <button onClick={() => handleNav('가입 심사')} className="text-emerald-300 hover:text-emerald-200 text-sm font-bold border border-emerald-400/25 px-3 py-2 rounded-full bg-emerald-950/20 shadow-[0_0_14px_rgba(16,185,129,0.12)] transition-all">
-                ⚔️ 가입 심사
+              <button onClick={() => handleNav('가입 심사')} className="text-emerald-300 hover:text-emerald-200 text-xs font-bold border border-emerald-400/25 px-2.5 py-1.5 rounded-full bg-emerald-950/20 shadow-[0_0_14px_rgba(16,185,129,0.12)] transition-all whitespace-nowrap">
+                ⚔️ 가입심사
               </button>
             </li>
           )}
@@ -244,7 +244,7 @@ export default function Header() {
           {/* 👑 관리자 버튼 (개발자, 마스터, 어드민) */}
           {isAdminOrHigher && (
             <li>
-              <button onClick={() => handleNav('관리자')} className="text-rose-300 hover:text-rose-200 text-sm font-bold border border-rose-400/25 px-3 py-2 rounded-full bg-rose-950/20 shadow-[0_0_14px_rgba(244,63,94,0.12)] transition-all">
+              <button onClick={() => handleNav('관리자')} className="text-rose-300 hover:text-rose-200 text-xs font-bold border border-rose-400/25 px-2.5 py-1.5 rounded-full bg-rose-950/20 shadow-[0_0_14px_rgba(244,63,94,0.12)] transition-all whitespace-nowrap">
                 👑 관리자
               </button>
             </li>
@@ -253,25 +253,25 @@ export default function Header() {
           {/* 🛠️ 개발자 전용 버튼 (오직 개발자만!) */}
           {isDeveloper && (
             <li>
-              <button onClick={() => handleNav('개발자')} className="text-cyan-200 hover:text-white text-sm font-bold border border-cyan-300/35 px-3 py-2 rounded-full bg-cyan-950/25 shadow-[0_0_18px_rgba(34,211,238,0.15)] transition-all">
+              <button onClick={() => handleNav('개발자')} className="text-cyan-200 hover:text-white text-xs font-bold border border-cyan-300/35 px-2.5 py-1.5 rounded-full bg-cyan-950/25 shadow-[0_0_18px_rgba(34,211,238,0.15)] transition-all whitespace-nowrap">
                 🛠️ 개발자
               </button>
             </li>
           )}
           
-          <li className="ml-2 flex items-center gap-3">
+          <li className="ml-1 flex items-center gap-2 shrink-0">
             {user ? (
               <>
                 <button onClick={() => handleNav('알림')} className="relative p-1 text-slate-300 hover:text-cyan-200 transition-all">
-                  <span className="text-lg">🔔</span>
+                  <span className="text-base">🔔</span>
                   {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
                 </button>
-                <button onClick={() => handleNav('프로필')} className="p-1 text-slate-300 hover:text-cyan-200 transition-all"><span className="text-lg">👤</span></button>
-                <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-full border border-cyan-400/15 shadow-[0_0_18px_rgba(34,211,238,0.08)]">
+                <button onClick={() => handleNav('프로필')} className="p-1 text-slate-300 hover:text-cyan-200 transition-all"><span className="text-base">👤</span></button>
+                <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1.5 rounded-full border border-cyan-400/15 shadow-[0_0_18px_rgba(34,211,238,0.08)]">
                   {nickname ? (
-                    <span className="text-xs font-bold text-slate-100">{nickname}</span>
+                    <span className="text-xs font-bold text-slate-100 max-w-[100px] truncate">{nickname}</span>
                   ) : (
-                    <span className="text-xs text-slate-400 max-w-[180px] truncate" title={NO_BYID_MESSAGE}>
+                    <span className="text-xs text-slate-400 max-w-[120px] truncate" title={NO_BYID_MESSAGE}>
                       {authError || NO_BYID_MESSAGE}
                     </span>
                   )}
@@ -279,7 +279,7 @@ export default function Header() {
                 </div>
               </>
             ) : (
-              <button onClick={handleLogin} className="px-4 py-2 border border-cyan-300/35 rounded-full text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-sm">로그인</button>
+              <button onClick={handleLogin} className="px-3 py-1.5 border border-cyan-300/35 rounded-full text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-xs whitespace-nowrap">로그인</button>
             )}
           </li>
         </ul>

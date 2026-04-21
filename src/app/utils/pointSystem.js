@@ -45,6 +45,9 @@ export const DAILY_BONUS_AMOUNT = 500;
 /** 매치 참여 보상 포인트 */
 export const MATCH_REWARD_AMOUNT = 500;
 
+/** Discord 접속/출첵 보상 포인트 */
+export const DISCORD_CHECKIN_AMOUNT = 1000;
+
 /**
  * 포인트를 지급하고 로그 및 알림을 기록합니다.
  *
@@ -270,4 +273,67 @@ export async function grantRankPromotionBonus(sb, userId, newRole, isTestData = 
 
   const result = await grantPoints(sb, userId, amount, reason, type, null, isTestData);
   return { ok: result.ok, amount };
+}
+
+/**
+ * Discord 서버 접속 또는 출석체크 시 포인트(1,000 CP)를 지급합니다.
+ * 하루 1회만 지급되며, last_discord_checkin_at 컬럼으로 중복을 방지합니다.
+ *
+ * ■ 사용 방법
+ *   Discord Bot이 서버 접속/출첵 이벤트를 감지하면 이 함수를 호출합니다.
+ *   현재는 운영진이 수동으로 호출하거나, 추후 Discord Bot 연동 시 자동 호출 예정입니다.
+ *
+ * ■ 연동 예정
+ *   Discord Bot (discord.js) → Supabase Edge Function → grantDiscordCheckinBonus 호출
+ *   또는 클라이언트에서 Discord OAuth 접속 확인 후 직접 호출
+ *
+ * @param {import('@supabase/supabase-js').SupabaseClient} sb
+ * @param {string} userId - 보상 대상 사용자 UUID
+ * @param {boolean} [isTestData=false]
+ * @returns {Promise<{granted: boolean, amount: number, reason: string}>}
+ */
+export async function grantDiscordCheckinBonus(sb, userId, isTestData = false) {
+  if (!userId) return { granted: false, amount: 0, reason: '유저 없음' };
+
+  try {
+    const { data: prof } = await sb
+      .from('profiles')
+      .select('last_discord_checkin_at, clan_point')
+      .eq('id', userId)
+      .single();
+
+    const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const lastCheckin = prof?.last_discord_checkin_at;
+
+    // 오늘 이미 지급한 경우 중복 지급 방지
+    if (lastCheckin === todayStr) {
+      return { granted: false, amount: 0, reason: '오늘 이미 Discord 출첵 보상을 받았습니다.' };
+    }
+
+    // 중복 방지용 날짜 먼저 업데이트
+    const { error: updateErr } = await sb
+      .from('profiles')
+      .update({ last_discord_checkin_at: todayStr })
+      .eq('id', userId);
+
+    if (updateErr) throw updateErr;
+
+    // 포인트 지급
+    const result = await grantPoints(
+      sb,
+      userId,
+      DISCORD_CHECKIN_AMOUNT,
+      'Discord 서버 접속/출석체크 보상',
+      'discord_checkin',
+      null,
+      isTestData,
+    );
+
+    if (!result.ok) throw new Error(result.error || '포인트 지급 실패');
+
+    return { granted: true, amount: DISCORD_CHECKIN_AMOUNT, reason: 'Discord 출첵 보상 지급 완료' };
+  } catch (err) {
+    console.error('[pointSystem] grantDiscordCheckinBonus 실패:', err);
+    return { granted: false, amount: 0, reason: err.message || 'Discord 출첵 보상 실패' };
+  }
 }
