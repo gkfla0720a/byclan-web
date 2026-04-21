@@ -369,7 +369,10 @@ export default function LadderDashboard({ onMatchEnter }) {
       currentUserRef.current = authUser;
 
       const { data: profile } = await supabase
-        .from('profiles').select('*').eq('id', authUser.id).single();
+        .from('profiles')
+        .select('id, by_id, role, race, clan_point, ladder_mmr, wins, losses, is_in_queue, is_test_account, discord_id')
+        .eq('id', authUser.id)
+        .single();
       if (profile) {
         setMyProfile(profile);
         setInQueue(profile.is_in_queue || false);
@@ -395,7 +398,7 @@ export default function LadderDashboard({ onMatchEnter }) {
       const { data: ongoing } = await filterVisibleTestData(supabase
         .from('ladder_matches')
         .select('*')
-        .in('status', ['진행중', '제안중'])
+        .in('status', ['in_progress', 'proposed'])
         .order('created_at', { ascending: false })
         .limit(8));
       const ongoingList = ongoing || [];
@@ -417,7 +420,7 @@ export default function LadderDashboard({ onMatchEnter }) {
 
       // 내가 포함된 제안 확인
       const myProposal = ongoingList.find(m =>
-        m.status === '제안중' &&
+        m.status === 'proposed' &&
         [...(m.team_a_ids || []), ...(m.team_b_ids || [])].includes(authUser.id)
       );
       if (myProposal) {
@@ -549,7 +552,7 @@ export default function LadderDashboard({ onMatchEnter }) {
       const { data, error } = await supabase
         .from('ladder_matches')
         .insert({
-          status: '제안중',
+          status: 'proposed',
           match_type: perTeam,
           team_a_ids: teamA.map(p => p.id),
           team_b_ids: teamB.map(p => p.id),
@@ -580,7 +583,7 @@ export default function LadderDashboard({ onMatchEnter }) {
 
   /**
    * 매치 제안 동의 핸들러입니다.
-   * - ladder_matches 상태를 '진행중'으로 업데이트합니다.
+   * - ladder_matches 상태를 'in_progress'으로 업데이트합니다.
    * - 참여 플레이어 전원의 is_in_queue를 false로 변경합니다.
    * - onMatchEnter 콜백을 호출하여 MatchCenter 화면으로 이동합니다.
    */
@@ -588,7 +591,7 @@ export default function LadderDashboard({ onMatchEnter }) {
     if (!activeProposal) return;
     try {
       await supabase.from('ladder_matches')
-        .update({ status: '진행중' })
+        .update({ status: 'in_progress' })
         .eq('id', activeProposal.matchId);
       const allIds = [...activeProposal.teamA, ...activeProposal.teamB].map(p => p.id);
       await supabase.from('profiles').update({ is_in_queue: false }).in('id', allIds);
@@ -955,14 +958,14 @@ export default function LadderDashboard({ onMatchEnter }) {
       </div>
 
       {/* 진행 중인 매치 목록 */}
-      {ongoingMatches.filter(m => m.status === '진행중').length > 0 && (
+      {ongoingMatches.filter(m => m.status === 'in_progress').length > 0 && (
         <div className="bg-[#0A1128] border border-emerald-500/30 rounded-xl overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.1)]">
           <div className="px-5 py-4 border-b border-emerald-500/30 flex items-center gap-2">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping flex-shrink-0"></span>
             <p className="text-emerald-400 text-sm font-bold uppercase tracking-widest">레더매치보드 — 진행 중</p>
           </div>
           <div className="divide-y divide-emerald-900/20">
-            {ongoingMatches.filter(m => m.status === '진행중').map(match => {
+            {ongoingMatches.filter(m => m.status === 'in_progress').map(match => {
               const isParticipant = [...(match.team_a_ids || []), ...(match.team_b_ids || [])].includes(user?.id);
               const teamANames = (match.team_a_ids || []).map(id => getDisplayName(matchProfiles[id]));
               const teamBNames = (match.team_b_ids || []).map(id => getDisplayName(matchProfiles[id]));

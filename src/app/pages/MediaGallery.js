@@ -71,7 +71,7 @@ function MediaGallery() {
           filterVisibleTestData(
             supabase
               .from('posts')
-              .select('id, title, author_name, created_at')
+              .select('id, title, created_at, profiles!user_id(by_id)')
               .order('created_at', { ascending: false })
               .limit(2)
           ),
@@ -97,7 +97,7 @@ function MediaGallery() {
             id: `post-${item.id}`,
             type: '게시글',
             title: item.title,
-            subtitle: `${item.author_name || '클랜원'}님이 남긴 글`,
+            subtitle: `${item.profiles?.by_id || '클랜원'}님이 남긴 글`,
             date: item.created_at,
             img: MEDIA_BACKGROUNDS.게시글,
           })),

@@ -61,7 +61,7 @@ export default function AdminMatchManager() {
 
       const { data, error } = await supabase
         .from('ladder_matches')
-        .select('id, status, match_type, winning_team, map_name, score_a, score_b, created_at, team_a_ids, team_b_ids')
+        .select('id, status, match_type, winner_team, map_name, score_a, score_b, created_at, team_a_ids, team_b_ids')
         .order('created_at', { ascending: false })
         .limit(80);
 
@@ -95,7 +95,7 @@ export default function AdminMatchManager() {
   };
 
   const handleSave = async (match) => {
-    const actionText = `경기 기록 수정: ${match.id}\n상태=${match.status}, 스코어=${match.score_a}:${match.score_b}, 승리팀=${match.winning_team || '-'} 로 저장합니다.`;
+    const actionText = `경기 기록 수정: ${match.id}\n상태=${match.status}, 스코어=${match.score_a}:${match.score_b}, 승리팀=${match.winner_team || '-'} 로 저장합니다.`;
     if (!requireAdminTypingConfirm(actionText)) {
       alert('취소되었습니다. 확인 문자열이 일치하지 않습니다.');
       return;
@@ -113,7 +113,7 @@ export default function AdminMatchManager() {
         status: match.status,
         score_a: Number(match.score_a || 0),
         score_b: Number(match.score_b || 0),
-        winning_team: match.winning_team || null,
+        winner_team: match.winner_team || null,
         map_name: match.map_name || null,
       };
 
@@ -279,8 +279,8 @@ export default function AdminMatchManager() {
               <label className="text-[11px] text-gray-400">
                 승리팀
                 <select
-                  value={m.winning_team || ''}
-                  onChange={(e) => updateLocalField(m.id, 'winning_team', e.target.value)}
+                  value={m.winner_team || ''}
+                  onChange={(e) => updateLocalField(m.id, 'winner_team', e.target.value)}
                   className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm text-white"
                 >
                   {WINNING_TEAM_OPTIONS.map((s) => <option key={s} value={s}>{s || '미지정'}</option>)}

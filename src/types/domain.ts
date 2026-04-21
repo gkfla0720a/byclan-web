@@ -30,35 +30,49 @@ export interface TestDataFlags {
 }
 
 export interface ProfileRow extends TestDataFlags {
-  id: UUID;
-  discord_id: string | null;
-  role: UserRole | null;
-  clan_point: number | null;
+  // ── 필수 필드 (DB NOT NULL) ────────────────────────────
+  id: UUID;                          // Supabase Auth UUID (PK)
   created_at: ISODateString;
-  byid?: string | null;
-  race: RaceCode | null;
-  intro: string | null;
-  ladder_mmr: number | null;
-  team_mmr?: number | null;
-  total_mmr?: number | null;
-  recent_total_delta?: number | null;
-  race_combo_stats?: JsonValue | null;
-  is_in_queue: boolean | null;
-  vote_to_start: boolean | null;
-  is_test_account: boolean | null;
-  is_test_account_active: boolean | null;
-  wins: number | null;
-  losses: number | null;
-  is_streamer: boolean | null;
-  streamer_platform: string | null;
-  streamer_url: string | null;
-  rookie_since: ISODateString | null;
+
+  // ── 클랜 정보 ──────────────────────────────────────────
+  by_id: string | null;              // 클랜 닉네임 (예: 'By_홍길동')
+  role: UserRole | null;             // 클랜 역할
+  clan_point: number | null;         // 클랜 포인트 (기본값 0)
+  race: RaceCode | null;             // 주종족
+  intro: string | null;              // 자기소개
+
+  // ── 래더 ───────────────────────────────────────────────
+  ladder_mmr: number | null;         // 래더 MMR (기본값 1000) — 단일 출처
+  wins: number | null;               // 래더 누적 승리
+  losses: number | null;             // 래더 누적 패배
+  is_in_queue: boolean | null;       // 래더 대기열 상태
+  vote_to_start: boolean | null;     // 래더 시작 투표
+  queue_joined_at?: ISODateString | null; // 대기열 합류 시각
+
+  // ── Discord 연동 ───────────────────────────────────────
+  discord_id: string | null;         // Discord 고유 ID
+
+  // ── 소셜 계정 연동 (마이그레이션으로 추가된 컬럼) ─────
   google_sub: string | null;
   google_email: string | null;
   google_name: string | null;
   google_avatar_url: string | null;
   auth_provider: string | null;
-  by_id: string | null;
+
+  // ── 스트리머 정보 ──────────────────────────────────────
+  is_streamer: boolean | null;
+  streamer_platform: string | null;
+  streamer_url: string | null;
+
+  // ── 시스템/운영 ────────────────────────────────────────
+  last_login_at: ISODateString | null;
+  last_daily_bonus_at: string | null;  // YYYY-MM-DD 형식
+  last_discord_checkin_at: string | null; // YYYY-MM-DD 형식 (Discord 출첵 보상용)
+  rookie_since: ISODateString | null;  // 신입 클랜원 등록일
+
+  // ── 테스트 계정 플래그 ─────────────────────────────────
+  is_test_account: boolean | null;
+  is_test_account_active: boolean | null;
 }
 
 export interface AuthProfile extends ProfileRow {

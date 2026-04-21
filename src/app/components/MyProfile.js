@@ -154,11 +154,8 @@ export default function MyProfile() {
 
         setAccountId(extractAccountIdFromAuthUser(user, profileData));
 
-        // 래더 데이터 가져오기
-        if (currentById.startsWith('By_')) {
-          const { data: ladder } = await supabase.from('ladders').select('*').eq('nickname', currentById).maybeSingle();
-          if (ladder) setLadderData(ladder);
-        }
+        // 래더 MMR 및 전적은 profiles.ladder_mmr / profiles.wins / profiles.losses 를 직접 사용합니다.
+        // ladders 테이블은 profiles로 통합되어 제거되었습니다.
       }
     } catch (error) {
       console.error("데이터 로드 에러:", error);

@@ -58,7 +58,7 @@ export default function PointHistoryPage() {
           .limit(100),
         supabase
           .from('match_bets')
-          .select('*, ladder_matches(match_type, status, winning_team)')
+          .select('*, ladder_matches(match_type, status, winner_team)')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(50),
@@ -185,9 +185,9 @@ export default function PointHistoryPage() {
             <div className="text-center py-16 text-gray-600 text-sm">베팅 이력이 없습니다.</div>
           )}
           {bets.map(bet => {
-            const matchEnded = bet.ladder_matches?.status === '완료';
-            const won = matchEnded && bet.ladder_matches?.winning_team === bet.team_choice;
-            const lost = matchEnded && bet.ladder_matches?.winning_team !== bet.team_choice;
+            const matchEnded = bet.ladder_matches?.status === 'completed';
+            const won = matchEnded && bet.ladder_matches?.winner_team === bet.team_choice;
+            const lost = matchEnded && bet.ladder_matches?.winner_team !== bet.team_choice;
             const statusColor = bet.status === 'won' ? 'text-emerald-400' : bet.status === 'lost' ? 'text-red-400' : 'text-yellow-400';
             const statusLabel = { won: '🏆 승리 정산', lost: '❌ 패배 정산', pending: '⏳ 정산 대기' }[bet.status] || '?';
 

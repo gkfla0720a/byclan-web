@@ -614,7 +614,7 @@ export function useAuth(): UseAuthReturn {
         const { data: m, error: matchError } = await supabase
           .from('ladder_matches')
           .select('id')
-          .eq('status', '진행중')
+          .eq('status', 'in_progress')
           .or(`team_a_ids.cs.{${authUser.id}},team_b_ids.cs.{${authUser.id}}`)
           .maybeSingle();
 

@@ -18,18 +18,24 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
+import { MATCH_STATUS_LABEL } from '@/app/utils/statusConstants';
 
 const PAGE_SIZE = 30;
 
 /** 경기 상태별 배지 스타일 클래스를 반환합니다. */
 function getStatusStyle(status) {
   switch (status) {
-    case '완료': return 'bg-cyan-900/60 text-cyan-300 border border-cyan-500/30';
-    case '진행중': return 'bg-red-900/60 text-red-300 border border-red-500/30';
-    case '제안중': return 'bg-yellow-900/60 text-yellow-300 border border-yellow-500/30';
-    case '모집중': return 'bg-green-900/60 text-green-300 border border-green-500/30';
-    default: return 'bg-gray-900/60 text-gray-400 border border-gray-600/30';
+    case 'completed':   return 'bg-cyan-900/60 text-cyan-300 border border-cyan-500/30';
+    case 'in_progress': return 'bg-red-900/60 text-red-300 border border-red-500/30';
+    case 'proposed':    return 'bg-yellow-900/60 text-yellow-300 border border-yellow-500/30';
+    case 'open':        return 'bg-green-900/60 text-green-300 border border-green-500/30';
+    default:            return 'bg-gray-900/60 text-gray-400 border border-gray-600/30';
   }
+}
+
+/** status 영문 값을 한국어 레이블로 변환합니다. */
+function getStatusLabel(status) {
+  return MATCH_STATUS_LABEL[status] ?? status ?? '-';
 }
 
 /** 날짜 문자열을 읽기 좋은 형식으로 변환합니다. */
@@ -147,8 +153,8 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
 
   if (!m) return null;
 
-  const isFinished = m.status === '완료';
-  const isOngoing = m.status === '진행중';
+  const isFinished = m.status === 'completed';
+  const isOngoing = m.status === 'in_progress';
   const teamA = m.team_a_ids || [];
   const teamB = m.team_b_ids || [];
   const teamARaces = m.team_a_races || [];
@@ -204,7 +210,7 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
       {/* 상태 배지 */}
       <div className="flex justify-center pt-3 pb-1">
         <span className={`text-[11px] font-black px-3 py-0.5 rounded-full ${getStatusStyle(m.status)}`}>
-          {isOngoing ? '진행중' : m.status || '-'}
+          {getStatusLabel(m.status)}
         </span>
       </div>
 
@@ -301,7 +307,7 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
                         </button>
                         <span className={`px-1.5 py-0.5 rounded ${isB ? 'bg-red-900/40 text-red-300' : 'text-slate-500'}`}>B</span>
                       </div>
-                      <span className="text-slate-500">{isActive ? '진행중' : raceCardsLabel(s.race_cards)}</span>
+                      <span className="text-slate-500">{isActive ? 'in_progress' : raceCardsLabel(s.race_cards)}</span>
                     </div>
 
                     {expanded && (
@@ -373,7 +379,7 @@ export default function MatchRecords() {
 
   /**
   * ladder_matches 테이블에서 최신 경기 목록을 불러옵니다.
-   * '완료', '진행중', '제안중' 상태만 표시합니다.
+   * 'completed', 'in_progress', 'proposed' 상태만 표시합니다.
    */
   const fetchMatches = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -388,7 +394,7 @@ export default function MatchRecords() {
         supabase
           .from('ladder_matches')
           .select('id, match_type, status, score_a, score_b, team_a_ids, team_b_ids, team_a_races, team_b_races, created_at')
-          .in('status', ['완료', '진행중', '제안중'])
+          .in('status', ['completed', 'in_progress', 'proposed'])
           .order('created_at', { ascending: false })
             .limit(300)
       );
@@ -500,12 +506,12 @@ export default function MatchRecords() {
                       <td className="py-3 px-4 text-cyan-200 text-xs font-bold">{m.match_type || '-'}</td>
                       <td className="py-3 px-4">
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${getStatusStyle(m.status)}`}>
-                          {m.status || '-'}
+                          {getStatusLabel(m.status)}
                         </span>
                       </td>
                       <td className="py-3 px-4">{renderTeam(m.team_a_ids)}</td>
                       <td className="py-3 px-3 text-center">
-                        {m.status === '완료' ? (
+                        {m.status === 'completed' ? (
                           <span className="text-white font-black text-sm">
                             {m.score_a ?? '-'} : {m.score_b ?? '-'}
                           </span>
@@ -545,7 +551,7 @@ export default function MatchRecords() {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-500 text-xs">{formatDate(m.created_at)}</span>
                       <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${getStatusStyle(m.status)}`}>
-                        {m.status || '-'}
+                        {getStatusLabel(m.status)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -554,7 +560,7 @@ export default function MatchRecords() {
                         <div className="text-[11px] text-gray-400 mb-0.5">A팀</div>
                         <div className="flex flex-wrap gap-1">{renderTeam(m.team_a_ids)}</div>
                       </div>
-                      {m.status === '완료' && (
+                      {m.status === 'completed' && (
                         <span className="text-white font-black text-sm mx-1">
                           {m.score_a ?? '-'} : {m.score_b ?? '-'}
                         </span>

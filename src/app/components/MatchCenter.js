@@ -186,7 +186,10 @@ export default function MatchCenter({ matchId, onExit }) {
     setMatch(m);
 
     const { data: prof } = await supabase
-      .from('profiles').select('*').eq('id', user.id).single();
+      .from('profiles')
+      .select('id, role, clan_point, is_test_account')
+      .eq('id', user.id)
+      .single();
     if (prof) {
       setMyClanPoint(prof.clan_point ?? 0);
       setMyRole(prof.role || null);
@@ -197,7 +200,7 @@ export default function MatchCenter({ matchId, onExit }) {
     const teamLetter = inTeamA ? 'A' : inTeamB ? 'B' : null;
     setMyTeam(teamLetter);
 
-    const activeSet = m.match_sets?.find(s => s.status !== '완료') || m.match_sets?.[m.match_sets.length - 1];
+    const activeSet = m.match_sets?.find(s => s.status !== 'completed') || m.match_sets?.[m.match_sets.length - 1];
     setCurrentSet(activeSet);
 
     setIsRevealed(Boolean(activeSet?.team_a_ready && activeSet?.team_b_ready));
@@ -332,7 +335,7 @@ export default function MatchCenter({ matchId, onExit }) {
   // 휴식 횟수 계산
   const getRestStatus = (playerId, teamLetter) => {
     if (!match?.match_sets || !teamLetter) return { count: 0, canRest: true };
-    const completedSets = match.match_sets.filter(s => s.status === '완료');
+    const completedSets = match.match_sets.filter(s => s.status === 'completed');
     const restCount = completedSets.filter(s => {
       const entry = teamLetter === 'A' ? s.team_a_entry : s.team_b_entry;
       return !entry?.some(e => e.id === playerId);
@@ -444,7 +447,7 @@ export default function MatchCenter({ matchId, onExit }) {
         .from('match_sets')
         .update({
           winner_team: winnerTeam,
-          status: '완료',
+          status: 'completed',
           team_a_ready: false,
           team_b_ready: false,
           team_a_withdraw_req: false,
@@ -476,7 +479,7 @@ export default function MatchCenter({ matchId, onExit }) {
             match_id: matchId,
             set_number: nextSetNo,
             race_type: match?.match_type || '4v4',
-            status: '엔트리제출중',
+            status: 'entry_pending',
             race_cards: getRaceCards(nextCombo),
             team_a_ready: false,
             team_b_ready: false,
@@ -992,14 +995,14 @@ export default function MatchCenter({ matchId, onExit }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 onClick={() => handleSetWin('A')}
-                disabled={!currentSet || currentSet?.status === '완료'}
+                disabled={!currentSet || currentSet?.status === 'completed'}
                 className="py-2 rounded-lg bg-blue-900/50 border border-blue-700 text-blue-300 font-bold text-xs disabled:opacity-30"
               >
                 TEAM A 세트 승리 확정
               </button>
               <button
                 onClick={() => handleSetWin('B')}
-                disabled={!currentSet || currentSet?.status === '완료'}
+                disabled={!currentSet || currentSet?.status === 'completed'}
                 className="py-2 rounded-lg bg-red-900/50 border border-red-700 text-red-300 font-bold text-xs disabled:opacity-30"
               >
                 TEAM B 세트 승리 확정
