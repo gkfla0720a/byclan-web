@@ -20,12 +20,20 @@
  *   텍스트: text-gray-200 (밝은 회색)
  * =====================================================================
  */
+
+'use client';
+
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./context/ToastContext";
 import ToastContainer from "./components/ToastContainer";
 import { Analytics } from "@vercel/analytics/next";
+
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import HomeGate from "./components/HomeGate";
+import ProfileSidebar from "./components/ProfileSidebar";
 
 /**
  * metadata
@@ -52,7 +60,12 @@ export const metadata = {
  *       <ErrorBoundary>       ← 오류 발생 시 앱 전체가 터지지 않도록 보호
  *         <ToastProvider>     ← Toast 알림 기능 활성화
  *           <AuthProvider>    ← 로그인 상태 및 프로필 공유
- *             {children}      ← 실제 페이지 내용
+ *            <HomeGate>
+ *             <Header />
+ *              <ProfileSidebar />
+ *               {children}      ← 실제 페이지 내용
+ *             <footer />
+ *            </HomeGate>
  *           </AuthProvider>
  *           <ToastContainer/> ← Toast 메시지 화면 표시
  *         </ToastProvider>
@@ -60,16 +73,41 @@ export const metadata = {
  *     </body>
  *   </html>
  */
+
+/**
+ * RootLayout
+ * - 이제 모든 페이지는 별도의 설정 없이도 Header, Sidebar, Footer를 갖게 됩니다.
+ * - HomeGate는 추후 철거 시 <HomeGate> 태그만 제거하면 됩니다.
+ */
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="ko"
-      className="h-full antialiased"
-    >
+    <html lang="ko" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-[#06060a] text-gray-200">
         <ErrorBoundary>
           <ToastProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              {/* 1. 홈게이트: 사이트 진입 관문 (필요 없을 때 이 태그만 삭제) */}
+              <HomeGate>
+                <div className="min-h-screen flex flex-col">
+                  {/* 2. 상단 헤더: 모든 페이지 공통 */}
+                  <Header />
+
+                  {/* 3. 중앙 영역: 사이드바 + 본문 콘텐츠 */}
+                  <main className="flex-grow w-full max-w-6xl mx-auto px-2 sm:px-6 flex gap-4 mt-4 mb-10">
+                    {/* 좌측 사이드바: PC에서만 보이고 모바일선 숨겨짐(ProfileSidebar 내부 로직) */}
+                    <ProfileSidebar />
+                    
+                    {/* 우측 본문: 실제 각 page.js의 내용이 들어가는 자리 */}
+                    <div className="flex-1 min-w-0">
+                      {children}
+                    </div>
+                  </main>
+
+                  {/* 4. 하단 푸터: 모든 페이지 공통 */}
+                  <Footer />
+                </div>
+              </HomeGate>
+            </AuthProvider>
             <ToastContainer />
           </ToastProvider>
         </ErrorBoundary>
