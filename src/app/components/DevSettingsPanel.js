@@ -111,7 +111,7 @@ export default function DevSettingsPanel() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 bg-purple-900/60 hover:bg-purple-800/80 text-purple-300 px-4 py-2 rounded-lg shadow-lg border border-purple-500/30 transition-all hover:scale-105 font-bold text-sm"
+        className="fixed bottom-4 right-4 z-40 bg-purple-900/60 hover:bg-purple-800/80 text-purple-300 px-4 py-2 rounded-lg shadow-lg border border-purple-500/30 transition-all hover:scale-105 font-bold text-sm"
         style={{ boxShadow: '0 0 12px rgba(168,85,247,0.2)' }}
       >
         ⚙️ 개발자 설정
