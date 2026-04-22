@@ -85,11 +85,13 @@ export default function RootLayout({ children }) {
         <ErrorBoundary>
           <ToastProvider>
             <AuthProvider>
-              <Header />
-              <main className="flex-grow w-full">
-                {children}
-              </main>
-              <Footer />
+              <div className="min-h-screen flex flex-col bg-[#06060a] text-gray-200 font-semibold relative" style={{ fontFamily: "'Pretendard', sans-serif" }}>
+                <Header />
+                <main className="flex-grow w-full">
+                  {children}
+                </main>
+                <Footer />
+              </div>
               <ToastContainer />
             </AuthProvider>
           </ToastProvider>
