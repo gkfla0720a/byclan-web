@@ -142,10 +142,10 @@ function normalizeProfileRow(profile: Record<string, unknown> | null): UserProfi
   if (!profile) return null;
 
   if (typeof profile.clan_point !== 'number') {
-    logger.warning('normalizeProfileRow: clan_point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
+    logger.info('normalizeProfileRow: clan_point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
   }
   if (typeof profile.ladder_mmr !== 'number') {
-    logger.warning('normalizeProfileRow: ladder_mmr 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
+    logger.info('normalizeProfileRow: ladder_mmr 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
   }
 
   return {
@@ -244,7 +244,7 @@ async function resolveUniqueById(seed: string, currentUserId?: string): Promise<
     .in('by_id', candidates);
 
   if (error) {
-    logger.warn('by_id 후보 조회 실패, 기본값으로 진행', error);
+    logger.info('by_id 후보 조회 실패, 기본값으로 진행', { error });
     return base;
   }
 
@@ -316,7 +316,7 @@ async function syncSocialProfileData(
     .single();
 
   if (updateError) {
-    logger.warn('소셜 프로필 동기화 일부 실패', updateError);
+    logger.info('소셜 프로필 동기화 일부 실패', { updateError });
     return currentProfile;
   }
 
@@ -600,13 +600,15 @@ export function useAuth(): UseAuthReturn {
 
     // 일별 첫 로그인 출석 보상 (500 CP) — 백그라운드 실행, 실패해도 무시
     const clanMemberRoles = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'];
-    if (clanMemberRoles.includes(nextProfile.role)) {
+    if (nextProfile?.role && clanMemberRoles.includes(nextProfile.role)) {
       checkAndGrantDailyBonus(
         supabase,
         (authUser.id as string),
         Boolean((nextProfile as UserProfile).is_test_account),
       ).catch(() => {});
     }
+
+    if (!nextProfile?.role) return;
 
     // 진행 중인 래더 매치 확인 (래더 플레이 가능 역할 전체)
     if (['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
