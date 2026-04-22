@@ -17,6 +17,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser, isInternalAuthEmail } from '@/app/utils/accountId';
 import { isMarkedTestAccount } from '@/app/utils/testData';
@@ -158,7 +159,7 @@ export default function MyProfile() {
         // ladders 테이블은 profiles로 통합되어 제거되었습니다.
       }
     } catch (error) {
-      console.error("데이터 로드 에러:", error);
+      logger.error('데이터 로드 에러', error);
     } finally {
       setLoading(false);
     }

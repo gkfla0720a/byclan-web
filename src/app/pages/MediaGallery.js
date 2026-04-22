@@ -18,6 +18,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
@@ -115,7 +116,7 @@ function MediaGallery() {
 
         setMediaItems(items);
       } catch (error) {
-        console.error('미디어 갤러리 로딩 실패:', error);
+        logger.error('미디어 갤러리 로딩 실패', error);
         setMediaItems([]);
       } finally {
         setLoading(false);

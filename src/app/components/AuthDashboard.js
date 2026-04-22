@@ -20,6 +20,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser } from '@/app/utils/accountId';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
@@ -55,7 +56,7 @@ function DiscordLinkPanel({ user, onLinked }) {
       if (error) throw error;
       setIsLinked(!!data.discord_id);
     } catch (error) {
-      console.error('Discord 연동 확인 실패:', error);
+      logger.error('Discord 연동 확인 실패', error);
     }
   }, [user]);
 

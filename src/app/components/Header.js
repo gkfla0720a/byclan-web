@@ -31,6 +31,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import logger from '@/app/utils/errorLogger';
 import Image from 'next/image';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '../hooks/useNavigate';
@@ -152,7 +153,7 @@ export default function Header() {
       await supabase.auth.signOut();
     } catch (error) {
       // signOut 실패 시에도 로컬 상태를 초기화하고 페이지를 새로고침합니다.
-      console.error('로그아웃 중 오류 발생:', error);
+      logger.error('로그아웃 중 오류 발생', error);
     }
     localStorage.clear();
     window.location.reload();

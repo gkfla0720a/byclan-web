@@ -15,6 +15,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { ROLE_PERMISSIONS } from '../utils/permissions';
@@ -29,7 +30,7 @@ import { isRelationshipError } from '../utils/retry';
 export default function AdminBoard() {
   /** 페이지 전환(탭 이동)을 위한 내비게이션 함수 */
   const navigateTo = useNavigate();
-  console.log('📍 AdminBoard 컴포넌트 렌더링됨!');
+  logger.info('AdminBoard 컴포넌트 렌더링됨.');
 
   /** 기밀 게시글 목록을 저장하는 상태 */
   const [posts, setPosts] = useState([]);
@@ -68,14 +69,7 @@ export default function AdminBoard() {
         /** 역할 문자열을 소문자로 정규화하여 정확히 비교 */
         const currentRole = profile?.role?.trim().toLowerCase();
 
-        // 디버그 로그
-        console.log('🔐 AdminBoard 권한 체크:', {
-          userId: user.id,
-          profile,
-          rawRole: profile?.role,
-          currentRole,
-          isAdmin: ['developer', 'master', 'admin'].includes(currentRole)
-        });
+        logger.info('AdminBoard 권한 체크', { userId: user.id, currentRole });
 
         // 중요: 개발자, 마스터, 운영진 등급만 이 게시판 접근 허용
         if (['developer', 'master', 'admin'].includes(currentRole)) {
@@ -84,7 +78,7 @@ export default function AdminBoard() {
         }
       }
     } catch (err) {
-      console.error("권한 확인 에러:", err);
+      logger.error('권한 확인 에러', err);
     } finally {
       setLoading(false);
     }
@@ -115,14 +109,14 @@ export default function AdminBoard() {
       .order('created_at', { ascending: false })); 
 
     if (error) {
-      console.error("목록 불러오기 에러:", error);
+      logger.error('목록 불러오기 에러', error);
       if (isRelationshipError(error)) {
         const { data: fallbackData, error: fallbackError } = await filterVisibleTestData(supabase
           .from('admin_posts')
           .select('id, title, content, created_at')
           .order('created_at', { ascending: false }));
         if (fallbackError) {
-          console.error("목록 폴백 쿼리 에러:", fallbackError);
+          logger.error('목록 폴백 쿼리 에러', fallbackError);
         } else {
           setPosts(fallbackData || []);
         }

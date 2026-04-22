@@ -15,6 +15,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { PermissionChecker } from '../utils/permissions';
 import { filterVisibleTestData } from '@/app/utils/testData';
@@ -75,7 +76,7 @@ export default function ApplicationList() {
     const { data, error } = await query;
 
     if (error) {
-      console.error("신청서 로드 에러:", error);
+      logger.error('신청서 로드 에러', error);
     } else {
       setApplications(data);
     }
@@ -110,7 +111,7 @@ export default function ApplicationList() {
         }
       }
     } catch (err) {
-      console.error("권한/데이터 로드 에러:", err);
+      logger.error('권한/데이터 로드 에러', err);
     } finally {
       setLoading(false);
     }

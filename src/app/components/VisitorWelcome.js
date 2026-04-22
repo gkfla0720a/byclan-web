@@ -13,6 +13,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser } from '@/app/utils/accountId';
 import { ErrorMessage } from './UIStates';
@@ -104,7 +105,7 @@ async function submitApplication(userId, applicationData) {
     }
 
     if (appError) {
-      console.warn('applications 테이블 오류:', appError.message);
+      logger.warning('applications 테이블 오류', null, { message: appError.message });
     }
 
     const profilePayload = {

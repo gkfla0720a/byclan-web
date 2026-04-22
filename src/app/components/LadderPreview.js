@@ -20,6 +20,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestAccounts } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
@@ -128,7 +129,7 @@ export default function LadderPreview({ isGuest }) {
           }))
         );
       } catch (error) {
-        console.error('래더 미리보기 로딩 실패:', error);
+        logger.error('래더 미리보기 로딩 실패', error);
         setPreviewPlayers([]);
       } finally {
         setLoading(false);

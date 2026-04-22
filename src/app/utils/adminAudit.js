@@ -3,6 +3,8 @@
  * @role 관리자 데이터 변경 감사 로그 기록 유틸
  */
 
+import logger from '@/app/utils/errorLogger';
+
 /**
  * 관리자 감사 로그를 기록합니다.
  * 실패해도 사용자 흐름을 막지 않도록 false를 반환합니다.
@@ -50,7 +52,7 @@ export async function recordAdminAudit(sb, payload) {
 
     return true;
   } catch (err) {
-    console.error('[adminAudit] 감사 로그 기록 실패:', err);
+    logger.error('[adminAudit] 감사 로그 기록 실패', err);
     return false;
   }
 }

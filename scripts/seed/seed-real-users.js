@@ -3,9 +3,11 @@
  * 실제 유저: By_Developer(A), By_6d0aa755a2(B), By_Master(C)
  */
 
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env.local') });
 const { Client } = require('pg');
 
-const DB_URL = process.env.DB_URL || 'postgresql://postgres.mmsmedvdwmisewngmuka:byclanblacktiger01!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres';
+const DB_URL = process.env.DB_URL;
+if (!DB_URL) throw new Error('DB_URL 환경변수가 설정되지 않았습니다. .env.local을 확인하세요.');
 
 // ── 실제 유저 UUID ───────────────────────────────────────────────────────────
 const A_ID = '057c4bc1-8067-406b-ad40-efe6125a3d1f'; // By_Developer  (developer)

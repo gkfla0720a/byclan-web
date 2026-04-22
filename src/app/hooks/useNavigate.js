@@ -26,6 +26,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -114,7 +115,7 @@ export function useNavigate() {
       router.push(path);
     } else {
       if (process.env.NODE_ENV === 'development') {
-        console.warn(`[useNavigate] Unmapped view name: "${viewName}". Add it to VIEW_TO_PATH in hooks/useNavigate.js.`);
+        logger.warning(`[useNavigate] Unmapped view name: "${viewName}". Add it to VIEW_TO_PATH in hooks/useNavigate.js.`);
       }
       router.push(`/${encodeURIComponent(viewName)}`);
     }

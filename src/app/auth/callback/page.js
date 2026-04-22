@@ -14,6 +14,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
 
@@ -148,7 +149,7 @@ export default function AuthCallback() {
         if (code) {
           const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
-            console.error('Code exchange error:', error);
+            logger.error('Code exchange error', error);
             router.push('/?error=auth_callback_error');
             return;
           }
@@ -171,7 +172,7 @@ export default function AuthCallback() {
         // Implicit 흐름: hash에 access_token이 있으면 Auth 서버 기준으로 사용자 검증
         const { data, error } = await supabase.auth.getUser();
         if (error) {
-          console.error('Auth callback error:', error);
+          logger.error('Auth callback error', error);
           router.push('/?error=auth_callback_error');
           return;
         }
@@ -182,7 +183,7 @@ export default function AuthCallback() {
           router.push('/?error=no_session');
         }
       } catch (err) {
-        console.error('Unexpected error:', err);
+        logger.error('Unexpected error', err);
         router.push('/?error=unexpected_error');
       }
     };

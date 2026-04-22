@@ -142,10 +142,10 @@ function normalizeProfileRow(profile: Record<string, unknown> | null): UserProfi
   if (!profile) return null;
 
   if (typeof profile.clan_point !== 'number') {
-    logger.warn('normalizeProfileRow: clan_point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
+    logger.warning('normalizeProfileRow: clan_point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
   }
   if (typeof profile.ladder_mmr !== 'number') {
-    logger.warn('normalizeProfileRow: ladder_mmr 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
+    logger.warning('normalizeProfileRow: ladder_mmr 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
   }
 
   return {

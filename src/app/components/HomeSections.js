@@ -18,6 +18,7 @@
  */
 'use client';
 import React, { useState, useEffect } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
@@ -89,7 +90,7 @@ function MatchStatus() {
         if (error) throw error;
         setMatches(data || []);
       } catch (error) {
-        console.error('매치 데이터 로딩 실패:', error);
+        logger.error('매치 데이터 로딩 실패', error);
       } finally {
         setLoading(false);
       }
@@ -240,7 +241,7 @@ function ActivityLog() {
 
         setActivities(nextActivities);
       } catch (error) {
-        console.error('활동 로그 로딩 실패:', error);
+        logger.error('활동 로그 로딩 실패', error);
       } finally {
         setLoading(false);
       }

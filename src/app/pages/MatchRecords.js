@@ -16,6 +16,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { MATCH_STATUS_LABEL } from '@/app/utils/statusConstants';
@@ -420,7 +421,7 @@ export default function MatchRecords() {
         setProfileCache(cache);
       }
     } catch (err) {
-      console.error('경기 기록 로딩 실패:', err);
+      logger.error('경기 기록 로딩 실패', err);
       setError(err);
     } finally {
       setLoading(false);
