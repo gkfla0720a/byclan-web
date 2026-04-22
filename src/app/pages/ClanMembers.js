@@ -19,6 +19,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
@@ -185,7 +186,7 @@ export default function ClanMembers() {
           )
         );
       } catch (error) {
-        console.error('클랜원 목록 로드 실패:', error);
+        logger.error('클랜원 목록 로드 실패', error);
         setError(error);
         setMembers([]);
       } finally {

@@ -11,6 +11,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { grantPoints, deductPoints } from '@/app/utils/pointSystem';
 import { recordAdminAudit } from '@/app/utils/adminAudit';
@@ -89,7 +90,7 @@ export default function AdminPointManager() {
         .order('by_id');
       setMembers(mems || []);
     } catch (err) {
-      console.error('[AdminPointManager] 초기화 오류:', err);
+      logger.error('[AdminPointManager] 초기화 오류', err);
     } finally {
       setLoading(false);
     }
@@ -126,7 +127,7 @@ export default function AdminPointManager() {
 
       setLogs(filtered);
     } catch (err) {
-      console.error('[AdminPointManager] 로그 조회 오류:', err);
+      logger.error('[AdminPointManager] 로그 조회 오류', err);
     } finally {
       setLogsLoading(false);
     }

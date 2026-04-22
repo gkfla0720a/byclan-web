@@ -19,6 +19,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { EmptyState, SkeletonLoader } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
@@ -109,7 +110,7 @@ export default function NoticeBoard() {
           }))
         );
       } catch (error) {
-        console.error('공지사항 로딩 실패:', error);
+        logger.error('공지사항 로딩 실패', error);
         setNotices([]);
       } finally {
         setLoading(false);

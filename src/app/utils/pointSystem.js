@@ -32,6 +32,8 @@
  * 직급별 승급 보상 포인트 정의
  * 형식: 해당 직급 고유 포인트 + 1,000 CP
  */
+import logger from '@/app/utils/errorLogger';
+
 export const RANK_BONUS = {
   rookie: 1000,   // 신규 클랜원: 1,000 CP
   member: 3000,   // 정회원: 2,000 + 1,000 = 3,000 CP
@@ -103,7 +105,7 @@ export async function grantPoints(sb, userId, amount, reason, type = 'manual', r
 
     return { ok: true, newBalance, error: null };
   } catch (err) {
-    console.error('[pointSystem] grantPoints 실패:', err);
+    logger.error('[pointSystem] grantPoints 실패', err);
     return { ok: false, newBalance: 0, error: err.message || '포인트 지급 실패' };
   }
 }
@@ -169,7 +171,7 @@ export async function deductPoints(sb, userId, amount, reason, type = 'manual', 
 
     return { ok: true, newBalance, error: null };
   } catch (err) {
-    console.error('[pointSystem] deductPoints 실패:', err);
+    logger.error('[pointSystem] deductPoints 실패', err);
     return { ok: false, newBalance: 0, error: err.message || '포인트 차감 실패' };
   }
 }
@@ -221,7 +223,7 @@ export async function checkAndGrantDailyBonus(sb, userId, isTestData = false) {
 
     return { granted: result.ok, amount: DAILY_BONUS_AMOUNT };
   } catch (err) {
-    console.error('[pointSystem] checkAndGrantDailyBonus 실패:', err);
+    logger.error('[pointSystem] checkAndGrantDailyBonus 실패', err);
     return { granted: false, amount: 0 };
   }
 }
@@ -333,7 +335,7 @@ export async function grantDiscordCheckinBonus(sb, userId, isTestData = false) {
 
     return { granted: true, amount: DISCORD_CHECKIN_AMOUNT, reason: 'Discord 출첵 보상 지급 완료' };
   } catch (err) {
-    console.error('[pointSystem] grantDiscordCheckinBonus 실패:', err);
+    logger.error('[pointSystem] grantDiscordCheckinBonus 실패', err);
     return { granted: false, amount: 0, reason: err.message || 'Discord 출첵 보상 실패' };
   }
 }

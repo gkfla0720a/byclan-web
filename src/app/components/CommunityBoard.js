@@ -18,6 +18,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { PermissionChecker } from '@/app/utils/permissions';
@@ -70,14 +71,14 @@ export default function CommunityBoard() {
         .order('created_at', { ascending: false }));
 
       if (error) {
-        console.error("데이터 불러오기 에러:", error);
+        logger.error('데이터 불러오기 에러', error);
         setFetchError(error);
         setPosts([]);
       } else {
         setPosts(data || []);
       }
     } catch (err) {
-      console.error("게시글 로딩 중 예외 발생:", err);
+      logger.error('게시글 로딩 중 예외 발생', err);
       setFetchError(err);
       setPosts([]);
     } finally {

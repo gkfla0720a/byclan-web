@@ -5,6 +5,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { recordAdminAudit } from '@/app/utils/adminAudit';
 
@@ -68,7 +69,7 @@ export default function AdminMatchManager() {
       if (error) throw error;
       setMatches((data || []).map((row) => ({ ...row })));
     } catch (err) {
-      console.error('[AdminMatchManager] loadData 오류:', err);
+      logger.error('[AdminMatchManager] loadData 오류', err);
       setMatches([]);
     } finally {
       setLoading(false);

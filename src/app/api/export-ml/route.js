@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js'; // 추가된 임포트
+import { createClient } from '@supabase/supabase-js';
+import logger from '@/app/utils/errorLogger';
 
 // 1. Supabase 설정 (환경변수)
 const supabase = createClient(
@@ -8,7 +9,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function GET(request) {
@@ -107,7 +107,7 @@ export async function GET(request) {
         .upsert(payload, { onConflict: 'match_id' });
 
       if (dbError) {
-        console.error("DB 저장 실패:", dbError.message);
+        logger.error('DB 저장 실패', dbError);
       }
     }
 

@@ -19,6 +19,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { buildInternalAuthEmail, getLoginEmailFromInput, normalizeAccountId } from '@/app/utils/accountId';
 
@@ -138,7 +139,7 @@ export default function AuthForm() {
           clan_point: 1000
         });
 
-        if (pError) console.error("프로필 생성 실패:", pError);
+        if (pError) logger.error('프로필 생성 실패', pError);
         alert("ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.");
         toggleMode();
       }

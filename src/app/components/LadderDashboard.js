@@ -24,6 +24,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
 
@@ -445,7 +446,7 @@ export default function LadderDashboard({ onMatchEnter }) {
         setActiveProposal(prev => prev ? null : prev);
       }
     } catch (err) {
-      console.error('래더 대시보드 로드 실패:', err);
+      logger.error('래더 대시보드 로드 실패', err);
     } finally {
       setLoading(false);
     }

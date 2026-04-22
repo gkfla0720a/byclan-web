@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs wc *)",
+      "Bash(git -C \"c:\\\\Users\\\\gkfla\\\\OneDrive\\\\바탕 화면\\\\Project\\\\ByClan\\\\byclan-web\" log --oneline -20)",
+      "Bash(npm install *)"
+    ]
+  }
+}

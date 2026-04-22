@@ -11,6 +11,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { isRelationshipError } from '../utils/retry';
 
@@ -63,7 +64,7 @@ export default function AdminBoard() {
         }
       }
     } catch (err) {
-      console.error("권한 확인 에러:", err);
+      logger.error('권한 확인 에러', err);
     } finally {
       setLoading(false);
     }
@@ -95,14 +96,14 @@ export default function AdminBoard() {
       .order('created_at', { ascending: false }); 
 
     if (error) {
-      console.error("목록 불러오기 에러:", error);
+      logger.error('목록 불러오기 에러', error);
       if (isRelationshipError(error)) {
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('admin_posts')
           .select('id, title, content, created_at')
           .order('created_at', { ascending: false });
         if (fallbackError) {
-          console.error("목록 폴백 쿼리 에러:", fallbackError);
+          logger.error('목록 폴백 쿼리 에러', fallbackError);
         } else {
           setPosts(fallbackData || []);
         }

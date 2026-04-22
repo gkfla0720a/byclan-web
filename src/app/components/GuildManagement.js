@@ -15,6 +15,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { isInternalAuthEmail } from '@/app/utils/accountId';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
@@ -126,7 +127,7 @@ export default function GuildManagement() {
         await supabase.from('notifications').insert(notifRows);
       }
     } catch (err) {
-      console.error('수습 기간 알림 확인 실패:', err);
+      logger.error('수습 기간 알림 확인 실패', err);
     }
   };
 
@@ -168,7 +169,7 @@ export default function GuildManagement() {
         await checkRookieReviewNotifications(user.id);
       }
     } catch (error) {
-      console.error('관리자 정보 로드 실패:', error);
+      logger.error('관리자 정보 로드 실패', error);
     }
   }, []);
 
@@ -189,7 +190,7 @@ export default function GuildManagement() {
       if (error) throw error;
       setMembers(data || []);
     } catch (error) {
-      console.error('길드원 목록 로드 실패:', error);
+      logger.error('길드원 목록 로드 실패', error);
     } finally {
       setLoading(false);
     }

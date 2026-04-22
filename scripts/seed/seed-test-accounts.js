@@ -15,12 +15,13 @@
  */
 
 'use strict';
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env.local') });
 const { Client } = require('pg');
 const bcrypt     = require('bcryptjs');
 const crypto     = require('crypto');
 
-const DB_URL = process.env.DB_URL ||
-  'postgresql://postgres.mmsmedvdwmisewngmuka:byclanblacktiger01!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres';
+const DB_URL = process.env.DB_URL;
+if (!DB_URL) throw new Error('DB_URL 환경변수가 설정되지 않았습니다. .env.local을 확인하세요.');
 
 const IS_RESET = process.argv.includes('--reset');
 

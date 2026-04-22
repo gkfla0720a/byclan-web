@@ -5,6 +5,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 
 const CATEGORY_OPTIONS = [
@@ -59,7 +60,7 @@ export default function AdminActivityLogViewer() {
       if (error) throw error;
       setRows(data || []);
     } catch (err) {
-      console.error('[AdminActivityLogViewer] loadLogs 오류:', err);
+      logger.error('[AdminActivityLogViewer] loadLogs 오류', err);
       setRows([]);
     } finally {
       setLoading(false);

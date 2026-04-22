@@ -18,6 +18,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { buildInternalAuthEmail, getLoginEmailFromInput, isLegacyEmailLogin, normalizeAccountId } from '../utils/accountId';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
@@ -181,7 +182,7 @@ function EmailLoginForm({ onSuccess }) {
             });
 
           if (profileError) {
-            console.error('프로필 생성 실패:', profileError);
+            logger.error('프로필 생성 실패', profileError);
           }
         }
 

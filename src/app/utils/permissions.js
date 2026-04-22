@@ -65,11 +65,13 @@ export const loadDevSettings = () => {
  * 매개변수:
  *   settings: 저장할 설정 객체 (DEV_SETTINGS 형태)
  */
+import logger from '@/app/utils/errorLogger';
+
 export const saveDevSettings = (settings) => {
   try {
     localStorage.setItem('byclan_dev_settings', JSON.stringify(settings));
   } catch (error) {
-    console.error('개발자 설정 저장 실패:', error);
+    logger.error('개발자 설정 저장 실패', error);
   }
 };
 

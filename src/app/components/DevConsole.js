@@ -5,6 +5,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import {
   TEST_ACCOUNT_NAMES,
@@ -58,7 +59,7 @@ export default function DevConsole() {
       try {
         await loadSettings();
       } catch (err) {
-        console.error("설정 로드 실패:", err);
+        logger.error('설정 로드 실패', err);
       } finally {
         setLoading(false);
       }

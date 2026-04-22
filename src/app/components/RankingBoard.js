@@ -9,6 +9,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import logger from '@/app/utils/errorLogger';
 import { supabase } from '@/supabase';
 import { filterVisibleTestAccounts, isMarkedTestData } from '@/app/utils/testData';
 
@@ -138,7 +139,7 @@ export default function RankingBoard() {
         if (fetchError) throw fetchError;
         setRankings(data || []);
       } catch (err) {
-        console.error('랭킹 로드 실패:', err);
+        logger.error('랭킹 로드 실패', err);
         setError(err);
       } finally {
         setLoading(false);

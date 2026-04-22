@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import logger from '@/app/utils/errorLogger';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // 마스터 키 권장
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 export async function GET() {
   try {
@@ -24,7 +23,7 @@ export async function GET() {
 
     // 2. 마지막 업데이트 후 24시간이 지났거나 데이터가 없는 경우에만 외부 서버 호출
     if (hoursSinceUpdate >= 24) {
-      console.log("⏳ 데이터가 오래되어 새로 수집을 시작합니다...");
+      logger.info('데이터가 오래되어 새로 수집을 시작합니다.');
       
       const targetUrl = `https://byclan.net/ladderSystem/?page=ranking`;
       const response = await fetch(targetUrl, { 
@@ -58,7 +57,7 @@ export async function GET() {
     }
 
     // 3. 24시간이 지나지 않았다면 DB에서 바로 데이터를 꺼내 반환 (서버 부하 제로)
-    console.log("✅ 신선한 데이터가 DB에 있어 즉시 반환합니다.");
+    logger.info('신선한 데이터가 DB에 있어 즉시 반환합니다.');
     const { data: cachedData } = await supabase
       .from('latest_rankings')
       .select('*')
