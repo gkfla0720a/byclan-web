@@ -3,6 +3,7 @@
  * 파일명: src/app/layout.js
  * 역할  : Next.js 앱 전체의 최상위 레이아웃(Root Layout)입니다.
  *         모든 페이지를 감싸는 공통 HTML 구조, Provider, 전역 CSS를 설정합니다.
+ *         Header와 Footer를 포함하여 모든 페이지에서 표시합니다.
  *
  * ■ 적용되는 Provider 계층 구조 (아래에서 위 순서로 감쌈)
  *   ErrorBoundary  → 예기치 못한 오류를 잡아 대체 UI 표시
@@ -25,6 +26,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./context/ToastContext";
 import ToastContainer from "./components/ToastContainer";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 
 /**
@@ -52,14 +55,26 @@ export const metadata = {
  *       <ErrorBoundary>       ← 오류 발생 시 앱 전체가 터지지 않도록 보호
  *         <ToastProvider>     ← Toast 알림 기능 활성화
  *           <AuthProvider>    ← 로그인 상태 및 프로필 공유
+ *             <Header />      ← 모든 페이지 상단 내비게이션 (개발 모드)
  *             {children}      ← 실제 페이지 내용
+ *             <Footer />      ← 모든 페이지 하단 푸터 (개발 모드)
  *           </AuthProvider>
  *           <ToastContainer/> ← Toast 메시지 화면 표시
  *         </ToastProvider>
  *       </ErrorBoundary>
  *     </body>
  *   </html>
+ * 
+ * ■ 변경사항 (2026-04-22)
+ *   - Header/Footer 추가: 모든 페이지에서 표시되도록 수정
+ *   - 홈게이트 제거: 프로덕션 배포 시 불필요한 임시 구조
+ *   - 모든 사용자가 홈컨텐츠에 직접 접속 가능
+ * 
+ * ■ 주의: Root Layout은 Server Component이므로 'use client' 미사용
+ *   Provider들(AuthProvider, ToastProvider 등)은 이 파일 내에서
+ *   클라이언트 컴포넌트이므로 정상 작동합니다.
  */
+
 export default function RootLayout({ children }) {
   return (
     <html
@@ -69,8 +84,14 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col bg-[#06060a] text-gray-200">
         <ErrorBoundary>
           <ToastProvider>
-            <AuthProvider>{children}</AuthProvider>
-            <ToastContainer />
+            <AuthProvider>
+              <Header />
+              <main className="flex-grow w-full">
+                {children}
+              </main>
+              <Footer />
+              <ToastContainer />
+            </AuthProvider>
           </ToastProvider>
         </ErrorBoundary>
         <Analytics />
