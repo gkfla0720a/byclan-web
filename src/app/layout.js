@@ -26,8 +26,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./context/ToastContext";
 import ToastContainer from "./components/ToastContainer";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 
 /**
@@ -66,9 +64,9 @@ export const metadata = {
  *   </html>
  * 
  * ■ 변경사항 (2026-04-22)
- *   - Header/Footer 추가: 모든 페이지에서 표시되도록 수정
- *   - 홈게이트 제거: 프로덕션 배포 시 불필요한 임시 구조
- *   - 모든 사용자가 홈컨텐츠에 직접 접속 가능
+ *   - Header/Footer 제거: (main)/layout.js로 이동
+ *   - Root layout은 모든 페이지(로그인, 인증 등)에 적용되므로 공통 구조만 유지
+ *   - 로그인/인증 페이지에서는 Header/Footer 미표시
  * 
  * ■ 주의: Root Layout은 Server Component이므로 'use client' 미사용
  *   Provider들(AuthProvider, ToastProvider 등)은 이 파일 내에서
@@ -86,11 +84,9 @@ export default function RootLayout({ children }) {
           <ToastProvider>
             <AuthProvider>
               <div className="min-h-screen flex flex-col bg-[#06060a] text-gray-200 font-semibold relative" style={{ fontFamily: "'Pretendard', sans-serif" }}>
-                <Header />
                 <main className="flex-grow w-full">
                   {children}
                 </main>
-                <Footer />
               </div>
               <ToastContainer />
             </AuthProvider>
