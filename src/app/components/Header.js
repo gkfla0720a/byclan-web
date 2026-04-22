@@ -191,12 +191,12 @@ export default function Header() {
 
   return (
     <nav ref={navRef} className="relative z-50 border-b border-cyan-400/20 bg-slate-950/70 backdrop-blur-2xl shadow-[0_12px_40px_rgba(15,23,42,0.35)]">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         
         {/* 로고 & 타이틀 */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
           <ByClanLogo />
-          <span 
+            <span 
               className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-110"
               style={{
                 background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
@@ -210,20 +210,20 @@ export default function Header() {
             </span>
         </div>
         
-        {/* 데스크톱 메뉴 — 항상 한 줄 유지 */}
-        <ul className="hidden md:flex flex-nowrap gap-x-1 items-center justify-end flex-1 overflow-x-auto scrollbar-none">
+        {/* 데스크톱 메뉴 */}
+        <ul className="hidden md:flex flex-wrap gap-x-4 items-center justify-end w-full">
           {menuData.map((menu, index) => (
             <li key={index} className="relative">
               <button
                 onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)}
-                className="rounded-full border border-cyan-400/15 bg-slate-900/55 px-3 py-1.5 text-sm font-semibold text-slate-200 transition-all hover:border-cyan-300/45 hover:bg-cyan-400/8 hover:text-cyan-100 hover:shadow-[0_0_18px_rgba(34,211,238,0.12)] whitespace-nowrap"
+                className="rounded-full border border-cyan-400/15 bg-slate-900/55 px-4 py-2 text-sm font-semibold text-slate-200 transition-all hover:border-cyan-300/45 hover:bg-cyan-400/8 hover:text-cyan-100 hover:shadow-[0_0_18px_rgba(34,211,238,0.12)]"
               >
                 {menu.title}
               </button>
               {openMenuIndex === index && (
                 <div className="absolute top-full left-0 mt-4 w-52 rounded-2xl border border-cyan-400/20 bg-slate-950/94 shadow-[0_20px_50px_rgba(8,15,26,0.55)] flex flex-col z-50 overflow-hidden backdrop-blur-xl">
                   {menu.items.map((subItem, subIndex) => (
-                    <span key={subIndex} onClick={() => handleNav(subItem)} className="px-4 py-3 text-base text-slate-200 hover:bg-cyan-400/8 hover:text-cyan-200 cursor-pointer transition-colors border-b border-cyan-400/10 last:border-none font-semibold">
+                    <span key={subIndex} onClick={() => handleNav(subItem)} className="px-4 py-3 text-sm text-slate-200 hover:bg-cyan-400/8 hover:text-cyan-200 cursor-pointer transition-colors border-b border-cyan-400/10 last:border-none">
                       {subItem}
                     </span>
                   ))}
@@ -235,8 +235,8 @@ export default function Header() {
           {/* 🛡️ 가입 심사 버튼 (개발자, 마스터, 어드민, 엘리트) */}
           {isDevOrHigher && (
             <li>
-              <button onClick={() => handleNav('가입 심사')} className="text-emerald-300 hover:text-emerald-200 text-sm font-bold border border-emerald-400/25 px-3 py-1.5 rounded-full bg-emerald-950/20 shadow-[0_0_14px_rgba(16,185,129,0.12)] transition-all whitespace-nowrap">
-                ⚔️ 가입심사
+              <button onClick={() => handleNav('가입 심사')} className="text-emerald-300 hover:text-emerald-200 text-sm font-bold border border-emerald-400/25 px-3 py-2 rounded-full bg-emerald-950/20 shadow-[0_0_14px_rgba(16,185,129,0.12)] transition-all">
+                ⚔️ 가입 심사
               </button>
             </li>
           )}
@@ -244,7 +244,7 @@ export default function Header() {
           {/* 👑 관리자 버튼 (개발자, 마스터, 어드민) */}
           {isAdminOrHigher && (
             <li>
-              <button onClick={() => handleNav('관리자')} className="text-rose-300 hover:text-rose-200 text-sm font-bold border border-rose-400/25 px-3 py-1.5 rounded-full bg-rose-950/20 shadow-[0_0_14px_rgba(244,63,94,0.12)] transition-all whitespace-nowrap">
+              <button onClick={() => handleNav('관리자')} className="text-rose-300 hover:text-rose-200 text-sm font-bold border border-rose-400/25 px-3 py-2 rounded-full bg-rose-950/20 shadow-[0_0_14px_rgba(244,63,94,0.12)] transition-all">
                 👑 관리자
               </button>
             </li>
@@ -253,33 +253,33 @@ export default function Header() {
           {/* 🛠️ 개발자 전용 버튼 (오직 개발자만!) */}
           {isDeveloper && (
             <li>
-              <button onClick={() => handleNav('개발자')} className="text-cyan-200 hover:text-white text-sm font-bold border border-cyan-300/35 px-3 py-1.5 rounded-full bg-cyan-950/25 shadow-[0_0_18px_rgba(34,211,238,0.15)] transition-all whitespace-nowrap">
+              <button onClick={() => handleNav('개발자')} className="text-cyan-200 hover:text-white text-sm font-bold border border-cyan-300/35 px-3 py-2 rounded-full bg-cyan-950/25 shadow-[0_0_18px_rgba(34,211,238,0.15)] transition-all">
                 🛠️ 개발자
               </button>
             </li>
           )}
           
-          <li className="ml-1 flex items-center gap-2 shrink-0">
+          <li className="ml-2 flex items-center gap-3">
             {user ? (
               <>
                 <button onClick={() => handleNav('알림')} className="relative p-1 text-slate-300 hover:text-cyan-200 transition-all">
-                  <span className="text-base">🔔</span>
+                  <span className="text-lg">🔔</span>
                   {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
                 </button>
-                <button onClick={() => handleNav('프로필')} className="p-1 text-slate-300 hover:text-cyan-200 transition-all"><span className="text-base">👤</span></button>
-                <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1.5 rounded-full border border-cyan-400/15 shadow-[0_0_18px_rgba(34,211,238,0.08)]">
+                <button onClick={() => handleNav('프로필')} className="p-1 text-slate-300 hover:text-cyan-200 transition-all"><span className="text-lg">👤</span></button>
+                <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-full border border-cyan-400/15 shadow-[0_0_18px_rgba(34,211,238,0.08)]">
                   {nickname ? (
-                    <span className="text-sm font-bold text-slate-100 max-w-[100px] truncate">{nickname}</span>
+                    <span className="text-xs font-bold text-slate-100">{nickname}</span>
                   ) : (
-                    <span className="text-sm text-slate-400 max-w-[120px] truncate" title={NO_BYID_MESSAGE}>
+                    <span className="text-xs text-slate-400 max-w-[180px] truncate" title={NO_BYID_MESSAGE}>
                       {authError || NO_BYID_MESSAGE}
                     </span>
                   )}
-                  <button onClick={handleLogout} className="text-xs text-red-500 font-black ml-1">OUT</button>
+                  <button onClick={handleLogout} className="text-[10px] text-red-500 font-black ml-1">OUT</button>
                 </div>
               </>
             ) : (
-              <button onClick={handleLogin} className="px-4 py-2 border border-cyan-300/35 rounded-full text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-sm whitespace-nowrap">로그인</button>
+              <button onClick={handleLogin} className="px-4 py-2 border border-cyan-300/35 rounded-full text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-sm">로그인</button>
             )}
           </li>
         </ul>
@@ -334,14 +334,14 @@ export default function Header() {
           
           {menuData.map((menu, index) => (
             <div key={index} className="flex flex-col border-b border-cyan-400/10">
-              <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className="px-6 py-4 flex justify-between items-center text-slate-100 font-black text-base">
+              <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className="px-6 py-4 flex justify-between items-center text-slate-100 font-black text-sm">
                 {menu.title}
-                <span className="text-xs text-cyan-300">{mobileAccordionIndex === index ? '▲' : '▼'}</span>
+                <span className="text-[10px] text-cyan-300">{mobileAccordionIndex === index ? '▲' : '▼'}</span>
               </button>
               {mobileAccordionIndex === index && (
                 <div className="flex flex-col bg-cyan-400/4 py-2">
                   {menu.items.map((sub, i) => (
-                    <span key={i} onClick={() => handleNav(sub)} className="px-10 py-3.5 text-sm text-slate-300 font-semibold hover:text-cyan-200">{sub}</span>
+                    <span key={i} onClick={() => handleNav(sub)} className="px-10 py-3.5 text-xs text-slate-300 font-bold hover:text-cyan-200">{sub}</span>
                   ))}
                 </div>
               )}
@@ -350,23 +350,23 @@ export default function Header() {
 
           {/* 모바일 가입 심사 */}
           {isDevOrHigher && (
-            <button onClick={() => handleNav('가입 심사')} className="px-6 py-5 text-left text-emerald-300 font-black text-base border-b border-cyan-400/10 bg-emerald-950/5 transition-all">⚔️ 가입 심사 관리</button>
+            <button onClick={() => handleNav('가입 심사')} className="px-6 py-5 text-left text-emerald-300 font-black text-sm border-b border-cyan-400/10 bg-emerald-950/5 transition-all">⚔️ 가입 심사 관리</button>
           )}
           
           {/* 모바일 관리자 */}
           {isAdminOrHigher && (
-            <button onClick={() => handleNav('관리자')} className="px-6 py-5 text-left text-rose-300 font-black text-base border-b border-cyan-400/10 bg-red-950/5 transition-all">👑 관리자 모드</button>
+            <button onClick={() => handleNav('관리자')} className="px-6 py-5 text-left text-rose-300 font-black text-sm border-b border-cyan-400/10 bg-red-950/5 transition-all">👑 관리자 모드</button>
           )}
 
           {/* 모바일 개발자 (오직 개발자만!) */}
           {isDeveloper && (
-            <button onClick={() => handleNav('개발자')} className="px-6 py-5 text-left text-cyan-200 font-black text-base border-b border-cyan-400/10 bg-cyan-950/10 transition-all underline decoration-cyan-400/40 underline-offset-8">🛠️ 시스템 개발자 콘솔</button>
+            <button onClick={() => handleNav('개발자')} className="px-6 py-5 text-left text-cyan-200 font-black text-sm border-b border-cyan-400/10 bg-cyan-950/10 transition-all underline decoration-cyan-400/40 underline-offset-8">🛠️ 시스템 개발자 콘솔</button>
           )}
 
           {/* 비로그인 시 로그인 버튼 */}
           {!user && (
             <div className="px-6 py-5 border-t border-cyan-400/10 bg-slate-900/35">
-              <button onClick={handleLogin} className="w-full py-3 border border-cyan-300/35 rounded-xl text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-base">
+              <button onClick={handleLogin} className="w-full py-3 border border-cyan-300/35 rounded-xl text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-sm">
                 로그인
               </button>
             </div>
