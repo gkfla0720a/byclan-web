@@ -41,13 +41,13 @@ export default function MainLayout({ children }) {
   const permissions = getPermissions();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#06060a] text-gray-200 font-semibold relative" style={{ fontFamily: "'Pretendard', sans-serif" }}>
       <Header />
-      <main className="flex-grow w-full">
-        {children}
-      </main>
+        <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
+          {children}
+          {permissions.isDeveloper && <DevSettingsPanel />}
+        </main>
       <Footer />
-      {permissions.isDeveloper && <DevSettingsPanel />}
     </div>
   );
 }
