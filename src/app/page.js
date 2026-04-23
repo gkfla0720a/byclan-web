@@ -23,7 +23,13 @@ export default function Home() {
     authLoading,
   } = useAuthContext();
 
-  const userPermissions = ROLE_PERMISSIONS[profile?.role] || {};
+  // 현재 사용자의 역할에 따른 권한 정보 조회
+  // profile.role이 없으면 visitor 기본값 사용
+  const userRole = profile?.role || 'visitor';
+  const userPermissions = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS.visitor;
+
+  // 개발자 권한 여부 확인
+  const isDeveloper = userRole === 'developer';
 
   // 1. 인증 로딩 중일 때만 로딩 표시
   if (authLoading) {
@@ -35,13 +41,17 @@ export default function Home() {
   }
 
   // 2. 이제 누구나 거실(Home)에 들어올 수 있습니다.
+  // - 신규 가입자(applicant)도 홈 컨텐츠를 볼 수 있음
+  // - 상세 기능은 권한에 따라 홈게이트 처리됨
   return (
     <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
       <Header />
         {/* 사이드바에서 본인의 상태(대기중 등)를 확인할 수 있습니다 */}
         <ProfileSidebar profile={profile} user={user} />
-          <HomeContent profile={profile} user={user} />
-          {userPermissions.isDeveloper && <DevSettingsPanel />}
+        {/* 홈 콘텐츠: 모든 역할이 볼 수 있음 */}
+        <HomeContent profile={profile} user={user} userPermissions={userPermissions} />
+        {/* 개발자 전용 설정 패널 */}
+        {isDeveloper && <DevSettingsPanel />}
       <Footer />
     </main>
   );

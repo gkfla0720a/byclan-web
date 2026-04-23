@@ -30,11 +30,13 @@
  * - DevSettingsPanel 컴포넌트에서 UI로 변경 가능합니다.
  *
  * 각 속성 설명:
+ *   homeGateEnabled:        홈게이트 활성화 여부 (true: 비밀번호 인증 필수)
  *   canReviewApplications: 개발자가 가입 심사를 할 수 있는지 여부
  *   canManageMembers:       개발자가 멤버를 관리할 수 있는지 여부
  *   canDelegateMaster:      개발자가 마스터 위임을 할 수 있는지 여부
  */
 export const DEV_SETTINGS = {
+  homeGateEnabled: true,             // 기본값: 홈게이트 활성화 (개발/점검 중)
   canReviewApplications: true,       // 기본값: 가입심사 가능
   canManageMembers: true,            // 기본값: 멤버 관리 가능
   canDelegateMaster: true            // 기본값: 마스터 위임 가능

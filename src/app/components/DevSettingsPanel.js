@@ -91,6 +91,11 @@ export default function DevSettingsPanel() {
    */
   const toggleItems = [
     {
+      key: 'homeGateEnabled',
+      title: '🔐 홈게이트 활성화',
+      desc: '임시 점검 모드 - ON시 비밀번호 인증 필수',
+    },
+    {
       key: 'canReviewApplications',
       title: '가입 심사 권한',
       desc: '가입 신청 심사 접근',

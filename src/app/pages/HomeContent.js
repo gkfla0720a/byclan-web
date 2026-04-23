@@ -132,10 +132,27 @@ function MobileProfileCard({ profile, user, navigateTo }) {
  * 홈 화면 전체 레이아웃을 렌더링합니다.
  * Supabase에서 상위 랭커와 최신 공지를 불러와 표시합니다.
  *
- * @param {{ profile: object|null, user: object|null }} props
+ * @param {{ profile: object|null, user: object|null, userPermissions: object }} props
+ * @param {object} profile - 사용자 프로필 정보
+ * @param {object} user - 인증된 사용자 정보
+ * @param {object} userPermissions - 사용자 역할별 권한 정보 (ROLE_PERMISSIONS에서 전달)
  * @returns {JSX.Element} 홈 화면 전체 UI
  */
-function HomeContent({ profile = null, user = null }) {
+function HomeContent({ profile = null, user = null, userPermissions = {} }) {
+  // ═══════════════════════════════════════════════════════════════
+  // 홈게이트 로직: 역할별 기능 접근 제어
+  // ═══════════════════════════════════════════════════════════════
+  const userRole = profile?.role || 'visitor';
+  
+  // 신규 가입자(applicant) 여부 - 테스트 대기 중
+  const isApplicant = userRole === 'applicant';
+  
+  // 방문자(visitor) 여부 - 로그인 없이 방문
+  const isVisitor = userRole === 'visitor';
+  
+  // 클랜원(정식 멤버 이상) 여부
+  const isClanMember = ['member', 'rookie', 'elite', 'admin', 'master', 'developer'].includes(userRole);
+
   /** 페이지 이동 훅 */
   const navigateTo = useNavigate();
   /** 래더 포인트 기준 상위 3인 랭커 배열 */
@@ -234,9 +251,18 @@ function HomeContent({ profile = null, user = null }) {
             </button>
             <button
               onClick={() => navigateTo('대시보드')}
-              className="px-5 py-2 rounded-lg font-bold text-sm bg-cyan-400/10 border border-cyan-300/30 text-cyan-200 hover:bg-cyan-400/18 transition-all shadow-[0_0_18px_rgba(34,211,238,0.08)]"
+              disabled={isVisitor || isApplicant}
+              className={`px-5 py-2 rounded-lg font-bold text-sm relative transition-all ${
+                isVisitor || isApplicant
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
+                  : 'bg-cyan-400/10 border border-cyan-300/30 text-cyan-200 hover:bg-cyan-400/18 shadow-[0_0_18px_rgba(34,211,238,0.08)]'
+              }`}
+              title={isVisitor ? '클랜원 전용 기능입니다' : isApplicant ? '테스트 대기 중에는 이용할 수 없습니다' : '래더 시스템'}
             >
               ⚔️ 래더 시스템
+              {(isVisitor || isApplicant) && (
+                <span className="absolute -top-1 -right-1 text-xs bg-red-500 px-1.5 py-0.5 rounded">🔒</span>
+              )}
             </button>
           </div>
         </div>
@@ -274,13 +300,22 @@ function HomeContent({ profile = null, user = null }) {
       {/* 랭킹 + 소식 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <section
-          className="neon-panel p-5 rounded-2xl cursor-pointer"
-          onClick={() => navigateTo('랭킹')}
+          className="neon-panel p-5 rounded-2xl cursor-pointer relative overflow-hidden"
+          onClick={() => !isVisitor && !isApplicant && navigateTo('랭킹')}
         >
+          {/* 홈게이트 오버레이: 방문자 또는 신규가입자 */}
+          {(isVisitor || isApplicant) && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl">
+              <div className="text-4xl mb-2">🔒</div>
+              <p className="text-white font-bold text-sm">{isApplicant ? '테스트 대기 중' : '클랜원 전용'}</p>
+              <p className="text-gray-300 text-xs mt-1">{isApplicant ? '테스트 결과를 기다려주세요' : '클랜에 가입하세요'}</p>
+            </div>
+          )}
+
           <h3 className="text-base font-bold text-cyan-300 mb-3 border-b border-cyan-400/10 pb-2 flex items-center gap-2">
             🏆 <span>명예의 전당</span>
           </h3>
-          <div className="space-y-2">
+          <div className={`space-y-2 ${(isVisitor || isApplicant) ? 'blur-sm' : ''}`}>
             {loading ? <SkeletonLoader count={3} /> :
              topRankers.length === 0 ? <EmptyState message="아직 랭킹 데이터가 없습니다" icon="🏆" /> :
              topRankers.map((p, index) => (
@@ -328,17 +363,24 @@ function HomeContent({ profile = null, user = null }) {
         <h3 className="text-base font-bold text-cyan-300 mb-4 border-b border-cyan-400/10 pb-2">🚀 빠른 접근</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: '📖', label: '가입 안내', view: '가입안내' },
-            { icon: '⚔️', label: '매치 참여', view: '대시보드' },
-            { icon: '💬', label: '커뮤니티', view: '자유게시판' },
-            { icon: '🏆', label: '랭킹 보기', view: '랭킹' },
-          ].map(({ icon, label, view }) => (
+            { icon: '📖', label: '가입 안내', view: '가입안내', restricted: false },
+            { icon: '⚔️', label: '매치 참여', view: '대시보드', restricted: isVisitor || isApplicant },
+            { icon: '💬', label: '커뮤니티', view: '자유게시판', restricted: false },
+            { icon: '🏆', label: '랭킹 보기', view: '랭킹', restricted: isVisitor || isApplicant },
+          ].map(({ icon, label, view, restricted }) => (
             <button
               key={view}
-              onClick={() => navigateTo(view)}
-              className="p-3 rounded-lg text-sm font-bold text-slate-200 border border-cyan-400/10 bg-slate-950/45 hover:border-cyan-300/40 hover:text-cyan-200 transition-all"
+              onClick={() => !restricted && navigateTo(view)}
+              disabled={restricted}
+              className={`p-3 rounded-lg text-sm font-bold transition-all relative ${
+                restricted
+                  ? 'text-gray-400 border border-gray-600 bg-slate-900/45 cursor-not-allowed opacity-60'
+                  : 'text-slate-200 border border-cyan-400/10 bg-slate-950/45 hover:border-cyan-300/40 hover:text-cyan-200'
+              }`}
+              title={restricted ? (isApplicant ? '테스트 대기 중에는 이용할 수 없습니다' : '클랜원 전용 기능입니다') : label}
             >
               {icon} {label}
+              {restricted && <span className="absolute -top-1 -right-1 text-[10px] bg-red-500 px-1 py-0.5 rounded">🔒</span>}
             </button>
           ))}
         </div>
