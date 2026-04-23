@@ -80,3 +80,20 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## 🛠 커밋 컨벤션 (Commit Convention)
+
+이 프로젝트에서는 일관된 커밋 메시지 관리를 위해 아래의 규칙을 따릅니다.
+
+| 타입 (Type) | 의미 (Description) |
+| :--- | :--- |
+| **feat** | 새로운 기능 추가 |
+| **fix** | 버그 수정 |
+| **chore** | 빌드 설정, 패키지 매니저 설정, 환경 설정 (코드 수정 없음) |
+| **docs** | 문서 수정 (README.md 등) |
+| **style** | 코드 포맷팅, 세미콜론 누락 등 (로직 변경 없음) |
+| **refactor** | 코드 리팩토링 (기능은 그대로, 구조 개선) |
+| **test** | 테스트 코드 추가 및 수정 |
+| **perf** | 성능 개선 |
+
+**메시지 형태:** `타입: 요약 내용` (예: `feat: 로그인 API 연동`)
