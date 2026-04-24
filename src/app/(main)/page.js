@@ -76,13 +76,13 @@ export default function Home() {
 
   // 일반 홈 화면
   return (
-    <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
-      <div className="w-full flex gap-4 mt-4">
+    <div className="w-full flex flex-col md:flex-row gap-6 mt-4">
+      <aside className="hidden md:block w-80 shrink-0">
         <ProfileSidebar profile={profile} user={user} />
-        <div className="flex-1 min-w-0">
-          <HomeContent profile={profile} user={user} />
-        </div>
+      </aside>
+      <div className="flex-1 min-w-0">
+        <HomeContent profile={profile} user={user} />
       </div>
-    </main>
+    </div>
   );
 }

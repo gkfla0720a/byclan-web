@@ -43,7 +43,7 @@ export default function MainLayout({ children }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#06060a] text-gray-200 font-semibold relative" style={{ fontFamily: "'Pretendard', sans-serif" }}>
       <Header />
-        <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
+      <main className="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-8 mb-10 mt-6 relative z-10 flex flex-col items-stretch">
           {children}
           {permissions.isDeveloper && <DevSettingsPanel />}
         </main>

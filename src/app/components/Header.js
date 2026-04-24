@@ -191,7 +191,7 @@ export default function Header() {
 
   return (
     <nav ref={navRef} className="relative z-50 border-b border-cyan-400/20 bg-slate-950/70 backdrop-blur-2xl shadow-[0_12px_40px_rgba(15,23,42,0.35)]">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
         
         {/* 로고 & 타이틀 */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
@@ -211,7 +211,7 @@ export default function Header() {
         </div>
         
         {/* 데스크톱 메뉴 */}
-        <ul className="hidden md:flex flex-wrap gap-x-4 items-center justify-end w-full">
+        <ul className="hidden md:flex flex-wrap gap-x-4 gap-y-2 items-center justify-center flex-1">
           {menuData.map((menu, index) => (
             <li key={index} className="relative">
               <button
@@ -297,7 +297,7 @@ export default function Header() {
               </button>
             </>
           ) : (
-            <button onClick={handleLogin} className="px-3 py-2 border border-cyan-300/35 rounded-xl text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-xs whitespace-nowrap">
+            <button onClick={handleLogin} className="px-3 py-2 border border-cyan-300/35 rounded-full text-cyan-200 bg-slate-950/70 shadow-[0_0_18px_rgba(34,211,238,0.16)] font-bold text-xs whitespace-nowrap">
               로그인
             </button>
           )}
