@@ -84,7 +84,11 @@ export default function RootLayout({ children }) {
           <ToastProvider>
             <AuthProvider>
               <div className="min-h-screen flex flex-col relative z-0">
+<<<<<<< HEAD
                   {children}
+=======
+                {children}
+>>>>>>> dc063a83e8ce666413e34723c37d21c81d3ed637
               </div>
               <ToastContainer />
             </AuthProvider>
