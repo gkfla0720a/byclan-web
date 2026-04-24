@@ -79,14 +79,12 @@ export default function RootLayout({ children }) {
       lang="ko"
       className="h-full antialiased"
     >
-      <body className="min-h-full flex flex-col bg-[#06060a] text-gray-200">
+      <body className="min-h-full flex flex-col bg-[#06060a] text-gray-200 font-semibold relative" style={{ fontFamily: "'Pretendard', sans-serif" }}>
         <ErrorBoundary>
           <ToastProvider>
             <AuthProvider>
               <div className="min-h-screen flex flex-col relative z-0">
-                <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
                   {children}
-                </main>
               </div>
               <ToastContainer />
             </AuthProvider>
