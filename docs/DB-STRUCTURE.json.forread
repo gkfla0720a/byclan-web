@@ -1,0 +1,306 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "point_logs",
+    "policyname": "포인트 내역 조회 가능",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "posts",
+    "policyname": "누구나 읽을 수 있음",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "applications",
+    "policyname": "신청서 메뉴 조회 가능",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "admin_posts",
+    "policyname": "마스터/운영진만 읽기 허용",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "is_admin()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "admin_posts",
+    "policyname": "마스터/운영진만 쓰기 허용",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ladder_matches",
+    "policyname": "모두가 경기 현황 조회 가능",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "applications",
+    "policyname": "심사관 수정 권한",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "( SELECT fn_is_reviewer() AS fn_is_reviewer)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "notice_posts",
+    "policyname": "notice_posts_public_read",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "applications",
+    "policyname": "준회원만 가입신청 가능",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "notifications",
+    "policyname": "본인 알림 수정 가능",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(( SELECT auth.uid() AS uid) = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "notifications",
+    "policyname": "본인 알림 조회 가능",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(( SELECT auth.uid() AS uid) = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "notifications",
+    "policyname": "심사관 알림 생성 가능",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "posts",
+    "policyname": "로그인한 유저만 글 작성 가능",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "posts",
+    "policyname": "로그인한 유저만 수정할 수 있음",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(( SELECT auth.uid() AS uid) = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ladder_matches",
+    "policyname": "회원만 경기 생성 가능",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ladder_matches",
+    "policyname": "방장만 경기 정보 수정 가능",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(( SELECT auth.uid() AS uid) = host_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "match_bets",
+    "policyname": "Users can insert own match bets",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "match_bets",
+    "policyname": "Users can view own match bets",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(( SELECT auth.uid() AS uid) = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_settings",
+    "policyname": "Management can insert system settings",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_settings",
+    "policyname": "Management can read system settings",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "( SELECT fn_is_management() AS fn_is_management)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_settings",
+    "policyname": "Management can update system settings",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "( SELECT fn_is_management() AS fn_is_management)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "notice_posts",
+    "policyname": "notice_posts_admin_insert",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "notice_posts",
+    "policyname": "notice_posts_admin_update",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = ( SELECT auth.uid() AS uid)) AND (profiles.role = ANY (ARRAY['admin'::text, 'master'::text, 'developer'::text])))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "notice_posts",
+    "policyname": "notice_posts_admin_delete",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = ( SELECT auth.uid() AS uid)) AND (profiles.role = ANY (ARRAY['admin'::text, 'master'::text, 'developer'::text])))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "admin_audit_logs",
+    "policyname": "Management can read admin audit logs",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND (p.role = ANY (ARRAY['admin'::text, 'master'::text, 'developer'::text])))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "admin_audit_logs",
+    "policyname": "Management can insert admin audit logs",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "activity_logs",
+    "policyname": "Management can read activity logs",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND (p.role = ANY (ARRAY['admin'::text, 'master'::text, 'developer'::text])))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "activity_logs",
+    "policyname": "Management can insert activity logs",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "match_sets",
+    "policyname": "match_sets_select",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((( SELECT fn_is_management() AS fn_is_management) AND ( SELECT fn_is_match_live_mode_enabled() AS fn_is_match_live_mode_enabled)) OR (EXISTS ( SELECT 1\n   FROM ladder_matches lm\n  WHERE ((lm.id = match_sets.match_id) AND ((( SELECT auth.uid() AS uid) = ANY (COALESCE(lm.team_a_ids, ARRAY[]::uuid[]))) OR (( SELECT auth.uid() AS uid) = ANY (COALESCE(lm.team_b_ids, ARRAY[]::uuid[]))))))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "match_sets",
+    "policyname": "match_sets_update",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "((( SELECT fn_is_management() AS fn_is_management) AND ( SELECT fn_is_match_live_mode_enabled() AS fn_is_match_live_mode_enabled)) OR (EXISTS ( SELECT 1\n   FROM ladder_matches lm\n  WHERE ((lm.id = match_sets.match_id) AND ((( SELECT auth.uid() AS uid) = ANY (COALESCE(lm.team_a_ids, ARRAY[]::uuid[]))) OR (( SELECT auth.uid() AS uid) = ANY (COALESCE(lm.team_b_ids, ARRAY[]::uuid[]))))))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "profiles_update",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(( SELECT is_admin() AS is_admin) OR (( SELECT auth.uid() AS uid) = id) OR ( SELECT fn_is_reviewer() AS fn_is_reviewer))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "legacy_matches",
+    "policyname": "Enable read access for all users",
+    "roles": "{anon}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "player_analytics",
+    "policyname": "Enable read access for all users",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "latest_rankings",
+    "policyname": "Enable read access for all users",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "synergy_scores",
+    "policyname": "Enable read access for all users",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Users can update own non-sensitive fields",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Users can insert own profile",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "profiles_select_policy",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  }
+]
