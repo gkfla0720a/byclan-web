@@ -133,7 +133,7 @@ export default function MatchCenter({ matchId, onExit }) {
   const [isRevealed, setIsRevealed] = useState(false);
   /** 현재 로그인 유저의 역할 (admin/master/developer 등) */
   const [myRole, setMyRole] = useState(null);
-  /** 운영진/개발자 실시간 관리모드 활성 여부 (system_settings.match_admin_live_mode) */
+  /** 운영진/개발자 실시간 관리모드 활성 여부 (developer_settings.match_admin_live_mode) */
   const [managementMode, setManagementMode] = useState(false);
   /**
    * 팀별 작성 중 엔트리 배열 (최대 3명).
@@ -240,7 +240,7 @@ export default function MatchCenter({ matchId, onExit }) {
   useEffect(() => {
     const loadManagementMode = async () => {
       const { data } = await supabase
-        .from('system_settings')
+        .from('developer_settings')
         .select('value_bool')
         .eq('key', 'match_admin_live_mode')
         .maybeSingle();
@@ -257,7 +257,7 @@ export default function MatchCenter({ matchId, onExit }) {
     const nextMode = !managementMode;
 
     const { error } = await supabase
-      .from('system_settings')
+      .from('developer_settings')
       .upsert(
         {
           key: 'match_admin_live_mode',

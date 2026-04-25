@@ -14,7 +14,7 @@ SELECT
     column_default
 FROM information_schema.columns
 WHERE table_schema = 'public'
-    AND table_name IN ('profiles', 'applications', 'ladder_matches', 'notifications', 'system_settings')
+    AND table_name IN ('profiles', 'applications', 'ladder_matches', 'notifications', 'developer_settings')
 ORDER BY table_name, ordinal_position;
 
 -- profiles 레거시 컬럼 확인(있으면 PROFILE-SCHEMA-UNIFIED-MIGRATION.sql 선실행 권장)
@@ -184,7 +184,7 @@ SELECT
     qual
 FROM pg_policies
 WHERE schemaname = 'public'
-    AND tablename IN ('profiles', 'applications', 'ladder_matches', 'match_bets', 'match_sets', 'system_settings')
+    AND tablename IN ('profiles', 'applications', 'ladder_matches', 'match_bets', 'match_sets', 'developer_settings')
 ORDER BY tablename, policyname;
 
 -- ===================================================================

@@ -26,7 +26,7 @@ export const TEST_MODE_SETTING_KEY = 'test_mode_active';
 
 /**
  * TEST_ACCOUNT_SETTING_KEY
- * - Supabase system_settings 테이블과 localStorage에서 "테스트 계정 기능" 활성화 여부를
+ * - Supabase developer_settings 테이블과 localStorage에서 "테스트 계정 기능" 활성화 여부를
  *   저장할 때 사용하는 키 이름입니다.
  */
 export const TEST_ACCOUNT_SETTING_KEY = 'test_accounts_enabled';

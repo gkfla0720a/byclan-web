@@ -519,7 +519,7 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 | `admin_posts` | id, title, content, author_id, ... | 운영진 게시글 |
 | `posts` | id, title, content, author_id, category, ... | 일반 게시글 |
 | `match_bets` | id, match_id, user_id, amount, ... | 매치 베팅 (RLS 적용) |
-| `system_settings` | key, value | 시스템 런타임 설정 |
+| `developer_settings` | key, value | 시스템 런타임 설정 |
 
 자세한 스키마 정보는 `guides/DATABASE-GUIDE.md`를 참고하세요.
 

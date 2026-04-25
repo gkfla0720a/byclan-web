@@ -88,7 +88,7 @@ revoke all on table public.match_sets from authenticated;
 grant select, update on table public.match_sets to authenticated;
 
 -- 4) 운영진/개발자 실시간 관리모드 정책 (옵션)
--- system_settings.key='match_admin_live_mode'가 true일 때만 관리 권한을 엽니다.
+-- developer_settings.key='match_admin_live_mode'가 true일 때만 관리 권한을 엽니다.
 do $$
 begin
   if exists (
@@ -117,7 +117,7 @@ begin
           )
           and exists (
             select 1
-            from public.system_settings s
+            from public.developer_settings s
             where s.key = 'match_admin_live_mode'
               and coalesce(s.value_bool, false) = true
           )
@@ -144,7 +144,7 @@ begin
           )
           and exists (
             select 1
-            from public.system_settings s
+            from public.developer_settings s
             where s.key = 'match_admin_live_mode'
               and coalesce(s.value_bool, false) = true
           )
@@ -158,7 +158,7 @@ begin
           )
           and exists (
             select 1
-            from public.system_settings s
+            from public.developer_settings s
             where s.key = 'match_admin_live_mode'
               and coalesce(s.value_bool, false) = true
           )

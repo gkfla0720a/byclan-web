@@ -34,14 +34,14 @@ export default function DevConsole() {
 
   const upsertBooleanSetting = async (key, value, description) => {
     const { error } = await supabase
-      .from('system_settings')
+      .from('developer_settings')
       .upsert({ key, value_bool: value, description, updated_at: new Date().toISOString() }, { onConflict: 'key' });
     if (error) throw error;
   };
 
   const loadSettings = async () => {
     const { data, error } = await supabase
-      .from('system_settings')
+      .from('developer_settings')
       .select('key, value_bool')
       .in('key', [TEST_MODE_SETTING_KEY, TEST_ACCOUNT_SETTING_KEY, DISCORD_UNLINK_SETTING_KEY]);
 

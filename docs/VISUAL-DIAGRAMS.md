@@ -316,7 +316,7 @@ erDiagram
         timestamp created_at
     }
 
-    SYSTEM_SETTINGS {
+    developer_settings {
         string key PK
         jsonb value "설정값 (JSON)"
         timestamp updated_at

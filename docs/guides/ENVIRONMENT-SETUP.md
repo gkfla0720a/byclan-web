@@ -14,7 +14,7 @@ SQL Editor에 바로 붙여넣을 버전은 `sql/migrations/TEST-DATA-SEED.sql` 
 
 `sql/migrations/TEST-DATA-SEED.sql` 맨 아래에는 아래 용도의 점검용 쿼리도 같이 들어 있습니다.
 
-- `system_settings` 상태 확인
+- `developer_settings` 상태 확인
 - `test1`~`test10` 프로필/래더/게시글/신청서/알림/매치 반영 여부 확인
 - 테스트 계정별 Discord 우회 적용 상태 확인
 - 전체 테스트 데이터 숨김/복구용 update 예시

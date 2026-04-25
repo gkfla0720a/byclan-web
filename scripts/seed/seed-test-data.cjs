@@ -640,8 +640,8 @@ async function main() {
     }
   }
 
-  printSection('system_settings');
-  await upsertRows(supabase, 'system_settings', buildSystemSettings(), { onConflict: 'key', ignoreMissingRelation: true });
+  printSection('developer_settings');
+  await upsertRows(supabase, 'developer_settings', buildSystemSettings(), { onConflict: 'key', ignoreMissingRelation: true });
 
   printSection('profiles');
   await upsertRows(supabase, 'profiles', buildProfiles());

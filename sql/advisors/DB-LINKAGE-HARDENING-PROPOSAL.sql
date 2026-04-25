@@ -177,7 +177,7 @@ alter table public.ladder_matches
 -- D. 데이터 미충전 환경 대응용 시드/백필
 -- ----------------------------------------------------------------------------
 
-insert into public.system_settings(key, value_bool, description)
+insert into public.developer_settings(key, value_bool, description)
 values
   ('feature_ladder_enabled', true, '래더 기능 활성화 여부'),
   ('feature_betting_enabled', true, '베팅 기능 활성화 여부'),

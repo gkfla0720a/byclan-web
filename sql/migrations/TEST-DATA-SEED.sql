@@ -110,14 +110,14 @@ on conflict (provider, provider_id) do update set
   last_sign_in_at = excluded.last_sign_in_at,
   updated_at = now();
 
-create table if not exists public.system_settings (
+create table if not exists public.developer_settings (
   key text primary key,
   value_bool boolean default false,
   description text,
   updated_at timestamptz default now()
 );
 
-alter table if exists public.system_settings
+alter table if exists public.developer_settings
   add column if not exists value_bool boolean default false,
   add column if not exists description text,
   add column if not exists updated_at timestamptz default now();
@@ -150,7 +150,7 @@ alter table if exists public.ladder_matches
   add column if not exists is_test_data boolean default false,
   add column if not exists is_test_data_active boolean default true;
 
-insert into public.system_settings (key, value_bool, description, updated_at)
+insert into public.developer_settings (key, value_bool, description, updated_at)
 values
   ('test_mode_active', false, '개발자 테스트 모드 활성화 여부', now()),
   ('test_accounts_enabled', true, '테스트 계정 및 테스트 데이터 노출 여부', now())
@@ -1111,7 +1111,7 @@ select
   value_bool,
   description,
   updated_at
-from public.system_settings
+from public.developer_settings
 where key in ('test_mode_active', 'test_accounts_enabled')
 order by key;
 
@@ -1178,13 +1178,13 @@ select
     else 'discord_required'
   end as ladder_discord_gate
 from public.profiles p
-left join public.system_settings s
+left join public.developer_settings s
   on s.key = 'test_accounts_enabled'
 where p.is_test_account = true
 order by p.discord_id;
 
 -- 6. 필요 시 전체 테스트 계정 숨김
--- update public.system_settings
+-- update public.developer_settings
 -- set value_bool = false, updated_at = now()
 -- where key = 'test_accounts_enabled';
 --
@@ -1217,7 +1217,7 @@ order by p.discord_id;
 -- where is_test_data = true;
 
 -- 7. 필요 시 다시 전체 테스트 계정 표시
--- update public.system_settings
+-- update public.developer_settings
 -- set value_bool = true, updated_at = now()
 -- where key = 'test_accounts_enabled';
 --

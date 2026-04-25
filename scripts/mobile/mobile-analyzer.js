@@ -53,7 +53,7 @@ export const DATABASE_TABLES = {
     ladders: "래더 랭킹"
   },
   system: {
-    system_settings: "시스템 설정",
+    developer_settings: "시스템 설정",
     notifications: "알림",
     point_logs: "포인트 로그",
     admin_posts: "관리자 공지"

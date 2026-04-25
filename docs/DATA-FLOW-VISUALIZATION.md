@@ -86,7 +86,7 @@ app/layout.js
 useAuth.ts 초기화 (useEffect)
       │
       ├─ loadServerSettings()
-      │     └─ system_settings 테이블 조회
+      │     └─ developer_settings 테이블 조회
       │         └─ 서버 설정값 state 저장
       │
       └─ initializeData()
@@ -165,7 +165,7 @@ export useAuth()
 │
 ├─ [초기화] useEffect
 │   ├─ loadServerSettings()
-│   │    └─ supabase.from('system_settings').select()
+│   │    └─ supabase.from('developer_settings').select()
 │   │
 │   └─ initializeData()
 │        ├─ supabase.auth.getSession()

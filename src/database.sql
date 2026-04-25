@@ -206,10 +206,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
-CREATE TABLE IF NOT EXISTS public.system_settings (
+CREATE TABLE IF NOT EXISTS public.developer_settings (
   key text NOT NULL,
   value_bool boolean DEFAULT false,
   updated_at timestamp with time zone DEFAULT now(),
   description text,
-  CONSTRAINT system_settings_pkey PRIMARY KEY (key)
+  CONSTRAINT developer_settings_pkey PRIMARY KEY (key)
 );

@@ -15,7 +15,7 @@
 - 공지/운영 게시판: `notice_posts`, `admin_posts`
 - 유저 알림: `notifications`
 - 포인트 이력: `point_logs`
-- 운영 플래그: `system_settings`
+- 운영 플래그: `developer_settings`
 
 핵심 해석은 다음과 같습니다.
 
@@ -153,7 +153,7 @@
 - 하위 화면:
   - 기능 토글 목록
   - 변경 이력 설명 영역
-- 핵심 데이터: `system_settings`
+- 핵심 데이터: `developer_settings`
 
 ## 3. Suggested Route Map
 
@@ -214,7 +214,7 @@
 
 - 포인트 증감의 출처 추적과 관리자 감사 로그 성능이 좋아집니다.
 
-1. `system_settings`에 `value_text`, `value_number`, `value_json` 중 하나 추가
+1. `developer_settings`에 `value_text`, `value_number`, `value_json` 중 하나 추가
 
 - 현재는 boolean 전용이라 운영 설정 확장성이 낮습니다.
 

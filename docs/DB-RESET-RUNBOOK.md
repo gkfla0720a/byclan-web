@@ -18,7 +18,7 @@
 
 초기화 후 최소 복구 항목
 
-- 운영 설정: `system_settings` 기본 키 4개
+- 운영 설정: `developer_settings` 기본 키 4개
 - 관리자 계정: 로그인 후 `profiles` 재생성 또는 시드 스크립트 별도 적용
 
 ## C. 실행 전/후 점검 SQL

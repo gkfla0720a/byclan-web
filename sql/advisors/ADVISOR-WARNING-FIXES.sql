@@ -77,7 +77,7 @@ set search_path = public
 as $$
   select exists (
     select 1
-    from public.system_settings s
+    from public.developer_settings s
     where s.key = 'match_admin_live_mode'
       and coalesce(s.value_bool, false) = true
   )
@@ -291,25 +291,25 @@ drop policy if exists "Participants or management can update match sets" on publ
 drop policy if exists "Participants or management can view match sets" on public.match_sets;
 
 -- ---------------------------------------------------------------------------
--- 10. system_settings
+-- 10. developer_settings
 -- ---------------------------------------------------------------------------
-drop policy if exists "Management can insert system settings" on public.system_settings;
+drop policy if exists "Management can insert system settings" on public.developer_settings;
 create policy "Management can insert system settings"
-  on public.system_settings
+  on public.developer_settings
   for insert
   to authenticated
   with check ((select public.fn_is_management()));
 
-drop policy if exists "Management can read system settings" on public.system_settings;
+drop policy if exists "Management can read system settings" on public.developer_settings;
 create policy "Management can read system settings"
-  on public.system_settings
+  on public.developer_settings
   for select
   to authenticated
   using ((select public.fn_is_management()));
 
-drop policy if exists "Management can update system settings" on public.system_settings;
+drop policy if exists "Management can update system settings" on public.developer_settings;
 create policy "Management can update system settings"
-  on public.system_settings
+  on public.developer_settings
   for update
   to authenticated
   using ((select public.fn_is_management()))

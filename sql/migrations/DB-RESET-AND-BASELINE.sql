@@ -23,12 +23,12 @@ truncate table
   public.notice_posts,
   public.admin_posts,
   public.applications,
-  public.system_settings,
+  public.developer_settings,
   public.profiles
 restart identity cascade;
 
 -- 2) 기본 운영 플래그 복구
-insert into public.system_settings(key, value_bool, description)
+insert into public.developer_settings(key, value_bool, description)
 values
   ('feature_ladder_enabled', true, '래더 기능 활성화 여부'),
   ('feature_betting_enabled', true, '베팅 기능 활성화 여부'),
