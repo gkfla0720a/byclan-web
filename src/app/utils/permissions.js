@@ -131,7 +131,6 @@ export const ROLE_PERMISSIONS = {
       'member.manage',     // 멤버 관리
       'member.test',       // 가입 테스트
       'member.mentor',     // 신입 멘토링
-      'master.delegate',   // 마스터 위임
       'tournament.create', // 토너먼트 생성
       'tournament.join',   // 토너먼트 참여
       'ladder.admin',      // 래더 관리
@@ -160,14 +159,31 @@ export const ROLE_PERMISSIONS = {
     description: '클랜 총괄 운영',
     level: 90,
     permissions: [
-      'clan.admin',        // 클랜 관리
+      'user.manage_all',   // 모든 유저 관리
+      'clan.admin_all',    // 클랜 전체 관리
+      'clan.admin',        // 클랜 일반 관리
+      'member.approve',    // 가입 심사
       'member.manage',     // 멤버 관리
+      'member.test',       // 가입 테스트
+      'member.mentor',     // 신입 멘토링
       'master.delegate',   // 마스터 위임
-      'tournament.create',  // 토너먼트 생성
+      'tournament.create', // 토너먼트 생성
+      'tournament.join',   // 토너먼트 참여
       'ladder.admin',      // 래더 관리
+      'ladder.moderate',   // 래더 중재
       'ladder.play',       // 래더 플레이
-      'announcement.post',  // 공지사항 게시
-      'member.test'        // 가입 테스트
+      'match.manage',      // 매치 관리
+      'match.host',        // 매치 개최
+      'match.join',        // 매치 참여
+      'match.view',        // 매치 관람
+      'announcement.post', // 공지사항 게시
+      'announcement.edit', // 공지사항 편집
+      'community.post',    // 자유게시판 게시
+      'community.view',    // 자유게시판 열람
+      'community.comment', // 자유게시판 댓글
+      'profile.edit',      // 프로필 수정
+      'profile.view',      // 프로필 열람
+      'clan.info'          // 클랜 정보 열람
     ],
     color: '#FFD93D',
     icon: '👑'
@@ -179,14 +195,30 @@ export const ROLE_PERMISSIONS = {
     description: '클랜 일반 운영',
     level: 80,
     permissions: [
-      'member.approve',    // 가입 승인
+      'user.manage_all',   // 모든 유저 관리
+      'clan.admin_all',    // 클랜 전체 관리
+      'clan.admin',        // 클랜 일반 관리
+      'member.approve',    // 가입 심사
       'member.manage',     // 멤버 관리
-      'match.manage',      // 매치 관리
+      'member.test',       // 가입 테스트
+      'member.mentor',     // 신입 멘토링
+      'tournament.create', // 토너먼트 생성
+      'tournament.join',   // 토너먼트 참여
+      'ladder.admin',      // 래더 관리
       'ladder.moderate',   // 래더 중재
       'ladder.play',       // 래더 플레이
+      'match.manage',      // 매치 관리
+      'match.host',        // 매치 개최
+      'match.join',        // 매치 참여
+      'match.view',        // 매치 관람
       'announcement.post', // 공지사항 게시
       'announcement.edit', // 공지사항 편집
-      'member.test'        // 가입 테스트
+      'community.post',    // 자유게시판 게시
+      'community.view',    // 자유게시판 열람
+      'community.comment', // 자유게시판 댓글
+      'profile.edit',      // 프로필 수정
+      'profile.view',      // 프로필 열람
+      'clan.info'          // 클랜 정보 열람
     ],
     color: '#6BCF7F',
     icon: '🛡️'
@@ -199,10 +231,23 @@ export const ROLE_PERMISSIONS = {
     level: 60,
     permissions: [
       'member.approve',    // 가입 심사
-      'match.host',        // 매치 개최
+      'member.test',       // 가입 테스트
+      'member.mentor',     // 신입 멘토링
+      'tournament.create', // 토너먼트 생성
       'tournament.join',   // 토너먼트 참여
+      'ladder.admin',      // 래더 관리
+      'ladder.moderate',   // 래더 중재
       'ladder.play',       // 래더 플레이
-      'member.mentor'      // 신입 멘토링
+      'match.manage',      // 매치 관리
+      'match.host',        // 매치 개최
+      'match.join',        // 매치 참여
+      'match.view',        // 매치 관람
+      'community.post',    // 자유게시판 게시
+      'community.view',    // 자유게시판 열람
+      'community.comment', // 자유게시판 댓글
+      'profile.edit',      // 프로필 수정
+      'profile.view',      // 프로필 열람
+      'clan.info'          // 클랜 정보 열람
     ],
     color: '#4ECDC4',
     icon: '⭐'
@@ -214,11 +259,17 @@ export const ROLE_PERMISSIONS = {
     description: '정식 일반 클랜원',
     level: 50,
     permissions: [
-      'match.join',
-      'ladder.play',
-      'community.post',
-      'profile.edit',
-      'tournament.join'
+      'tournament.join',   // 토너먼트 참여
+      'ladder.play',       // 래더 플레이
+      'match.host',        // 매치 개최
+      'match.join',        // 매치 참여
+      'match.view',        // 매치 관람
+      'community.post',    // 자유게시판 게시
+      'community.view',    // 자유게시판 열람
+      'community.comment', // 자유게시판 댓글
+      'profile.edit',      // 프로필 수정
+      'profile.view',      // 프로필 열람
+      'clan.info'          // 클랜 정보 열람
     ],
     color: '#60A5FA',
     icon: '🛡️'
@@ -230,16 +281,17 @@ export const ROLE_PERMISSIONS = {
     description: '클랜 신규 멤버 (2주 활동 기간)',
     level: 35,
     permissions: [
-      'match.view',        // 매치 관람
-      'match.join',        // 매치 참가
-      'match.host',        // 매치 개최
-      'community.view',    // 커뮤니티 열람
-      'community.comment', // 커뮤니티 댓글
-      'community.post',    // 커뮤니티 게시글 작성
-      'profile.view',      // 프로필 열람
-      'profile.edit',      // 프로필 수정
+      'tournament.join',   // 토너먼트 참여
       'ladder.play',       // 래더 플레이
-      'tournament.join'    // 토너먼트 참여
+      'match.host',        // 매치 개최
+      'match.join',        // 매치 참여
+      'match.view',        // 매치 관람
+      'community.post',    // 자유게시판 게시
+      'community.view',    // 자유게시판 열람
+      'community.comment', // 자유게시판 댓글
+      'profile.edit',      // 프로필 수정
+      'profile.view',      // 프로필 열람
+      'clan.info'          // 클랜 정보 열람
     ],
     color: '#DDA0DD',
     icon: '🆕'
@@ -252,9 +304,12 @@ export const ROLE_PERMISSIONS = {
     level: 25,
     permissions: [
       'match.view',        // 매치 관람
-      'community.view',    // 커뮤니티 열람
+      'community.view',    // 자유게시판 열람
+      'community.comment', // 자유게시판 댓글
+      'profile.edit',      // 프로필 수정
       'profile.view',      // 프로필 열람
-      'application.track'  // 가입 신청 현황 확인
+      'clan.info',          // 클랜 정보 열람
+      'application.track' // 가입 신청 현황 확인
     ],
     color: '#F0E68C',
     icon: '📝'
@@ -267,10 +322,11 @@ export const ROLE_PERMISSIONS = {
     level: 10,
     permissions: [
       'match.view',        // 매치 관람
-      'community.view',    // 커뮤니티 열람 (제한적)
-      'profile.view',      // 프로필 열람 (제한적)
-      'clan.info',         // 클랜 정보 확인
-      'application.submit' // 가입 신청 가능
+      'community.view',    // 자유게시판 열람
+      'profile.edit',      // 프로필 수정
+      'profile.view',      // 프로필 열람
+      'clan.info',          // 클랜 정보 열람
+      'application.submit' // 가입 신청 제출 (실제 메뉴 진입은 사용하지 않지만 호환성 유지)
     ],
     color: '#C7CEEA',
     icon: '👤'
