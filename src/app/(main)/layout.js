@@ -43,11 +43,7 @@ export default function MainLayout({ children }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#06060a]">
       <Header />
-<<<<<<< HEAD
-        <main className="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-6 mb-10 relative z-10">
-=======
       <main className="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-8 mb-10 mt-6 relative z-10 flex flex-col items-stretch">
->>>>>>> dc063a83e8ce666413e34723c37d21c81d3ed637
           {children}
           {permissions.isDeveloper && <DevSettingsPanel />}
         </main>
