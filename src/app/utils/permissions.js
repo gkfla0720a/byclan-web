@@ -451,23 +451,32 @@ export const PermissionChecker = {
     const MEMBER_ROLES = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'];
 
     const menuPermissions = {
-      '개발자': ['developer'],
+      '가입안내': ALL_ROLES,
+      '정회원 전환신청': ['rookie'], // 신입 길드원만 정회원 신청 가능
+      '개요': ALL_ROLES,
+      '클랜원': ALL_ROLES,
+      '대시보드': MEMBER_ROLES,
+      '랭킹': ALL_ROLES,
+      '경기기록': ALL_ROLES,
+      '외부 레더 랭킹': ALL_ROLES,
+      '외부 레더 기록': ALL_ROLES,
+      '승률 시뮬레이터': ALL_ROLES,
+      'BSL 공지사항': ALL_ROLES,
+      'BSL 경기일정 및 결과': ALL_ROLES,
+      '토너먼트 공지': ALL_ROLES,
+      '진행중인 토너먼트': ALL_ROLES,
+      '공지사항': ALL_ROLES,
+      '자유게시판': ALL_ROLES,
+      '클랜원 소식': ALL_ROLES,
+      '포인트 상점': ALL_ROLES,
+      '포인트 내역': ALL_ROLES,
+      '프로필': ALL_ROLES,
+      '알림': ALL_ROLES,
       '관리자': ['developer', 'master', 'admin'],
       '가입 심사': ['developer', 'master', 'admin', 'elite'],
       '운영진게시판': ['developer', 'master', 'admin'],
       '길드원 관리': ['developer', 'master', 'admin'],
-      '대시보드': MEMBER_ROLES,
-      '랭킹': ALL_ROLES,
-      '경기기록': ALL_ROLES,
-      '공지사항': ALL_ROLES,
-      '자유게시판': ALL_ROLES,
-      '개요': ALL_ROLES,
-      '클랜원': ALL_ROLES,
-      '프로필': ALL_ROLES,
-      '알림': ALL_ROLES,
-      '가입신청': ALL_ROLES,
-      '가입안내': ALL_ROLES,
-      '정회원 전환신청': ['rookie'] // 신입 길드원만 정회원 신청
+      '개발자': ['developer'],
     };
 
     const allowedRoles = menuPermissions[menuPath] || [];

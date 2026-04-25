@@ -35,6 +35,7 @@ import Image from 'next/image';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '../hooks/useNavigate';
 import { useAuthContext } from '../context/AuthContext';
+import { PermissionChecker } from '@/app/utils/permissions';
 
 /**
  * ByClanLogo()
@@ -174,6 +175,14 @@ export default function Header() {
     { title: '포인트', items: ['포인트 상점', '포인트 내역'] }
   ];
 
+  const filteredMenuData = menuData.map(category => {
+    return {
+      ...category,
+      // 하위 메뉴(items) 중 권한이 있는 것만 남깁니다.
+      items: category.items.filter(item => PermissionChecker.canAccessMenu(currentRole, item))
+    };
+  }).filter(category => category.items.length > 0);
+
   const handleNav = (viewName) => {
     navigateTo(viewName);
     setOpenMenuIndex(null);
@@ -212,7 +221,7 @@ export default function Header() {
         
         {/* 데스크톱 메뉴 */}
         <ul className="hidden md:flex flex-wrap gap-x-4 gap-y-2 items-center justify-center flex-1">
-          {menuData.map((menu, index) => (
+          {filteredMenuData.map((menu, index) => (
             <li key={index} className="relative">
               <button
                 onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)}
@@ -332,7 +341,7 @@ export default function Header() {
             </div>
           )}
           
-          {menuData.map((menu, index) => (
+          {filteredMenuData.map((menu, index) => (
             <div key={index} className="flex flex-col border-b border-cyan-400/10">
               <button onClick={() => setMobileAccordionIndex(mobileAccordionIndex === index ? null : index)} className="px-6 py-4 flex justify-between items-center text-slate-100 font-black text-sm">
                 {menu.title}
