@@ -452,7 +452,7 @@ export const PermissionChecker = {
 
     const menuPermissions = {
       '가입안내': ALL_ROLES,
-      '정회원 전환신청': ['rookie'], // 신입 길드원만 정회원 신청 가능
+      '정회원 전환신청': ['rookie'], // 신입 길드원만 접근 가능
       '개요': ALL_ROLES,
       '클랜원': ALL_ROLES,
       '대시보드': MEMBER_ROLES,
