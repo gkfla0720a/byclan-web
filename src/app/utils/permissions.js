@@ -458,14 +458,14 @@ export const PermissionChecker = {
       '길드원 관리': ['developer', 'master', 'admin'],
       '대시보드': MEMBER_ROLES,
       '랭킹': ALL_ROLES,
-      '경기기록': ALL_ROLES,   // 비로그인 포함 전체 공개
+      '경기기록': ALL_ROLES,
       '공지사항': ALL_ROLES,
       '자유게시판': ALL_ROLES,
       '개요': ALL_ROLES,
       '클랜원': ALL_ROLES,
       '프로필': ALL_ROLES,
-      '알림': ['applicant', ...MEMBER_ROLES],
-      '가입신청': ['visitor'], // 직접 메뉴 진입은 사용하지 않지만 호환성 유지
+      '알림': ALL_ROLES,
+      '가입신청': ALL_ROLES,
       '가입안내': ALL_ROLES,
       '정회원 전환신청': ['rookie'] // 신입 길드원만 정회원 신청
     };
