@@ -33,7 +33,7 @@ import { useRouter } from 'next/navigation';
  */
 export default function CommunityBoard() {
   const router = useRouter(); // 페이지 이동을 위한 라우터
-  const { profile } = useAuthContext(); // 현재 로그인 유저 프로필 (권한 확인용)
+  const { user, profile } = useAuthContext(); // 현재 로그인 유저 프로필 (권한 확인용)
 
 // --- 상태 정의 ---
   const [posts, setPosts] = useState([]); // DB에서 불러온 게시글 배열
@@ -42,6 +42,9 @@ export default function CommunityBoard() {
   // 💡 페이징 관련 상태
   const [currentPage, setCurrentPage] = useState(1); // 현재 페이지
   const postsPerPage = 30; // 페이지당 게시글 수
+
+  // 글쓰기 권한 여부 판별 (true / false)
+  const canWrite = PermissionChecker.hasPermission(profile?.role, 'community.post');
 
   /**
    * posts 테이블에서 게시글을 최신순으로 불러옵니다.
@@ -64,6 +67,22 @@ export default function CommunityBoard() {
     }, []);
 
     useEffect(() => { fetchPosts(); }, [fetchPosts]);
+
+    // 버튼 클릭 핸들러 (권한별 알림)
+  const handleWriteClick = () => {
+    // 1. 로그인을 아예 안 한 경우 (Visitor 등)
+    if (!user) {
+      alert('로그인한 길드원 만 작성 가능합니다. 먼저 로그인을 해주세요!');
+      return;
+    }
+    // 2. 로그인은 했지만 권한이 부족한 경우 (Applicant 등)
+    if (!canWrite) {
+      alert('신입길드원 이상만 작성 가능합니다. 테스트 통과를 기원합니다!');
+      return;
+    }
+    // 3. 통과한 경우 글쓰기 페이지로 이동
+    router.push('/community/write');
+  };
 
     // --- 페이징 계산 로직 ---
     // 1. 현재 페이지에 보여줄 게시글을 계산합니다.
@@ -90,7 +109,7 @@ export default function CommunityBoard() {
       <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
         <h2 className="text-2xl font-bold text-white">💬 자유게시판</h2>
         <button 
-          onClick={() => router.push('/community/write')}
+          onClick={handleWriteClick}
           className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-5 py-2 rounded-lg font-bold transition-all shadow-lg hover:scale-105"
         >
           글쓰기 ✍️

@@ -51,7 +51,6 @@ function ByClanLogo() {
         alt="ByClan Logo" 
         width={48} 
         height={48}
-        priority={true} 
         unoptimized={true}
         className="object-contain transition-transform duration-300 group-hover:scale-110" 
         style={{ 
