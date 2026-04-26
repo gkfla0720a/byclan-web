@@ -7,7 +7,7 @@
  */
 'use client';
 
-import CommunityBoard from '../../../components/CommunityBoard';
+import CommunityBoard from '@/app/components/CommunityBoard';
 
 /** CommunityPage - 커뮤니티 페이지 컴포넌트. CommunityBoard를 렌더링합니다. */
 export default function CommunityPage() {

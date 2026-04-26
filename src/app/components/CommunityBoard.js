@@ -22,6 +22,7 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
 import { PermissionChecker } from '@/app/utils/permissions';
 import { useAuthContext } from '@/app/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 /**
  * CommunityBoard 컴포넌트
@@ -31,203 +32,139 @@ import { useAuthContext } from '@/app/context/AuthContext';
  * @returns {JSX.Element} 자유게시판 UI
  */
 export default function CommunityBoard() {
-  /** 글쓰기 폼 표시 여부 (true: 폼 열림, false: 닫힘) */
-  const [isWriting, setIsWriting] = useState(false);
-  /** 새 글 제목 입력값 */
-  const [title, setTitle] = useState('');
-  /** 새 글 내용 입력값 */
-  const [content, setContent] = useState('');
-  
-  /** DB에서 불러온 게시글 배열 */
-  const [posts, setPosts] = useState([]);
-  /** 게시글 로딩 중 여부 */
-  const [loading, setLoading] = useState(true);
-  /** 게시글 불러오기 에러 상태 (null: 에러 없음) */
-  const [fetchError, setFetchError] = useState(null);
+  const router = useRouter(); // 페이지 이동을 위한 라우터
+  const { profile } = useAuthContext(); // 현재 로그인 유저 프로필 (권한 확인용)
 
-  /** 현재 로그인 유저 프로필 (권한 확인용) */
-  const { profile } = useAuthContext();
+// --- 상태 정의 ---
+  const [posts, setPosts] = useState([]); // DB에서 불러온 게시글 배열
+  const [loading, setLoading] = useState(true);  // 게시글 로딩 중 여부
+  
+  // 💡 페이징 관련 상태
+  const [currentPage, setCurrentPage] = useState(1); // 현재 페이지
+  const postsPerPage = 30; // 페이지당 게시글 수
 
   /**
    * posts 테이블에서 게시글을 최신순으로 불러옵니다.
    * useCallback으로 감싸 fetchPosts 참조가 불필요하게 바뀌지 않도록 합니다.
    */
   const fetchPosts = useCallback(async () => {
-    if (!isSupabaseConfigured) {
-      setPosts([]);
-      setLoading(false);
-      return;
-    }
-
+    if (!isSupabaseConfigured) return;
     setLoading(true);
-    setFetchError(null);
-
     try {
       const { data, error } = await filterVisibleTestData(supabase
         .from('posts')
         // author_name 컬럼 대신 profiles 테이블 JOIN으로 최신 닉네임을 가져옵니다.
-        .select('id, title, content, user_id, views, created_at, profiles!user_id(by_id)')
+        .select('id, title, user_id, views, created_at, profiles!user_id(by_id)')
         .order('created_at', { ascending: false }));
 
-      if (error) {
-        console.error("데이터 불러오기 에러:", error);
-        setFetchError(error);
-        setPosts([]);
-      } else {
-        setPosts(data || []);
-      }
-    } catch (err) {
-      console.error("게시글 로딩 중 예외 발생:", err);
-      setFetchError(err);
-      setPosts([]);
-    } finally {
-      setLoading(false);
+      if (!error) setPosts(data || []);
+      } finally {
+        setLoading(false);
+      }      
+    }, []);
+
+    useEffect(() => { fetchPosts(); }, [fetchPosts]);
+
+    // --- 페이징 계산 로직 ---
+    // 1. 현재 페이지에 보여줄 게시글을 계산합니다.
+    const indexOfLastPost = currentPage * postsPerPage;
+    const indexOfFirstPost = indexOfLastPost - postsPerPage;
+    const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
+
+    // 2. 총 페이지 수를 계산합니다.
+    const totalPages = Math.ceil(posts.length / postsPerPage);
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
     }
-  }, []);
 
-  // 날짜 변환 함수 (예: 2026-04-01T... -> 04.01)
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${month}.${day}`;
-  };
-
-  /** 컴포넌트 마운트 시 게시글을 불러옵니다 */
-  useEffect(() => {
-    const loadPosts = async () => {
-      await fetchPosts();
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return `${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
     };
-    void loadPosts();
-  }, [fetchPosts]);
 
-  /**
-   * 새 게시글을 Supabase posts 테이블에 저장합니다.
-   * 로그인하지 않은 경우 알림을 표시하고 중단합니다.
-   * 성공하면 폼을 닫고 목록을 새로 불러옵니다.
-   */
-  const handleSubmit = async () => {
-    if (!title || !content) {
-      alert('제목과 내용을 모두 입력해주세요!');
-      return;
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert('글을 작성하려면 로그인이 필요합니다!');
-      return;
-    }
-
-    const userRole = profile?.role?.trim()?.toLowerCase();
-    if (!PermissionChecker.hasPermission(userRole, 'community.post')) {
-      alert('게시글 작성 권한이 없습니다. (rookie 이상 등급 필요)');
-      return;
-    }
-
-    const isTestAuthor = Boolean(profile?.is_test_account);
-
-    const { error } = await supabase
-      .from('posts')
-      .insert([
-        {
-          title: title,
-          content: content,
-          user_id: user.id,
-          // author_name은 저장하지 않습니다.
-          // 조회 시 profiles!user_id(by_id) JOIN으로 최신 닉네임을 가져옵니다.
-          is_test_data: isTestAuthor,
-          is_test_data_active: isTestAuthor,
-        }
-      ]);
-
-
-    if (error) {
-      alert('글 작성에 실패했습니다: ' + error.message);
-    } else {
-      alert('글이 성공적으로 등록되었습니다!');
-      setTitle('');
-      setContent('');
-      setIsWriting(false);
-      
-      fetchPosts(); 
-    }
-  };
-
-  return (
-    <div className="w-full max-w-5xl mx-auto py-8 px-4 animate-fade-in-down">
-      <div className="flex justify-between items-end mb-6 border-b border-gray-700 pb-3">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
-          <span className="text-yellow-500">💬</span> 자유게시판
-        </h2>
+    return (
+    <div className="w-full max-w-6xl mx-auto py-8 px-4">
+      {/* 상단 헤더 영역 */}
+      <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
+        <h2 className="text-2xl font-bold text-white">💬 자유게시판</h2>
         <button 
-          onClick={() => setIsWriting(!isWriting)}
-          className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-transform hover:scale-105"
+          onClick={() => router.push('/community/write')}
+          className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-5 py-2 rounded-lg font-bold transition-all shadow-lg hover:scale-105"
         >
-          {isWriting ? '취소하기 ❌' : '글쓰기 ✍️'}
+          글쓰기 ✍️
         </button>
       </div>
-      
-      {isWriting && (
-        <div className="bg-gray-800 p-4 mb-6 rounded-xl border border-gray-700 shadow-xl flex flex-col gap-3">
-          <input 
-            type="text" 
-            placeholder="제목을 입력하세요 (예: 오늘 내전 팟 구함)" 
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-2 rounded bg-gray-900 text-white border border-gray-600 focus:outline-none focus:border-yellow-500"
-          />
-          <textarea 
-            placeholder="내용을 입력하세요" 
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full p-2 h-32 rounded bg-gray-900 text-white border border-gray-600 focus:outline-none focus:border-yellow-500 resize-none"
-          />
-          <button 
-            onClick={handleSubmit}
-            className="self-end bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold transition-colors"
-          >
-            등록 완료
-          </button>
+
+      {/* 게시판 본문 (테이블 형태) */}
+      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-2xl">
+        {/* 1. 컬럼 제목 (Header) */}
+        <div className="flex items-center bg-gray-900/80 text-gray-400 text-sm font-bold border-b border-gray-600">
+          <div className="w-16 py-3 text-center border-r border-gray-700">번호</div>
+          <div className="flex-1 py-3 text-center border-r border-gray-700">제목</div>
+          <div className="w-28 py-3 text-center border-r border-gray-700">작성자</div>
+          <div className="w-20 py-3 text-center border-r border-gray-700">날짜</div>
+          <div className="w-16 py-3 text-center border-r border-gray-700">조회수</div>
+          <div className="w-16 py-3 text-center">추천수</div>
+        </div>
+
+        {/* 2. 게시글 목록 (Body) */}
+        <div className="flex flex-col">
+          {loading ? (
+            <div className="p-10 text-center text-gray-500">불러오는 중...</div>
+          ) : currentPosts.length === 0 ? (
+            <div className="p-10 text-center text-gray-500">게시글이 없습니다.</div>
+          ) : (
+            currentPosts.map((post, index) => (
+              <div 
+                key={post.id}
+                onClick={() => router.push(`/community/${post.id}`)}
+                className="flex items-center text-sm text-gray-300 border-b border-gray-700/50 hover:bg-gray-700/40 transition-colors cursor-pointer"
+              >
+                {/* 💡 번호는 전체 개수에서 차례대로 보여줌 */}
+                <div className="w-16 py-4 text-center border-r border-gray-700/50 text-gray-500 font-mono">
+                  {posts.length - (indexOfFirstPost + index)}
+                </div>
+                <div className="flex-1 px-4 py-4 border-r border-gray-700/50 truncate font-medium text-gray-200">
+                  {post.title}
+                </div>
+                <div className="w-28 py-4 text-center border-r border-gray-700/50 truncate">
+                  {post.profiles?.by_id || '알 수 없음'}
+                </div>
+                <div className="w-20 py-4 text-center border-r border-gray-700/50 text-gray-400">
+                  {formatDate(post.created_at)}
+                </div>
+                <div className="w-16 py-4 text-center border-r border-gray-700/50 text-gray-500">
+                  {post.views || 0}
+                </div>
+                <div className="w-16 py-4 text-center text-gray-500">
+                  {post.likes || 0}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* 3. 페이지네이션 (Pagination) */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-8">
+          {pageNumbers.map(number => (
+            <button
+              key={number}
+              onClick={() => setCurrentPage(number)}
+              className={`w-10 h-10 rounded-lg font-bold transition-all ${
+                currentPage === number 
+                ? 'bg-yellow-500 text-gray-900 shadow-lg' 
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              {number}
+            </button>
+          ))}
         </div>
       )}
-
-      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
-        {!isSupabaseConfigured ? (
-          <div className="p-8 text-center text-gray-400">
-            게시판 데이터 연결이 아직 완료되지 않았습니다. Supabase 연결 후 실제 클랜 글이 여기에 표시됩니다.
-          </div>
-        ) : loading ? (
-          <div className="p-8 text-center text-gray-500">게시글을 불러오는 중입니다...</div>
-        ) : fetchError ? (
-          <div className="p-8 text-center text-red-400">
-            게시글을 불러오지 못했습니다. 잠시 후 새로고침 해주세요.
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
-            아직 등록된 글이 없습니다. 첫 글을 남겨서 오늘 클랜 분위기를 시작해보세요.
-          </div>
-        ) : (
-          <div className="flex flex-col">
-          {posts.map(post => (
-            <div key={post.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors cursor-pointer group">
-              <div className="flex flex-col gap-1 mb-2 sm:mb-0">
-                <span className="text-gray-200 font-medium group-hover:text-yellow-400 transition-colors">{post.title}</span>
-                <span className="text-xs text-gray-500 sm:hidden">
-                  {post.profiles?.by_id || '알 수 없음'} | {formatDate(post.created_at)} | 조회 {post.views || 0}
-                </span>
-              </div>
-              <div className="hidden sm:flex items-center gap-4 text-sm text-gray-400">
-                <span className="w-24 text-center truncate">{post.profiles?.by_id || '알 수 없음'}</span>
-                <span className="w-16 text-center">{formatDate(post.created_at)}</span>
-                <span className="w-12 text-center text-xs">👀 {post.views || 0}</span>
-              </div>
-            </div>
-          ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
