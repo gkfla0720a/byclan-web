@@ -57,7 +57,7 @@ export default function CommunityBoard() {
       const { data, error } = await filterVisibleTestData(supabase
         .from('posts')
         // author_name 컬럼 대신 profiles 테이블 JOIN으로 최신 닉네임을 가져옵니다.
-        .select('id, title, user_id, views, likes, created_at, profiles!user_id(by_id), comments(count)')
+        .select('id, title, user_id, views, likes, dislikes, created_at, profiles!user_id(by_id), comments(count)')
         .order('created_at', { ascending: false }));
 
       if (!error) setPosts(data || []);

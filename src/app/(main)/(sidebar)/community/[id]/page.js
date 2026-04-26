@@ -64,6 +64,13 @@ export default function PostDetailPage() {
     setPost({ ...post, likes: newLikes });
   };
 
+  const handleDislike = async () => {
+    if (!user) return alert('로그인이 필요합니다.');
+    const newDislikes = (post.dislikes || 0) + 1;
+    await supabase.from('posts').update({ dislikes: newDislikes }).eq('id', postId);
+    setPost({ ...post, dislikes: newDislikes });
+  };
+
   if (loading) return <div className="p-10 text-center text-white">불러오는 중...</div>;
   if (!post) return <div className="p-10 text-center text-red-400">글이 없습니다.</div>;
 
@@ -88,9 +95,9 @@ export default function PostDetailPage() {
               <span className="text-2xl">👍</span>
               <span className="text-sm font-bold text-pink-500">{post.likes || 0}</span>
             </button>
-            <button className="flex flex-col items-center p-4 border border-gray-600 bg-gray-800 rounded-xl opacity-50">
+            <button onClick={handleDislike} className="flex flex-col items-center p-4 border border-gray-600 bg-gray-800 rounded-xl opacity-50">
               <span className="text-2xl">👎</span>
-              <span className="text-sm font-bold text-gray-500">0</span>
+              <span className="text-sm font-bold text-gray-500">{post.dislikes || 0}</span>
             </button>
           </div>
         </div>
