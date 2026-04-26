@@ -88,38 +88,30 @@ export default function PostDetailPage() {
     if (!user) return alert('로그인한 길드원만 투표가 가능합니다!');
 
     try {
+      // 1. 화면의 숫자를 즉각적으로 바꿔주기 위한 임시 계산
       let updatedLikes = post.likes || 0;
       let updatedDislikes = post.dislikes || 0;
 
       if (userVote === type) {
         // [취소]
-        await supabase.from('post_votes').delete().eq('post_id', postId).eq('user_id', user.id);
         if (type === 'like') updatedLikes--; else updatedDislikes--;
         setUserVote(null);
+        await supabase.from('post_votes').delete().eq('post_id', postId).eq('user_id', user.id);
       } else {
         // [등록/변경]
-        await supabase.from('post_votes').upsert({ post_id: postId, user_id: user.id, vote_type: type });
-        if (type === 'like') {
-          updatedLikes++;
-          if (userVote === 'dislike') updatedDislikes--; // 기존 비추천 취소
-        } else {
-          updatedDislikes++;
-          if (userVote === 'like') updatedLikes--; // 기존 추천 취소
-        }
+        if (type === 'like') { updatedLikes++; if (userVote === 'dislike') updatedDislikes--; } 
+        else { updatedDislikes++; if (userVote === 'like') updatedLikes--; }
         setUserVote(type);
+        await supabase.from('post_votes').upsert({ post_id: postId, user_id: user.id, vote_type: type }, { onConflict: 'post_id, user_id' });
       }
 
-      // 핵심: 실제 'posts' 테이블의 숫자 서랍을 업데이트합니다!
-      await supabase.from('posts').update({ 
-        likes: Math.max(0, updatedLikes), 
-        dislikes: Math.max(0, updatedDislikes) 
-      }).eq('id', postId);
-
-      // 화면에 즉시 반영
+      // 2. 화면 즉시 반영 (로딩 없이 빠르게 변하게 함)
       setPost({ ...post, likes: Math.max(0, updatedLikes), dislikes: Math.max(0, updatedDislikes) });
 
+      // DB 안의 트리거 로봇이 알아서 posts 테이블을 완벽하게 업데이트 해줍니다.
+
     } catch (err) {
-      console.error(err);
+      console.error("투표 처리 중 오류:", err);
     }
   };
 
