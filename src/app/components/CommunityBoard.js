@@ -120,12 +120,12 @@ export default function CommunityBoard() {
       <div className="bg-gray-800 border border-gray-700 overflow-hidden shadow-2xl">
         {/* 1. 컬럼 제목 (Header) */}
         <div className="flex items-center bg-gray-900/80 text-gray-400 text-sm font-bold border-b border-gray-600">
-          <div className="w-16 py-3 text-center border-r border-gray-700">번호</div>
-          <div className="flex-1 py-3 text-center border-r border-gray-700">제목</div>
-          <div className="w-28 py-3 text-center border-r border-gray-700">작성자</div>
-          <div className="w-20 py-3 text-center border-r border-gray-700">날짜</div>
-          <div className="w-16 py-3 text-center border-r border-gray-700">댓글</div>
-          <div className="w-16 py-3 text-center border-r border-gray-700">추천수</div>
+          <div className="w-16 py-3 text-center border-gray-700">번호</div>
+          <div className="flex-1 py-3 text-center border-gray-700">제목</div>
+          <div className="w-28 py-3 text-center border-gray-700">작성자</div>
+          <div className="w-20 py-3 text-center border-gray-700">날짜</div>
+          <div className="w-16 py-3 text-center border-gray-700">댓글</div>
+          <div className="w-16 py-3 text-center border-gray-700">추천수</div>
           <div className="w-16 py-3 text-center">조회수</div>
         </div>
 
@@ -143,22 +143,22 @@ export default function CommunityBoard() {
                 className="flex items-center text-sm text-gray-300 border-b border-gray-700/50 hover:bg-gray-700/40 transition-colors cursor-pointer"
               >
                 {/* 💡 번호는 전체 개수에서 차례대로 보여줌 */}
-                <div className="w-16 py-4 text-center border-r border-gray-700/50 text-gray-500 font-mono">
+                <div className="w-16 py-4 text-center border-gray-700/50 text-gray-500 font-mono">
                   {posts.length - (indexOfFirstPost + index)}
                 </div>
-                <div className="flex-1 px-4 py-4 border-r border-gray-700/50 truncate font-medium text-gray-200">
+                <div className="flex-1 px-4 py-4 border-gray-700/50 truncate font-medium text-gray-200">
                   {post.title}
                 </div>
-                <div className="w-28 py-4 text-center border-r border-gray-700/50 truncate">
+                <div className="w-28 py-4 text-center border-gray-700/50 truncate">
                   {post.profiles?.by_id || '알 수 없음'}
                 </div>
-                <div className="w-20 py-4 text-center border-r border-gray-700/50 text-gray-400">
+                <div className="w-20 py-4 text-center border-gray-700/50 text-gray-400">
                   {formatDate(post.created_at)}
                 </div>
-                <div className="w-16 py-4 text-center border-r border-gray-700/50 text-yellow-500 font-bold">
+                <div className="w-16 py-4 text-center border-gray-700/50 text-yellow-500 font-bold">
                   {post.comments?.[0]?.count || 0} {/* 댓글 수 */}
                 </div>
-                <div className="w-16 py-4 text-center border-r border-gray-700/50 text-pink-400">
+                <div className="w-16 py-4 text-center border-gray-700/50 text-pink-400">
                   {post.likes || 0} {/* 추천수 */}
                 </div>
                 <div className="w-16 py-4 text-center text-gray-500">
