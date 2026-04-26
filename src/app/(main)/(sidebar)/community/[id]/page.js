@@ -1,199 +1,134 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
 import { useAuthContext } from '@/app/context/AuthContext';
 import { PermissionChecker } from '@/app/utils/permissions';
 
-// --- 게시글 상세 페이지 컴포넌트(메인) ---
 export default function PostDetailPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params.id; 
-
-  // 현재 로그인한 유저 정보 꺼내기
   const { user, profile } = useAuthContext();
 
-  // 상태(State) 관리
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // 수정 기능용 상태 (상세 페이지에서는 글을 '수정'할 때 title과 content를 씁니다)
-  const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState('');
-  
-  // 댓글 입력용 상태
+  const [commentsList, setCommentsList] = useState([]);
   const [comment, setComment] = useState('');
+  const [adjacentPosts, setAdjacentPosts] = useState({ prev: null, next: null });
 
-  // --- 글 데이터 불러오기 ---
-  useEffect(() => {
-    const fetchPostDetail = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*, profiles!user_id(by_id)')
-        .eq('id', postId)
-        .single(); 
-
-      if (error) {
-        console.error('글 불러오기 에러:', error);
-      } else {
-        setPost(data);
-        setEditTitle(data.title);
-        setEditContent(data.content);
-        // 조회수 증가 (옵션)
-        await supabase.rpc('increment_views', { row_id: postId });
-      }
-      setLoading(false);
-    };
-
-    if (postId) fetchPostDetail();
+  // 댓글 불러오기 함수 (자주 쓰이므로 useCallback으로 선언)
+  const fetchComments = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('comments')
+      .select('*, profiles!user_id(by_id)')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+    if (!error && data) setCommentsList(data);
   }, [postId]);
 
-  // --- 권한 확인 (렌더링 직전에 계산) ---
-  // 내가 쓴 글인가? (또는 관리자인가?)
-  const isAuthor = user?.id === post?.user_id;
-  const isManager = PermissionChecker.hasPermission(profile?.role, 'community.manage') || ['developer', 'master', 'admin'].includes(profile?.role);
-  const canEditOrDelete = isAuthor || isManager;
-
-
-  // --- 기능 함수들 (에러 처리 포함) ---
-  const handleDelete = async () => {
-    if (!window.confirm('정말로 이 글을 삭제하시겠습니까?')) return;
-
-    // 💡 에러 처리 방어선
-    try {
-      const { error } = await supabase.from('posts').delete().eq('id', postId);
-      if (error) throw error; // 에러가 나면 catch 블록으로 던집니다.
+  useEffect(() => {
+    const fetchAllData = async () => {
+      setLoading(true);
+      const { data: postData } = await supabase.from('posts').select('*, profiles!user_id(by_id)').eq('id', postId).single();
       
-      alert('게시글이 삭제되었습니다.');
-      router.push('/community'); // 삭제 후 목록으로 쫓아냄
-    } catch (err) {
-      alert('삭제 중 오류가 발생했습니다: ' + err.message);
-    }
-  };
-
-  // --- 글 수정 함수 (에러 처리 포함) ---
-  const handleUpdate = async () => {
-    if (!editTitle || !editContent) return alert('제목과 내용을 입력해주세요.');
-
-    try {
-      const { error } = await supabase
-        .from('posts')
-        .update({ title: editTitle, content: editContent })
-        .eq('id', postId);
+      if (postData) {
+        setPost(postData);
+        await supabase.rpc('increment_views', { row_id: postId });
         
-      if (error) throw error;
+        // 내비게이션용 ID 찾기
+        const { data: nextD } = await supabase.from('posts').select('id').lt('created_at', postData.created_at).order('created_at', { ascending: false }).limit(1).single();
+        const { data: prevD } = await supabase.from('posts').select('id').gt('created_at', postData.created_at).order('created_at', { ascending: true }).limit(1).single();
+        setAdjacentPosts({ prev: prevD?.id, next: nextD?.id });
+      }
+      await fetchComments();
+      setLoading(false);
+    };
+    if (postId) fetchAllData();
+  }, [postId, fetchComments]);
 
-      alert('수정되었습니다.');
-      // 화면 데이터도 즉시 업데이트
-      setPost({ ...post, title: editTitle, content: editContent });
-      setIsEditing(false); // 수정 모드 종료
-    } catch (err) {
-      alert('수정 중 오류가 발생했습니다: ' + err.message);
-    }
-  };
-  
-  // --- 댓글 등록 함수 (에러 처리 포함) ---
   const handleCommentSubmit = async () => {
-    if (!comment.trim()) return alert('댓글 내용을 입력해주세요.');
-    if (!user) return alert('로그인이 필요합니다.');
-
-    try {
-      const { error } = await supabase
-        .from('comments') 
-        .insert([
-          {
-            post_id: postId,
-            user_id: user.id,
-            content: comment,
-          }
-        ]);
-
-      if (error) throw error;
-
-      alert('댓글이 등록되었습니다!');
-      setComment(''); // 입력창 비우기
-    } catch (err) {
-      alert('댓글 등록 실패: ' + err.message);
+    if (!comment.trim()) return;
+    const { error } = await supabase.from('comments').insert([{ post_id: postId, user_id: user.id, content: comment }]);
+    if (!error) {
+      setComment('');
+      fetchComments(); // 💡 즉시 갱신!
     }
   };
 
+  const handleLike = async () => {
+    if (!user) return alert('로그인이 필요합니다.');
+    const newLikes = (post.likes || 0) + 1;
+    await supabase.from('posts').update({ likes: newLikes }).eq('id', postId);
+    setPost({ ...post, likes: newLikes });
+  };
 
-  // --- UI 렌더링 ---
-  if (loading) return <div className="p-8 text-center text-white">글을 불러오는 중입니다...</div>;
-  if (!post) return <div className="p-8 text-center text-red-400">글을 찾을 수 없거나 삭제되었습니다.</div>;
+  if (loading) return <div className="p-10 text-center text-white">불러오는 중...</div>;
+  if (!post) return <div className="p-10 text-center text-red-400">글이 없습니다.</div>;
 
   return (
     <div className="w-full max-w-4xl mx-auto py-8 px-4">
-      <button onClick={() => router.push('/community')} className="mb-6 text-gray-400 hover:text-yellow-400 font-bold transition-colors">
-        ← 목록으로
-      </button>
-
-      <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-2xl mb-8">
-        
-        {/* 헤더 및 본문 영역 */}
-        {isEditing ? (
-          // 수정 모드일 때 보여줄 화면
-          <div className="p-6 flex flex-col gap-4">
-            <input 
-              value={editTitle} 
-              onChange={(e) => setEditTitle(e.target.value)} 
-              className="w-full p-3 rounded bg-gray-900 text-white border border-yellow-500 focus:outline-none font-bold text-xl"
-            />
-            <textarea 
-              value={editContent} 
-              onChange={(e) => setEditContent(e.target.value)} 
-              className="w-full p-3 rounded bg-gray-900 text-white border border-yellow-500 focus:outline-none min-h-[300px] resize-y"
-            />
-            <div className="flex justify-end gap-2 mt-2">
-              <button onClick={() => setIsEditing(false)} className="px-4 py-2 bg-gray-600 text-white rounded font-bold hover:bg-gray-500">취소</button>
-              <button onClick={handleUpdate} className="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-500">저장</button>
-            </div>
+      {/* 1. 본문 영역 */}
+      <div className="bg-gray-800 border border-gray-700 shadow-xl mb-1">
+        <div className="p-6 border-b border-gray-700 bg-gray-900/50">
+          <h1 className="text-2xl font-bold text-white mb-4">{post.title}</h1>
+          <div className="flex justify-between text-sm text-gray-400">
+            <span className="font-bold text-yellow-500">{post.profiles?.by_id}</span>
+            <span>{new Date(post.created_at).toLocaleString()}</span>
           </div>
-        ) : (
-          // 일반 읽기 모드일 때 보여줄 화면
-          <>
-            <div className="p-6 border-b border-gray-700 bg-gray-800/50">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">{post.title}</h1>
-              <div className="flex items-center gap-4 text-sm text-gray-400">
-                <span className="font-bold text-yellow-500">{post.profiles?.by_id || '알 수 없음'}</span>
-                <span>{new Date(post.created_at).toLocaleString()}</span>
-                <span>조회 {post.views || 0}</span>
-              </div>
-            </div>
-            
-            {/* 💡 요청하신 대로 본문 배경을 더 어둡게(bg-gray-900/50) 처리했습니다 */}
-            <div className="p-8 min-h-[300px] text-gray-200 whitespace-pre-wrap leading-relaxed bg-gray-900/50 text-lg">
-              {post.content}
-            </div>
-
-            {/* 본인 또는 관리자에게만 보이는 수정/삭제 버튼 */}
-            {canEditOrDelete && (
-              <div className="p-4 border-t border-gray-700 flex justify-end gap-2 bg-gray-900/30">
-                <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-gray-700 text-gray-200 rounded font-bold hover:bg-gray-600 transition-colors">수정</button>
-                <button onClick={handleDelete} className="px-4 py-2 bg-red-900/50 text-red-400 rounded font-bold hover:bg-red-800/50 transition-colors">삭제</button>
-              </div>
-            )}
-          </>
-        )}
+        </div>
+        
+        <div className="p-8 min-h-[300px] text-gray-200 bg-gray-900/50 text-lg leading-relaxed">
+          {post.content}
+          
+          {/* 추천 버튼부 */}
+          <div className="flex justify-center gap-6 mt-20">
+            <button onClick={handleLike} className="flex flex-col items-center p-4 border border-gray-600 bg-gray-800 rounded-xl hover:bg-gray-700">
+              <span className="text-2xl">👍</span>
+              <span className="text-sm font-bold text-pink-500">{post.likes || 0}</span>
+            </button>
+            <button className="flex flex-col items-center p-4 border border-gray-600 bg-gray-800 rounded-xl opacity-50">
+              <span className="text-2xl">👎</span>
+              <span className="text-sm font-bold text-gray-500">0</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* 댓글 뼈대 */}
-      <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 shadow-xl">
-        <h3 className="text-xl font-bold text-white mb-6">💬 댓글</h3>
-        <div className="flex gap-3 mb-8">
+      {/* 2. 내비게이션 화살표 */}
+      <div className="flex justify-end gap-6 my-4 text-2xl text-gray-500">
+        {adjacentPosts.prev && <button onClick={() => router.push(`/community/${adjacentPosts.prev}`)} className="hover:text-white">▲</button>}
+        {adjacentPosts.next && <button onClick={() => router.push(`/community/${adjacentPosts.next}`)} className="hover:text-white">▼</button>}
+        <button onClick={() => router.push('/community')} className="hover:text-white">📋</button>
+      </div>
+
+      {/* 3. 댓글 영역 */}
+      <div className="bg-gray-800 border border-gray-700 p-6 shadow-xl">
+        <h3 className="text-lg font-bold text-white mb-6 border-b border-gray-700 pb-2">댓글 {commentsList.length}</h3>
+        
+        {/* 댓글 리스트가 먼저 나옴 */}
+        <div className="space-y-4 mb-8">
+          {commentsList.map(cmt => (
+            <div key={cmt.id} className="border-b border-gray-700/50 pb-3">
+              <div className="flex gap-2 text-sm mb-1">
+                <span className="font-bold text-yellow-500">{cmt.profiles?.by_id}</span>
+                <span className="text-gray-500 text-xs">{new Date(cmt.created_at).toLocaleTimeString()}</span>
+              </div>
+              <p className="text-gray-300">{cmt.content}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* 댓글 작성란이 아래에 위치 */}
+        <div className="flex gap-3 bg-gray-900 p-4 border border-gray-700 rounded-lg">
           <textarea 
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="댓글을 남겨보세요!" 
-            className="flex-1 p-3 rounded-lg bg-gray-900 text-white border border-gray-600 focus:border-yellow-500 resize-none h-20"
+            placeholder="댓글을 입력하세요..." 
+            className="flex-1 bg-transparent text-white focus:outline-none resize-none h-16"
           />
-          <button 
-           onClick={handleCommentSubmit}
-          className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-6 font-bold rounded-lg transition-colors">등록</button>
+          <button onClick={handleCommentSubmit} className="bg-gray-700 hover:bg-gray-600 px-6 font-bold rounded-lg text-gray-300">등록</button>
         </div>
       </div>
     </div>

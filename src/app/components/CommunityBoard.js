@@ -54,7 +54,7 @@ export default function CommunityBoard() {
       const { data, error } = await filterVisibleTestData(supabase
         .from('posts')
         // author_name 컬럼 대신 profiles 테이블 JOIN으로 최신 닉네임을 가져옵니다.
-        .select('id, title, user_id, views, created_at, profiles!user_id(by_id)')
+        .select('id, title, user_id, views, likes, created_at, profiles!user_id(by_id), comments(count)')
         .order('created_at', { ascending: false }));
 
       if (!error) setPosts(data || []);
@@ -98,15 +98,16 @@ export default function CommunityBoard() {
       </div>
 
       {/* 게시판 본문 (테이블 형태) */}
-      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-2xl">
+      <div className="bg-gray-800 border border-gray-700 overflow-hidden shadow-2xl">
         {/* 1. 컬럼 제목 (Header) */}
         <div className="flex items-center bg-gray-900/80 text-gray-400 text-sm font-bold border-b border-gray-600">
           <div className="w-16 py-3 text-center border-r border-gray-700">번호</div>
           <div className="flex-1 py-3 text-center border-r border-gray-700">제목</div>
           <div className="w-28 py-3 text-center border-r border-gray-700">작성자</div>
           <div className="w-20 py-3 text-center border-r border-gray-700">날짜</div>
-          <div className="w-16 py-3 text-center border-r border-gray-700">조회수</div>
-          <div className="w-16 py-3 text-center">추천수</div>
+          <div className="w-16 py-3 text-center border-r border-gray-700">댓글</div>
+          <div className="w-16 py-3 text-center border-r border-gray-700">추천수</div>
+          <div className="w-16 py-3 text-center">조회수</div>
         </div>
 
         {/* 2. 게시글 목록 (Body) */}
@@ -135,11 +136,14 @@ export default function CommunityBoard() {
                 <div className="w-20 py-4 text-center border-r border-gray-700/50 text-gray-400">
                   {formatDate(post.created_at)}
                 </div>
-                <div className="w-16 py-4 text-center border-r border-gray-700/50 text-gray-500">
-                  {post.views || 0}
+                <div className="w-16 py-4 text-center border-r border-gray-700/50 text-yellow-500 font-bold">
+                  {post.comments?.[0]?.count || 0} {/* 댓글 수 */}
+                </div>
+                <div className="w-16 py-4 text-center border-r border-gray-700/50 text-pink-400">
+                  {post.likes || 0} {/* 추천수 */}
                 </div>
                 <div className="w-16 py-4 text-center text-gray-500">
-                  {post.likes || 0}
+                  {post.views || 0} {/* 조회수 */}
                 </div>
               </div>
             ))
