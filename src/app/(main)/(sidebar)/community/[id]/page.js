@@ -88,29 +88,36 @@ export default function PostDetailPage() {
     if (!user) return alert('로그인한 길드원만 투표가 가능합니다!');
 
     try {
+      let updatedLikes = post.likes || 0;
+      let updatedDislikes = post.dislikes || 0;
+
       if (userVote === type) {
-        // [투표 취소] 같은 것을 다시 누름
+        // [취소]
         await supabase.from('post_votes').delete().eq('post_id', postId).eq('user_id', user.id);
+        if (type === 'like') updatedLikes--; else updatedDislikes--;
         setUserVote(null);
-        // 화면 수치 1 깎기
-        setPost(prev => ({ ...prev, [type === 'like' ? 'likes' : 'dislikes']: Math.max(0, (prev[type === 'like' ? 'likes' : 'dislikes'] || 0) - 1) }));
       } else {
-        // [투표 등록/변경] 처음 누르거나 반대쪽 누름
-        await supabase.from('post_votes').upsert(
-          { post_id: postId, user_id: user.id, vote_type: type }, 
-          { onConflict: 'post_id, user_id' } // 💡 제약조건을 이용해 덮어쓰기!
-        );
-        
-        setPost(prev => {
-          const newPost = { ...prev };
-          // 만약 기존에 다른 투표를 했었다면 1 깎기
-          if (userVote) newPost[userVote === 'like' ? 'likes' : 'dislikes'] = Math.max(0, (newPost[userVote === 'like' ? 'likes' : 'dislikes'] || 0) - 1);
-          // 새로 누른 투표 1 더하기
-          newPost[type === 'like' ? 'likes' : 'dislikes'] = (newPost[type === 'like' ? 'likes' : 'dislikes'] || 0) + 1;
-          return newPost;
-        });
+        // [등록/변경]
+        await supabase.from('post_votes').upsert({ post_id: postId, user_id: user.id, vote_type: type });
+        if (type === 'like') {
+          updatedLikes++;
+          if (userVote === 'dislike') updatedDislikes--; // 기존 비추천 취소
+        } else {
+          updatedDislikes++;
+          if (userVote === 'like') updatedLikes--; // 기존 추천 취소
+        }
         setUserVote(type);
       }
+
+      // 핵심: 실제 'posts' 테이블의 숫자 서랍을 업데이트합니다!
+      await supabase.from('posts').update({ 
+        likes: Math.max(0, updatedLikes), 
+        dislikes: Math.max(0, updatedDislikes) 
+      }).eq('id', postId);
+
+      // 화면에 즉시 반영
+      setPost({ ...post, likes: Math.max(0, updatedLikes), dislikes: Math.max(0, updatedDislikes) });
+
     } catch (err) {
       console.error(err);
     }
@@ -239,6 +246,8 @@ export default function PostDetailPage() {
         {/* 💡 댓글 작성란 (아래에 배치) */}
         <div className="flex gap-3 bg-gray-900 p-4 border border-gray-700">
           <textarea 
+            id="comment-content"
+            name="comment-content"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="댓글을 입력하세요..." 
