@@ -32,15 +32,15 @@ export default function PostDetailPage() {
 
   // 2. 내 투표 기록 불러오기
   const fetchVote = useCallback(async () => {
-    if (!user) return;
+    if (!user?.id) return;
     const { data } = await supabase
       .from('post_votes')
       .select('vote_type')
       .eq('post_id', postId)
-      .eq('user_id', user.id)
+      .eq('user_id', user?.id)
       .single();
     if (data) setUserVote(data.vote_type);
-  }, [postId, user]);
+  }, [postId, user?.id]);
 
   // 3. 전체 데이터 초기 로딩
   useEffect(() => {
