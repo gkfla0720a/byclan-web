@@ -6,18 +6,21 @@ import { supabase } from '@/supabase';
 import { useAuthContext } from '@/app/context/AuthContext';
 import { PermissionChecker } from '@/app/utils/permissions';
 
-export default function PostDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const postId = params.id; 
-  const { user, profile } = useAuthContext();
 
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [commentsList, setCommentsList] = useState([]);
-  const [comment, setComment] = useState('');
+export default function PostDetailPage() {
+  const params = useParams(); // URL에서 :id 값을 가져옵니다. 예: /community/123 -> params.id === '123'
+  const router = useRouter(); // 페이지 이동을 위한 라우터
+  const postId = params.id; // 게시글 ID (문자열 형태)
+  const { user, profile } = useAuthContext(); // 현재 로그인 유저 프로필 (권한 확인용)
+
+  const [post, setPost] = useState(null); // 게시글 데이터 (제목, 내용, 작성자 등)
+  const [loading, setLoading] = useState(true); // 데이터 로딩 중 여부
+  const [commentsList, setCommentsList] = useState([]); // 댓글 목록 배열
+  const [comment, setComment] = useState(''); // 댓글 입력란의 현재 값
+  const [editingCommentId, setEditingCommentId] = useState(null); // 현재 수정 중인 댓글 ID (null이면 수정 모드 아님)
+  const [editContent, setEditContent] = useState(''); // 수정 중인 댓글의 내용
   
-  const [adjacentPosts, setAdjacentPosts] = useState({ prev: null, next: null });
+  const [adjacentPosts, setAdjacentPosts] = useState({ prev: null, next: null }); // 이전/다음 글 ID 저장
   const [userVote, setUserVote] = useState(null); // 'like', 'dislike', null
 
   // 1. 댓글 목록 불러오기
@@ -81,6 +84,29 @@ export default function PostDetailPage() {
       fetchComments(); // 즉시 새로고침
     } else {
       alert('댓글 작성 실패: ' + error.message);
+    }
+  };
+
+  // 댓글 삭제
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
+    const { error } = await supabase.from('comments').delete().eq('id', commentId);
+    if (!error) fetchComments(); // 삭제 후 새로고침
+  };
+
+  // 댓글 수정 모드 켜기
+  const startEditComment = (cmt) => {
+    setEditingCommentId(cmt.id);
+    setEditContent(cmt.content);
+  };
+
+  // 댓글 수정 완료 (DB 저장)
+  const handleUpdateComment = async (commentId) => {
+    if (!editContent.trim()) return;
+    const { error } = await supabase.from('comments').update({ content: editContent }).eq('id', commentId);
+    if (!error) {
+      setEditingCommentId(null);
+      fetchComments(); // 수정 후 새로고침
     }
   };
 
@@ -218,20 +244,50 @@ export default function PostDetailPage() {
       <div className="bg-gray-800 border border-gray-700 p-6 shadow-xl">
         <h3 className="text-lg font-bold text-white mb-6 border-b border-gray-700 pb-2">댓글 {commentsList.length}</h3>
         
-        {/* 💡 등록된 댓글 리스트 (위에 배치) */}
+        {/* 등록된 댓글 리스트 */}
         <div className="space-y-4 mb-8">
           {commentsList.length === 0 ? (
             <div className="text-gray-500 text-center py-4">가장 먼저 댓글을 남겨보세요!</div>
           ) : (
-            commentsList.map(cmt => (
-              <div key={cmt.id} className="border-b border-gray-700/50 pb-3">
-                <div className="flex gap-3 text-sm mb-1 items-baseline">
-                  <span className="font-bold text-yellow-500">{cmt.profiles?.by_id || '알 수 없음'}</span>
-                  <span className="text-gray-500 text-xs">{new Date(cmt.created_at).toLocaleString()}</span>
+            commentsList.map(cmt => {
+              const isCommentAuthor = user?.id === cmt.user_id;
+              const canManageComment = isCommentAuthor || isManager;
+
+              return (
+                <div key={cmt.id} className="border-b border-gray-700/50 pb-3">
+                  <div className="flex justify-between items-baseline mb-1">
+                    <div className="flex gap-3 text-sm items-baseline">
+                      <span className="font-bold text-yellow-500">{cmt.profiles?.by_id || '알 수 없음'}</span>
+                      <span className="text-gray-500 text-xs">{new Date(cmt.created_at).toLocaleString()}</span>
+                    </div>
+                    {/* 수정/삭제 버튼 (권한자에게만 표시) */}
+                    {canManageComment && editingCommentId !== cmt.id && (
+                      <div className="flex gap-2 text-xs text-gray-400">
+                        {isCommentAuthor && <button onClick={() => startEditComment(cmt)} className="hover:text-white">수정</button>}
+                        <button onClick={() => handleDeleteComment(cmt.id)} className="hover:text-red-400">삭제</button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 수정 모드 vs 일반 모드 렌더링 */}
+                  {editingCommentId === cmt.id ? (
+                    <div className="mt-2 flex gap-2">
+                      <textarea 
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="flex-1 bg-gray-900 border border-gray-600 rounded p-2 text-white text-sm resize-none"
+                      />
+                      <div className="flex flex-col gap-1">
+                        <button onClick={() => handleUpdateComment(cmt.id)} className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold">저장</button>
+                        <button onClick={() => setEditingCommentId(null)} className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded text-xs">취소</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-300">{cmt.content}</p>
+                  )}
                 </div>
-                <p className="text-gray-300">{cmt.content}</p>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
