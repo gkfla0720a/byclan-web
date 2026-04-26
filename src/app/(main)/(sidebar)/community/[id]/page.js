@@ -38,13 +38,15 @@ export default function PostDetailPage() {
       .select('vote_type')
       .eq('post_id', postId)
       .eq('user_id', user?.id)
-      .single();
+      .maybeSingle();
     if (data) setUserVote(data.vote_type);
   }, [postId, user?.id]);
 
   // 3. 전체 데이터 초기 로딩
   useEffect(() => {
     const fetchAllData = async () => {
+      // CCTV 끄기 핵심: 이미 현재 글 데이터가 있으면 멈춤! (불필요한 리로딩 방지)
+      if (post && post.id == postId) return;
       setLoading(true);
       const { data: postData } = await supabase
         .from('posts')
@@ -57,8 +59,8 @@ export default function PostDetailPage() {
         await supabase.rpc('increment_views', { row_id: postId });
         
         // 이전/다음글 찾기
-        const { data: nextD } = await supabase.from('posts').select('id').lt('created_at', postData.created_at).order('created_at', { ascending: false }).limit(1).single();
-        const { data: prevD } = await supabase.from('posts').select('id').gt('created_at', postData.created_at).order('created_at', { ascending: true }).limit(1).single();
+        const { data: nextD } = await supabase.from('posts').select('id').lt('created_at', postData.created_at).order('created_at', { ascending: false }).limit(1).maybeSingle();
+        const { data: prevD } = await supabase.from('posts').select('id').gt('created_at', postData.created_at).order('created_at', { ascending: true }).limit(1).maybeSingle();
         setAdjacentPosts({ prev: prevD?.id, next: nextD?.id });
       }
       await fetchComments();
@@ -66,7 +68,7 @@ export default function PostDetailPage() {
       setLoading(false);
     };
     if (postId) fetchAllData();
-  }, [postId, fetchComments, fetchVote]);
+  }, [postId, user?.id]);
 
   // --- 이벤트 핸들러 ---
   const handleCommentSubmit = async () => {
