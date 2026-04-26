@@ -3,19 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
-// 💡 추가된 부분: 로그인 정보와 권한 체커 가져오기
 import { useAuthContext } from '@/app/context/AuthContext';
 import { PermissionChecker } from '@/app/utils/permissions';
 
+// --- 게시글 상세 페이지 컴포넌트(메인) ---
 export default function PostDetailPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params.id; 
 
-  // 💡 추가된 부분: 현재 로그인한 유저 정보 꺼내기
+  // 현재 로그인한 유저 정보 꺼내기
   const { user, profile } = useAuthContext();
 
-  // --- 상태(State) 관리 ---
+  // 상태(State) 관리
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -75,6 +75,7 @@ export default function PostDetailPage() {
     }
   };
 
+  // --- 글 수정 함수 (에러 처리 포함) ---
   const handleUpdate = async () => {
     if (!editTitle || !editContent) return alert('제목과 내용을 입력해주세요.');
 
@@ -92,6 +93,31 @@ export default function PostDetailPage() {
       setIsEditing(false); // 수정 모드 종료
     } catch (err) {
       alert('수정 중 오류가 발생했습니다: ' + err.message);
+    }
+  };
+  
+  // --- 댓글 등록 함수 (에러 처리 포함) ---
+  const handleCommentSubmit = async () => {
+    if (!comment.trim()) return alert('댓글 내용을 입력해주세요.');
+    if (!user) return alert('로그인이 필요합니다.');
+
+    try {
+      const { error } = await supabase
+        .from('comments') 
+        .insert([
+          {
+            post_id: postId,
+            user_id: user.id,
+            content: comment,
+          }
+        ]);
+
+      if (error) throw error;
+
+      alert('댓글이 등록되었습니다!');
+      setComment(''); // 입력창 비우기
+    } catch (err) {
+      alert('댓글 등록 실패: ' + err.message);
     }
   };
 
@@ -165,7 +191,9 @@ export default function PostDetailPage() {
             placeholder="댓글을 남겨보세요!" 
             className="flex-1 p-3 rounded-lg bg-gray-900 text-white border border-gray-600 focus:border-yellow-500 resize-none h-20"
           />
-          <button className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-6 font-bold rounded-lg transition-colors">등록</button>
+          <button 
+           onClick={handleCommentSubmit}
+          className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-6 font-bold rounded-lg transition-colors">등록</button>
         </div>
       </div>
     </div>
