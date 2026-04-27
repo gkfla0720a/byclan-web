@@ -139,13 +139,12 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // by_id가 없는 경우 즉시 프로필 설정 페이지로 이동하여 아이디를 등록하도록 유도합니다.
-  // (자동 로그아웃은 useAuth.ts의 재확인 로직에서 처리합니다.)
-  useEffect(() => {
-    if (user && !authLoading && needsByIdSetup) {
-      navigateTo('프로필');
-    }
-  }, [user, authLoading, needsByIdSetup, navigateTo]);
+  // ❌ REMOVED: by_id 없을 때 자동 네비게이션
+  // 이유: useAuth.ts의 by_id 재확인 로직(라인 450)에서 이미 처리함
+  //   - 3초 후 자동 로그아웃 + window.location.reload()
+  //   - Header에서 추가 네비게이션 시도 시 충돌 가능
+  // 대신: Header는 단순히 by_id 표시 또는 에러 메시지만 처리
+  // 사용자가 설정할 기회를 주고 싶으면 개별 페이지에서 명시적으로 처리
 
   const handleLogout = async () => {
     try {
@@ -167,10 +166,10 @@ export default function Header() {
   const menuData = [
     { title: '클랜 소개', items: ['가입안내', '정회원 전환신청', '개요'] },
     { title: '클랜원', items: ['클랜원'] },
-    { title: 'BY래더시스템', items: ['대시보드', '랭킹', '경기기록', '외부 레더 랭킹', '외부 레더 기록', '승률 시뮬레이터'] },
+    { title: 'BY래더시스템', items: ['BY래더', '랭킹', '경기기록'] },
     { title: 'BSL', items: ['BSL 공지사항', 'BSL 경기일정 및 결과'] },
     { title: '토너먼트', items: ['토너먼트 공지', '진행중인 토너먼트'] },
-    { title: '커뮤니티', items: ['공지사항', '자유게시판', '클랜원 소식'] },
+    { title: '커뮤니티', items: ['공지사항', '자유게시판'] },
     { title: '포인트', items: ['포인트 상점', '포인트 내역'] }
   ];
 
@@ -188,13 +187,11 @@ export default function Header() {
     setIsMobileMenuOpen(false);
   };
 
-  // 로고 클릭 시 홈으로 이동하면서 프로필을 재조회합니다.
-  // SPA 탐색이므로 페이지가 새로고침되지 않아 프로필 변동사항이 반영되지 않을 수 있기 때문입니다.
+  // 로고 클릭 시 홈으로 이동합니다.
+  // SPA 환경에서 불필요한 프로필 재로드를 제거했습니다.
+  // 필요한 경우 각 페이지에서 명시적으로 reloadProfile()를 호출하세요.
   const handleLogoClick = () => {
     handleNav('Home');
-    if (user) {
-      reloadProfile();
-    }
   };
 
   return (
@@ -243,7 +240,7 @@ export default function Header() {
           {/* 🛡️ 가입 심사 버튼 (개발자, 마스터, 어드민, 엘리트) */}
           {isDevOrHigher && (
             <li>
-              <button onClick={() => handleNav('가입 심사')} className="text-emerald-300 hover:text-emerald-200 text-sm font-bold border border-emerald-400/25 px-3 py-2 rounded-full bg-emerald-950/20 shadow-[0_0_14px_rgba(16,185,129,0.12)] transition-all">
+              <button onClick={() => handleNav('가입 심사 관리')} className="text-emerald-300 hover:text-emerald-200 text-sm font-bold border border-emerald-400/25 px-3 py-2 rounded-full bg-emerald-950/20 shadow-[0_0_14px_rgba(16,185,129,0.12)] transition-all">
                 ⚔️ 가입 심사
               </button>
             </li>
@@ -274,7 +271,7 @@ export default function Header() {
                   <span className="text-lg">🔔</span>
                   {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
                 </button>
-                <button onClick={() => handleNav('프로필')} className="p-1 text-slate-300 hover:text-cyan-200 transition-all"><span className="text-lg">👤</span></button>
+                <button onClick={() => handleNav('내 프로필')} className="p-1 text-slate-300 hover:text-cyan-200 transition-all"><span className="text-lg">👤</span></button>
                 <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-full border border-cyan-400/15 shadow-[0_0_18px_rgba(34,211,238,0.08)]">
                   {nickname ? (
                     <span className="text-xs font-bold text-slate-100">{nickname}</span>
@@ -300,7 +297,7 @@ export default function Header() {
                 <span className="text-lg">🔔</span>
                 {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
               </button>
-              <button onClick={() => handleNav('프로필')} aria-label="프로필" className="p-2 text-slate-300 hover:text-cyan-200 transition-all border border-cyan-400/15 rounded-xl bg-slate-950/60">
+              <button onClick={() => handleNav('내 프로필')} aria-label="프로필" className="p-2 text-slate-300 hover:text-cyan-200 transition-all border border-cyan-400/15 rounded-xl bg-slate-950/60">
                 <span className="text-lg">👤</span>
               </button>
             </>
@@ -333,7 +330,7 @@ export default function Header() {
                   <span>🔔 알림</span>
                   {unreadCount > 0 && <span className="bg-red-600 text-[9px] px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
                 </button>
-                <button onClick={() => handleNav('프로필')} className="flex-1 bg-slate-950/70 p-3 rounded-xl border border-cyan-400/10 text-slate-200 font-bold text-xs flex justify-center items-center gap-2">
+                <button onClick={() => handleNav('내 프로필')} className="flex-1 bg-slate-950/70 p-3 rounded-xl border border-cyan-400/10 text-slate-200 font-bold text-xs flex justify-center items-center gap-2">
                   <span>👤 프로필</span>
                 </button>
               </div>
@@ -358,7 +355,7 @@ export default function Header() {
 
           {/* 모바일 가입 심사 */}
           {isDevOrHigher && (
-            <button onClick={() => handleNav('가입 심사')} className="px-6 py-5 text-left text-emerald-300 font-black text-sm border-b border-cyan-400/10 bg-emerald-950/5 transition-all">⚔️ 가입 심사 관리</button>
+            <button onClick={() => handleNav('가입 심사 관리')} className="px-6 py-5 text-left text-emerald-300 font-black text-sm border-b border-cyan-400/10 bg-emerald-950/5 transition-all">⚔️ 가입 심사 관리</button>
           )}
           
           {/* 모바일 관리자 */}

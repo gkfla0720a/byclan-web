@@ -62,7 +62,7 @@ function formatRelativeTime(dateString) {
  * @returns {JSX.Element} 매치 현황 섹션 UI
  */
 function MatchStatus() {
-  /** 페이지 이동 훅 — navigateTo('대시보드') 처럼 사용합니다 */
+  /** 페이지 이동 훅 — navigateTo('BY래더) 처럼 사용합니다 */
   const navigateTo = useNavigate();
   /** DB에서 불러온 매치 배열 상태 */
   const [matches, setMatches] = useState([]);
@@ -125,7 +125,7 @@ function MatchStatus() {
   };
 
   return (
-    <section className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl cursor-pointer" onClick={() => navigateTo('대시보드')}>
+    <section className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl cursor-pointer" onClick={() => navigateTo('BY래더)}>
       <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">⚔️ 매치 현황</h3>
       <div className="space-y-3">
         {loading ? (

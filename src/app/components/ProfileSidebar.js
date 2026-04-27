@@ -165,7 +165,7 @@ export default function ProfileSidebar({ profile, user }) {
     <aside className="hidden lg:flex flex-col w-56 shrink-0 gap-3">
       <div
         className="cyber-card rounded-xl p-4 flex flex-col gap-3 cursor-pointer hover:border-cyan-500/30 transition-all"
-        onClick={() => navigateTo('프로필')}
+        onClick={() => navigateTo('내 프로필')}
         title="프로필로 이동"
       >
         {/* 아바타 / 유저 */}

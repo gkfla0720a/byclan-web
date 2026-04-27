@@ -141,9 +141,9 @@ import { useNavigate } from '@/app/hooks/useNavigate';
 const navigateTo = useNavigate();
 
 navigateTo('랭킹');       // → /ranking
-navigateTo('대시보드');    // → /ladder
+navigateTo('BY래더);    // → /ladder
 navigateTo('관리자');      // → /admin
-navigateTo('프로필');      // → /profile
+navigateTo('내 프로필');      // → /profile
 ```
 
 ### useToast()

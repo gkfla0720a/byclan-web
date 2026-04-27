@@ -5,7 +5,7 @@
  *         커스텀 훅(hook)입니다.
  *
  * ■ 배경
- *   사이드바, 헤더 등의 UI 컴포넌트에서 '개요', '랭킹', '대시보드' 같은
+ *   사이드바, 헤더 등의 UI 컴포넌트에서 '개요', '랭킹', 'BY래더 같은
  *   한국어 이름으로 페이지를 참조하는데, 이를 실제 URL로 변환해 줍니다.
  *
  * ■ 사용 방법
@@ -18,7 +18,7 @@
  *
  * ■ 매핑 테이블 (VIEW_TO_PATH)
  *   '랭킹' → '/ranking'
- *   '대시보드' → '/ladder'
+ *   'BY래더 → '/ladder'
  *   '관리자' → '/admin'
  *   등 (아래 VIEW_TO_PATH 객체 참고)
  * =====================================================================
@@ -40,33 +40,34 @@ const VIEW_TO_PATH = {
   '개요': '/overview',
   '클랜원': '/members',
   '가입안내': '/join',
-  '가입신청': '/join',
   '정회원 전환신청': '/join/transfer',
   '공지사항': '/notice',
   'BSL 공지사항': '/notice',
   '토너먼트 공지': '/notice',
   '자유게시판': '/community',
-  '클랜원 소식': '/community',
   '랭킹': '/ranking',
-  '시즌별 랭킹': '/ranking',
-  '대시보드': '/ladder',
-  'BY래더시스템': '/ladder',
+  'BY래더': '/ladder',
+  '경기기록': '/matches',
   'BSL 경기일정 및 결과': '/tournament',
   '진행중인 토너먼트': '/tournament',
   '경기 영상': '/media',
   '사진 갤러리': '/media',
-  '가입 심사': '/admin/applications',
+  '가입 심사 관리': '/admin/applications',
   '관리자': '/admin',
   '운영진게시판': '/admin',
   '길드원 관리': '/admin/guild',
+  '멤버 관리': '/admin/guild',
+  '경기 관리': '/admin/matches',
+  '래더/경기 운영': '/admin/matches',
+  '콘텐츠 관리': '/admin/content',
+  '알림': '/admin/notifications',
+  '시스템 설정': '/admin/settings',
   '개발자': '/developer',
-  '프로필': '/profile',
+  '내 프로필': '/profile',
   '알림': '/notifications',
   '포인트 상점': '/points/shop',
   '포인트 내역': '/points/history',
-  '경기기록': '/matches',
   '로그인': '/login',
-  '승률 시뮬레이터': '/simulator'
 };
 
 /**
@@ -93,7 +94,7 @@ export const PATH_TO_VIEW = Object.fromEntries(
  * 사용 예시:
  *   const navigateTo = useNavigate();
  *   navigateTo('랭킹');    // → /ranking 으로 이동
- *   navigateTo('대시보드'); // → /ladder 로 이동
+ *   navigateTo('BY래더); // → /ladder 로 이동
  */
 export function useNavigate() {
   const router = useRouter();
