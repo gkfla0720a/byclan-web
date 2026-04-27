@@ -612,7 +612,7 @@ export function useAuth(): UseAuthReturn {
     if (['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
       try {
         const { data: m, error: matchError } = await supabase
-          .from('ladder_matches')
+          .from('ladder_match_sets')
           .select('id')
           .eq('status', 'in_progress')
           .or(`team_a_ids.cs.{${authUser.id}},team_b_ids.cs.{${authUser.id}}`)

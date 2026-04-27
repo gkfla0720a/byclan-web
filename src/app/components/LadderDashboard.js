@@ -396,8 +396,8 @@ export default function LadderDashboard({ onMatchEnter }) {
       lastQueueKeyRef.current = newKey;
 
       const { data: ongoing } = await filterVisibleTestData(supabase
-        .from('ladder_matches')
-        .select('*')
+        .from('ladder_match_sets')
+        .select('*, ladder_record(user_id, team)')
         .in('status', ['in_progress', 'proposed'])
         .order('created_at', { ascending: false })
         .limit(8));
@@ -406,7 +406,7 @@ export default function LadderDashboard({ onMatchEnter }) {
 
       // 진행 중인 매치 참여 선수 프로필을 별도 조회 (host_id FK 조인은 팀원 정보를 제공하지 않음)
       const allTeamIds = [...new Set(
-        ongoingList.flatMap(m => [...(m.team_a_ids || []), ...(m.team_b_ids || [])])
+        ongoingList.flatMap(m => (m.ladder_record || []).map(r => r.user_id))
       )];
       let profMap = {};
       if (allTeamIds.length > 0) {
@@ -421,25 +421,28 @@ export default function LadderDashboard({ onMatchEnter }) {
       // 내가 포함된 제안 확인
       const myProposal = ongoingList.find(m =>
         m.status === 'proposed' &&
-        [...(m.team_a_ids || []), ...(m.team_b_ids || [])].includes(authUser.id)
+        (m.ladder_record || []).some(r => r.user_id === authUser.id)
       );
       if (myProposal) {
         const resolveProf = (id) => ({
           id,
           by_id: profMap[id]?.by_id,
-
           clan_point: getPlayerMmr(profMap[id]),
         });
-        const teamA = (myProposal.team_a_ids || []).map(resolveProf);
-        const teamB = (myProposal.team_b_ids || []).map(resolveProf);
+        const myRecordA = (myProposal.ladder_record || []).filter(r => r.team === 'A').map(r => r.user_id);
+        const myRecordB = (myProposal.ladder_record || []).filter(r => r.team === 'B').map(r => r.user_id);
+        const teamA = myRecordA.map(resolveProf);
+        const teamB = myRecordB.map(resolveProf);
+        const matchType = myProposal.race_type ? parseInt(myProposal.race_type.charAt(0), 10) : teamA.length;
+
         const avgA = teamA.length ? teamA.reduce((s, p) => s + getPlayerMmr(p), 0) / teamA.length : 1000;
         const avgB = teamB.length ? teamB.reduce((s, p) => s + getPlayerMmr(p), 0) / teamB.length : 1000;
         setActiveProposal(prev => prev?.matchId === myProposal.id ? prev : {
-          matchId: myProposal.id,
-          matchType: `${myProposal.match_type}v${myProposal.match_type}`,
+          matchId: myProposal.match_id,
+          matchType: `${matchType}v${matchType}`,
           teamA, teamB, avgA, avgB,
           diff: Math.abs(avgA - avgB),
-          proposedBy: myProposal.created_by,
+          proposedBy: null, // 작성자 구분을 위해 필요하다면 별도 처리
         });
       } else {
         setActiveProposal(prev => prev ? null : prev);
@@ -549,21 +552,24 @@ export default function LadderDashboard({ onMatchEnter }) {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('ladder_matches')
+      const matchId = crypto.randomUUID(); // 그룹 식별자 발급
+      
+      const { error: setErr } = await supabase
+        .from('ladder_match_sets')
         .insert({
+          match_id: matchId,
+          set_number: 1,
           status: 'proposed',
-          match_type: perTeam,
-          team_a_ids: teamA.map(p => p.id),
-          team_b_ids: teamB.map(p => p.id),
-          score_a: 0,
-          score_b: 0,
-          created_by: user.id,
-          is_test_data: Boolean(myProfile?.is_test_account),
-          is_test_data_active: Boolean(myProfile?.is_test_account),
-        })
-        .select().single();
-      if (error) throw error;
+          race_type: `${perTeam}v${perTeam}`,
+        });
+      if (setErr) throw setErr;
+
+      const records = [
+        ...teamA.map(p => ({ match_id: matchId, user_id: p.id, team: 'A' })),
+        ...teamB.map(p => ({ match_id: matchId, user_id: p.id, team: 'B' }))
+      ];
+      const { error: recordErr } = await supabase.from('ladder_record').insert(records);
+      if (recordErr) throw recordErr;
 
       const newAttempts = proposalAttempts + 1;
       setProposalAttempts(newAttempts);
@@ -571,7 +577,7 @@ export default function LadderDashboard({ onMatchEnter }) {
       setProposalCooldown(COOLDOWN_STEPS[cdIdx]);
 
       setActiveProposal({
-        matchId: data.id,
+        matchId: matchId,
         matchType: `${perTeam}v${perTeam}`,
         teamA, teamB, avgA, avgB, diff,
         proposedBy: user.id,
@@ -590,9 +596,9 @@ export default function LadderDashboard({ onMatchEnter }) {
   const handleAccept = async () => {
     if (!activeProposal) return;
     try {
-      await supabase.from('ladder_matches')
+      await supabase.from('ladder_match_sets')
         .update({ status: 'in_progress' })
-        .eq('id', activeProposal.matchId);
+        .eq('match_id', activeProposal.matchId);
       const allIds = [...activeProposal.teamA, ...activeProposal.teamB].map(p => p.id);
       await supabase.from('profiles').update({ is_in_queue: false }).in('id', allIds);
 
@@ -611,9 +617,9 @@ export default function LadderDashboard({ onMatchEnter }) {
   const handleReject = async () => {
     if (!activeProposal) return;
     try {
-      await supabase.from('ladder_matches')
+      await supabase.from('ladder_match_sets')
         .update({ status: '거절됨' })
-        .eq('id', activeProposal.matchId);
+        .eq('match_id', activeProposal.matchId);
     } finally {
       setActiveProposal(null);
     }
@@ -966,18 +972,20 @@ export default function LadderDashboard({ onMatchEnter }) {
           </div>
           <div className="divide-y divide-emerald-900/20">
             {ongoingMatches.filter(m => m.status === 'in_progress').map(match => {
-              const isParticipant = [...(match.team_a_ids || []), ...(match.team_b_ids || [])].includes(user?.id);
-              const teamANames = (match.team_a_ids || []).map(id => getDisplayName(matchProfiles[id]));
-              const teamBNames = (match.team_b_ids || []).map(id => getDisplayName(matchProfiles[id]));
+              const isParticipant = (match.ladder_record || []).some(r => r.user_id === user?.id);
+              const teamANames = (match.ladder_record || []).filter(r => r.team === 'A').map(r => getDisplayName(matchProfiles[r.user_id]));
+              const teamBNames = (match.ladder_record || []).filter(r => r.team === 'B').map(r => getDisplayName(matchProfiles[r.user_id]));
+              const dynamicScoreA = ongoingMatches.filter(om => om.match_id === match.match_id && om.winner_team === 'A').length;
+              const dynamicScoreB = ongoingMatches.filter(om => om.match_id === match.match_id && om.winner_team === 'B').length;
               return (
-                <div key={match.id} className="px-5 py-4 flex items-center justify-between flex-wrap gap-3">
+                <div key={match.match_id} className="px-5 py-4 flex items-center justify-between flex-wrap gap-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-emerald-300 font-bold text-sm">
-                        {match.match_type}v{match.match_type} {match.match_type >= 3 ? '래더' : '일반'}
+                        {match.race_type} 래더
                       </span>
                       <span className="text-gray-600 text-xs border border-gray-700 px-2 py-0.5 rounded">
-                        BO{match.match_type >= 5 ? '7' : '5'} — {match.score_a} : {match.score_b}
+                        진행중 — {dynamicScoreA} : {dynamicScoreB}
                       </span>
                     </div>
                     <div className="text-gray-600 text-xs font-sans">
@@ -988,7 +996,7 @@ export default function LadderDashboard({ onMatchEnter }) {
                   </div>
                   {isParticipant && (
                     <button
-                      onClick={() => onMatchEnter(match.id)}
+                      onClick={() => onMatchEnter(match.match_id)}
                       className="px-5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-lg text-sm transition-colors shadow-[0_0_10px_rgba(16,185,129,0.2)]"
                     >
                       매치 재입장 →

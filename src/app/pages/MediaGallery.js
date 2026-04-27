@@ -77,7 +77,7 @@ function MediaGallery() {
           ),
           filterVisibleTestData(
             supabase
-              .from('ladder_matches')
+              .from('ladder_match_sets')
               .select('id, match_type, status, created_at, map_name')
               .order('created_at', { ascending: false })
               .limit(2)

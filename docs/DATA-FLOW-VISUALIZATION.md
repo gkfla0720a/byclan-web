@@ -186,7 +186,7 @@ export useAuth()
 │   └─ 권한 객체 반환
 │
 ├─ handleAuthSuccess(authUser)
-│   └─ [래더 진행 중 확인] supabase.from('ladder_matches').select()
+│   └─ [래더 진행 중 확인] supabase.from('ladder_match_sets').select()
 │
 ├─ handleSetupComplete()
 │   └─ withRetry(() => loadUserData(user))
@@ -207,7 +207,7 @@ export useAuth()
 LadderDashboard.js
       │
       ├─ 매치 목록 조회
-      │   └─ supabase.from('ladder_matches')
+      │   └─ supabase.from('ladder_match_sets')
       │        .select('*, profiles(*)')   ← host_id FK join (개최자 프로필)
       │        .eq('status', 'waiting')
       │

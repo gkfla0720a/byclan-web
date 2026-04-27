@@ -392,7 +392,7 @@ export default function MatchRecords() {
     try {
       const { data, error: fetchError } = await filterVisibleTestData(
         supabase
-          .from('ladder_matches')
+          .from('ladder_match_sets')
           .select('id, match_type, status, score_a, score_b, team_a_ids, team_b_ids, team_a_races, team_b_races, created_at')
           .in('status', ['completed', 'in_progress', 'proposed'])
           .order('created_at', { ascending: false })

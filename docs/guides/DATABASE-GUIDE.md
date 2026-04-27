@@ -94,35 +94,22 @@ ByClan 클랜원의 모든 정보를 저장합니다.
 
 ---
 
-### 3-2. `ladder_matches` 테이블 (래더 매치)
+### 3-2. `ladder_record` 및 `ladder_match_sets` (래더 매치 기록)
 
-래더 게임 매치 정보를 저장합니다.
+- **`ladder_record`**: 유저 개인 기준으로 변경된 경기 본체 기록 테이블입니다. (기존 `ladder_matches` 역할 대체)
+- **`ladder_match_sets`**: 다수의 사용자가 래더 시스템을 통해 경기를 치를 때, 하나의 매치에 포함된 세부 경기(세트)마다의 승패 및 여러 정보를 저장합니다.
 
-| 컬럼명 | 타입 | 설명 | 예시 값 |
-|--------|------|------|---------|
-| `id` | UUID | 기본 키 (매치 고유 번호) | `c3d4e5f6-...` |
-| `host_id` | UUID | 매치를 만든 사람의 ID | `a1b2c3d4-...` |
-| `status` | TEXT | 현재 매치 상태 | `모집중`, `진행중`, `완료`, `취소` |
-| `match_type` | TEXT | 매치 형식 | `1v1`, `2v2`, `3v3` |
-| `team_a_ids` | UUID[] | A팀 참가자 ID 배열 | `[id1, id2]` |
-| `team_b_ids` | UUID[] | B팀 참가자 ID 배열 | `[id3, id4]` |
-| `team_a_races` | TEXT[] | A팀 종족 배열 | `['Terran', 'Zerg']` |
-| `team_b_races` | TEXT[] | B팀 종족 배열 | `['Protoss', 'Terran']` |
-| `map_name` | TEXT | 게임 맵 이름 | `Fighting Spirit` |
-| `score_a` | INT | A팀 점수 | `2` |
-| `score_b` | INT | B팀 점수 | `1` |
-| `created_at` | TIMESTAMP | 매치 생성 시간 | `2026-01-15 20:00:00+09` |
-| `created_by` | UUID | 매치 생성자 ID (host_id와 동일할 수 있음) | `a1b2c3d4-...` |
+### 3-3. `ladder_rankings` 테이블 (래더 랭킹)
 
-**주의:** `team_a_ids`, `team_b_ids`는 **배열(Array)** 타입입니다.
-- PostgreSQL의 GIN 인덱스를 사용해 배열 내 특정 값을 빠르게 검색합니다.
-- 쿼리 예시: `.contains('team_a_ids', [userId])` → A팀에 특정 유저가 있는지 확인
+랭킹 보드에 기록하기 위한 테이블입니다. (기존 `ladders` 대체)
+
+- 포함되어야 할 정보: `mmr`, `경기 승패 기록`, `승률`, `선호 종족`, `by_id` 등
 
 ---
 
-### 3-3. `applications` 테이블 (가입 신청서)
+### 3-4. `applications` 테이블 (가입/승급 신청서)
 
-클랜 가입 신청 정보를 저장합니다.
+클랜 가입 및 승급 신청 리스트를 저장합니다. 가입 테스터의 정보와 메모도 같이 보관합니다.
 
 | 컬럼명 | 타입 | 설명 | 예시 값 |
 |--------|------|------|---------|
@@ -137,9 +124,9 @@ ByClan 클랜원의 모든 정보를 저장합니다.
 
 ---
 
-### 3-4. `notifications` 테이블 (알림)
+### 3-5. `notifications` 테이블 (알림)
 
-사용자에게 보내는 알림 메시지를 저장합니다.
+사용자에게 보내는 알림 목록을 저장합니다.
 
 | 컬럼명 | 타입 | 설명 | 예시 값 |
 |--------|------|------|---------|
@@ -152,26 +139,14 @@ ByClan 클랜원의 모든 정보를 저장합니다.
 
 ---
 
-### 3-5. `promotion_logs` 테이블 (승격 기록)
+### 3-6. `clanpoint_logs` 및 `mmr_logs` (포인트 및 MMR 로그)
 
-역할 변경 이력을 저장합니다. (`sql/queries/DATABASE-QUERIES.sql`에서 생성)
+- **`clanpoint_logs`**: 클랜 포인트(cp) 변경 내역을 저장합니다. (기존 `point_logs`)
+- **`mmr_logs`**: 트리거 발동을 통해 클랜원의 MMR 포인트 변경 내역을 저장합니다.
 
-| 컬럼명 | 타입 | 설명 |
-|--------|------|------|
-| `id` | UUID | 기본 키 |
-| `user_id` | UUID | 역할이 변경된 사용자 ID |
-| `old_role` | TEXT | 변경 전 역할 |
-| `new_role` | TEXT | 변경 후 역할 |
-| `promoted_by` | UUID | 역할을 변경한 운영진 ID |
-| `promoted_at` | TIMESTAMP | 변경 시간 |
-| `notes` | TEXT | 변경 사유 메모 |
-| `created_at` | TIMESTAMP | 레코드 생성 시간 |
+### 3-7. `developer_settings` 테이블 (개발자 도구 목록)
 
----
-
-### 3-6. `developer_settings` 테이블 (시스템 설정)
-
-앱 전역 설정값을 저장합니다.
+개발자 도구 목록 및 시스템 설정값을 저장합니다.
 
 | 컬럼명 | 타입 | 설명 | 예시 |
 |--------|------|------|------|
@@ -180,9 +155,9 @@ ByClan 클랜원의 모든 정보를 저장합니다.
 
 ---
 
-### 3-7. `match_bets` 테이블 (매치 베팅)
+### 3-8. `match_bets` 테이블 (매치 배팅 내역)
 
-래더 매치에 대한 포인트 베팅 정보를 저장합니다.
+각 매치에 대한 배팅 내역 처리 목록을 저장합니다.
 
 | 컬럼명 | 타입 | 설명 |
 |--------|------|------|
@@ -192,6 +167,23 @@ ByClan 클랜원의 모든 정보를 저장합니다.
 | `amount` | INT | 베팅한 포인트 수 |
 | `team` | TEXT | 베팅한 팀 (`A` 또는 `B`) |
 | `created_at` | TIMESTAMP | 베팅 시간 |
+
+---
+
+### 3-9. 게시판 및 커뮤니티 관련 테이블
+
+- **`admin_posts`**: 운영자 전용 게시판입니다.
+- **`notice_posts`**: 공지사항 게시판입니다.
+- **`comments`**: 게시글의 댓글 목록을 저장합니다.
+- **`post_votes`**: 자유게시판의 추천, 비추천 선택 여부를 기록합니다. (추후 다른 게시판 기록도 추가 예정)
+
+---
+
+### 3-10. 시스템 감사 및 기타 테이블
+
+- **`admin_audit_logs`**: 관리자(admin)의 활동 내역 로그이며 감사 수단입니다.
+- **`v_manual_activity_review`**: 감사 목적의 뷰/테이블이지만 아직 코드가 완벽히 정립되지 않았습니다.
+- **무시해도 되는 테이블 (외부 참고자료)**: `latest_rankings`, `legacy_matches`, `player_analytics`, `synergy_scores`
 
 ---
 
@@ -218,8 +210,8 @@ CREATE TABLE IF NOT EXISTS promotion_logs (...)
 → 역할 변경 이력 테이블을 없으면 생성합니다.
 → `IF NOT EXISTS`로 이미 있어도 에러가 발생하지 않습니다.
 
-#### 섹션 3: ladder_matches 구조 확인
-→ 래더 매치 테이블 컬럼 목록 확인
+#### 섹션 3: ladder_record 구조 확인
+→ 래더 매치 기록 테이블 컬럼 목록 확인
 
 #### 섹션 4: 역할별 사용자 확인
 ```sql
@@ -266,7 +258,7 @@ FROM profiles GROUP BY role ORDER BY COUNT(*) DESC;
 #### 섹션 10: 인덱스 생성
 ```sql
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
-CREATE INDEX IF NOT EXISTS idx_ladder_matches_team_a ON ladder_matches USING GIN(team_a_ids);
+-- 변경 필요: 개인 기준 테이블인 ladder_record 구조에 맞춘 인덱스로 재설정해야 합니다.
 ```
 → 자주 검색하는 컬럼에 인덱스를 만들어 쿼리 속도를 높입니다.
 → `GIN 인덱스`: 배열 컬럼 검색에 최적화된 인덱스 유형

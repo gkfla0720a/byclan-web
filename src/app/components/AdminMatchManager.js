@@ -60,8 +60,8 @@ export default function AdminMatchManager() {
       }
 
       const { data, error } = await supabase
-        .from('ladder_matches')
-        .select('id, status, match_type, winner_team, map_name, score_a, score_b, created_at, team_a_ids, team_b_ids')
+        .from('ladder_match_sets')
+        .select('id, match_id, status, race_type, winner_team, created_at')
         .order('created_at', { ascending: false })
         .limit(80);
 
@@ -104,21 +104,18 @@ export default function AdminMatchManager() {
     setSavingId(match.id);
     try {
       const { data: current } = await supabase
-        .from('ladder_matches')
+        .from('ladder_match_sets')
         .select('*')
         .eq('id', match.id)
         .single();
 
       const payload = {
         status: match.status,
-        score_a: Number(match.score_a || 0),
-        score_b: Number(match.score_b || 0),
         winner_team: match.winner_team || null,
-        map_name: match.map_name || null,
       };
 
       const { error } = await supabase
-        .from('ladder_matches')
+        .from('ladder_match_sets')
         .update(payload)
         .eq('id', match.id);
 
@@ -130,15 +127,11 @@ export default function AdminMatchManager() {
         actorRole: myProfile?.role,
         category: 'admin',
         actionType: 'match_update',
-        targetTable: 'ladder_matches',
+        targetTable: 'ladder_match_sets',
         targetId: match.id,
         summary: `경기 기록 수동 수정 (${match.id})`,
         beforeData: current,
         afterData: payload,
-        meta: {
-          team_a_ids: current?.team_a_ids || [],
-          team_b_ids: current?.team_b_ids || [],
-        },
         note: '관리자 경기 기록 수정',
         isTestData: Boolean(current?.is_test_data),
       });
@@ -162,30 +155,29 @@ export default function AdminMatchManager() {
     setDeletingId(match.id);
     try {
       const { data: current } = await supabase
-        .from('ladder_matches')
+        .from('ladder_match_sets')
         .select('*')
         .eq('id', match.id)
         .single();
 
-      // FK 충돌 방지를 위해 하위 데이터부터 삭제
-      const { data: deletedSets, error: setErr } = await supabase
-        .from('match_sets')
+      const { data: deletedRecords, error: recordErr } = await supabase
+        .from('ladder_record')
         .delete()
         .select('id')
-        .eq('match_id', match.id);
-      if (setErr) throw setErr;
+        .eq('match_id', match.match_id);
+      if (recordErr) throw recordErr;
 
       const { data: deletedBets, error: betErr } = await supabase
         .from('match_bets')
         .delete()
         .select('id')
-        .eq('match_id', match.id);
+        .eq('match_id', match.match_id);
       if (betErr) throw betErr;
 
       const { error: matchErr } = await supabase
-        .from('ladder_matches')
+        .from('ladder_match_sets')
         .delete()
-        .eq('id', match.id);
+        .eq('match_id', match.match_id);
       if (matchErr) throw matchErr;
 
       await recordAdminAudit(supabase, {
@@ -194,18 +186,14 @@ export default function AdminMatchManager() {
         actorRole: myProfile?.role,
         category: 'admin',
         actionType: 'match_delete',
-        targetTable: 'ladder_matches',
+        targetTable: 'ladder_match_sets',
         targetId: match.id,
         summary: `경기 기록 수동 삭제 (${match.id})`,
         beforeData: current,
         afterData: {
           deleted: true,
-          deleted_set_count: (deletedSets || []).length,
+          deleted_record_count: (deletedRecords || []).length,
           deleted_bet_count: (deletedBets || []).length,
-        },
-        meta: {
-          team_a_ids: current?.team_a_ids || [],
-          team_b_ids: current?.team_b_ids || [],
         },
         note: '관리자 경기 기록 삭제',
         isTestData: Boolean(current?.is_test_data),
@@ -244,7 +232,7 @@ export default function AdminMatchManager() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="매치 ID, 상태, 맵명 검색"
+            placeholder="매치 ID, 상태, 유형 검색"
             className="w-full sm:max-w-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200"
           />
           <button
@@ -260,7 +248,7 @@ export default function AdminMatchManager() {
         {filteredMatches.map((m) => (
           <div key={m.id} className="bg-[#0b0f1c] border border-gray-700/60 rounded-2xl p-3 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-3">
-              <p className="text-cyan-300 text-xs sm:text-sm font-bold break-all">{m.id}</p>
+              <p className="text-cyan-300 text-xs sm:text-sm font-bold break-all">SET ID: {m.id} (MATCH: {m.match_id})</p>
               <p className="text-gray-500 text-[11px]">생성일: {new Date(m.created_at).toLocaleString()}</p>
             </div>
 
@@ -288,32 +276,10 @@ export default function AdminMatchManager() {
               </label>
 
               <label className="text-[11px] text-gray-400">
-                스코어 A
+                유형 (예: 4v4)
                 <input
-                  type="number"
-                  min="0"
-                  value={m.score_a ?? 0}
-                  onChange={(e) => updateLocalField(m.id, 'score_a', e.target.value)}
-                  className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm text-white"
-                />
-              </label>
-
-              <label className="text-[11px] text-gray-400">
-                스코어 B
-                <input
-                  type="number"
-                  min="0"
-                  value={m.score_b ?? 0}
-                  onChange={(e) => updateLocalField(m.id, 'score_b', e.target.value)}
-                  className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm text-white"
-                />
-              </label>
-
-              <label className="text-[11px] text-gray-400">
-                맵 이름
-                <input
-                  value={m.map_name || ''}
-                  onChange={(e) => updateLocalField(m.id, 'map_name', e.target.value)}
+                  value={m.race_type || ''}
+                  disabled
                   className="mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm text-white"
                 />
               </label>

@@ -80,7 +80,7 @@ function MatchStatus() {
 
       try {
         const { data, error } = await filterVisibleTestData(supabase
-          .from('ladder_matches')
+          .from('ladder_match_sets')
           .select('*')
           .in('status', ['모집중', '진행중'])
           .order('created_at', { ascending: false })
@@ -139,9 +139,9 @@ function MatchStatus() {
                 <span className={`text-xs font-bold px-2 py-1 rounded-full ${getStatusColor(match.status)}`}>
                   {getStatusText(match.status)}
                 </span>
-                <span className="text-gray-300 font-medium">{match.match_type || '1v1'}</span>
+                <span className="text-gray-300 font-medium">{match.race_type || '매치'}</span>
               </div>
-              <span className="text-gray-500 text-xs">{match.map_name || '맵 선택 중'}</span>
+              <span className="text-gray-500 text-xs">세트 {match.set_number || 1} 진행 중</span>
             </div>
           ))
         )}
@@ -195,8 +195,8 @@ function ActivityLog() {
             .order('created_at', { ascending: false })
             .limit(2)),
           filterVisibleTestData(supabase
-            .from('ladder_matches')
-            .select('id, match_type, status, created_at, map_name')
+            .from('ladder_match_sets')
+            .select('id, match_id, race_type, status, created_at')
             .order('created_at', { ascending: false })
             .limit(2))
         ]);
@@ -229,7 +229,7 @@ function ActivityLog() {
           ...(matchesResult.data || []).map(match => ({
             id: `match-${match.id}`,
             type: '래더',
-            message: `${match.match_type || '1v1'} 매치가 ${match.status || '생성'} 상태로 등록되었습니다${match.map_name ? ` · ${match.map_name}` : ''}.`,
+            message: `${match.race_type || '매치'}가 ${match.status || '생성'} 상태로 등록되었습니다.`,
             time: formatRelativeTime(match.created_at),
             createdAt: match.created_at,
             icon: '⚔️'

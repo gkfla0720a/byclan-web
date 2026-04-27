@@ -57,7 +57,7 @@ WHERE is_test_account = true;
 
 -- ============================================================
 -- 5. 배팅 정산 DB 함수 및 트리거
--- ladder_matches.status 가 '완료'로 바뀔 때 자동 실행
+-- ladder_match_sets.status 가 '완료'로 바뀔 때 자동 실행
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.fn_settle_match_bets()
@@ -80,66 +80,54 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- 매치 종료 참여 보상 (500 CP): 팀 A/B 모든 참가자에게 1회 지급
-  FOREACH v_player_id IN ARRAY COALESCE(NEW.team_a_ids, '{}'::uuid[])
-  LOOP
-    SELECT COALESCE(clan_point, 0) INTO v_new_balance
-    FROM public.profiles WHERE id = v_player_id;
+  -- 매치 종료 참여 보상 (500 CP): 팀 A/B 참가자에게 지급 (JSONB 데이터에서 추출)
+  v_player_id := (NEW.team_a_entry->>'user_id')::uuid;
+  IF v_player_id IS NOT NULL THEN
+      SELECT COALESCE(clan_point, 0) INTO v_new_balance
+      FROM public.profiles WHERE id = v_player_id;
 
-    v_new_balance := v_new_balance + 500;
+      v_new_balance := v_new_balance + 500;
 
-    UPDATE public.profiles
-    SET clan_point = v_new_balance
-    WHERE id = v_player_id;
+      UPDATE public.profiles SET clan_point = v_new_balance WHERE id = v_player_id;
 
-    INSERT INTO public.point_logs (user_id, amount, reason, type, balance_after, related_id)
-    VALUES (
-      v_player_id,
-      500,
-      '매치 참여 보상 (종료 정산): ' || NEW.id::text,
-      'match_reward',
-      v_new_balance,
-      NEW.id::text
-    );
+      INSERT INTO public.clanpoint_logs (user_id, amount, reason, type, balance_after, related_id)
+      VALUES (
+        v_player_id, 500,
+        '매치 참여 보상 (종료 정산): ' || NEW.match_id::text,
+        'match_reward', v_new_balance, NEW.match_id::text
+      );
 
-    INSERT INTO public.notifications (user_id, title, message)
-    VALUES (
-      v_player_id,
-      '🎮 매치 참여 보상 지급',
-      '매치 종료 정산으로 500CP가 지급되었습니다. 현재 잔액: ' || v_new_balance || 'CP'
-    );
-  END LOOP;
+      INSERT INTO public.notifications (user_id, title, message)
+      VALUES (
+        v_player_id, '🎮 매치 참여 보상 지급',
+        '매치 종료 정산으로 500CP가 지급되었습니다. 현재 잔액: ' || v_new_balance || 'CP'
+      );
+  END IF;
 
-  FOREACH v_player_id IN ARRAY COALESCE(NEW.team_b_ids, '{}'::uuid[])
-  LOOP
-    SELECT COALESCE(clan_point, 0) INTO v_new_balance
-    FROM public.profiles WHERE id = v_player_id;
+  v_player_id := (NEW.team_b_entry->>'user_id')::uuid;
+  IF v_player_id IS NOT NULL THEN
+      SELECT COALESCE(clan_point, 0) INTO v_new_balance
+      FROM public.profiles WHERE id = v_player_id;
 
-    v_new_balance := v_new_balance + 500;
+      v_new_balance := v_new_balance + 500;
 
-    UPDATE public.profiles
-    SET clan_point = v_new_balance
-    WHERE id = v_player_id;
+      UPDATE public.profiles SET clan_point = v_new_balance WHERE id = v_player_id;
 
-    INSERT INTO public.point_logs (user_id, amount, reason, type, balance_after, related_id)
-    VALUES (
-      v_player_id,
-      500,
-      '매치 참여 보상 (종료 정산): ' || NEW.id::text,
-      'match_reward',
-      v_new_balance,
-      NEW.id::text
-    );
+      INSERT INTO public.clanpoint_logs (user_id, amount, reason, type, balance_after, related_id)
+      VALUES (
+        v_player_id, 500,
+        '매치 참여 보상 (종료 정산): ' || NEW.match_id::text,
+        'match_reward', v_new_balance, NEW.match_id::text
+      );
 
-    INSERT INTO public.notifications (user_id, title, message)
-    VALUES (
-      v_player_id,
-      '🎮 매치 참여 보상 지급',
-      '매치 종료 정산으로 500CP가 지급되었습니다. 현재 잔액: ' || v_new_balance || 'CP'
-    );
-  END LOOP;
+      INSERT INTO public.notifications (user_id, title, message)
+      VALUES (
+        v_player_id, '🎮 매치 참여 보상 지급',
+        '매치 종료 정산으로 500CP가 지급되었습니다. 현재 잔액: ' || v_new_balance || 'CP'
+      );
+  END IF;
 
-  v_winning_team := NEW.winning_team;
+  v_winning_team := NEW.winner_team;
 
   -- winning_team 이 없으면 베팅 정산은 생략 (참여보상은 이미 지급됨)
   IF v_winning_team IS NULL OR v_winning_team = '' THEN
@@ -149,14 +137,14 @@ BEGIN
   -- 승리팀 베팅 합계
   SELECT COALESCE(SUM(bet_amount), 0) INTO v_total_winner_bets
   FROM public.match_bets
-  WHERE match_id = NEW.id
+  WHERE match_id = NEW.match_id
     AND team_choice = v_winning_team
     AND status = 'pending';
 
   -- 전체 베팅 합계
   SELECT COALESCE(SUM(bet_amount), 0) INTO v_total_all_bets
   FROM public.match_bets
-  WHERE match_id = NEW.id
+  WHERE match_id = NEW.match_id
     AND status = 'pending';
 
   -- 베팅 없으면 종료
@@ -167,7 +155,7 @@ BEGIN
   -- 각 베팅 건별 정산
   FOR v_bet IN
     SELECT * FROM public.match_bets
-    WHERE match_id = NEW.id AND status = 'pending'
+    WHERE match_id = NEW.match_id AND status = 'pending'
   LOOP
     IF v_bet.team_choice = v_winning_team THEN
       -- 승리팀 베팅: 전체 베팅 풀을 투자 비율대로 분배
@@ -188,14 +176,14 @@ BEGIN
       WHERE id = v_bet.user_id;
 
       -- 포인트 로그
-      INSERT INTO public.point_logs (user_id, amount, reason, type, balance_after, related_id)
+      INSERT INTO public.clanpoint_logs (user_id, amount, reason, type, balance_after, related_id)
       VALUES (
         v_bet.user_id,
         v_payout,
-        '베팅 정산 (승리) 매치: ' || NEW.id::text,
+        '베팅 정산 (승리) 매치: ' || NEW.match_id::text,
         'bet_settle_win',
         v_new_balance,
-        NEW.id::text
+        NEW.match_id::text
       );
 
       -- 알림 (승리)
@@ -218,14 +206,14 @@ BEGIN
       FROM public.profiles WHERE id = v_bet.user_id;
 
       -- 포인트 로그 (패배 기록)
-      INSERT INTO public.point_logs (user_id, amount, reason, type, balance_after, related_id)
+      INSERT INTO public.clanpoint_logs (user_id, amount, reason, type, balance_after, related_id)
       VALUES (
         v_bet.user_id,
         -v_bet.bet_amount,
-        '베팅 정산 (패배) 매치: ' || NEW.id::text,
+        '베팅 정산 (패배) 매치: ' || NEW.match_id::text,
         'bet_settle_loss',
         v_new_balance,
-        NEW.id::text
+        NEW.match_id::text
       );
 
       -- 알림 (패배)
@@ -248,9 +236,9 @@ END;
 $$;
 
 -- 트리거 등록
-DROP TRIGGER IF EXISTS trg_ladder_matches_settle_bets ON public.ladder_matches;
-CREATE TRIGGER trg_ladder_matches_settle_bets
-  AFTER UPDATE OF status ON public.ladder_matches
+DROP TRIGGER IF EXISTS trg_ladder_match_sets_settle_bets ON public.ladder_match_sets;
+CREATE TRIGGER trg_ladder_match_sets_settle_bets
+  AFTER UPDATE OF status ON public.ladder_match_sets
   FOR EACH ROW EXECUTE FUNCTION public.fn_settle_match_bets();
 
 -- ============================================================
@@ -309,12 +297,12 @@ GRANT EXECUTE ON FUNCTION public.fn_get_match_bet_odds(uuid) TO authenticated;
 SELECT trigger_name, event_manipulation, event_object_table
 FROM information_schema.triggers
 WHERE trigger_schema = 'public'
-  AND trigger_name = 'trg_ladder_matches_settle_bets';
+  AND trigger_name = 'trg_ladder_match_sets_settle_bets';
 
 -- 컬럼 확인
 SELECT column_name, data_type, column_default
 FROM information_schema.columns
 WHERE table_schema = 'public'
-  AND table_name IN ('match_bets', 'point_logs', 'profiles')
+  AND table_name IN ('match_bets', 'clanpoint_logs', 'profiles')
   AND column_name IN ('status', 'payout', 'settled_at', 'type', 'balance_after', 'related_id', 'last_daily_bonus_at')
 ORDER BY table_name, column_name;

@@ -180,9 +180,33 @@ export default function MatchCenter({ matchId, onExit }) {
     if (!user) return;
     setMyUserId(user.id);
 
-    const { data: m } = await supabase
-      .from('ladder_matches').select('*, profiles(*)').eq('id', matchId).single();
-    if (!m) return;
+    const { data: sets } = await supabase
+      .from('ladder_match_sets')
+      .select('*')
+      .eq('match_id', matchId)
+      .order('set_number', { ascending: true });
+      
+    const { data: records } = await supabase
+      .from('ladder_record')
+      .select('*, profiles(*)')
+      .eq('match_id', matchId);
+
+    if (!sets || sets.length === 0 || !records) return;
+    
+    const scoreA = sets.filter(s => s.winner_team === 'A').length;
+    const scoreB = sets.filter(s => s.winner_team === 'B').length;
+    const matchType = records.filter(r => r.team === 'A').length;
+    
+    const m = {
+      ...sets[0], 
+      match_sets: sets,
+      team_a_ids: records.filter(r => r.team === 'A').map(r => r.user_id),
+      team_b_ids: records.filter(r => r.team === 'B').map(r => r.user_id),
+      profiles: records.map(r => r.profiles),
+      score_a: scoreA,
+      score_b: scoreB,
+      match_type: matchType
+    };
     setMatch(m);
 
     const { data: prof } = await supabase

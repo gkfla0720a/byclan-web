@@ -101,33 +101,33 @@ async function run() {
       DELETE FROM public.match_bets
       WHERE user_id = ANY($1::uuid[])
          OR match_id IN (
-           SELECT id FROM public.ladder_matches WHERE host_id = ANY($1::uuid[])
+           SELECT id FROM public.ladder_record WHERE host_id = ANY($1::uuid[])
          )
     `, [TEST_IDS]);
     console.log('  ✓ match_bets 삭제');
 
-    // 1-2. match_sets
+    // 1-2. ladder_match_sets
     await client.query(`
-      DELETE FROM public.match_sets
+      DELETE FROM public.ladder_match_sets
       WHERE match_id IN (
-        SELECT id FROM public.ladder_matches WHERE host_id = ANY($1::uuid[])
+        SELECT id FROM public.ladder_record WHERE host_id = ANY($1::uuid[])
       )
       OR match_id IN (
-        SELECT id FROM public.ladder_matches
+        SELECT id FROM public.ladder_record
         WHERE team_a_ids && $1::uuid[]
            OR team_b_ids && $1::uuid[]
       )
     `, [TEST_IDS]);
-    console.log('  ✓ match_sets 삭제');
+    console.log('  ✓ ladder_match_sets 삭제');
 
-    // 1-3. ladder_matches
+    // 1-3. ladder_record
     await client.query(`
-      DELETE FROM public.ladder_matches
+      DELETE FROM public.ladder_record
       WHERE host_id = ANY($1::uuid[])
          OR team_a_ids && $1::uuid[]
          OR team_b_ids && $1::uuid[]
     `, [TEST_IDS]);
-    console.log('  ✓ ladder_matches 삭제');
+    console.log('  ✓ ladder_record 삭제');
 
     // 1-4. posts
     await client.query(`DELETE FROM public.posts WHERE user_id = ANY($1::uuid[])`, [TEST_IDS]);
@@ -141,9 +141,9 @@ async function run() {
     await client.query(`DELETE FROM public.notifications WHERE user_id = ANY($1::uuid[])`, [TEST_IDS]);
     console.log('  ✓ notifications 삭제');
 
-    // 1-7. point_logs
-    await client.query(`DELETE FROM public.point_logs WHERE user_id = ANY($1::uuid[])`, [TEST_IDS]);
-    console.log('  ✓ point_logs 삭제');
+    // 1-7. clanpoint_logs
+    await client.query(`DELETE FROM public.clanpoint_logs WHERE user_id = ANY($1::uuid[])`, [TEST_IDS]);
+    console.log('  ✓ clanpoint_logs 삭제');
 
     // 1-8. applications (user_id, tester_id 모두)
     await client.query(`
@@ -153,13 +153,13 @@ async function run() {
     `, [TEST_IDS]);
     console.log('  ✓ applications 삭제');
 
-    // 1-9. ladders (is_test_data 또는 user_id 기준)
+    // 1-9. ladder_rankings (is_test_data 또는 user_id 기준)
     await client.query(`
-      DELETE FROM public.ladders
+      DELETE FROM public.ladder_rankings
       WHERE is_test_data = true
          OR user_id = ANY($1::uuid[])
     `, [TEST_IDS]);
-    console.log('  ✓ ladders 삭제');
+    console.log('  ✓ ladder_rankings 삭제');
 
     // 1-10. profiles
     await client.query(`DELETE FROM public.profiles WHERE id = ANY($1::uuid[])`, [TEST_IDS]);
@@ -219,9 +219,10 @@ async function run() {
     for (const m of MATCHES) {
       const createdAt = daysAgo(m.days);
 
-      // ladder_matches 삽입
+      // ladder_record 삽입
+      // FIXME: 스키마가 ladder_matches 구조를 띄고 있으나, 개인 기준으로 마이그레이션 적용 후 쿼리 변경이 필요합니다.
       await client.query(`
-        INSERT INTO public.ladder_matches
+        INSERT INTO public.ladder_record
           (id, host_id, status, match_type, team_a_ids, team_b_ids,
            team_a_races, team_b_races, winning_team, map_name,
            score_a, score_b, created_at, is_test_data)
@@ -237,11 +238,11 @@ async function run() {
         createdAt,
       ]);
 
-      // match_sets 삽입 (bo3 기준 세트 생성)
+      // ladder_match_sets 삽입 (bo3 기준 세트 생성)
       const sets = buildSets(m.id, m.sa, m.sb, m.ta[0], m.tb[0], createdAt);
       for (const s of sets) {
         await client.query(`
-          INSERT INTO public.match_sets
+          INSERT INTO public.ladder_match_sets
             (id, match_id, set_number, race_type,
              team_a_entry, team_b_entry,
              winner_team, status, created_at,
@@ -274,7 +275,7 @@ async function run() {
         ? Math.round((le.win / (le.win + le.lose)) * 100) + '%'
         : '0%';
       await client.query(`
-        INSERT INTO public.ladders
+        INSERT INTO public.ladder_rankings
           (user_id, nickname, ladder_mmr, race, win, lose, win_rate, rank, is_test_data)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,false)
       `, [le.user_id, le.nickname, le.ladder_mmr, le.race, le.win, le.lose, wr, le.rank]);
@@ -312,14 +313,14 @@ async function run() {
     console.log(`  ✓ 알림 ${notifications.length}건 등록`);
 
     // ══════════════════════════════════════════════════════════
-    // PHASE 7 : 포인트 로그 등록
+    // PHASE 7 : 클랜 포인트 로그 등록
     // ══════════════════════════════════════════════════════════
     console.log('\n💰 PHASE 7 — 포인트 로그 등록');
 
     const pointLogs = buildPointLogs();
     for (const pl of pointLogs) {
       await client.query(`
-        INSERT INTO public.point_logs
+        INSERT INTO public.clanpoint_logs
           (user_id, amount, reason, created_at)
         VALUES ($1,$2,$3,$4)
       `, [pl.user_id, pl.amount, pl.reason, daysAgo(pl.days)]);
@@ -366,13 +367,13 @@ async function run() {
       SELECT
         (SELECT COUNT(*) FROM public.profiles) AS profiles,
         (SELECT COUNT(*) FROM auth.users) AS auth_users,
-        (SELECT COUNT(*) FROM public.ladder_matches) AS matches,
-        (SELECT COUNT(*) FROM public.match_sets) AS match_sets,
+        (SELECT COUNT(*) FROM public.ladder_record) AS matches,
+        (SELECT COUNT(*) FROM public.ladder_match_sets) AS match_sets,
         (SELECT COUNT(*) FROM public.posts) AS posts,
         (SELECT COUNT(*) FROM public.notifications) AS notifications,
-        (SELECT COUNT(*) FROM public.point_logs) AS point_logs,
+        (SELECT COUNT(*) FROM public.clanpoint_logs) AS clanpoint_logs,
         (SELECT COUNT(*) FROM public.applications) AS applications,
-        (SELECT COUNT(*) FROM public.ladders) AS ladders
+        (SELECT COUNT(*) FROM public.ladder_rankings) AS ladder_rankings
     `);
     console.log('최종 카운트:', JSON.stringify(verify.rows[0], null, 2));
 

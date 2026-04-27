@@ -332,10 +332,10 @@ profiles (PK: id)
   ├─ activity_logs (actor_id, target_user_id)
   ├─ admin_posts (author_id)
   ├─ applications (user_id, tester_id, reviewed_by)
-  ├─ ladder_matches (host_id, created_by)
+  ├─ ladder_record (host_id, created_by - 개편 구조에 따라 달라질 수 있음)
   ├─ match_bets (user_id)
   ├─ notifications (user_id)
-  ├─ point_logs (user_id)
+  ├─ clanpoint_logs (user_id)
   ├─ posts (user_id)
   └─ (15+ 테이블)
 ```
@@ -346,12 +346,12 @@ profiles (PK: id)
 |----------|----------|-------|------|
 | admin_audit_logs | ✅ | 2 (SELECT, INSERT) | Management 전용 |
 | activity_logs | ✅ | 2 (SELECT, INSERT) | Management 전용 |
-| match_sets | ✅ | 2 (SELECT, UPDATE) | 참가자 전용 |
+| ladder_match_sets | ✅ | 2 (SELECT, UPDATE) | 참가자 전용 |
 | match_bets | ❌ | 2 (INSERT, SELECT) | ⚠️ RLS 미활성화 |
 | applications | ✅ | 3 | 심사관/지원자 권한 |
 | notifications | ✅ | 3 | 본인 + 심사관 |
 | posts | ✅ | 2 (INSERT, UPDATE) | 작성자만 수정 |
-| ladder_matches | ✅ | 2 | 회원만 생성/방장만 수정 |
+| ladder_record | ✅ | 2 | 회원만 생성/방장만 수정 |
 
 ### 🔴 위험: match_bets 테이블의 RLS 미활성화
 ```sql

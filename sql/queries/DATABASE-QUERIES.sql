@@ -14,7 +14,7 @@ SELECT
     column_default
 FROM information_schema.columns
 WHERE table_schema = 'public'
-    AND table_name IN ('profiles', 'applications', 'ladder_matches', 'notifications', 'developer_settings')
+    AND table_name IN ('profiles', 'applications', 'ladder_record', 'notifications', 'developer_settings')
 ORDER BY table_name, ordinal_position;
 
 -- profiles 레거시 컬럼 확인(있으면 PROFILE-SCHEMA-UNIFIED-MIGRATION.sql 선실행 권장)
@@ -112,34 +112,11 @@ LEFT JOIN public.profiles p ON p.id = a.user_id
 ORDER BY a.created_at DESC
 LIMIT 100;
 
--- 래더 매치 최근 20건
-SELECT id, host_id, status, match_type, created_at
-FROM public.ladder_matches
+-- 개인별 래더 매치 기록 최근 20건
+SELECT id, match_id, user_id, team, is_winner, mmr_change, created_at
+FROM public.ladder_record
 ORDER BY created_at DESC
 LIMIT 20;
-
--- legacy ladders 테이블은 존재 시에만 확인
-DO $$
-DECLARE
-    ladders_preview jsonb;
-BEGIN
-    IF to_regclass('public.ladders') IS NOT NULL THEN
-        EXECUTE $sql$
-            SELECT COALESCE(jsonb_agg(t), '[]'::jsonb)
-            FROM (
-                SELECT *
-                FROM public.ladders
-                LIMIT 20
-            ) AS t
-        $sql$
-        INTO ladders_preview;
-
-        RAISE NOTICE 'public.ladders preview: %', ladders_preview;
-    ELSE
-        RAISE NOTICE 'public.ladders does not exist.';
-    END IF;
-END
-$$;
 
 -- ===================================================================
 -- 5. 인덱스 최적화
@@ -154,10 +131,10 @@ CREATE INDEX IF NOT EXISTS idx_applications_status ON public.applications(status
 CREATE INDEX IF NOT EXISTS idx_applications_user_id ON public.applications(user_id);
 CREATE INDEX IF NOT EXISTS idx_applications_created_at ON public.applications(created_at);
 
-CREATE INDEX IF NOT EXISTS idx_ladder_matches_status ON public.ladder_matches(status);
-CREATE INDEX IF NOT EXISTS idx_ladder_matches_created_at ON public.ladder_matches(created_at);
-CREATE INDEX IF NOT EXISTS idx_ladder_matches_team_a ON public.ladder_matches USING gin(team_a_ids);
-CREATE INDEX IF NOT EXISTS idx_ladder_matches_team_b ON public.ladder_matches USING gin(team_b_ids);
+-- 래더 매치 기록 최적화
+CREATE INDEX IF NOT EXISTS idx_ladder_record_match_id ON public.ladder_record(match_id);
+CREATE INDEX IF NOT EXISTS idx_ladder_record_user_id ON public.ladder_record(user_id);
+CREATE INDEX IF NOT EXISTS idx_ladder_record_created_at ON public.ladder_record(created_at);
 
 -- ===================================================================
 -- 6. 안전 정리 쿼리
@@ -184,7 +161,7 @@ SELECT
     qual
 FROM pg_policies
 WHERE schemaname = 'public'
-    AND tablename IN ('profiles', 'applications', 'ladder_matches', 'match_bets', 'match_sets', 'developer_settings')
+    AND tablename IN ('profiles', 'applications', 'ladder_record', 'match_bets', 'ladder_match_sets', 'developer_settings', 'ladder_rankings')
 ORDER BY tablename, policyname;
 
 -- ===================================================================
@@ -203,11 +180,11 @@ SELECT *
 FROM public.applications
 WHERE NOT EXISTS (SELECT 1 FROM public.applications_backup);
 
-CREATE TABLE IF NOT EXISTS public.ladder_matches_backup (LIKE public.ladder_matches INCLUDING ALL);
-INSERT INTO public.ladder_matches_backup
+CREATE TABLE IF NOT EXISTS public.ladder_record_backup (LIKE public.ladder_record INCLUDING ALL);
+INSERT INTO public.ladder_record_backup
 SELECT *
-FROM public.ladder_matches
-WHERE NOT EXISTS (SELECT 1 FROM public.ladder_matches_backup);
+FROM public.ladder_record
+WHERE NOT EXISTS (SELECT 1 FROM public.ladder_record_backup);
 
 -- ===================================================================
 -- 권장 실행 순서
