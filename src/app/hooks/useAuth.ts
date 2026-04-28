@@ -220,6 +220,16 @@ function getSocialIdentity(authUser: Record<string, unknown>) {
   };
 }
 
+async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Promise<UserProfile> {
+  const { data } = await supabase
+    .from('profile_oauth')
+    .select('discord_id, google_sub, google_email, google_name, google_avatar_url, auth_provider')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!data) return profile;
+  return { ...profile, ...data };
+}
+
 function sanitizeByIdSeed(seed: string): string {
   const cleaned = seed
     .normalize('NFKD')
@@ -280,47 +290,65 @@ async function syncSocialProfileData(
     authProvider,
   } = getSocialIdentity(authUser);
 
-  const updates: Record<string, unknown> = {};
+  const profileUpdates: Record<string, unknown> = {};
+  const oauthUpdates: Record<string, unknown> = {};
 
   if (isDiscordProvider) {
     // discord_id는 아직 없을 때만 백필(최초 로그인 시)합니다.
     // 명시적 연동(linkIdentity) 흐름에서는 auth/callback이 직접 저장합니다.
-    if (discordId && !currentProfile.discord_id) updates.discord_id = discordId;
+    if (discordId && !currentProfile.discord_id) oauthUpdates.discord_id = discordId;
   }
 
   if (isGoogleProvider) {
-    if (googleSub && currentProfile.google_sub !== googleSub) updates.google_sub = googleSub;
-    if (googleEmail && currentProfile.google_email !== googleEmail) updates.google_email = googleEmail;
-    if (googleName && currentProfile.google_name !== googleName) updates.google_name = googleName;
-    if (googleAvatarUrl && currentProfile.google_avatar_url !== googleAvatarUrl) updates.google_avatar_url = googleAvatarUrl;
-    if (authProvider && currentProfile.auth_provider !== authProvider) updates.auth_provider = authProvider;
+    if (googleSub && currentProfile.google_sub !== googleSub) oauthUpdates.google_sub = googleSub;
+    if (googleEmail && currentProfile.google_email !== googleEmail) oauthUpdates.google_email = googleEmail;
+    if (googleName && currentProfile.google_name !== googleName) oauthUpdates.google_name = googleName;
+    if (googleAvatarUrl && currentProfile.google_avatar_url !== googleAvatarUrl) oauthUpdates.google_avatar_url = googleAvatarUrl;
+    if (authProvider && currentProfile.auth_provider !== authProvider) oauthUpdates.auth_provider = authProvider;
   } else if (authProvider && currentProfile.auth_provider !== authProvider) {
-    updates.auth_provider = authProvider;
+    oauthUpdates.auth_provider = authProvider;
   }
 
   if (!currentProfile.by_id || !currentProfile.by_id.trim()) {
     const loginId = extractAccountIdFromAuthUser(authUser, currentProfile);
     const seed = googleName || discordName || loginId || (authUser.email as string)?.split('@')[0] || 'User';
-    updates.by_id = await resolveUniqueById(seed, authUser.id as string);
+    profileUpdates.by_id = await resolveUniqueById(seed, authUser.id as string);
   }
 
-  if (Object.keys(updates).length === 0) {
+  if (Object.keys(profileUpdates).length === 0 && Object.keys(oauthUpdates).length === 0) {
     return currentProfile;
   }
 
-  const { data: updatedProfile, error: updateError } = await supabase
-    .from('profiles')
-    .update(updates)
-    .eq('id', authUser.id)
-    .select('*')
-    .single();
+  let updatedProfile = { ...currentProfile };
 
-  if (updateError) {
-    logger.warn('소셜 프로필 동기화 일부 실패', updateError);
-    return currentProfile;
+  // 핵심 필드(by_id 등) → profiles 테이블
+  if (Object.keys(profileUpdates).length > 0) {
+    const { data, error: updateError } = await supabase
+      .from('profiles')
+      .update(profileUpdates)
+      .eq('id', authUser.id)
+      .select('*')
+      .single();
+    if (updateError) {
+      logger.warn('프로필 동기화 실패', updateError);
+    } else if (data) {
+      updatedProfile = { ...updatedProfile, ...(data as UserProfile) };
+    }
   }
 
-  return (updatedProfile as UserProfile) || currentProfile;
+  // OAuth 필드(discord_id, google_* 등) → profile_oauth 테이블
+  if (Object.keys(oauthUpdates).length > 0) {
+    const { error: oauthError } = await supabase
+      .from('profile_oauth')
+      .upsert({ user_id: authUser.id as string, ...oauthUpdates }, { onConflict: 'user_id' });
+    if (oauthError) {
+      logger.warn('OAuth 프로필 동기화 실패', oauthError);
+    } else {
+      updatedProfile = { ...updatedProfile, ...oauthUpdates };
+    }
+  }
+
+  return updatedProfile;
 }
 
 // ─── HomeGate external store ─────────────────────────────────────────────────
@@ -568,7 +596,8 @@ export function useAuth(): UseAuthReturn {
           .single();
 
         const normalizedNewProfile = normalizeProfileRow(newProfile as Record<string, unknown>);
-        const syncedProfile = await syncSocialProfileData(authUser, normalizedNewProfile as UserProfile);
+        const mergedNewProfile = await mergeOAuthIntoProfile(normalizedNewProfile as UserProfile, authUser.id as string);
+        const syncedProfile = await syncSocialProfileData(authUser, mergedNewProfile);
         setProfile(syncedProfile);
         syncViewerTestAccountFlag(syncedProfile);
         setNeedsSetup(false);
@@ -583,6 +612,7 @@ export function useAuth(): UseAuthReturn {
     }
 
     let nextProfile: UserProfile = normalizeProfileRow(p as Record<string, unknown>) as UserProfile;
+    nextProfile = await mergeOAuthIntoProfile(nextProfile, authUser.id as string);
     nextProfile = await syncSocialProfileData(authUser, nextProfile);
 
     setProfile(nextProfile);
@@ -758,7 +788,8 @@ export function useAuth(): UseAuthReturn {
             return;
           }
           if (data) {
-            const nextProfile = normalizeProfileRow(data as Record<string, unknown>);
+            const normalized = normalizeProfileRow(data as Record<string, unknown>);
+            const nextProfile = await mergeOAuthIntoProfile(normalized as UserProfile, user.id as string);
             setProfile(nextProfile);
             syncViewerTestAccountFlag(nextProfile);
           }
@@ -802,7 +833,8 @@ export function useAuth(): UseAuthReturn {
         return;
       }
       if (data) {
-        const nextProfile = normalizeProfileRow(data as Record<string, unknown>);
+        const normalized = normalizeProfileRow(data as Record<string, unknown>);
+        const nextProfile = await mergeOAuthIntoProfile(normalized as UserProfile, user.id as string);
         setProfile(nextProfile);
         syncViewerTestAccountFlag(nextProfile);
       }

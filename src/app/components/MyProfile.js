@@ -259,9 +259,9 @@ export default function MyProfile() {
       const identityCount = user?.identities?.length || 0;
 
       const { error } = await supabase
-        .from('profiles')
+        .from('profile_oauth')
         .update({ discord_id: null })
-        .eq('id', profile.id);
+        .eq('user_id', profile.id);
       if (error) throw error;
 
       if (discordIdentity && identityCount > 1) {
@@ -296,9 +296,9 @@ export default function MyProfile() {
       const identityCount = user?.identities?.length || 0;
 
       const { error } = await supabase
-        .from('profiles')
+        .from('profile_oauth')
         .update({ google_sub: null, google_email: null, google_name: null, google_avatar_url: null })
-        .eq('id', profile.id);
+        .eq('user_id', profile.id);
       if (error) throw error;
 
       if (googleIdentity && identityCount > 1) {

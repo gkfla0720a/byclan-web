@@ -26,8 +26,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 
-/** 베팅 가능한 포인트 단위 목록 (1,000/5,000/10,000 CP 세 가지 선택지) */
-const BET_AMOUNTS = [1000, 5000, 10000];
+/** 베팅 가능한 포인트 단위 목록 (500/1,000/5,000/10,000 CP 세 가지 선택지) */
+const BET_AMOUNTS = [500,1000, 5000, 10000];
 /** 세트 시작 후 베팅 가능한 시간(초). 5분 = 300초. */
 const BET_WINDOW_SECONDS = 300; // 5분
 
@@ -43,14 +43,14 @@ const RACE_COMBOS = [
   { id: 'PZT', label: '프저테', races: ['Protoss', 'Zerg', 'Terran'] },
   { id: 'RANDOM', label: '대포 (랜덤)', races: null },
 ];
-const REQUIRED_RACE_COMBOS = ['PPP', 'PPT', 'PPZ', 'PZT'];
+// 종족 조합 선택 시 반드시 필요한 조합 ID 목록입니다. 매치 진행 중에 이 조합들은 반드시 한 번씩 사용되어야 합니다.
+const REQUIRED_RACE_COMBOS = ['PPP', 'PPT', 'PPZ', 'PZT', 'RANDOM'];
 
 /** 종족 영문명을 한글 아이콘으로 변환하는 매핑 객체 */
 const RACE_ICONS = { Protoss: '프', Terran: '테', Zerg: '저' };
 
 /**
  * 선택된 종족 조합 ID로 해당 세트의 종족 카드 배열을 반환합니다.
- * RANDOM(대포) 선택 시 프프프를 제외한 무작위 3종족 조합을 생성합니다.
  *
  * @param {string} comboId - 종족 조합 ID (예: 'PPT', 'RANDOM')
  * @returns {string[]} 종족 이름 배열 (예: ['Protoss', 'Protoss', 'Terran'])
@@ -58,14 +58,9 @@ const RACE_ICONS = { Protoss: '프', Terran: '테', Zerg: '저' };
 function getRaceCards(comboId) {
   const combo = RACE_COMBOS.find(c => c.id === comboId);
   if (!combo || !combo.races) {
-    // 대포: 랜덤 3종족 (프프프 제외)
+    // 대포: 프프프 포함 모든 조합 허용
     const pool = ['Protoss', 'Terran', 'Zerg'];
-    let result;
-    do {
-      // Shuffle pool and pick 3 (allows duplicates except all-Protoss)
-      result = [0, 1, 2].map(() => pool[Math.floor(Math.random() * pool.length)]);
-    } while (result.every(r => r === 'Protoss'));
-    return result;
+    return [0, 1, 2].map(() => pool[Math.floor(Math.random() * pool.length)]);
   }
   return combo.races;
 }
@@ -416,7 +411,7 @@ export default function MatchCenter({ matchId, onExit }) {
     const reqCol = team === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
     const entry = selectedEntryByTeam[team];
 
-    const { error } = await supabase.from('match_sets').update({
+    const { error } = await supabase.from('ladder_match_sets').update({
       [column]: true,
       [entryCol]: entry,
       [reqCol]: false,
@@ -436,7 +431,7 @@ export default function MatchCenter({ matchId, onExit }) {
   const requestWithdraw = async (teamLetter) => {
     if (!currentSet || currentSet.winner_team) return;
     const col = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
-    const { error } = await supabase.from('match_sets').update({ [col]: true }).eq('id', currentSet.id);
+    const { error } = await supabase.from('ladder_match_sets').update({ [col]: true }).eq('id', currentSet.id);
     if (error) alert('철회 요청 실패: ' + error.message);
   };
 
@@ -445,7 +440,7 @@ export default function MatchCenter({ matchId, onExit }) {
     if (!currentSet || currentSet.winner_team) return;
     const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
     const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
-    const { error } = await supabase.from('match_sets').update({
+    const { error } = await supabase.from('ladder_match_sets').update({
       [readyCol]: false,
       [reqCol]: false,
     }).eq('id', currentSet.id);
@@ -457,7 +452,7 @@ export default function MatchCenter({ matchId, onExit }) {
     if (!currentSet || !isManagementRole || !managementMode) return;
     const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
     const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
-    const { error } = await supabase.from('match_sets').update({
+    const { error } = await supabase.from('ladder_match_sets').update({
       [readyCol]: false,
       [reqCol]: false,
     }).eq('id', currentSet.id);
@@ -468,7 +463,7 @@ export default function MatchCenter({ matchId, onExit }) {
     if (!currentSet || !canReportSetResult) return;
     try {
       const { error } = await supabase
-        .from('match_sets')
+        .from('ladder_match_sets')
         .update({
           winner_team: winnerTeam,
           status: 'completed',
@@ -498,7 +493,7 @@ export default function MatchCenter({ matchId, onExit }) {
 
         const nextSetNo = (match?.match_sets?.length || 0) + 1;
         const { error: insertErr } = await supabase
-          .from('match_sets')
+          .from('ladder_match_sets')
           .insert({
             match_id: matchId,
             set_number: nextSetNo,

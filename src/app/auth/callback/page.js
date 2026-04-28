@@ -46,10 +46,10 @@ async function handleLinkCallback(user, provider) {
 
     // 다른 계정에 이미 연동된 Discord ID인지 확인
     const { data: conflict } = await supabase
-      .from('profiles')
-      .select('id, by_id')
+      .from('profile_oauth')
+      .select('user_id')
       .eq('discord_id', discordId)
-      .neq('id', user.id)
+      .neq('user_id', user.id)
       .maybeSingle();
 
     if (conflict) {
@@ -60,11 +60,10 @@ async function handleLinkCallback(user, provider) {
       return '/profile?error=discord_conflict';
     }
 
-    // 충돌 없음 – profiles 테이블에 discord_id 저장
+    // 충돌 없음 – profile_oauth 테이블에 discord_id 저장
     await supabase
-      .from('profiles')
-      .update({ discord_id: discordId })
-      .eq('id', user.id);
+      .from('profile_oauth')
+      .upsert({ user_id: user.id, discord_id: discordId }, { onConflict: 'user_id' });
 
     return '/profile?linked=discord';
   }
@@ -91,10 +90,10 @@ async function handleLinkCallback(user, provider) {
 
     // 다른 계정에 이미 연동된 Google 계정인지 확인
     const { data: conflict } = await supabase
-      .from('profiles')
-      .select('id, by_id')
+      .from('profile_oauth')
+      .select('user_id')
       .eq('google_sub', googleSub)
-      .neq('id', user.id)
+      .neq('user_id', user.id)
       .maybeSingle();
 
     if (conflict) {
@@ -104,14 +103,14 @@ async function handleLinkCallback(user, provider) {
       return '/profile?error=google_conflict';
     }
 
-    // 충돌 없음 – profiles 테이블에 Google 정보 저장
-    const updates = {};
+    // 충돌 없음 – profile_oauth 테이블에 Google 정보 저장
+    const updates = { user_id: user.id };
     if (googleSub) updates.google_sub = googleSub;
     if (googleEmail) updates.google_email = googleEmail;
     if (googleName) updates.google_name = googleName;
     if (googleAvatarUrl) updates.google_avatar_url = googleAvatarUrl;
-    if (Object.keys(updates).length > 0) {
-      await supabase.from('profiles').update(updates).eq('id', user.id);
+    if (Object.keys(updates).length > 1) {
+      await supabase.from('profile_oauth').upsert(updates, { onConflict: 'user_id' });
     }
 
     return '/profile?linked=google';
