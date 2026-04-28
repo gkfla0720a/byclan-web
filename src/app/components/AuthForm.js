@@ -146,7 +146,7 @@ export default function AuthForm() {
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email: getLoginEmailFromInput(accountId), password });
       if (error) alert("로그인 정보가 정확하지 않습니다.");
-      else window.location.reload();
+      // 로그인 성공 시 onAuthStateChange(SIGNED_IN)이 발생하여 AuthContext가 자동으로 갱신됩니다.
     }
     setLoading(false);
   };

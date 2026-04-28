@@ -17,11 +17,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser, isInternalAuthEmail } from '@/app/utils/accountId';
 import { isMarkedTestAccount } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 import { useAuthContext } from '../context/AuthContext';
+import { invalidateCache } from '../utils/queryCache';
 
 function normalizeProfileRow(profileData) {
   if (!profileData) return profileData;
@@ -53,6 +55,7 @@ function getTier(mmr) {
  * 현재 로그인한 유저가 자신의 클랜 프로필을 확인하고 수정할 수 있는 페이지입니다.
  */
 export default function MyProfile() {
+  const router = useRouter();
   /** 페이지 전환(탭 이동)을 위한 내비게이션 함수 */
   const navigateTo = useNavigate();
   /** AuthContext에서 전역 프로필 재조회 함수를 가져옵니다. */
@@ -271,7 +274,7 @@ export default function MyProfile() {
         // Discord가 유일한 로그인 수단: 로그아웃 후 홈으로 이동
         await supabase.auth.signOut();
         localStorage.clear();
-        window.location.href = '/';
+        router.push('/');
       }
     } catch (error) {
       alert('Discord 연동 해제 실패: ' + error.message);
@@ -306,7 +309,7 @@ export default function MyProfile() {
       } else {
         await supabase.auth.signOut();
         localStorage.clear();
-        window.location.href = '/';
+        router.push('/');
       }
     } catch (error) {
       alert('Google 연동 해제 실패: ' + error.message);
@@ -384,8 +387,7 @@ export default function MyProfile() {
 
       if (error) throw error;
       alert('프로필이 성공적으로 업데이트되었습니다.');
-      // 전역 인증 상태(헤더 닉네임 등)와 로컬 화면을 모두 갱신합니다.
-      // window.location.reload() 대신 사용하여 페이지 깜빡임 없이 최신 데이터를 반영합니다.
+      invalidateCache('ranking_board');
       await reloadProfile();
       fetchProfileData();
     } catch (error) {
@@ -404,7 +406,7 @@ export default function MyProfile() {
     if (confirm("로그아웃 하시겠습니까?")) {
       await supabase.auth.signOut();
       localStorage.clear();
-      window.location.href = "/";
+      router.push('/');
     }
   };
 

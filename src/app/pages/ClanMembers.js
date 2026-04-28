@@ -22,6 +22,9 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
+import { getCached, setCached, invalidateCache } from '@/app/utils/queryCache';
+
+const CACHE_KEY = 'members_list';
 
 const ROLE_SECTIONS = [
   { key: 'leadership', title: '운영진', roles: ['developer', 'master', 'admin'] },
@@ -172,18 +175,25 @@ export default function ClanMembers() {
     };
 
     const fetchMembers = async () => {
+      const cached = getCached(CACHE_KEY);
+      if (cached) {
+        setMembers(cached);
+        setLoading(false);
+        return;
+      }
+
       try {
         const { data, error } = await fetchMembersWithSchemaFallback();
 
         if (error) throw error;
 
-        setMembers(
-          applyDemoStreamers(
-            (data || [])
-              .map(normalizeMemberRole)
-              .filter((member) => member && member.id && VISIBLE_MEMBER_ROLES.includes(member.role))
-          )
+        const processed = applyDemoStreamers(
+          (data || [])
+            .map(normalizeMemberRole)
+            .filter((member) => member && member.id && VISIBLE_MEMBER_ROLES.includes(member.role))
         );
+        setCached(CACHE_KEY, processed);
+        setMembers(processed);
       } catch (error) {
         console.error('클랜원 목록 로드 실패:', error);
         setError(error);
@@ -246,7 +256,11 @@ export default function ClanMembers() {
       if (error) throw error;
       if (!data?.ok) throw new Error(data?.error || '역할 변경 실패');
 
-      setMembers((prev) => prev.map((item) => item.id === member.id ? { ...item, role: nextRole } : item));
+      setMembers((prev) => {
+        const updated = prev.map((item) => item.id === member.id ? { ...item, role: nextRole } : item);
+        invalidateCache(CACHE_KEY);
+        return updated;
+      });
     } catch (error) {
       alert(`등급 변경 실패: ${error.message}`);
     } finally {

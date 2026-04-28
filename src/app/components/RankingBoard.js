@@ -11,6 +11,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestAccounts, isMarkedTestData } from '@/app/utils/testData';
+import { getCached, setCached } from '@/app/utils/queryCache';
+
+const CACHE_KEY = 'ranking_board';
 
 const TIER_META = [
   { key: 'challenger', label: '챌린저', min: 2400, badge: 'C', tone: 'from-amber-200 via-yellow-400 to-amber-600', ring: 'ring-amber-300/70' },
@@ -124,6 +127,13 @@ export default function RankingBoard() {
 
   useEffect(() => {
     const fetchRankings = async () => {
+      const cached = getCached(CACHE_KEY);
+      if (cached) {
+        setRankings(cached);
+        setLoading(false);
+        return;
+      }
+
       try {
         const { data, error: fetchError } = await filterVisibleTestAccounts(
           supabase
@@ -136,6 +146,7 @@ export default function RankingBoard() {
         );
 
         if (fetchError) throw fetchError;
+        if (data) setCached(CACHE_KEY, data);
         setRankings(data || []);
       } catch (err) {
         console.error('랭킹 로드 실패:', err);

@@ -486,7 +486,7 @@ export function useAuth(): UseAuthReturn {
       await new Promise<void>(resolve => setTimeout(resolve, 3000));
       try { await supabase.auth.signOut(); } catch (signOutErr) { logger.error('로그아웃 중 오류', signOutErr); }
       localStorage.clear();
-      window.location.reload();
+      // signOut이 onAuthStateChange(SIGNED_OUT)을 발생시켜 React 상태를 자동 초기화합니다.
     };
 
     runRecheck().catch(async err => {
@@ -495,7 +495,7 @@ export function useAuth(): UseAuthReturn {
       // 재확인 중 오류가 발생해도 로그아웃하여 사용자가 엉킨 상태에 머무르지 않도록 합니다.
       try { await supabase.auth.signOut(); } catch (signOutErr) { logger.error('로그아웃 중 오류', signOutErr); }
       localStorage.clear();
-      window.location.reload();
+      // signOut이 onAuthStateChange(SIGNED_OUT)을 발생시켜 React 상태를 자동 초기화합니다.
     });
   }, [user, profile, authLoading]);
 

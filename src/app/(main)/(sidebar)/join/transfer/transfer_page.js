@@ -12,6 +12,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
 
 /** 정회원 신청 가능 최소 수습 기간(일) */
@@ -22,6 +23,7 @@ const MIN_ROOKIE_DAYS = 7;
  * 정회원 전환 신청 UI를 렌더링합니다.
  */
 export default function JoinTransferPage() {
+  const router = useRouter();
   /** 현재 로그인 유저 프로필 */
   const [profile, setProfile] = useState(null);
   /** 데이터 로딩 여부 */
@@ -34,6 +36,8 @@ export default function JoinTransferPage() {
   const [resultMsg, setResultMsg] = useState('');
 
   useEffect(() => {
+    // 이미 프로필 데이터가 로드되었다면 다시 실행하지 않음
+    if (profile) return;
     const load = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -45,8 +49,9 @@ export default function JoinTransferPage() {
           .eq('id', user.id)
           .single();
 
-        setProfile(p);
-
+        if (p)setProfile(p);
+        
+        // 신청 여부 확인 (applications 테이블에서 'TRANSFER_' 마커로 구분)
         if (p?.id) {
           // applications 테이블에서 전환 신청 여부 확인
           // notifications에 의존하던 방식을 제거하고 applications를 단일 출처로 사용합니다.
@@ -90,13 +95,13 @@ export default function JoinTransferPage() {
 
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
           <button
-            onClick={() => window.location.assign('/')}
+            onClick={() => router.push('/')}
             className="px-5 py-2.5 rounded-lg font-bold text-sm bg-slate-700 text-white hover:bg-slate-600 transition-colors"
           >
             홈으로 이동
           </button>
           <button
-            onClick={() => window.location.assign('/join')}
+            onClick={() => router.push('/join')}
             className="px-5 py-2.5 rounded-lg font-bold text-sm bg-slate-800 text-slate-200 border border-slate-600 hover:bg-slate-700 transition-colors"
           >
             가입 안내 보기
