@@ -47,6 +47,7 @@ export default function PostDetailPage() {
 
   // 3. 전체 데이터 초기 로딩
   useEffect(() => {
+
     const fetchAllData = async () => {
       // CCTV 끄기 핵심: 이미 현재 글 데이터가 있으면 멈춤! (불필요한 리로딩 방지)
       if (post && post.id == postId) return;
