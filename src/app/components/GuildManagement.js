@@ -19,7 +19,7 @@ import { supabase } from '@/supabase';
 import { isInternalAuthEmail } from '@/app/utils/accountId';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
 import { grantRankPromotionBonus } from '../utils/pointSystem';
-import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
+import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/app/utils/testData';
 
 /** 마스터 위임 재인증의 유효 시간: 5분 (밀리초 단위) */
 const DELEGATION_VERIFY_WINDOW_MS = 5 * 60 * 1000;
@@ -179,15 +179,26 @@ export default function GuildManagement() {
    */
   const fetchMembers = useCallback(async () => {
     try {
-      const { data, error } = await filterVisibleTestAccounts(supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, by_id, role, created_at, profile_oauth(discord_id), profile_meta(is_test_account, is_test_account_active)')
         .neq('role', 'visitor')
         .neq('role', 'expelled')
-        .order('created_at', { ascending: false }));
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setMembers(data || []);
+
+      const isTestViewer = isCurrentViewerTestAccount();
+      const flat = (data || []).map(m => ({
+        ...m,
+        discord_id: m.profile_oauth?.discord_id ?? null,
+        is_test_account: m.profile_meta?.is_test_account ?? null,
+        is_test_account_active: m.profile_meta?.is_test_account_active ?? null,
+      })).filter(m => isTestViewer
+        ? (m.is_test_account === true && m.is_test_account_active === true)
+        : (!m.is_test_account)
+      );
+      setMembers(flat);
     } catch (error) {
       console.error('길드원 목록 로드 실패:', error);
     } finally {

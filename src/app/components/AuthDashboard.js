@@ -47,13 +47,13 @@ function DiscordLinkPanel({ user, onLinked }) {
   const checkDiscordLink = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profile_oauth')
         .select('discord_id')
-        .eq('id', user.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (error) throw error;
-      setIsLinked(!!data.discord_id);
+      setIsLinked(!!data?.discord_id);
     } catch (error) {
       console.error('Discord 연동 확인 실패:', error);
     }
@@ -103,11 +103,9 @@ function DiscordLinkPanel({ user, onLinked }) {
 
     try {
       const { error } = await supabase
-        .from('profiles')
-        .update({
-          discord_id: null,
-        })
-        .eq('id', user.id);
+        .from('profile_oauth')
+        .update({ discord_id: null })
+        .eq('user_id', user.id);
 
       if (error) throw error;
       setIsLinked(false);

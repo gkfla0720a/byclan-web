@@ -21,7 +21,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
-import { filterVisibleTestAccounts, isMarkedTestAccount } from '@/app/utils/testData';
+import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/app/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/app/utils/queryCache';
 
 const CACHE_KEY = 'members_list';
