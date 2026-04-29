@@ -23,7 +23,7 @@ import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from '../components/UIStates';
 import { MatchStatus, ActivityLog } from '../components/HomeSections';
-import { filterVisibleTestAccounts, filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
+import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
 /** 티어별 텍스트 색상 클래스 매핑 */
@@ -180,14 +180,15 @@ function HomeContent({ profile = null, user = null, userPermissions = {} }) {
         return;
       }
 
-      const { data: rankData } = await filterVisibleTestAccounts(supabase
-        .from('profiles')
-        .select('id, by_id, total_mmr, ladder_mmr, team_mmr')
-        .neq('role', 'visitor')
-        .neq('role', 'applicant')
-        .neq('role', 'expelled')
+      const { data: rawRankData } = await supabase
+        .from('ladder_rankings')
+        .select('user_id, by_id, total_mmr, ladder_mmr, team_mmr, profiles!inner(role)')
+        .neq('profiles.role', 'visitor')
+        .neq('profiles.role', 'applicant')
+        .neq('profiles.role', 'expelled')
         .order('total_mmr', { ascending: false })
-        .limit(3));
+        .limit(3);
+      const rankData = (rawRankData || []).map(r => ({ ...r, id: r.user_id }));
 
       const { data: noticeData } = await filterVisibleTestData(supabase
         .from('admin_posts')

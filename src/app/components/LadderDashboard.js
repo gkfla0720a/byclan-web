@@ -25,7 +25,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
-import { filterVisibleTestAccounts, filterVisibleTestData } from '@/app/utils/testData';
+import { filterVisibleTestData } from '@/app/utils/testData';
 
 // ── 상수 ─────────────────────────────────────────────────────────────
 /** 지원하는 매치 유형 정보. 키는 선택 값, 값은 레이블·최소 인원·포맷 등을 담습니다. */
@@ -368,22 +368,51 @@ export default function LadderDashboard({ onMatchEnter }) {
       setUser(authUser);
       currentUserRef.current = authUser;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, by_id, role, race, clan_point, ladder_mmr, wins, losses, is_in_queue, is_test_account, discord_id')
-        .eq('id', authUser.id)
-        .single();
+      const [{ data: profile }, { data: profileMeta }] = await Promise.all([
+        supabase.from('profiles').select('id, by_id, role, race, clan_point, ladder_mmr, wins, losses').eq('id', authUser.id).single(),
+        supabase.from('profile_meta').select('is_test_account').eq('user_id', authUser.id).maybeSingle(),
+      ]);
       if (profile) {
-        setMyProfile(profile);
-        setInQueue(profile.is_in_queue || false);
+        setMyProfile({ ...profile, is_test_account: profileMeta?.is_test_account ?? false });
       }
 
-      const { data: queue } = await filterVisibleTestAccounts(supabase
-        .from('profiles')
-        .select('id, by_id, race, clan_point, ladder_mmr, team_mmr, total_mmr, role, is_in_queue, queue_joined_at')
+      // 내 대기열 상태 조회
+      const { data: myQueue } = await supabase
+        .from('ladder_queue')
+        .select('is_in_queue')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+      setInQueue(myQueue?.is_in_queue || false);
+
+      // 대기열 전체 목록 (ladder_queue → profiles join)
+      const isTestViewer = typeof window !== 'undefined' &&
+        window.localStorage.getItem('byclan_current_is_test_account') === 'true';
+      let queueQuery = supabase
+        .from('ladder_queue')
+        .select(`
+          user_id, queue_joined_at,
+          profiles!inner(id, by_id, race, clan_point, ladder_mmr, team_mmr, total_mmr, role, is_test_account, is_test_account_active)
+        `)
         .eq('is_in_queue', true)
-        .order('queue_joined_at', { ascending: true }));
-      const qPlayers = queue || [];
+        .order('queue_joined_at', { ascending: true });
+      if (isTestViewer) {
+        queueQuery = queueQuery.eq('profiles.is_test_account', true).eq('profiles.is_test_account_active', true);
+      } else {
+        queueQuery = queueQuery.or('is_test_account.is.null,is_test_account.eq.false', { referencedTable: 'profiles' });
+      }
+      const { data: queueRaw } = await queueQuery;
+      const qPlayers = (queueRaw || []).map(r => ({
+        id: r.user_id,
+        by_id: r.profiles?.by_id,
+        race: r.profiles?.race,
+        clan_point: r.profiles?.clan_point,
+        ladder_mmr: r.profiles?.ladder_mmr,
+        team_mmr: r.profiles?.team_mmr,
+        total_mmr: r.profiles?.total_mmr,
+        role: r.profiles?.role,
+        is_test_account: r.profiles?.is_test_account,
+        queue_joined_at: r.queue_joined_at,
+      }));
       setQueuePlayers(qPlayers);
 
       // 대기열 인원 변경 시 쿨다운 리셋
@@ -463,8 +492,8 @@ export default function LadderDashboard({ onMatchEnter }) {
     fetchData();
     const channel = supabase
       .channel('ladder-queue-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ladder_matches' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ladder_queue' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ladder_match_sets' }, fetchData)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [fetchData]);
@@ -496,10 +525,11 @@ export default function LadderDashboard({ onMatchEnter }) {
     }
     try {
       setJoiningQueue(true);
-      await supabase.from('profiles').update({
+      await supabase.from('ladder_queue').upsert({
+        user_id: user.id,
         is_in_queue: true,
         queue_joined_at: new Date().toISOString(),
-      }).eq('id', user.id);
+      }, { onConflict: 'user_id' });
       setInQueue(true);
       fetchData();
       clearTimeout(queueTimerRef.current);
@@ -522,7 +552,7 @@ export default function LadderDashboard({ onMatchEnter }) {
     const uid = currentUserRef.current?.id || user?.id;
     if (!uid) return;
     clearTimeout(queueTimerRef.current);
-    await supabase.from('profiles').update({ is_in_queue: false }).eq('id', uid);
+    await supabase.from('ladder_queue').update({ is_in_queue: false, vote_to_start: false }).eq('user_id', uid);
     setInQueue(false);
     fetchData();
   };
@@ -600,7 +630,7 @@ export default function LadderDashboard({ onMatchEnter }) {
         .update({ status: 'in_progress' })
         .eq('match_id', activeProposal.matchId);
       const allIds = [...activeProposal.teamA, ...activeProposal.teamB].map(p => p.id);
-      await supabase.from('profiles').update({ is_in_queue: false }).in('id', allIds);
+      await supabase.from('ladder_queue').update({ is_in_queue: false, vote_to_start: false }).in('user_id', allIds);
 
       const mid = activeProposal.matchId;
       setActiveProposal(null);

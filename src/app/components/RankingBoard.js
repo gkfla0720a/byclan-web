@@ -10,11 +10,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import { filterVisibleTestAccounts, isMarkedTestData } from '@/app/utils/testData';
+import { isMarkedTestData } from '@/app/utils/testData';
 import { getCached, setCached } from '@/app/utils/queryCache';
 
-const CACHE_KEY = 'ranking_board';
+const CACHE_KEY = 'ranking_board_v2';
 
+// 랭킹 보드에서 사용되는 티어 메타 정보입니다.
+// 각 티어는 점수 범위, 레이블, 배지 문자, 색상 톤, 링 스타일을 정의합니다.
 const TIER_META = [
   { key: 'challenger', label: '챌린저', min: 2400, badge: 'C', tone: 'from-amber-200 via-yellow-400 to-amber-600', ring: 'ring-amber-300/70' },
   { key: 'master', label: '마스터', min: 2200, badge: 'M', tone: 'from-rose-300 via-pink-500 to-rose-700', ring: 'ring-rose-400/60' },
@@ -25,6 +27,9 @@ const TIER_META = [
   { key: 'bronze', label: '브론즈', min: -Infinity, badge: 'B', tone: 'from-orange-200 via-orange-500 to-amber-700', ring: 'ring-orange-400/60' },
 ];
 
+// 조합 통계에서 사용할 키와 레이블 매핑입니다.
+// COMBO_KEYS는 데이터에서 사용되는 키 목록이고
+// COMBO_LABELS는 UI에 표시할 레이블 매핑입니다.
 const COMBO_KEYS = ['PPP', 'PPT', 'PPZ', 'PZT', 'OTHER'];
 const COMBO_LABELS = {
   PPP: 'PPP',
@@ -33,6 +38,7 @@ const COMBO_LABELS = {
   PZT: 'PZT',
   OTHER: '기타종족',
 };
+// 플레이어의 주 종족을 레이블로 변환하기 위한 매핑입니다.
 const MAIN_RACE_LABELS = {
   Protoss: '프로토스',
   Terran: '테란',
@@ -41,20 +47,25 @@ const MAIN_RACE_LABELS = {
   미지정: '미지정',
 };
 
+// 점수에 해당하는 티어 메타 정보를 반환하는 함수입니다.
 function getTierMeta(score) {
   return TIER_META.find((tier) => score >= tier.min) || TIER_META[TIER_META.length - 1];
 }
 
+// 플레이어의 주 종족을 레이블로 변환하는 함수입니다.
 function getMainRaceLabel(race) {
   return MAIN_RACE_LABELS[race] || race || '미지정';
 }
 
+// 승률을 계산하여 포맷팅하는 함수입니다. 승수와 패수를 입력받아 승률을 백분율 문자열로 반환합니다.
 function formatPercent(wins, losses) {
   const total = wins + losses;
   if (total <= 0) return '0%';
   return `${((wins / total) * 100).toFixed(1)}%`;
 }
 
+// 조합 통계 데이터를 강제로 변환하는 함수입니다.
+// 원본 데이터가 예상되는 구조가 아닐 경우 null을 반환합니다.
 function coerceComboStats(rawStats) {
   if (!rawStats || typeof rawStats !== 'object' || Array.isArray(rawStats)) {
     return null;
@@ -76,12 +87,14 @@ function coerceComboStats(rawStats) {
   return foundValue ? normalized : null;
 }
 
+// 플레이어 객체에서 조합 통계 데이터를 가져오는 함수입니다.
 function getComboStats(player) {
   const stats = coerceComboStats(player.race_combo_stats);
   if (stats) return stats;
   return Object.fromEntries(COMBO_KEYS.map((key) => [key, { wins: 0, losses: 0 }]));
 }
 
+// 플레이어 객체에서 최근 점수 변동 데이터를 가져오는 함수입니다.
 function getRecentDelta(player) {
   if (player.recent_total_delta !== null && player.recent_total_delta !== undefined) {
     return Number(player.recent_total_delta);
@@ -89,6 +102,8 @@ function getRecentDelta(player) {
   return 0;
 }
 
+// 최근 점수 변동 데이터를 포맷팅하는 함수입니다.
+// 양수는 상승, 음수는 하락으로 표시하며, 변동이 없는 경우 '-'로 표시합니다.
 function formatRecentDelta(delta) {
   if (!delta) {
     return { text: '-', tone: 'text-slate-500', arrow: '' };
@@ -99,6 +114,7 @@ function formatRecentDelta(delta) {
   return { text: `${delta}`, tone: 'text-rose-400', arrow: '↓' };
 }
 
+// 조합 통계 셀을 렌더링하는 컴포넌트입니다. stat 객체를 입력받아 승률과 전적을 표시합니다.
 function ComboRateCell({ stat }) {
   return (
     <td className="px-3 py-4 text-center align-middle">
@@ -108,6 +124,7 @@ function ComboRateCell({ stat }) {
   );
 }
 
+// 티어 뱃지를 렌더링하는 컴포넌트입니다.
 function TierBadge({ score }) {
   const tier = getTierMeta(score);
   return (
@@ -119,6 +136,7 @@ function TierBadge({ score }) {
   );
 }
 
+// 랭킹 보드 컴포넌트입니다. 랭킹 데이터를 불러와서 테이블 형태로 표시합니다. 검색 기능도 포함되어 있습니다.
 export default function RankingBoard() {
   const [rankings, setRankings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -135,17 +153,43 @@ export default function RankingBoard() {
       }
 
       try {
-        const { data, error: fetchError } = await filterVisibleTestAccounts(
-          supabase
-            .from('profiles')
-            .select('id, by_id, race, ladder_mmr, team_mmr, total_mmr, wins, losses, recent_total_delta, race_combo_stats')
-            .neq('role', 'visitor')
-            .neq('role', 'applicant')
-            .neq('role', 'expelled')
-            .order('total_mmr', { ascending: false })
-        );
+        const isTestViewer = typeof window !== 'undefined' &&
+          window.localStorage.getItem('byclan_current_is_test_account') === 'true';
 
+        let query = supabase
+          .from('ladder_rankings')
+          .select(`
+            user_id, by_id, ladder_mmr, team_mmr, total_mmr,
+            wins, losses, recent_total_delta, race_combo_stats, favorite_race,
+            profiles!inner(role, is_test_account, is_test_account_active)
+          `)
+          .neq('profiles.role', 'visitor')
+          .neq('profiles.role', 'applicant')
+          .neq('profiles.role', 'expelled')
+          .order('total_mmr', { ascending: false });
+
+        if (isTestViewer) {
+          query = query.eq('profiles.is_test_account', true).eq('profiles.is_test_account_active', true);
+        } else {
+          query = query.or('is_test_account.is.null,is_test_account.eq.false', { referencedTable: 'profiles' });
+        }
+
+        const { data: rawData, error: fetchError } = await query;
         if (fetchError) throw fetchError;
+
+        const data = (rawData || []).map(r => ({
+          id: r.user_id,
+          by_id: r.by_id,
+          race: r.favorite_race,
+          ladder_mmr: r.ladder_mmr,
+          team_mmr: r.team_mmr,
+          total_mmr: r.total_mmr,
+          wins: r.wins,
+          losses: r.losses,
+          recent_total_delta: r.recent_total_delta,
+          race_combo_stats: r.race_combo_stats,
+          is_test_account: r.profiles?.is_test_account,
+        }));
         if (data) setCached(CACHE_KEY, data);
         setRankings(data || []);
       } catch (err) {

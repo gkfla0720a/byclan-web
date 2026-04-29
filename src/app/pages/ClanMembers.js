@@ -98,6 +98,40 @@ function normalizeMemberRole(member) {
  */
 async function fetchMembersWithSchemaFallback() {
   // discord_id는 UI에 표시하지 않으므로 select에서 제외합니다.
+  // ladder_rankings(MMR)과 profile_meta(스트리머)를 함께 조인합니다.
+  const joinedResult = await filterVisibleTestAccounts(
+    supabase
+      .from('profiles')
+      .select(`
+        id, by_id, role, race, intro, clan_point,
+        ladder_rankings(ladder_mmr, total_mmr),
+        profile_meta(is_streamer, streamer_platform, streamer_url, is_test_account, is_test_account_active)
+      `)
+      .neq('role', 'visitor')
+      .neq('role', 'applicant')
+      .neq('role', 'expelled')
+      .order('clan_point', { ascending: false })
+  );
+
+  if (!joinedResult.error) {
+    return {
+      ...joinedResult,
+      data: (joinedResult.data || []).map(m => ({
+        ...m,
+        ladder_mmr: m.ladder_rankings?.ladder_mmr ?? m.ladder_mmr ?? 0,
+        total_mmr: m.ladder_rankings?.total_mmr ?? m.total_mmr ?? 0,
+        is_streamer: m.profile_meta?.is_streamer ?? false,
+        streamer_platform: m.profile_meta?.streamer_platform ?? null,
+        streamer_url: m.profile_meta?.streamer_url ?? null,
+        is_test_account: m.profile_meta?.is_test_account ?? false,
+        is_test_account_active: m.profile_meta?.is_test_account_active ?? true,
+        ladder_rankings: undefined,
+        profile_meta: undefined,
+      })),
+    };
+  }
+
+  // 조인 실패 시 기본 컬럼만으로 폴백
   const candidates = [
     'id, by_id, role, race, intro, clan_point, ladder_mmr, total_mmr, is_streamer, streamer_platform, streamer_url',
     'id, by_id, role, race, intro, clan_point',

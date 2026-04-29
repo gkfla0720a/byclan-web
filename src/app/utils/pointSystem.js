@@ -187,11 +187,11 @@ export async function checkAndGrantDailyBonus(sb, userId, isTestData = false) {
   if (!userId) return { granted: false, amount: 0 };
 
   try {
-    const { data: prof } = await sb
-      .from('profiles')
-      .select('last_daily_bonus_at, clan_point')
-      .eq('id', userId)
-      .single();
+    const [{ data: meta }, { data: profCp }] = await Promise.all([
+      sb.from('profile_meta').select('last_daily_bonus_at').eq('user_id', userId).maybeSingle(),
+      sb.from('profiles').select('clan_point').eq('id', userId).single(),
+    ]);
+    const prof = { last_daily_bonus_at: meta?.last_daily_bonus_at, clan_point: profCp?.clan_point };
 
     const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     const lastBonus = prof?.last_daily_bonus_at;
@@ -202,9 +202,8 @@ export async function checkAndGrantDailyBonus(sb, userId, isTestData = false) {
 
     // last_daily_bonus_at 업데이트 먼저 (중복 방지)
     const { error: updateErr } = await sb
-      .from('profiles')
-      .update({ last_daily_bonus_at: todayStr })
-      .eq('id', userId);
+      .from('profile_meta')
+      .upsert({ user_id: userId, last_daily_bonus_at: todayStr }, { onConflict: 'user_id' });
 
     if (updateErr) throw updateErr;
 
@@ -296,11 +295,11 @@ export async function grantDiscordCheckinBonus(sb, userId, isTestData = false) {
   if (!userId) return { granted: false, amount: 0, reason: '유저 없음' };
 
   try {
-    const { data: prof } = await sb
-      .from('profiles')
-      .select('last_discord_checkin_at, clan_point')
-      .eq('id', userId)
-      .single();
+    const [{ data: meta }, { data: profCp }] = await Promise.all([
+      sb.from('profile_meta').select('last_discord_checkin_at').eq('user_id', userId).maybeSingle(),
+      sb.from('profiles').select('clan_point').eq('id', userId).single(),
+    ]);
+    const prof = { last_discord_checkin_at: meta?.last_discord_checkin_at, clan_point: profCp?.clan_point };
 
     const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     const lastCheckin = prof?.last_discord_checkin_at;
@@ -312,9 +311,8 @@ export async function grantDiscordCheckinBonus(sb, userId, isTestData = false) {
 
     // 중복 방지용 날짜 먼저 업데이트
     const { error: updateErr } = await sb
-      .from('profiles')
-      .update({ last_discord_checkin_at: todayStr })
-      .eq('id', userId);
+      .from('profile_meta')
+      .upsert({ user_id: userId, last_discord_checkin_at: todayStr }, { onConflict: 'user_id' });
 
     if (updateErr) throw updateErr;
 

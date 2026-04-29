@@ -21,7 +21,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { filterVisibleTestAccounts } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 
 /**
@@ -82,35 +81,36 @@ export default function LadderPreview({ isGuest }) {
 
       try {
         // 1단계: 현재 대기열에 있는 플레이어 최대 5명 조회
-        const queueResult = await filterVisibleTestAccounts(
-          supabase
-            .from('profiles')
-            .select('id, by_id, race, clan_point, is_in_queue')
-            .eq('is_in_queue', true)
-            .order('clan_point', { ascending: false })
-            .limit(5)
-        );
+        const { data: queueRows } = await supabase
+          .from('ladder_queue')
+          .select('user_id, is_in_queue, profiles!inner(by_id, race, clan_point)')
+          .eq('is_in_queue', true)
+          .order('queue_joined_at', { ascending: true })
+          .limit(5);
 
-        let rows = queueResult.data || [];
+        let rows = (queueRows || []).map(r => ({
+          id: r.user_id,
+          by_id: r.profiles?.by_id,
+          race: r.profiles?.race,
+          clan_point: r.profiles?.clan_point,
+          is_in_queue: true,
+        }));
 
         if (rows.length === 0) {
-          // 2단계: 대기열이 비어 있으면 profiles 기준 상위 5명 조회
-          const profileResult = await filterVisibleTestAccounts(
-            supabase
-              .from('profiles')
-              .select('id, by_id, race, ladder_mmr, team_mmr, total_mmr, is_in_queue')
-              .neq('role', 'visitor')
-              .neq('role', 'applicant')
-              .neq('role', 'expelled')
-              .order('total_mmr', { ascending: false })
-              .limit(5)
-          );
+          // 2단계: 대기열이 비어 있으면 ladder_rankings 기준 상위 5명 조회
+          const { data: rankRows } = await supabase
+            .from('ladder_rankings')
+            .select('user_id, by_id, total_mmr, ladder_mmr, team_mmr, profiles!inner(role, race)')
+            .neq('profiles.role', 'visitor')
+            .neq('profiles.role', 'applicant')
+            .neq('profiles.role', 'expelled')
+            .order('total_mmr', { ascending: false })
+            .limit(5);
 
-          // ladders 테이블 컬럼명이 profiles와 다를 수 있어 통일된 구조로 변환
-          rows = (profileResult.data || []).map((row, index) => ({
-            id: row.id || `ladder-${index}`,
+          rows = (rankRows || []).map((row, index) => ({
+            id: row.user_id || `ladder-${index}`,
             by_id: row.by_id,
-            race: row.race,
+            race: row.profiles?.race,
             clan_point: row.total_mmr ?? ((row.ladder_mmr ?? 1500) + (row.team_mmr ?? 0)),
             is_in_queue: false,
           }));

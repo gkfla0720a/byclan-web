@@ -44,24 +44,6 @@ import { checkAndGrantDailyBonus } from '../utils/pointSystem';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-/**
- * UserProfile
- * - Supabase의 profiles 테이블 한 행(row)에 해당하는 타입입니다.
- * - 각 필드 설명:
- *   id:             Supabase Auth의 사용자 UUID (기본 키)
- *   by_id:           클랜 내 고유 닉네임 (예: 'By_홍길동') – 클랜원이라면 반드시 존재해야 함
- *   discord_id:     Discord 고유 ID (연동 식별자 – 연동 여부 판단·충돌 감지·표시에 사용)
- *   role:           클랜 역할 (visitor/applicant/rookie/member/elite/admin/master/developer)
- *   clan_point:     클랜 재화 포인트 (베팅·상점 등에 사용, 기본값: 0)
- *   race:           스타크래프트 종족 (Terran/Zerg/Protoss)
- *   intro:          자기소개 문구
- *   is_in_queue:    현재 래더 대기열에 있는지 여부
- *   vote_to_start:  래더 시작 투표 여부
- *   wins:           래더 승리 수 (선택)
- *   losses:         래더 패배 수 (선택)
- *   queue_joined_at: 대기열 합류 시간 (선택)
- */
-
 export type { UserProfile };
 
 /**
@@ -144,14 +126,10 @@ function normalizeProfileRow(profile: Record<string, unknown> | null): UserProfi
   if (typeof profile.clan_point !== 'number') {
     logger.warn('normalizeProfileRow: clan_point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
   }
-  if (typeof profile.ladder_mmr !== 'number') {
-    logger.warn('normalizeProfileRow: ladder_mmr 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
-  }
 
   return {
     ...(profile as UserProfile),
     clan_point: typeof profile.clan_point === 'number' ? profile.clan_point : 0,
-    ladder_mmr: typeof profile.ladder_mmr === 'number' ? profile.ladder_mmr : 1000,
   };
 }
 
@@ -221,13 +199,24 @@ function getSocialIdentity(authUser: Record<string, unknown>) {
 }
 
 async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Promise<UserProfile> {
-  const { data } = await supabase
-    .from('profile_oauth')
-    .select('discord_id, google_sub, google_email, google_name, google_avatar_url, auth_provider')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (!data) return profile;
-  return { ...profile, ...data };
+  const [{ data: oauthData }, { data: metaData }, { data: rankData }] = await Promise.all([
+    supabase
+      .from('profile_oauth')
+      .select('discord_id, google_sub, google_email, google_name, google_avatar_url, auth_provider')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('profile_meta')
+      .select('is_test_account, is_test_account_active, is_streamer, streamer_platform, streamer_url, last_login_at')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('ladder_rankings')
+      .select('ladder_mmr, team_mmr, total_mmr, wins, losses, recent_total_delta, race_combo_stats')
+      .eq('user_id', userId)
+      .maybeSingle(),
+  ]);
+  return { ...profile, ...(oauthData || {}), ...(metaData || {}), ...(rankData || {}) };
 }
 
 function sanitizeByIdSeed(seed: string): string {
@@ -405,9 +394,8 @@ async function recordLoginTimestamp(userId: string): Promise<void> {
   if (window.sessionStorage.getItem(key) === '1') return;
 
   const { error } = await supabase
-    .from('profiles')
-    .update({ last_login_at: new Date().toISOString() })
-    .eq('id', userId);
+    .from('profile_meta')
+    .upsert({ user_id: userId, last_login_at: new Date().toISOString() }, { onConflict: 'user_id' });
 
   if (!error) {
     window.sessionStorage.setItem(key, '1');
@@ -567,8 +555,6 @@ export function useAuth(): UseAuthReturn {
               clan_point: 0,
               race: 'Terran',
               intro: '클랜 방문자',
-              is_in_queue: false,
-              vote_to_start: false,
             });
 
           if (!error) {

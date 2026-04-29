@@ -86,7 +86,7 @@ export default function DevConsole() {
     if (!confirm(confirmationMessage)) return;
 
     const operations = [
-      { table: 'profiles', marker: 'is_test_account', activeField: 'is_test_account_active' },
+      { table: 'profile_meta', marker: 'is_test_account', activeField: 'is_test_account_active' },
       { table: 'ladders', marker: 'is_test_data', activeField: 'is_test_data_active' },
       { table: 'admin_posts', marker: 'is_test_data', activeField: 'is_test_data_active' },
       { table: 'posts', marker: 'is_test_data', activeField: 'is_test_data_active' },
@@ -129,7 +129,7 @@ export default function DevConsole() {
 
   const resetAllQueues = async () => {
     if(!confirm("모든 유저의 대기열 상태를 초기화하시겠습니까?")) return;
-    const { error } = await supabase.from('profiles').update({ is_in_queue: false }).eq('is_in_queue', true);
+    const { error } = await supabase.from('ladder_queue').update({ is_in_queue: false, vote_to_start: false }).eq('is_in_queue', true);
     if (!error) alert("대기열이 모두 비워졌습니다.");
   };
 

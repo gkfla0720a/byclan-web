@@ -204,11 +204,11 @@ export default function MatchCenter({ matchId, onExit }) {
     };
     setMatch(m);
 
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('id, role, clan_point, is_test_account')
-      .eq('id', user.id)
-      .single();
+    const [{ data: prof }, { data: profMeta }] = await Promise.all([
+      supabase.from('profiles').select('id, role, clan_point').eq('id', user.id).single(),
+      supabase.from('profile_meta').select('is_test_account').eq('user_id', user.id).maybeSingle(),
+    ]);
+    if (prof && profMeta) prof.is_test_account = profMeta.is_test_account;
     if (prof) {
       setMyClanPoint(prof.clan_point ?? 0);
       setMyRole(prof.role || null);

@@ -71,12 +71,13 @@ export default function AdminPointManager() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('id, by_id, role, is_test_account')
+        .select('id, by_id, role, profile_meta(is_test_account)')
         .eq('id', user.id)
         .single();
 
-      setMyProfile(prof);
-      const role = prof?.role?.trim().toLowerCase();
+      const flatProf = prof ? { ...prof, is_test_account: prof.profile_meta?.is_test_account ?? false, profile_meta: undefined } : null;
+      setMyProfile(flatProf);
+      const role = flatProf?.role?.trim().toLowerCase();
       if (!['developer', 'master', 'admin'].includes(role)) return;
 
       setIsAdmin(true);
@@ -84,10 +85,10 @@ export default function AdminPointManager() {
       // 클랜원 목록 로드
       const { data: mems } = await supabase
         .from('profiles')
-        .select('id, by_id, role, clan_point, is_test_account')
+        .select('id, by_id, role, clan_point, profile_meta(is_test_account)')
         .not('role', 'eq', 'visitor')
         .order('by_id');
-      setMembers(mems || []);
+      setMembers((mems || []).map(m => ({ ...m, is_test_account: m.profile_meta?.is_test_account ?? false, profile_meta: undefined })));
     } catch (err) {
       console.error('[AdminPointManager] 초기화 오류:', err);
     } finally {
@@ -163,7 +164,7 @@ export default function AdminPointManager() {
     try {
       const { data: targetBefore } = await supabase
         .from('profiles')
-        .select('id, by_id, role, clan_point, is_test_account')
+        .select('id, by_id, role, clan_point')
         .eq('id', selectedUserId)
         .single();
 
@@ -175,7 +176,7 @@ export default function AdminPointManager() {
       if (result.ok) {
         const { data: targetAfter } = await supabase
           .from('profiles')
-          .select('id, by_id, role, clan_point, is_test_account')
+          .select('id, by_id, role, clan_point')
           .eq('id', selectedUserId)
           .single();
 

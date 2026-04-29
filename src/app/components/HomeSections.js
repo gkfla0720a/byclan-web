@@ -125,7 +125,7 @@ function MatchStatus() {
   };
 
   return (
-    <section className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl cursor-pointer" onClick={() => navigateTo('BY래더)}>
+    <section className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl cursor-pointer" onClick={() => navigateTo('BY래더')}>
       <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">⚔️ 매치 현황</h3>
       <div className="space-y-3">
         {loading ? (
@@ -169,6 +169,8 @@ function ActivityLog() {
    * 컴포넌트 마운트 시 posts·admin_posts·applications·ladder_matches
    * 4개 테이블을 병렬로 조회하여 활동 목록을 구성합니다.
    */
+  // 각 테이블에서 최대 3~2건씩 최신 데이터를 불러와서 활동 항목으로 변환한 뒤,
+  // 전체를 시간순으로 정렬하여 상위 5개만 화면에 보여줍니다.
   useEffect(() => {
     const fetchActivities = async () => {
       if (!isSupabaseConfigured) {

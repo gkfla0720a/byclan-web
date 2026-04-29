@@ -107,17 +107,18 @@ async function submitApplication(userId, applicationData) {
       console.warn('applications 테이블 오류:', appError.message);
     }
 
-    const profilePayload = {
-      role: 'applicant',
+    let { error: profileError } = await supabase
+      .from('profiles')
+      .update({ role: 'applicant' })
+      .eq('id', userId);
+
+    // 스트리머 정보는 profile_meta에 저장
+    await supabase.from('profile_meta').upsert({
+      user_id: userId,
       is_streamer: applicationData.isStreamer,
       streamer_platform: applicationData.isStreamer ? applicationData.streamerPlatform : null,
       streamer_url: applicationData.isStreamer ? normalizeUrl(applicationData.streamerUrl) : null,
-    };
-
-    let { error: profileError } = await supabase
-      .from('profiles')
-      .update(profilePayload)
-      .eq('id', userId);
+    }, { onConflict: 'user_id' });
 
     if (profileError) {
       const message = `${profileError.message || ''} ${profileError.details || ''}`.toLowerCase();

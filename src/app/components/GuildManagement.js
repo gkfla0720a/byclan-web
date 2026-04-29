@@ -237,16 +237,16 @@ export default function GuildManagement() {
       // 직급 승급 포인트 보상
       const promotionRoles = ['rookie', 'member', 'elite', 'admin'];
       if (promotionRoles.includes(newRole)) {
-        const { data: targetProf } = await supabase
-          .from('profiles')
+        const { data: targetMeta } = await supabase
+          .from('profile_meta')
           .select('is_test_account')
-          .eq('id', memberId)
-          .single();
+          .eq('user_id', memberId)
+          .maybeSingle();
         await grantRankPromotionBonus(
           supabase,
           memberId,
           newRole,
-          Boolean(targetProf?.is_test_account),
+          Boolean(targetMeta?.is_test_account),
         );
       }
 
