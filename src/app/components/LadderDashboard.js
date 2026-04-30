@@ -368,12 +368,19 @@ export default function LadderDashboard({ onMatchEnter }) {
       setUser(authUser);
       currentUserRef.current = authUser;
 
-      const [{ data: profile }, { data: profileMeta }] = await Promise.all([
-        supabase.from('profiles').select('id, by_id, role, race, clan_point, ladder_mmr, wins, losses').eq('id', authUser.id).single(),
+      const [{ data: profile }, { data: profileMeta }, { data: ladderData }] = await Promise.all([
+        supabase.from('profiles').select('id, by_id, role, race, clan_point').eq('id', authUser.id).single(),
         supabase.from('profile_meta').select('is_test_account').eq('user_id', authUser.id).maybeSingle(),
+        supabase.from('ladder_rankings').select('ladder_mmr, wins, losses').eq('user_id', authUser.id).maybeSingle(),
       ]);
       if (profile) {
-        setMyProfile({ ...profile, is_test_account: profileMeta?.is_test_account ?? false });
+        setMyProfile({
+          ...profile,
+          ladder_mmr: ladderData?.ladder_mmr ?? 1500,
+          wins: ladderData?.wins ?? 0,
+          losses: ladderData?.losses ?? 0,
+          is_test_account: profileMeta?.is_test_account ?? false,
+        });
       }
 
       // 내 대기열 상태 조회
@@ -440,10 +447,17 @@ export default function LadderDashboard({ onMatchEnter }) {
       let profMap = {};
       if (allTeamIds.length > 0) {
         const { data: teamProfs } = await supabase
-          .from('profiles')
-          .select('id, by_id, clan_point, ladder_mmr, team_mmr, total_mmr')
-          .in('id', allTeamIds);
-        profMap = Object.fromEntries((teamProfs || []).map(p => [p.id, p]));
+          .from('ladder_rankings')
+          .select('user_id, ladder_mmr, team_mmr, total_mmr, profiles!inner(id, by_id, clan_point)')
+          .in('user_id', allTeamIds);
+        profMap = Object.fromEntries((teamProfs || []).map(p => [p.user_id, {
+          id: p.user_id,
+          by_id: p.profiles?.by_id,
+          clan_point: p.profiles?.clan_point,
+          ladder_mmr: p.ladder_mmr,
+          team_mmr: p.team_mmr,
+          total_mmr: p.total_mmr,
+        }]));
       }
       setMatchProfiles(profMap);
 

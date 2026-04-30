@@ -492,7 +492,12 @@ export function useAuth(): UseAuthReturn {
           .select('*')
           .eq('id', userId)
           .single();
-        if (fullProfile) setProfile(fullProfile as UserProfile);
+        if (fullProfile) {
+          const normalized = normalizeProfileRow(fullProfile as Record<string, unknown>);
+          const merged = await mergeOAuthIntoProfile(normalized as UserProfile, userId);
+          setProfile(merged);
+          syncViewerTestAccountFlag(merged);
+        }
         return;
       }
 

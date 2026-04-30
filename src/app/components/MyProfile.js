@@ -140,8 +140,18 @@ export default function MyProfile() {
       setAuthEmail(user.email || '');
       setUsesInternalLogin(isInternalAuthEmail(user.email || ''));
 
-      const { data: profileDataRaw } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      const profileData = normalizeProfileRow(profileDataRaw);
+      const [{ data: profileDataRaw }, { data: oauthData }, { data: ladderData }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('profile_oauth').select('discord_id, google_email, google_name, google_avatar_url, auth_provider').eq('user_id', user.id).maybeSingle(),
+        supabase.from('ladder_rankings').select('ladder_mmr, wins, losses').eq('user_id', user.id).maybeSingle(),
+      ]);
+      const profileData = normalizeProfileRow({
+        ...profileDataRaw,
+        ...(oauthData || {}),
+        ladder_mmr: ladderData?.ladder_mmr ?? 1500,
+        wins: ladderData?.wins ?? 0,
+        losses: ladderData?.losses ?? 0,
+      });
 
       if (profileData) {
         setProfile(profileData);

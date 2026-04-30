@@ -5,7 +5,7 @@
  *   - 길드원 목록 조회 및 등급 변경 (applicant/rookie/member/elite/admin)
  *   - 길드원 제명 처리 (role을 'expelled'로 변경)
  *   - 마스터 위임 기능: 비밀번호 재인증 또는 이메일 OTP 인증 후 위임 가능
- *   - 테스트 계정 필터링 지원 (filterVisibleTestAccounts)
+ *   - 테스트 계정 필터링 지원 (profile_meta 조인 후 클라이언트 측 필터링)
  *   - 역할별 색상/아이콘 표시 (ROLE_PERMISSIONS 기반)
  * @사용방법
  *   member.manage 권한을 가진 운영진만 접근할 수 있습니다.
