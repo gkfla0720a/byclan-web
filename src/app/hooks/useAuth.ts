@@ -622,11 +622,13 @@ export function useAuth(): UseAuthReturn {
     // 일별 첫 로그인 출석 보상 (500 CP) — 백그라운드 실행, 실패해도 무시
     const clanMemberRoles = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'];
     if (clanMemberRoles.includes(nextProfile.role)) {
-      checkAndGrantDailyBonus(
-        supabase,
-        (authUser.id as string),
-        Boolean((nextProfile as UserProfile).is_test_account),
-      ).catch(() => {});
+      fetch('/api/daily-bonus', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: authUser.id,
+          isTestData: Boolean((nextProfile as UserProfile).is_test_account)
+        }),
+      }).catch((err) => console.error("보너스 요청 실패:", err));
     }
 
     // 진행 중인 래더 매치 확인 (래더 플레이 가능 역할 전체)
