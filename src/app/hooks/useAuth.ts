@@ -124,7 +124,7 @@ function normalizeProfileRow(profile: Record<string, unknown> | null): UserProfi
   if (!profile) return null;
 
   if (typeof profile.clan_point !== 'number') {
-    logger.warn('normalizeProfileRow: clan_point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
+    logger.warning('normalizeProfileRow: clan_point 컬럼이 없거나 숫자 타입이 아닙니다. DB 스키마를 확인하세요.');
   }
 
   return {
@@ -243,7 +243,7 @@ async function resolveUniqueById(seed: string, currentUserId?: string): Promise<
     .in('by_id', candidates);
 
   if (error) {
-    logger.warn('by_id 후보 조회 실패, 기본값으로 진행', error);
+    logger.warning('by_id 후보 조회 실패, 기본값으로 진행', { error });
     return base;
   }
 
@@ -319,7 +319,7 @@ async function syncSocialProfileData(
       .select('*')
       .single();
     if (updateError) {
-      logger.warn('프로필 동기화 실패', updateError);
+      logger.warning('프로필 동기화 실패', { updateError });
     } else if (data) {
       updatedProfile = { ...updatedProfile, ...(data as UserProfile) };
     }
@@ -331,7 +331,7 @@ async function syncSocialProfileData(
       .from('profile_oauth')
       .upsert({ user_id: authUser.id as string, ...oauthUpdates }, { onConflict: 'user_id' });
     if (oauthError) {
-      logger.warn('OAuth 프로필 동기화 실패', oauthError);
+      logger.warning('OAuth 프로필 동기화 실패', { oauthError });
     } else {
       updatedProfile = { ...updatedProfile, ...oauthUpdates };
     }

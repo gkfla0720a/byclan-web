@@ -455,7 +455,7 @@ export const PermissionChecker = {
       '정회원 전환신청': ['rookie'], // 신입 길드원만 접근 가능
       '개요': ALL_ROLES,
       '클랜원': ALL_ROLES,
-      'BY래더: MEMBER_ROLES,
+      'BY래더': MEMBER_ROLES,
       '랭킹': ALL_ROLES,
       '경기기록': ALL_ROLES,
       '외부 레더 랭킹': ALL_ROLES,

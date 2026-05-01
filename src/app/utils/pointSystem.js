@@ -220,7 +220,10 @@ export async function checkAndGrantDailyBonus(sb, userId, isTestData = false) {
 
     return { granted: result.ok, amount: DAILY_BONUS_AMOUNT };
   } catch (err) {
-    console.error('[pointSystem] checkAndGrantDailyBonus 실패:', err);
+    // 1. err.message를 붙여서 글자로 확실히 출력하게 합니다.
+    // 2. err 자체를 따로 쉼표로 구분해서 출력하면 브라우저 콘솔에서 클릭해서 내부를 들여다볼 수 있습니다.
+    console.error('[pointSystem] checkAndGrantDailyBonus 실패:', err.message || err, err);
+    
     return { granted: false, amount: 0 };
   }
 }

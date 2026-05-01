@@ -251,7 +251,7 @@ function HomeContent({ profile = null, user = null, userPermissions = {} }) {
               클랜 소개 보기
             </button>
             <button
-              onClick={() => navigateTo('BY래더)}
+              onClick={() => navigateTo('BY래더')}
               disabled={isVisitor || isApplicant}
               className={`px-5 py-2 rounded-lg font-bold text-sm relative transition-all ${
                 isVisitor || isApplicant
@@ -365,7 +365,7 @@ function HomeContent({ profile = null, user = null, userPermissions = {} }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { icon: '📖', label: '가입 안내', view: '가입안내', restricted: false },
-            { icon: '⚔️', label: '매치 참여', view: 'BY래더, restricted: isVisitor || isApplicant },
+            { icon: '⚔️', label: '매치 참여', view: 'BY래더', restricted: isVisitor || isApplicant },
             { icon: '💬', label: '커뮤니티', view: '자유게시판', restricted: false },
             { icon: '🏆', label: '랭킹 보기', view: '랭킹', restricted: isVisitor || isApplicant },
           ].map(({ icon, label, view, restricted }) => (
