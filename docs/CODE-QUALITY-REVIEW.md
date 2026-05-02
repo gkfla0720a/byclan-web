@@ -192,7 +192,7 @@ const currentRole = (profile?.role ?? '').toLowerCase().trim() || 'visitor';
 ```javascript
 // ❌ 현재 — 의미 파악에 시간 필요
 const isDeveloper = currentRole === 'developer';
-const isDevOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);
+const isEliteOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);
 const isAdminOrHigher = ['developer', 'master', 'admin'].includes(currentRole);
 ```
 
@@ -202,7 +202,7 @@ const isAdminOrHigher = ['developer', 'master', 'admin'].includes(currentRole);
 const isDeveloper = currentRole === 'developer';
 
 /** 가입 심사 메뉴 (elite 이상) 표시 여부 — permissions.js의 member.approve 참조 */
-const isDevOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);
+const isEliteOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);
 
 /** 관리자 메뉴 (admin 이상) 표시 여부 */
 const isAdminOrHigher = ['developer', 'master', 'admin'].includes(currentRole);

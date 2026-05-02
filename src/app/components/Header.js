@@ -106,8 +106,8 @@ export default function Header() {
   // isDeveloper: 개발자 역할 여부 (개발자 전용 메뉴 표시에 사용)
   // 최고 개발자(developer)는 모든 관리자/정예 권한을 상속받습니다.
   const isDeveloper = currentRole === 'developer';
-  // isDevOrHigher: 정예 이상 여부 (가입 심사 버튼 표시에 사용)
-  const isDevOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);
+  // isEliteOrHigher: 정예 이상 여부 (가입 심사 버튼 표시에 사용)
+  const isEliteOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);
   // isAdminOrHigher: admin 이상 여부 (관리자 버튼 표시에 사용)
   const isAdminOrHigher = ['developer', 'master', 'admin'].includes(currentRole);
 
@@ -247,7 +247,7 @@ export default function Header() {
           {user ? (
             <>
               {/* 🛠️ 추가: 관리 권한(정예 이상)이 있는 경우에만 톱니바퀴 버튼 표시 */}
-              {isDevOrHigher && (
+              {isEliteOrHigher && (
                 <button 
                   onClick={() => handleNav('관리설정')} // 👈 관리자 페이지 라우팅 이름 지정
                   className="relative p-1 text-slate-300 hover:text-cyan-200 transition-all mr-1"
@@ -343,7 +343,7 @@ export default function Header() {
           ))}
 
           {/* 모바일 가입 심사 */}
-          {isDevOrHigher && (
+          {isEliteOrHigher && (
             <button onClick={() => handleNav('가입 심사 관리')} className="px-6 py-5 text-left text-emerald-300 font-black text-sm border-b border-cyan-400/10 bg-emerald-950/5 transition-all">⚔️ 가입 심사 관리</button>
           )}
           

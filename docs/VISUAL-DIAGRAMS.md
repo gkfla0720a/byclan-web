@@ -248,7 +248,7 @@ flowchart TD
 
     HEADER --> MENUCOND["역할별 메뉴 표시 조건"]
     MENUCOND --> ISDEV["isDeveloper\n= role === 'developer'\n→ 개발자 콘솔 표시"]
-    MENUCOND --> DEVHIGH["isDevOrHigher\n= elite 이상\n→ 가입 심사 메뉴 표시"]
+    MENUCOND --> ELTHIGH["isEliteOrHigher\n= elite 이상\n→ 가입 심사 메뉴 표시"]
     MENUCOND --> ADMHIGH["isAdminOrHigher\n= admin 이상\n→ 관리자 메뉴 표시"]
 
     style HEADER fill:#4f46e5,color:#fff
