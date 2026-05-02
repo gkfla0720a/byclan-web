@@ -199,12 +199,12 @@ export default function Header() {
       <div className="w-full px-4 sm:px-8 py-3 flex items-center justify-between">
         
         {/* 로고 & 타이틀 */}
-        <div className="hidden md:block w-52 lg:w-64 xl:w-80 shrink-0 flex items-baseline justify-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
+        <div className="w-64 lg:w-72 xl:w-80 shrink-0 flex items-baseline justify-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
           <div className="self-center">
             <ByClanLogo />
           </div>
             <span 
-              className="text-3xl sm:text-4xl font-black tracking-widest transition-all duration-300 group-hover:brightness-110 pb-1"
+              className="text-3xl sm:text-4xl font-black whitespace-nowrap tracking-widest transition-all duration-300 group-hover:brightness-110 pb-1"
               style={{
                 background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
                 WebkitBackgroundClip: "text",
