@@ -82,10 +82,10 @@ export default function Footer() {
             <p className="text-gray-600 text-xs">© 2026 ByClan. All rights reserved.</p>
 
             {/* 후원 계좌 박스 */}
-            <div className="w-full md:w-auto flex flex-col items-center md:items-start bg-gray-900 border border-yellow-600/30 rounded-xl px-5 py-3 gap-1 min-w-[200px]">
-              <span className="text-yellow-500 text-xs font-bold tracking-widest uppercase">💛 후원 계좌</span>
-              <span className="text-gray-200 text-sm font-semibold tracking-wider">후원계좌</span>
-              <span className="text-gray-400 text-xs">클랜 운영 지원에 감사드립니다 🙏</span>
+            <div className="w-full md:w-auto flex flex-col items-center md:items-start bg-gray-900 border border-yellow-600/30 rounded-xl px-5 py-3 gap-1 min-w-50">
+              <span className="text-yellow-500 text-s font-bold tracking-widest uppercase">By후원계좌</span>
+              <span className="text-gray-200 text-sm font-semibold tracking-wider">예금주: 신한캐피탈(주)</span>
+              <span className="text-gray-400 text-sm">우리은행 1002-738-934965</span>
             </div>
           </div>
 

@@ -272,32 +272,6 @@ function HomeContent({ profile = null, user = null, userPermissions = {} }) {
       {/* 모바일 전용 프로필 카드 (데스크톱에서는 사이드바로 표시) */}
       <MobileProfileCard profile={profile} user={user} navigateTo={navigateTo} />
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          {
-            title: '클랜 성향',
-            icon: '🌐',
-            desc: 'ByClan은 스타크래프트 빠른무한 유저가 꾸준히 접속해 경쟁하고 교류하는 레더 중심 클랜입니다.'
-          },
-          {
-            title: '관전 재미',
-            icon: '⚡',
-            desc: '경기 구경, 최근 변화가 큰 플레이어 체크, 포인트 베팅까지 방문자도 분위기를 빠르게 파악할 수 있습니다.'
-          },
-          {
-            title: '가입 동선',
-            icon: '📝',
-            desc: '로그인 없이 개요와 가입 절차를 먼저 보고, 필요할 때만 회원가입·가입신청으로 이어지도록 구성했습니다.'
-          },
-        ].map((item) => (
-          <div key={item.title} className="neon-panel p-5 rounded-2xl">
-            <div className="text-2xl mb-2">{item.icon}</div>
-            <h3 className="text-cyan-300 font-bold text-sm mb-2">{item.title}</h3>
-            <p className="text-xs text-slate-300/85 leading-relaxed">{item.desc}</p>
-          </div>
-        ))}
-      </section>
-
       {/* 랭킹 + 소식 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <section
@@ -357,34 +331,6 @@ function HomeContent({ profile = null, user = null, userPermissions = {} }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <MatchStatus />
         <ActivityLog />
-      </div>
-
-      {/* 빠른 접근 */}
-      <div className="neon-panel p-5 rounded-2xl">
-        <h3 className="text-base font-bold text-cyan-300 mb-4 border-b border-cyan-400/10 pb-2">🚀 빠른 접근</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { icon: '📖', label: '가입 안내', view: '가입안내', restricted: false },
-            { icon: '⚔️', label: '매치 참여', view: 'BY래더', restricted: isVisitor || isApplicant },
-            { icon: '💬', label: '커뮤니티', view: '자유게시판', restricted: false },
-            { icon: '🏆', label: '랭킹 보기', view: '랭킹', restricted: isVisitor || isApplicant },
-          ].map(({ icon, label, view, restricted }) => (
-            <button
-              key={view}
-              onClick={() => !restricted && navigateTo(view)}
-              disabled={restricted}
-              className={`p-3 rounded-lg text-sm font-bold transition-all relative ${
-                restricted
-                  ? 'text-gray-400 border border-gray-600 bg-slate-900/45 cursor-not-allowed opacity-60'
-                  : 'text-slate-200 border border-cyan-400/10 bg-slate-950/45 hover:border-cyan-300/40 hover:text-cyan-200'
-              }`}
-              title={restricted ? (isApplicant ? '테스트 대기 중에는 이용할 수 없습니다' : '클랜원 전용 기능입니다') : label}
-            >
-              {icon} {label}
-              {restricted && <span className="absolute -top-1 -right-1 text-[10px] bg-red-500 px-1 py-0.5 rounded">🔒</span>}
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );
