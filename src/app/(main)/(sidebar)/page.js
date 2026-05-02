@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * 파일명: src/app/(main)/page.js
+ * 파일명: src/app/(main)/(sidebar)/page.js
  * 역할  : ByClan 웹사이트의 홈 페이지('/' 경로)를 담당합니다.
  *         Header와 Footer가 포함된 (main) 레이아웃에 감싸집니다.
  *
@@ -19,11 +19,9 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-
-import ProfileSidebar from '../components/ProfileSidebar';
-import AuthDashboard from '../components/AuthDashboard';
-import HomeContent from '../pages/HomeContent';
-import { useAuthContext } from '../context/AuthContext';
+import AuthDashboard from '../../components/AuthDashboard';
+import HomeContent from '../../pages/HomeContent';
+import { useAuthContext } from '../../context/AuthContext';
 
 export default function Home() {
   const router = useRouter();
@@ -76,13 +74,8 @@ export default function Home() {
 
   // 일반 홈 화면
   return (
-    <div className="w-full flex flex-col md:flex-row gap-6 mt-4">
-      <aside className="hidden md:block w-70 shrink-0">
-        <ProfileSidebar profile={profile} user={user} />
-      </aside>
-      <div className="flex-1 min-w-0">
-        <HomeContent profile={profile} user={user} />
-      </div>
+    <div className="w-full flex-1 min-w-0 mt-4">
+      <HomeContent profile={profile} user={user} />
     </div>
   );
 }

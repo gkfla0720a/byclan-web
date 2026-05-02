@@ -21,7 +21,6 @@
 import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import DevSettingsPanel from '../components/DevSettingsPanel';
 import { useAuthContext } from '../context/AuthContext';
 
 /**
@@ -34,7 +33,6 @@ import { useAuthContext } from '../context/AuthContext';
  *     {children}
  *   </main>
  *   <Footer />        - 하단 푸터
- *   <DevSettings />   - 개발자 전용 패널 (권한이 있을 때만)
  */
 export default function MainLayout({ children }) {
   const { getPermissions } = useAuthContext();
