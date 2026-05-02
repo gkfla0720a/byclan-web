@@ -1,23 +1,29 @@
+// src/app/(main)/(sidebar)/layout.js
 'use client';
 
 import React from 'react';
-import ProfileSidebar from '@/app/components/ProfileSidebar'; // 경로 확인 필요!
-import { useAuthContext } from '@/app/context/AuthContext'; // 유저 정보 필요 시
+import ProfileSidebar from '@/app/components/ProfileSidebar';
+import { useAuthContext } from '@/app/context/AuthContext';
 
 export default function SidebarLayout({ children }) {
-  const { user, profile } = useAuthContext();
+  const { user, profile, needsSetup, authLoading } = useAuthContext();
 
-return (
-    /* 여기서 max-w를 또 걸지 않아도 됩니다. 상위 layout.js에서 이미 잡았기 때문입니다. */
-    <div className="w-full flex flex-col md:flex-row gap-8">
+  // 🛠️ 추가: 신규 가입자 설정 중이거나 가입 심사 대기 중일 때는 사이드바 없이 내용만 렌더링합니다.
+  if (!authLoading && user && (needsSetup || profile?.role === 'applicant')) {
+    return <div className="w-full flex justify-center">{children}</div>;
+  }
+
+  // 일반 홈 화면일 때만 사이드바 렌더링
+  return (
+    <div className="w-full flex flex-col md:flex-row gap-4 lg:gap-6 mt-4">
       
-      {/* 왼쪽 사이드바: 모바일(기본)에서는 hidden, PC(md)부터 block */}
-      <aside className="hidden md:block w-64 lg:w-72 xl:w-80 shrink-0">
+      {/* 왼쪽 사이드바 (Header 로고와 동일한 반응형 너비 적용) */}
+      <aside className="hidden md:block w-64 lg:w-72 xl:w-80 shrink-0 transition-all duration-300">
         <ProfileSidebar profile={profile} user={user} />
       </aside>
 
-      {/* 오른쪽 콘텐츠: 모바일에서는 전체 너비, PC에서는 남은 공간 차지 */}
-      <section className="flex-1 min-w-0">
+      {/* 오른쪽 콘텐츠 */}
+      <section className="flex-1 min-w-0 transition-all duration-300">
         {children}
       </section>
       
