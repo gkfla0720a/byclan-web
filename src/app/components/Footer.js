@@ -31,13 +31,13 @@ function ByClanLogo() {
   return (
     <div className="flex items-center justify-center cursor-pointer group w-12 h-12 relative">
       <Image 
-        src="/ByClanLogo.png" 
+        src="/ByClanLogo_WebP.webp" 
         alt="ByClan Logo" 
         width={48}
         height={48}
         priority={true}
+        unoptimized={true}
         className="object-contain transition-all duration-300 group-hover:scale-110 group-hover:brightness-110" 
-        style={{ filter: "drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.9)) drop-shadow(0px 0px 12px rgba(0, 0, 0, 0.6))" }} 
       />
     </div>
   );
@@ -61,15 +61,17 @@ export default function Footer() {
           {/* 왼쪽: 로고 + 후원계좌 */}
           <div className="flex flex-col items-center md:items-start text-center md:text-left gap-4">
             {/* 로고 + 클랜명 */}
-            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigateTo('Home')}>
-              <ByClanLogo />
+            <div className="flex items-baseline gap-3 cursor-pointer group" onClick={() => navigateTo('Home')}>
+              <div className="self-center">
+                <ByClanLogo />
+              </div>
               <span
-                className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-110"
+                className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-110 pb-1"
                 style={{
                   background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0px 1px 0px rgba(200, 162, 102, 0.6)) drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.9))",
+                  filter: "brightness(1.2)",
                   textShadow: "0px 1px 1px rgba(200, 162, 102, 0.4), 0px 1px 0px rgba(0, 0, 0, 0.3)"
                 }}
               >

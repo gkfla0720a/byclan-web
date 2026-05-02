@@ -16,7 +16,7 @@ export async function POST(request) {
     
     // 마스터 권한으로 포인트 함수 실행
     const result = await checkAndGrantDailyBonus(supabaseAdmin, userId, isTestData);
-    
+
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json({ granted: false, error: error.message }, { status: 500 });

@@ -53,11 +53,10 @@ function ByClanLogo() {
         height={48}
         priority={true}
         unoptimized={true}
-        className="object-contain transition-transform duration-300 group-hover:scale-110" 
+        className="object-contain transition-transform duration-300 group-hover:scale-110 group-hover:brightness-110" 
         style={{ 
-        // brightness는 1.05~1.1 정도로 아주 미세하게만 올리고, 
-        // 그림자 농도를 0.9에서 0.5 정도로 낮추는 것이 핵심입니다.
-        filter: "brightness(1.1) drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.5)) drop-shadow(0px 0px 12px rgba(0, 0, 0, 0.3))" 
+        // brightness는 1.05~1.1 정도로 아주 미세하게 조정하여 원본 색감 유지하면서 살짝 더 밝게 보이도록 합니다.
+        filter: "brightness(1.1)" 
       }}
       />
     </div>
@@ -200,15 +199,17 @@ export default function Header() {
       <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
         
         {/* 로고 & 타이틀 */}
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
-          <ByClanLogo />
+        <div className="flex items-baseline gap-3 cursor-pointer group" onClick={handleLogoClick}>
+          <div className="self-center">
+            <ByClanLogo />
+          </div>
             <span 
-              className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-110"
+              className="text-3xl sm:text-4xl font-black tracking-widest shrink-0 transition-all duration-300 group-hover:brightness-110 pb-1"
               style={{
                 background: "linear-gradient(155deg, #FFE8C6 0%, #B89C60 20%, #C8A266 40%, #45372A 50%, #5E462E 60%, #B89C60 80%, #2E241C 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "brightness(1.3) drop-shadow(0px 1px 0px rgba(200, 162, 102, 0.6)) drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.4))",
+                filter: "brightness(1.2)",
                 textShadow: "0px 1px 1px rgba(200, 162, 102, 0.4), 0px 1px 0px rgba(0, 0, 0, 0.3)"
               }}
             >
