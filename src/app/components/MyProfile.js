@@ -510,7 +510,7 @@ export default function MyProfile() {
   const userRoleLabel = roleLabels[currentRole] || `👤 방문자 (${currentRole})`;
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-8 px-4 animate-fade-in font-sans relative">
+    <div className="w-full py-8 px-4 animate-fade-in font-sans relative">
       
       {/* ⚙️ 비밀 톱니바퀴 (오직 'developer' 등급에게만 보임) */}
       {isDeveloper && (

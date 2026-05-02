@@ -170,7 +170,7 @@ export default function NoticeBoard() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto py-8 px-4 animate-fade-in-down">
+    <div className="w-full py-8 px-4 animate-fade-in-down">
       <div className="flex justify-between items-end mb-6 border-b border-gray-700 pb-3">
         <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
           <span className="text-yellow-500">📢</span> 공지사항

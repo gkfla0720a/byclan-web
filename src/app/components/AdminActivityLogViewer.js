@@ -87,7 +87,7 @@ export default function AdminActivityLogViewer() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-4 px-2 sm:px-4 space-y-4">
+    <div className="w-full py-4 px-2 sm:px-4 space-y-4">
       <div className="bg-gray-900/60 border border-gray-700 rounded-2xl p-4">
         <h2 className="text-white text-lg font-black mb-2">전역 활동 로그</h2>
         <p className="text-gray-500 text-xs sm:text-sm mb-3">CP/MMR/경기/접속/게시글/닉네임/등급 변동 이력을 통합 조회합니다.</p>

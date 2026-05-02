@@ -228,7 +228,7 @@ export default function AdminPointManager() {
   );
 
   if (!isAdmin) return (
-    <div className="w-full max-w-4xl mx-auto my-10 bg-gray-900 rounded-3xl p-12 text-center border-2 border-red-900/50">
+    <div className="w-full my-10 bg-gray-900 rounded-3xl p-12 text-center border-2 border-red-900/50">
       <div className="text-5xl mb-4">🚫</div>
       <h2 className="text-2xl font-black text-red-500">접근 불가</h2>
       <p className="text-gray-500 mt-2 text-sm">운영진(admin/master/developer) 전용 기능입니다.</p>
@@ -236,7 +236,7 @@ export default function AdminPointManager() {
   );
 
   return (
-    <div className="w-full max-w-5xl mx-auto py-8 px-4 space-y-8 font-sans">
+    <div className="w-full py-8 px-4 space-y-8 font-sans">
       <div className="border-b border-yellow-700/30 pb-6">
         <h2 className="text-2xl font-black text-white flex items-center gap-3">
           <span>💰</span> 포인트 관리 시스템

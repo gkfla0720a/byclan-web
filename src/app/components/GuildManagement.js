@@ -587,7 +587,7 @@ export default function GuildManagement() {
 
   if (!canManageMembers) {
     return (
-      <div className="w-full max-w-4xl mx-auto py-20 px-4">
+      <div className="w-full py-20 px-4">
         <div className="rounded-3xl border border-red-500/30 bg-gray-950/80 px-8 py-12 text-center shadow-2xl">
           <div className="text-5xl mb-4">🚫</div>
           <h2 className="text-3xl font-black text-red-400 mb-4">길드원 관리 권한 없음</h2>
@@ -598,7 +598,7 @@ export default function GuildManagement() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-8 px-4">
+    <div className="w-full py-8 px-4">
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-purple-600 mb-2">
           길드원 관리

@@ -200,7 +200,7 @@ export default function AdminBoard() {
   );
   
   if (!isAdmin) return (
-    <div className="w-full max-w-4xl mx-auto my-20 bg-gray-900 rounded-3xl p-16 text-center border-4 border-red-950/70 shadow-[0_0_60px_rgba(185,28,28,0.2)] animate-pulse">
+    <div className="w-full my-20 bg-gray-900 rounded-3xl p-16 text-center border-4 border-red-950/70 shadow-[0_0_60px_rgba(185,28,28,0.2)] animate-pulse">
       <div className="text-7xl mb-6">⚠️</div>
       <h2 className="text-4xl font-black text-red-400 mb-6 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">
         CLASSIFIED INFORMATION <br/> (접근 불가)
@@ -212,7 +212,7 @@ export default function AdminBoard() {
   );
 
   return (
-    <div className="w-full max-w-5xl mx-auto py-8 px-4 animate-fade-in-down font-sans mb-10">
+    <div className="w-full py-8 px-4 animate-fade-in-down font-sans mb-10">
       
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10 border-b-2 border-yellow-700/50 pb-6 shadow-[0_4px_10px_-4px_rgba(234,179,8,0.2)]">
         <div>

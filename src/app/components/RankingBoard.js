@@ -210,7 +210,7 @@ export default function RankingBoard() {
   });
 
   return (
-    <div className="w-full mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono space-y-4">
+    <div className="w-full animate-fade-in-down mt-4 sm:mt-8 font-mono space-y-4">
       <div className="flex flex-col gap-3 rounded-3xl border border-cyan-500/20 bg-slate-950/70 px-5 py-4 shadow-[0_0_30px_rgba(8,145,178,0.12)] sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-black tracking-[0.2em] text-cyan-300">RANKING</h2>

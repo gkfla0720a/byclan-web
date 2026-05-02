@@ -229,7 +229,7 @@ export default function ApplicationList() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-8 px-4 animate-fade-in-down font-sans relative">
+    <div className="w-full py-8 px-4 animate-fade-in-down font-sans relative">
       
       <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-8 border-b border-gray-700 pb-5 gap-4">
         <div>

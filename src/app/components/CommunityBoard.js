@@ -104,7 +104,7 @@ export default function CommunityBoard() {
     };
 
     return (
-    <div className="w-full max-w-6xl mx-auto py-8 px-4">
+    <div className="w-full py-8 px-4">
       {/* 상단 헤더 영역 */}
       <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
         <h2 className="text-2xl font-bold text-white">💬 자유게시판</h2>

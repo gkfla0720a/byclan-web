@@ -76,7 +76,7 @@ export default function NotificationCenter({ profile }) {
   if (loading) return <div className="text-center py-20 text-gray-500">LOADING NOTIFICATIONS...</div>;
 
   return (
-    <div className="w-full max-w-3xl mx-auto py-12 px-4 animate-fade-in-down">
+    <div className="w-full py-12 px-4 animate-fade-in-down">
       <h2 className="text-3xl font-black text-white mb-8 border-b border-gray-700 pb-4 flex items-center gap-3">
         <span>🔔</span> 알림함
       </h2>

@@ -168,7 +168,7 @@ export default function AdminBoard() {
   );
   
   if (!isAdmin) return (
-    <div className="w-full max-w-4xl mx-auto my-20 bg-gray-900 rounded-3xl p-16 text-center border-4 border-red-950/70 shadow-2xl">
+    <div className="w-full my-20 bg-gray-900 rounded-3xl p-16 text-center border-4 border-red-950/70 shadow-2xl">
       <div className="text-7xl mb-6">🚫</div>
       <h2 className="text-4xl font-black text-red-500 mb-6 uppercase tracking-tighter">Access Denied</h2>
       <p className="text-gray-400">인가되지 않은 유저의 접근입니다. 모든 시도는 기록됩니다.</p>
@@ -176,7 +176,7 @@ export default function AdminBoard() {
   );
 
   return (
-    <div className="w-full max-w-5xl mx-auto py-8 px-4 animate-fade-in font-sans mb-10">
+    <div className="w-full py-8 px-4 animate-fade-in font-sans mb-10">
       
       <div className="flex flex-col sm:flex-row items-center justify-between mb-10 border-b border-yellow-700/30 pb-8">
         <div>
