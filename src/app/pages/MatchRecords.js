@@ -447,7 +447,7 @@ export default function MatchRecords() {
   const pagedMatches = matches.slice(pageStart, pageStart + PAGE_SIZE);
 
   return (
-    <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 font-mono">
+    <div className="w-full animate-fade-in-down font-mono">
       {/* 헤더 */}
       <div className="flex justify-between items-end mb-4 px-2 sm:px-0 border-b border-cyan-500/50 pb-2">
         <h2 className="text-xl sm:text-2xl font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] tracking-widest">
