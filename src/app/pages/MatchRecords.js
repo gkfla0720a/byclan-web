@@ -6,7 +6,7 @@
  *   비로그인 유저를 포함한 모든 방문자가 열람할 수 있습니다.
  *
  * 주요 기능:
- *   - ladder_matches 테이블에서 완료·진행중 경기를 최신순으로 불러옵니다.
+ *   - ladder_match_sets 테이블에서 완료·진행중 경기를 최신순으로 불러옵니다.
  *   - 각 경기의 날짜, 종류, 상태, 스코어, 참여 인원을 표시합니다.
  *   - 참여자 프로필(by_id)을 비동기로 조회하여 팀 명단을 표시합니다.
  *   - 경기 행 클릭 시 상세 팝업을 표시합니다.
@@ -121,12 +121,12 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
   const [sets, setSets] = useState([]);
   const [expandedSetNo, setExpandedSetNo] = useState(null);
 
-  // 경기가 바뀔 때마다 match_sets 조회
+  // 경기가 바뀔 때마다 ladder_match_sets 조회
   useEffect(() => {
     if (!m?.id || !isSupabaseConfigured) return;
     let cancelled = false;
     supabase
-      .from('match_sets')
+      .from('ladder_match_sets')
       .select('set_number, winner_team, race_cards, combo_code, status, team_a_entry, team_b_entry')
       .eq('match_id', m.id)
       .order('set_number', { ascending: true })
