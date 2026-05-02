@@ -158,7 +158,7 @@ export default function ProfileSidebar({ profile, user }) {
   const race = RACE_LABELS[profile.race] || profile.race || '—';
 
   return (
-    <div className="w-full">
+    <div className="w-full flex, flex-col, gap-4">
       <div
         className="cyber-card rounded-xl p-4 flex flex-col gap-3 cursor-pointer hover:border-cyan-500/30 transition-all"
         onClick={() => navigateTo('내 프로필')}
