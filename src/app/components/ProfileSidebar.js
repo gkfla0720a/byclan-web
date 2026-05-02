@@ -104,7 +104,7 @@ export default function ProfileSidebar({ profile, user }) {
   // 로그인했지만 프로필이 아직 로딩 중인 경우 → 스켈레톤 표시 (샘플 데이터 없음)
   if (user && !profile) {
     return (
-      <aside className="hidden lg:flex flex-col w-56 shrink-0 gap-3">
+      <aside className="hidden md:block w-52 lg:w-64 xl:w-80 flex shrink-0 gap-3">
         <div className="cyber-card rounded-xl p-4 flex flex-col gap-3 animate-pulse">
           <div className="flex flex-col items-center gap-2 pb-2 border-b border-gray-800">
             <div className="w-12 h-12 rounded-full bg-gray-800" />
@@ -126,7 +126,7 @@ export default function ProfileSidebar({ profile, user }) {
   if (!user || !profile || !isActiveMember || !hasProfileData) {
     // 방문자 / 비로그인 / 프로필 미완성 상태
     return (
-      <aside className="hidden lg:flex flex-col w-56 shrink-0 gap-3">
+      <aside className="hidden md:block w-52 lg:w-64 xl:w-80 flex shrink-0 gap-3">
         <div className="cyber-card rounded-xl p-4 flex flex-col gap-3">
           <div className="flex flex-col items-center gap-1.5 pb-2 border-b border-gray-800">
             <div className="w-12 h-12 rounded-full bg-gray-900/70 border border-gray-700 flex items-center justify-center text-xl">👤</div>
@@ -162,7 +162,7 @@ export default function ProfileSidebar({ profile, user }) {
   const race = RACE_LABELS[profile.race] || profile.race || '—';
 
   return (
-    <aside className="hidden lg:flex flex-col w-56 shrink-0 gap-3">
+    <aside className="hidden md:block w-52 lg:w-64 xl:w-80 flex shrink-0 gap-3">
       <div
         className="cyber-card rounded-xl p-4 flex flex-col gap-3 cursor-pointer hover:border-cyan-500/30 transition-all"
         onClick={() => navigateTo('내 프로필')}

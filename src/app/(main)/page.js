@@ -77,7 +77,7 @@ export default function Home() {
   // 일반 홈 화면
   return (
     <div className="w-full flex flex-col md:flex-row gap-6 mt-4">
-      <aside className="hidden md:block w-80 shrink-0">
+      <aside className="hidden md:block w-70 shrink-0">
         <ProfileSidebar profile={profile} user={user} />
       </aside>
       <div className="flex-1 min-w-0">

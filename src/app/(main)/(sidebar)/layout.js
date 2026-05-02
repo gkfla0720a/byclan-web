@@ -12,7 +12,7 @@ return (
     <div className="w-full flex flex-col md:flex-row gap-8">
       
       {/* 왼쪽 사이드바: 모바일(기본)에서는 hidden, PC(md)부터 block */}
-      <aside className="hidden md:block w-80 shrink-0">
+      <aside className="hidden md:block w-52 lg:w-64 xl:w-80 shrink-0">
         <ProfileSidebar profile={profile} user={user} />
       </aside>
 

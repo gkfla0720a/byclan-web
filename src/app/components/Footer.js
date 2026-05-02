@@ -53,13 +53,13 @@ export default function Footer() {
 
   return (
     <footer className="w-full bg-gray-950 border-t border-gray-800 mt-16 py-8 sm:py-12 px-4 relative z-10">
-      <div className="max-w-400 mx-auto space-y-8">
+      <div className="mx-auto space-y-8">
 
         {/* 메인 3단 영역 */}
         <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
 
           {/* 왼쪽: 로고 + 후원계좌 */}
-          <div className="w-64 shrink-0 flex flex-col items-center md:items-start text-center md:text-left gap-4">
+          <div className="hidden md:block w-52 lg:w-64 xl:w-80 shrink-0 flex flex-col items-center jestify-center md:items-start text-center md:text-left gap-4">
             {/* 로고 + 클랜명 */}
             <div className="flex items-baseline gap-3 cursor-pointer group" onClick={() => navigateTo('Home')}>
               <div className="self-center">
@@ -134,7 +134,7 @@ export default function Footer() {
           </div>
 
           {/* 오른쪽: Discord 참여 */}
-          <div className="flex flex-col items-center md:items-end">
+          <div className="hidden md:flex items-center gap-3 shrink-0">
             <span className="text-gray-300 font-bold mb-3">공식 커뮤니티 참가</span>
             <a
               href="https://discord.gg/byclan"
