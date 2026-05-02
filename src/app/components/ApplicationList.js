@@ -233,7 +233,7 @@ export default function ApplicationList() {
       
       <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-8 border-b border-gray-700 pb-5 gap-4">
         <div>
-          <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">
+          <h2 className="text-3xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-300 to-yellow-600">
             가입 심사 관리
           </h2>
           <p className="text-gray-400 mt-1">대기 중인 신청서를 확인하고, 과거 심사 기록을 열람하세요.</p>
@@ -355,7 +355,7 @@ export default function ApplicationList() {
                       <button 
                         onClick={() => handleClaimTest(app.id)}
                         disabled={processingId === app.id}
-                        className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold rounded-lg shadow-md transition-transform hover:scale-105"
+                        className="w-full sm:w-auto px-6 py-2 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold rounded-lg shadow-md transition-transform hover:scale-105"
                       >
                         내가 담당하기
                       </button>

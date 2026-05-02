@@ -321,7 +321,7 @@ export default function ClanMembers() {
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
       <div className="relative neon-panel rounded-3xl overflow-hidden px-6 py-4 sm:px-8 sm:py-5 text-center">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_38%)] pointer-events-none" />
-        <h2 className="relative text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 via-cyan-300 to-blue-400 drop-shadow-lg">
+        <h2 className="relative text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-100 via-cyan-300 to-blue-400 drop-shadow-lg">
           클랜원 명단
         </h2>
       </div>

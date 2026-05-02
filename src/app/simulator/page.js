@@ -66,7 +66,7 @@ export default function ByClanTacticalDashboard() {
     <div className="min-h-screen bg-[#0a0a0f] text-gray-100 p-6 font-sans">
       {/* 상단 헤더 */}
       <header className="mb-10 text-center">
-        <h1 className="text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 mb-2">
+        <h1 className="text-4xl font-black italic text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-blue-600 mb-2">
           BYCLAN TACTICAL SIMULATOR
         </h1>
         <p className="text-gray-400 text-sm">TrueSkill™ 알고리즘 기반 실시간 승률 예측 시스템</p>
@@ -138,7 +138,7 @@ export default function ByClanTacticalDashboard() {
           <div className="bg-[#12121e] rounded-2xl p-8 border border-gray-800 text-center">
             <button 
               onClick={simulateMatch}
-              className="px-10 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full font-black text-xl hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20 mb-8"
+              className="px-10 py-4 bg-linear-to-r from-blue-600 to-cyan-500 rounded-full font-black text-xl hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20 mb-8"
             >
               SIMULATE BATTLE
             </button>

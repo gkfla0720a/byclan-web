@@ -24,7 +24,7 @@ function ClanTournament() {
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-8">
       <div className="text-center sm:text-left border-b border-gray-700 pb-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500">⚔️ 클랜 대회 및 토너먼트</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-yellow-200 to-yellow-500">⚔️ 클랜 대회 및 토너먼트</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {upcomingTournaments.map((t) => (

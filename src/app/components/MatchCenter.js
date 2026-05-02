@@ -999,7 +999,7 @@ export default function MatchCenter({ matchId, onExit }) {
             <button
               onClick={() => submitEntry(editingTeam)}
               disabled={selectedEntry.some((e) => !e.id)}
-              className="w-full mt-4 py-4 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-xl disabled:opacity-25 active:scale-98 transition-all text-sm tracking-wider"
+              className="w-full mt-4 py-4 bg-linear-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-xl disabled:opacity-25 active:scale-98 transition-all text-sm tracking-wider"
             >
               {selectedEntry.every((e) => e.id) ? '엔트리 최종 제출 →' : '모든 슬롯에 선수를 배치하세요'}
             </button>

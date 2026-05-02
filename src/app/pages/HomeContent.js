@@ -220,7 +220,7 @@ function HomeContent({ profile = null, user = null, userPermissions = {} }) {
       {/* 히어로 배너 */}
       <section className="relative rounded-3xl overflow-hidden border border-cyan-300/20 bg-slate-950/40 h-56 sm:h-72 flex flex-col items-center justify-center text-center scanline shadow-[0_20px_60px_rgba(8,15,26,0.32)] backdrop-blur-sm">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
-        <div className="absolute inset-0 bg-gradient-to-b from-cyan-300/5 via-slate-950/35 to-slate-950/75" />
+        <div className="absolute inset-0 bg-linear-to-b from-cyan-300/5 via-slate-950/35 to-slate-950/75" />
         {/* 사이버 그리드 오버레이 */}
         <div className="absolute inset-0" style={{
           backgroundImage: 'linear-gradient(rgba(0,212,255,0.04) 1px,transparent 1px), linear-gradient(90deg,rgba(0,212,255,0.04) 1px,transparent 1px)',

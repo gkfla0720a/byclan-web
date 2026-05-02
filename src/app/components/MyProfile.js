@@ -604,7 +604,7 @@ export default function MyProfile() {
             disabled={isUpdating || !isNicknameAvailable}
             className={`w-full py-4 font-black text-lg rounded-2xl shadow-xl transition-all active:scale-95
               ${isNicknameAvailable && !isUpdating 
-                ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-gray-900 hover:brightness-110' 
+                ? 'bg-linear-to-r from-yellow-600 to-yellow-500 text-gray-900 hover:brightness-110' 
                 : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
           >
             {isUpdating ? '데이터 처리 중...' : '변경 사항 저장하기'}
@@ -706,7 +706,7 @@ export default function MyProfile() {
         <div className="space-y-6">
           
           {/* 래더 정보 카드 */}
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-6 border border-gray-700 shadow-xl relative overflow-hidden group">
+          <div className="bg-linear-to-br from-gray-800 to-gray-900 rounded-3xl p-6 border border-gray-700 shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl group-hover:scale-110 transition-transform duration-500">🏆</div>
             <h3 className="text-white font-black text-xs mb-6 border-b border-gray-700/50 pb-2 uppercase tracking-[0.2em]">Ladder Status</h3>
             <div className="space-y-5">

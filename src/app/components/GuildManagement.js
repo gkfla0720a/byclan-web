@@ -600,7 +600,7 @@ export default function GuildManagement() {
   return (
     <div className="w-full max-w-6xl mx-auto py-8 px-4">
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600 mb-2">
+        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-purple-600 mb-2">
           길드원 관리
         </h1>
         <p className="text-gray-400">길드원 등급 변경, 제명, 마스터 위임 등의 관리 기능</p>

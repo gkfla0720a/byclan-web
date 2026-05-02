@@ -169,7 +169,7 @@ export default function JoinTransferPage() {
   return (
     <div className="max-w-lg mx-auto mt-12 mb-20 px-4">
       <div className="bg-gray-900 border border-purple-500/30 rounded-2xl p-8 shadow-2xl">
-        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-2">
+        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-pink-500 mb-2">
           정회원 전환 신청
         </h1>
         <p className="text-gray-400 mb-6 text-sm leading-relaxed">
@@ -223,7 +223,7 @@ export default function JoinTransferPage() {
           <button
             onClick={handleApply}
             disabled={!canApply || submitting || daysAsSinceRookie === null}
-            className="w-full py-3 rounded-xl font-black text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg"
+            className="w-full py-3 rounded-xl font-black text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg"
           >
             {submitting ? '신청 중...' : '정회원 전환 신청하기'}
           </button>

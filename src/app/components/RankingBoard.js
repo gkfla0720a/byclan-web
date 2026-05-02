@@ -128,7 +128,7 @@ function ComboRateCell({ stat }) {
 function TierBadge({ score }) {
   const tier = getTierMeta(score);
   return (
-    <div className={`relative h-11 w-11 shrink-0 rounded-2xl bg-gradient-to-br ${tier.tone} p-[1px] shadow-[0_0_20px_rgba(34,211,238,0.18)]`}>
+    <div className={`relative h-11 w-11 shrink-0 rounded-2xl bg-linear-to-br ${tier.tone} p-[1px] shadow-[0_0_20px_rgba(34,211,238,0.18)]`}>
       <div className={`flex h-full w-full items-center justify-center rounded-2xl bg-slate-950/90 text-sm font-black text-white ring-1 ${tier.ring}`}>
         {tier.badge}
       </div>
