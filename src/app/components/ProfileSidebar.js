@@ -104,8 +104,7 @@ export default function ProfileSidebar({ profile, user }) {
   // 로그인했지만 프로필이 아직 로딩 중인 경우 → 스켈레톤 표시 (샘플 데이터 없음)
   if (user && !profile) {
     return (
-      <aside className="w-full bg-slate-900 flex shrink-0 gap-3">
-        <div className="cyber-card rounded-xl p-4 flex flex-col gap-3 animate-pulse">
+        <div className="w-full cyber-card rounded-xl p-4 flex flex-col gap-3 animate-pulse">
           <div className="flex flex-col items-center gap-2 pb-2 border-b border-gray-800">
             <div className="w-12 h-12 rounded-full bg-gray-800" />
             <div className="h-3 w-24 bg-gray-800 rounded" />
@@ -119,15 +118,13 @@ export default function ProfileSidebar({ profile, user }) {
             ))}
           </div>
         </div>
-      </aside>
     );
   }
 
   if (!user || !profile || !isActiveMember || !hasProfileData) {
     // 방문자 / 비로그인 / 프로필 미완성 상태
     return (
-      <aside className="w-full bg-slate-900 flex shrink-0 gap-3">
-        <div className="cyber-card rounded-xl p-4 flex flex-col gap-3">
+        <div className="w-full cyber-card rounded-xl p-4 flex flex-col gap-3">
           <div className="flex flex-col items-center gap-1.5 pb-2 border-b border-gray-800">
             <div className="w-12 h-12 rounded-full bg-gray-900/70 border border-gray-700 flex items-center justify-center text-xl">👤</div>
             <span className="font-black text-sm text-gray-500 truncate max-w-full">비로그인</span>
@@ -151,7 +148,6 @@ export default function ProfileSidebar({ profile, user }) {
 
           <p className="pt-1 text-center text-[10px] text-gray-600">로그인 후 프로필 정보가 표시됩니다</p>
         </div>
-      </aside>
     );
   }
 
@@ -162,7 +158,7 @@ export default function ProfileSidebar({ profile, user }) {
   const race = RACE_LABELS[profile.race] || profile.race || '—';
 
   return (
-    <aside className="hidden lg:flex flex-col w-80 shrink-0 gap-3">
+    <div className="w-full">
       <div
         className="cyber-card rounded-xl p-4 flex flex-col gap-3 cursor-pointer hover:border-cyan-500/30 transition-all"
         onClick={() => navigateTo('내 프로필')}
@@ -227,7 +223,7 @@ export default function ProfileSidebar({ profile, user }) {
 
       {/* Discord 접속 중인 멤버 */}
       <DiscordOnlinePanel />
-    </aside>
+    </div>
   );
 }
 
@@ -239,7 +235,7 @@ export default function ProfileSidebar({ profile, user }) {
  */
 function DiscordOnlinePanel() {
   return (
-    <div className="cyber-card rounded-xl p-3 flex flex-col gap-2">
+    <div className="w-full cyber-card rounded-xl p-3 flex flex-col gap-2">
       {/* 헤더 */}
       <div className="flex items-center gap-1.5 pb-2 border-b border-gray-800">
         {/* Discord 로고 색상 원형 */}
