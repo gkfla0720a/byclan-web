@@ -8,10 +8,10 @@ import { useAuthContext } from '@/app/context/AuthContext';
 export default function SidebarLayout({ children }) {
   const { user, profile, needsSetup, authLoading } = useAuthContext();
 
-  // 🛠️ 추가: 신규 가입자 설정 중이거나 가입 심사 대기 중일 때는 사이드바 없이 내용만 렌더링합니다.
-  if (!authLoading && user && (needsSetup || profile?.role === 'applicant')) {
-    return <div className="w-full flex justify-center">{children}</div>;
-  }
+// 오직 초기 닉네임 설정(needsSetup) 중일 때만 사이드바를 숨깁니다.
+if (!authLoading && user && needsSetup) {
+  return <div className="w-full flex justify-center">{children}</div>;
+}
 
   // 일반 홈 화면일 때만 사이드바 렌더링
   return (
