@@ -390,24 +390,27 @@ export default function MatchRecords() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fetchError } = await filterVisibleTestData(
-        supabase
-          .from('ladder_match_sets')
-          .select('id, match_type, status, score_a, score_b, team_a_ids, team_b_ids, team_a_races, team_b_races, created_at')
-          .in('status', ['completed', 'in_progress', 'proposed'])
-          .order('created_at', { ascending: false })
-            .limit(300)
-      );
-      if (fetchError) throw fetchError;
-      setMatches(data || []);
-          setCurrentPage(1);
+      // 1. 이제 부모 테이블(ladder_record)에서 깔끔하게 정리된 경기 요약본만 쏙 빼옵니다!
+      const { data, error: fetchError } = await supabase
+        .from('ladder_record')
+        .select('*')
+        .in('status', ['completed', 'in_progress', 'proposed'])
+        .order('created_at', { ascending: false })
+        .limit(300);
 
-      // 경기에 참여한 모든 사용자 ID를 모아 프로필 일괄 조회
+      if (fetchError) throw fetchError;
+      
+      const matchData = data || [];
+      setMatches(matchData);
+      setCurrentPage(1);
+
+      // 2. 프로필(닉네임) 캐시 불러오기 (기존 로직과 동일)
       const allIds = new Set();
-      (data || []).forEach((m) => {
+      matchData.forEach((m) => {
         (m.team_a_ids || []).forEach((id) => allIds.add(id));
         (m.team_b_ids || []).forEach((id) => allIds.add(id));
       });
+
       if (allIds.size > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
