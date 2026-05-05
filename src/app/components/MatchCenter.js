@@ -30,9 +30,6 @@ import { supabase } from '@/supabase';
 const BET_AMOUNTS = [500,1000, 5000, 10000];
 /** 세트 시작 후 베팅 가능한 시간(초). 5분 = 300초. */
 const BET_WINDOW_SECONDS = 300; // 5분
-/** 최종 정산 처리 상태 및 에러 메시지 */
-const [settlementStatus, setSettlementStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
-const [settlementError, setSettlementError] = useState('');
 
 /**
  * 종족 조합 선택지 목록입니다.
@@ -51,44 +48,6 @@ const REQUIRED_RACE_COMBOS = ['PPP', 'PPT', 'PPZ', 'PZT', 'RANDOM'];
 
 /** 종족 영문명을 한글 아이콘으로 변환하는 매핑 객체 */
 const RACE_ICONS = { Protoss: '프', Terran: '테', Zerg: '저' };
-
-/**
-   * 매치 최종 정산 처리 함수
-   */
-const handleSettlement = async () => {
-  setSettlementStatus('loading');
-  setSettlementError('');
-
-  try {
-    // 1. 사전 검증: 이미 정산 완료된 경기인지 확인
-    const { data: matchData, error: checkError } = await supabase
-      .from('ladder_record')
-      .select('status')
-      .eq('id', matchId)
-      .single();
-
-    if (checkError) throw checkError;
-
-    if (matchData?.status === 'completed') {
-      setSettlementStatus('success');
-      throw new Error('이미 정산이 완료된 경기입니다.');
-    }
-
-    // 2. DB 정산 함수(RPC) 호출 (트랜잭션)
-    const { error } = await supabase.rpc('fn_process_settlement', { p_match_id: matchId });
-    
-    if (error) throw error;
-
-    // 3. 성공 처리
-    setSettlementStatus('success');
-    alert('매치 정산이 완벽하게 처리되었습니다!');
-    
-  } catch (err) {
-    console.error('정산 오류:', err);
-    setSettlementError(err.message || '알 수 없는 오류가 발생했습니다.');
-    setSettlementStatus('error'); // 에러 시 상태를 error로 변경하여 버튼 재활성화
-  }
-};
 
 /**
  * 선택된 종족 조합 ID로 해당 세트의 종족 카드 배열을 반환합니다.
@@ -174,6 +133,10 @@ export default function MatchCenter({ matchId, onExit }) {
   const [myRole, setMyRole] = useState(null);
   /** 운영진/개발자 실시간 관리모드 활성 여부 (developer_settings.match_admin_live_mode) */
   const [managementMode, setManagementMode] = useState(false);
+  /** 최종 정산 처리 상태 및 에러 메시지 */
+  const [settlementStatus, setSettlementStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
+  const [settlementError, setSettlementError] = useState('');
+
   /**
    * 팀별 작성 중 엔트리 배열 (최대 3명).
    * A/B 팀 각각 독립적으로 관리하여 시야 전환 시에도 입력 상태를 보존합니다.
@@ -641,6 +604,44 @@ export default function MatchCenter({ matchId, onExit }) {
   const canBetOnA = myTeam !== 'A';
   /** B팀에 베팅 가능 여부. 내가 B팀이면 베팅 불가. */
   const canBetOnB = myTeam !== 'B';
+
+  /**
+   * 매치 최종 정산 처리 함수
+   */
+  const handleSettlement = async () => {
+    setSettlementStatus('loading');
+    setSettlementError('');
+
+    try {
+      // 1. 사전 검증: 이미 정산 완료된 경기인지 확인
+      const { data: matchData, error: checkError } = await supabase
+        .from('ladder_record')
+        .select('status')
+        .eq('id', matchId)
+        .single();
+
+      if (checkError) throw checkError;
+
+      if (matchData?.status === 'completed') {
+        setSettlementStatus('success');
+        throw new Error('이미 정산이 완료된 경기입니다.');
+      }
+
+      // 2. DB 정산 함수(RPC) 호출 (트랜잭션)
+      const { error } = await supabase.rpc('fn_process_settlement', { p_match_id: matchId });
+      
+      if (error) throw error;
+
+      // 3. 성공 처리
+      setSettlementStatus('success');
+      alert('매치 정산이 완벽하게 처리되었습니다!');
+      
+    } catch (err) {
+      console.error('정산 오류:', err);
+      setSettlementError(err.message || '알 수 없는 오류가 발생했습니다.');
+      setSettlementStatus('error'); // 에러 시 상태를 error로 변경하여 버튼 재활성화
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto py-6 px-4 space-y-5 font-mono">
