@@ -156,12 +156,16 @@ export default function RankingBoard() {
         const isTestViewer = typeof window !== 'undefined' &&
           window.localStorage.getItem('byclan_current_is_test_account') === 'true';
 
-        let query = supabase
+        // 💡 수정 1: profiles 안의 profile_meta를 가져오도록 select 문 변경
+        const query = supabase
           .from('ladder_rankings')
           .select(`
             user_id, by_id, ladder_mmr, team_mmr, total_mmr,
             wins, losses, recent_total_delta, race_combo_stats, favorite_race,
-            profiles!inner(role, is_test_account, is_test_account_active, is_active)
+            profiles!inner (
+              role, is_active,
+              profile_meta (is_test_account, is_test_account_active)
+            )
           `)
           .eq('profiles.is_active', true)
           .neq('profiles.role', 'visitor')
@@ -169,30 +173,51 @@ export default function RankingBoard() {
           .neq('profiles.role', 'expelled')
           .order('total_mmr', { ascending: false });
 
-        if (isTestViewer) {
-          query = query.eq('profiles.is_test_account', true).eq('profiles.is_test_account_active', true);
-        } else {
-          query = query.or('is_test_account.is.null,is_test_account.eq.false', { referencedTable: 'profiles' });
-        }
+        // 💡 주의: Supabase 쿼리단에서 is_test_account 필터링(.or, .eq)을 제거했습니다!
+        // (profile_meta 같은 손자 테이블 필터링은 JS에서 하는 것이 에러 없이 안전합니다.)
 
         const { data: rawData, error: fetchError } = await query;
         if (fetchError) throw fetchError;
 
-        const data = (rawData || []).map(r => ({
-          id: r.user_id,
-          by_id: r.by_id,
-          race: r.favorite_race,
-          ladder_mmr: r.ladder_mmr,
-          team_mmr: r.team_mmr,
-          total_mmr: r.total_mmr,
-          wins: r.wins,
-          losses: r.losses,
-          recent_total_delta: r.recent_total_delta,
-          race_combo_stats: r.race_combo_stats,
-          is_test_account: r.profiles?.is_test_account,
-        }));
-        if (data) setCached(CACHE_KEY, data);
+        // 💡 수정 2: 자바스크립트로 테스트 계정을 안전하게 분리해냅니다.
+        const filteredData = (rawData || []).filter(r => {
+          // profile_meta가 배열로 넘어올 수도 있고 객체로 넘어올 수도 있으므로 안전하게 처리
+          const meta = Array.isArray(r.profiles?.profile_meta) 
+            ? r.profiles.profile_meta[0] 
+            : r.profiles?.profile_meta;
+            
+          const isTest = meta?.is_test_account === true;
+          const isActive = meta?.is_test_account_active === true;
+          
+          return isTestViewer ? (isTest && isActive) : !isTest;
+        });
+
+        // 💡 수정 3: 분리해낸 데이터를 화면에 맞게 매핑합니다.
+        const data = filteredData.map(r => {
+          const meta = Array.isArray(r.profiles?.profile_meta) 
+            ? r.profiles.profile_meta[0] 
+            : r.profiles?.profile_meta;
+
+          return {
+            id: r.user_id,
+            by_id: r.by_id,
+            race: r.favorite_race,
+            ladder_mmr: r.ladder_mmr,
+            team_mmr: r.team_mmr,
+            total_mmr: r.total_mmr,
+            wins: r.wins,
+            losses: r.losses,
+            recent_total_delta: r.recent_total_delta,
+            race_combo_stats: r.race_combo_stats,
+            is_test_account: meta?.is_test_account || false,
+          };
+        });
+
+        if (data.length > 0) {
+          setCached(CACHE_KEY, data);
+        }
         setRankings(data || []);
+
       } catch (err) {
         console.error('랭킹 로드 실패:', err);
         setError(err);

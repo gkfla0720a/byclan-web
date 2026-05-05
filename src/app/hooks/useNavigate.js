@@ -66,6 +66,7 @@ const VIEW_TO_PATH = {
   '알림': '/admin/notifications',
   '알림': '/notifications',
   '내 프로필': '/profile',
+  '개발자': '/developer',
   '로그인': '/login',
 };
 
