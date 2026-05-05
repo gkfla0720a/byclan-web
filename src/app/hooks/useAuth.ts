@@ -636,9 +636,10 @@ export function useAuth(): UseAuthReturn {
       try {
         const { data: m, error: matchError } = await supabase
           .from('ladder_match_sets')
-          .select('id')
+          // 💡 핵심: ladder_record 테이블과 INNER JOIN 하여 해당 유저가 참여 중인 매치만 필터링합니다.
+          .select('id, ladder_record!inner(user_id)') 
           .eq('status', 'in_progress')
-          .or(`team_a_ids.cs.{${authUser.id}},team_b_ids.cs.{${authUser.id}}`)
+          .eq('ladder_record.user_id', authUser.id)
           .maybeSingle();
 
         if (!matchError && m) {
