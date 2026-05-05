@@ -376,9 +376,11 @@ export default function LadderDashboard({ onMatchEnter }) {
       if (profile) {
         setMyProfile({
           ...profile,
-          ladder_mmr: ladderData?.ladder_mmr ?? 1500,
-          wins: ladderData?.wins ?? 0,
-          losses: ladderData?.losses ?? 0,
+          // 💡 기본값을 제거하여 데이터가 없으면 0이나 null로 표시되게 합니다.
+          ladder_mmr: ladderData?.ladder_mmr || 0, 
+          wins: ladderData?.wins || 0,
+          losses: ladderData?.losses || 0,
+          total_mmr: ladderData?.total_mmr || 0,
           is_test_account: profileMeta?.is_test_account ?? false,
         });
       }

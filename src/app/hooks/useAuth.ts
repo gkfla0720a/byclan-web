@@ -199,24 +199,32 @@ function getSocialIdentity(authUser: Record<string, unknown>) {
 }
 
 async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Promise<UserProfile> {
-  const [{ data: oauthData }, { data: metaData }, { data: rankData }] = await Promise.all([
-    supabase
-      .from('profile_oauth')
-      .select('discord_id, google_sub, google_email, google_name, google_avatar_url, auth_provider')
-      .eq('user_id', userId)
-      .maybeSingle(),
-    supabase
-      .from('profile_meta')
-      .select('is_test_account, is_test_account_active, is_streamer, streamer_platform, streamer_url, last_login_at')
-      .eq('user_id', userId)
-      .maybeSingle(),
-    supabase
-      .from('ladder_rankings')
-      .select('ladder_mmr, team_mmr, total_mmr, wins, losses, recent_total_delta, race_combo_stats')
-      .eq('user_id', userId)
-      .maybeSingle(),
+  const [{ data: oauthData }, { data: metaData }, { data: rankData, error: rankError }] = await Promise.all([
+    supabase.from('profile_oauth').select('*').eq('user_id', userId).maybeSingle(),
+    supabase.from('profile_meta').select('*').eq('user_id', userId).maybeSingle(),
+    supabase.from('ladder_rankings').select('*').eq('user_id', userId).maybeSingle(),
   ]);
-  return { ...profile, ...(oauthData || {}), ...(metaData || {}), ...(rankData || {}) };
+
+  if (rankError) {
+    console.error("🚨 래더 랭킹 정보를 불러오지 못했습니다:", rankError);
+  }
+
+  // 💡 rankData가 없으면 래더 관련 필드들을 명시적으로 초기화하여 
+  // profiles 테이블의 옛날 값이 덮어씌워지게 합니다.
+  const ladderStats = rankData || {
+    ladder_mmr: 0,
+    team_mmr: 0,
+    total_mmr: 0,
+    wins: 0,
+    losses: 0
+  };
+
+  return { 
+    ...profile, 
+    ...(oauthData || {}), 
+    ...(metaData || {}), 
+    ...ladderStats 
+  };
 }
 
 function sanitizeByIdSeed(seed: string): string {
