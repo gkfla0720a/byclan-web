@@ -199,24 +199,18 @@ function ActivityLog() {
             .select('id, btag, status, created_at')
             .order('created_at', { ascending: false })
             .limit(2)),
-          // 💡 수정된 부분: filterVisibleTestData를 빼고 부모 테이블(ladder_record)을 조인합니다.
           supabase
-            .from('ladder_match_sets')
-            .select('id, match_id, status, created_at, ladder_record!inner(match_type, is_test_data)')
-            .order('created_at', { ascending: false })
-            .limit(10)
+          .from('ladder_match_sets')
+          .select('id, match_id, status, created_at, ladder_record!inner(match_type)')
+          .order('created_at', { ascending: false })
+          .limit(10)
         ]);
 
-        // 💡 수정된 부분: 매치 데이터를 JS에서 안전하게 필터링하고 race_type을 match_type으로 매핑합니다.
-        const validMatches = (matchesRawResult.data || []).filter(m => {
-          const rec = Array.isArray(m.ladder_record) ? m.ladder_record[0] : m.ladder_record;
-          const isTestMatch = rec?.is_test_data === true;
-          return isTestViewer ? isTestMatch : !isTestMatch;
-        }).slice(0, 2).map(m => {
+        // race_type을 match_type으로 매핑합니다.
+        const validMatches = (matchesRawResult.data || []).slice(0, 2).map(m => {
           const rec = Array.isArray(m.ladder_record) ? m.ladder_record[0] : m.ladder_record;
           return { ...m, race_type: rec?.match_type };
         });
-
         const nextActivities = [
           ...(postsResult.data || []).map(post => ({
             id: `post-${post.id}`,
