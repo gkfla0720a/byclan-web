@@ -391,40 +391,46 @@ export default function LadderDashboard({ onMatchEnter }) {
         .maybeSingle();
       setInQueue(myQueue?.is_in_queue || false);
 
-      // 대기열 전체 목록 조회
+      // 1. 대기열 전체 목록 조회 (ladder_rankings 조인 추가)
       const isTestViewer = typeof window !== 'undefined' &&
-        window.localStorage.getItem('byclan_current_is_test_account') === 'true';
-        
-      const { data: queueRaw } = await supabase
-        .from('ladder_queue')
-        .select(`
-          user_id, queue_joined_at,
-          profiles!inner (
-            id, by_id, race, clan_point, ladder_mmr, team_mmr, total_mmr, role,
-            profile_meta (is_test_account, is_test_account_active)
-          )
-        `)
-        .eq('is_in_queue', true)
-        .order('queue_joined_at', { ascending: true });
+      window.localStorage.getItem('byclan_current_is_test_account') === 'true';
 
-      // DB 필터링 대신 프론트엔드(JS)에서 안전하게 테스트 계정을 분리합니다.
+      let queueQuery = supabase
+      .from('ladder_queue')
+      .select(`
+        user_id, queue_joined_at,
+        profiles!inner (
+          id, by_id, race, clan_point, role,
+          profile_meta (is_test_account, is_test_account_active),
+          ladder_rankings (ladder_mmr, team_mmr, total_mmr)
+        )
+      `)
+      .eq('is_in_queue', true)
+      .order('queue_joined_at', { ascending: true });
+
+      const { data: queueRaw } = await queueQuery;
+
       const qPlayers = (queueRaw || []).filter(r => {
-        const meta = Array.isArray(r.profiles?.profile_meta) ? r.profiles.profile_meta[0] : r.profiles?.profile_meta;
-        const isTest = meta?.is_test_account === true;
-        const isActive = meta?.is_test_account_active === true;
-        return isTestViewer ? (isTest && isActive) : !isTest;
-      }).map(r => ({
+      const meta = Array.isArray(r.profiles?.profile_meta) ? r.profiles.profile_meta[0] : r.profiles?.profile_meta;
+      const isTest = meta?.is_test_account === true;
+      const isActive = meta?.is_test_account_active === true;
+      return isTestViewer ? (isTest && isActive) : !isTest;
+      }).map(r => {
+      // ladder_rankings 데이터 안전하게 파싱
+      const rankings = Array.isArray(r.profiles?.ladder_rankings) ? r.profiles.ladder_rankings[0] : r.profiles?.ladder_rankings;
+      return {
         id: r.user_id,
         by_id: r.profiles?.by_id,
         race: r.profiles?.race,
         clan_point: r.profiles?.clan_point,
-        ladder_mmr: r.profiles?.ladder_mmr,
-        team_mmr: r.profiles?.team_mmr,
-        total_mmr: r.profiles?.total_mmr,
         role: r.profiles?.role,
+        ladder_mmr: rankings?.ladder_mmr ?? 1000,
+        team_mmr: rankings?.team_mmr ?? 0,
+        total_mmr: rankings?.total_mmr ?? 1000,
         is_test_account: Array.isArray(r.profiles?.profile_meta) ? r.profiles.profile_meta[0]?.is_test_account : r.profiles?.profile_meta?.is_test_account,
         queue_joined_at: r.queue_joined_at,
-      }));
+      };
+      });
       setQueuePlayers(qPlayers);
 
       // 대기열 인원 변경 시 쿨다운 리셋
@@ -437,29 +443,25 @@ export default function LadderDashboard({ onMatchEnter }) {
       lastQueueKeyRef.current = newKey;
 
 
+      // 진행 중인 매치 조회
       // user_id가 아니라 team_a_ids, team_b_ids 배열을 가져옵니다.
       const { data: ongoingRaw } = await supabase
-        .from('ladder_match_sets')
-        .select('*, ladder_record(id, team_a_ids, team_b_ids, is_test_data)')
-        .in('status', ['in_progress', 'proposed'])
-        .order('created_at', { ascending: false })
-        .limit(20);
+      .from('ladder_match_sets')
+      .select('*, ladder_record(id, team_a_ids, team_b_ids)') // is_test_data 제거
+      .in('status', ['in_progress', 'proposed'])
+      .order('created_at', { ascending: false })
+      .limit(20);
 
-      const ongoingList = (ongoingRaw || []).filter(m => {
-        const rec = Array.isArray(m.ladder_record) ? m.ladder_record[0] : m.ladder_record;
-        const isTestMatch = rec?.is_test_data === true;
-        return isTestViewer ? isTestMatch : !isTestMatch;
-      }).map(m => {
-        // 기존 프론트엔드 호환성을 위해 배열 데이터를 쪼개서 가짜 record를 만들어 줍니다.
-        const rec = Array.isArray(m.ladder_record) ? m.ladder_record[0] : m.ladder_record;
-        const teamA = (rec?.team_a_ids || []).map(id => ({ user_id: id, team: 'A' }));
-        const teamB = (rec?.team_b_ids || []).map(id => ({ user_id: id, team: 'B' }));
-        return {
-          ...m,
-          ladder_record: [...teamA, ...teamB] 
-        };
+      const ongoingList = (ongoingRaw || []).map(m => {
+      const rec = Array.isArray(m.ladder_record) ? m.ladder_record[0] : m.ladder_record;
+      const teamA = (rec?.team_a_ids || []).map(id => ({ user_id: id, team: 'A' }));
+      const teamB = (rec?.team_b_ids || []).map(id => ({ user_id: id, team: 'B' }));
+      return {
+        ...m,
+        ladder_record: [...teamA, ...teamB] 
+      };
       }).slice(0, 8);
-      
+
       setOngoingMatches(ongoingList);
 
       // 진행 중인 매치 참여 선수 프로필을 별도 조회 (host_id FK 조인은 팀원 정보를 제공하지 않음)
