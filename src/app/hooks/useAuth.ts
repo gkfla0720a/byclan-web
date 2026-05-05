@@ -634,16 +634,20 @@ export function useAuth(): UseAuthReturn {
     // 진행 중인 래더 매치 확인 (래더 플레이 가능 역할 전체)
     if (['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(nextProfile.role)) {
       try {
-        const { data: m, error: matchError } = await supabase
+        // 복잡한 .or 조건 대신 전체 진행 중 매치를 가져와서 JS로 내 ID를 찾습니다.
+        const { data: ongoingRaw } = await supabase
           .from('ladder_match_sets')
-          // 💡 핵심: ladder_record 테이블과 INNER JOIN 하여 해당 유저가 참여 중인 매치만 필터링합니다.
-          .select('id, ladder_record!inner(user_id)') 
-          .eq('status', 'in_progress')
-          .eq('ladder_record.user_id', authUser.id)
-          .maybeSingle();
+          .select('id, ladder_record!inner(team_a_ids, team_b_ids)')
+          .eq('status', 'in_progress');
 
-        if (!matchError && m) {
-          setActiveMatchId((m as { id: string }).id);
+        const myMatch = (ongoingRaw || []).find(m => {
+          const rec = Array.isArray(m.ladder_record) ? m.ladder_record[0] : m.ladder_record;
+          if (!rec) return false;
+          return (rec.team_a_ids || []).includes(authUser.id) || (rec.team_b_ids || []).includes(authUser.id);
+        });
+
+        if (myMatch) {
+          setActiveMatchId(myMatch.id);
         }
       } catch {
         // 래더 매치 확인 실패는 무시
