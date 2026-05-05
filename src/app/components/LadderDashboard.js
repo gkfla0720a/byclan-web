@@ -394,18 +394,19 @@ export default function LadderDashboard({ onMatchEnter }) {
       // 대기열 전체 목록 (ladder_queue → profiles join)
       const isTestViewer = typeof window !== 'undefined' &&
         window.localStorage.getItem('byclan_current_is_test_account') === 'true';
-      let queueQuery = supabase
+        let queueQuery = supabase
         .from('ladder_queue')
         .select(`
           user_id, queue_joined_at,
-          profiles!inner(id, by_id, race, clan_point, ladder_mmr, team_mmr, total_mmr, role, is_test_account, is_test_account_active)
+          profiles!inner(id, by_id, race, clan_point, ladder_mmr, team_mmr, total_mmr, role),
+          profile_meta!inner(is_test_account, is_test_account_active)
         `)
         .eq('is_in_queue', true)
         .order('queue_joined_at', { ascending: true });
       if (isTestViewer) {
-        queueQuery = queueQuery.eq('profiles.is_test_account', true).eq('profiles.is_test_account_active', true);
+        queueQuery = queueQuery.eq('profile_meta.is_test_account', true).eq('profile_meta.is_test_account_active', true);
       } else {
-        queueQuery = queueQuery.or('is_test_account.is.null,is_test_account.eq.false', { referencedTable: 'profiles' });
+        queueQuery = queueQuery.or('is_test_account.is.null,is_test_account.eq.false', { referencedTable: 'profile_meta' });
       }
       const { data: queueRaw } = await queueQuery;
       const qPlayers = (queueRaw || []).map(r => ({
@@ -417,7 +418,7 @@ export default function LadderDashboard({ onMatchEnter }) {
         team_mmr: r.profiles?.team_mmr,
         total_mmr: r.profiles?.total_mmr,
         role: r.profiles?.role,
-        is_test_account: r.profiles?.is_test_account,
+        is_test_account: r.profile_meta?.is_test_account, // profile_meta에서 가져오도록 수정
         queue_joined_at: r.queue_joined_at,
       }));
       setQueuePlayers(qPlayers);
@@ -431,13 +432,19 @@ export default function LadderDashboard({ onMatchEnter }) {
       }
       lastQueueKeyRef.current = newKey;
 
-      const { data: ongoing } = await filterVisibleTestData(supabase
-        .from('ladder_match_sets')
-        .select('*, ladder_record(user_id, team)')
-        .in('status', ['in_progress', 'proposed'])
-        .order('created_at', { ascending: false })
-        .limit(8));
-      const ongoingList = ongoing || [];
+      // ladder_record에서 is_test_data를 같이 가져옵니다.
+      const { data: ongoingRaw } = await supabase
+      .from('ladder_match_sets')
+      .select('*, ladder_record(user_id, team, is_test_data)')
+      .in('status', ['in_progress', 'proposed'])
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+      // JS 배열 필터링을 통해 테스트 데이터와 일반 데이터를 분리합니다.
+      const ongoingList = (ongoingRaw || []).filter(m => {
+      const isTestMatch = m.ladder_record?.[0]?.is_test_data === true;
+      return isTestViewer ? isTestMatch : !isTestMatch;
+      }).slice(0, 8);
       setOngoingMatches(ongoingList);
 
       // 진행 중인 매치 참여 선수 프로필을 별도 조회 (host_id FK 조인은 팀원 정보를 제공하지 않음)
