@@ -161,8 +161,9 @@ export default function RankingBoard() {
           .select(`
             user_id, by_id, ladder_mmr, team_mmr, total_mmr,
             wins, losses, recent_total_delta, race_combo_stats, favorite_race,
-            profiles!inner(role, is_test_account, is_test_account_active)
+            profiles!inner(role, is_test_account, is_test_account_active, is_active)
           `)
+          .eq('profiles.is_active', true)
           .neq('profiles.role', 'visitor')
           .neq('profiles.role', 'applicant')
           .neq('profiles.role', 'expelled')

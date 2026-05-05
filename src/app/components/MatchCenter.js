@@ -30,6 +30,9 @@ import { supabase } from '@/supabase';
 const BET_AMOUNTS = [500,1000, 5000, 10000];
 /** 세트 시작 후 베팅 가능한 시간(초). 5분 = 300초. */
 const BET_WINDOW_SECONDS = 300; // 5분
+/** 최종 정산 처리 상태 및 에러 메시지 */
+const [settlementStatus, setSettlementStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
+const [settlementError, setSettlementError] = useState('');
 
 /**
  * 종족 조합 선택지 목록입니다.
@@ -50,20 +53,61 @@ const REQUIRED_RACE_COMBOS = ['PPP', 'PPT', 'PPZ', 'PZT', 'RANDOM'];
 const RACE_ICONS = { Protoss: '프', Terran: '테', Zerg: '저' };
 
 /**
+   * 매치 최종 정산 처리 함수
+   */
+const handleSettlement = async () => {
+  setSettlementStatus('loading');
+  setSettlementError('');
+
+  try {
+    // 1. 사전 검증: 이미 정산 완료된 경기인지 확인
+    const { data: matchData, error: checkError } = await supabase
+      .from('ladder_record')
+      .select('status')
+      .eq('id', matchId)
+      .single();
+
+    if (checkError) throw checkError;
+
+    if (matchData?.status === 'completed') {
+      setSettlementStatus('success');
+      throw new Error('이미 정산이 완료된 경기입니다.');
+    }
+
+    // 2. DB 정산 함수(RPC) 호출 (트랜잭션)
+    const { error } = await supabase.rpc('fn_process_settlement', { p_match_id: matchId });
+    
+    if (error) throw error;
+
+    // 3. 성공 처리
+    setSettlementStatus('success');
+    alert('매치 정산이 완벽하게 처리되었습니다!');
+    
+  } catch (err) {
+    console.error('정산 오류:', err);
+    setSettlementError(err.message || '알 수 없는 오류가 발생했습니다.');
+    setSettlementStatus('error'); // 에러 시 상태를 error로 변경하여 버튼 재활성화
+  }
+};
+
+/**
  * 선택된 종족 조합 ID로 해당 세트의 종족 카드 배열을 반환합니다.
  *
  * @param {string} comboId - 종족 조합 ID (예: 'PPT', 'RANDOM')
  * @returns {string[]} 종족 이름 배열 (예: ['Protoss', 'Protoss', 'Terran'])
  */
+
+/* 주석에 쓰인대로 수정해야 합니다.
 function getRaceCards(comboId) {
   const combo = RACE_COMBOS.find(c => c.id === comboId);
   if (!combo || !combo.races) {
-    // 대포: 프프프 포함 모든 조합 허용
+    // 대포: 테테테, 저저저 제외
     const pool = ['Protoss', 'Terran', 'Zerg'];
     return [0, 1, 2].map(() => pool[Math.floor(Math.random() * pool.length)]);
   }
   return combo.races;
 }
+*/
 
 function getComboIdFromRaceCards(cards) {
   if (!Array.isArray(cards) || cards.length !== 3) return null;
@@ -458,6 +502,10 @@ export default function MatchCenter({ matchId, onExit }) {
     }).eq('id', currentSet.id);
     if (error) alert('강제 철회 실패: ' + error.message);
   };
+
+  // 승리 조건 계산 (5v5는 4선승, 그 외는 3선승)
+  const needWins = Number(match?.match_type) >= 5 ? 4 : 3;
+  const matchEnded = match && (match.score_a >= needWins || match.score_b >= needWins);
 
   const handleSetWin = async (winnerTeam) => {
     if (!currentSet || !canReportSetResult) return;
@@ -1006,6 +1054,7 @@ export default function MatchCenter({ matchId, onExit }) {
           </div>
         )}
 
+        {/* 기존 세트 결과 처리 영역 */}
         {canReportSetResult && (
           <div className="mt-5 pt-4 border-t border-gray-700/50">
             <p className="text-[10px] text-orange-400 font-bold mb-2 uppercase tracking-wider">
@@ -1027,9 +1076,44 @@ export default function MatchCenter({ matchId, onExit }) {
                 TEAM B 세트 승리 확정
               </button>
             </div>
+            
+            {/* ▼ 추가할 최종 정산 버튼 영역 (매치가 종료 조건을 달성했을 때만 표시) ▼ */}
+            {matchEnded && (
+              <div className="mt-6 pt-4 border-t border-yellow-500/30">
+                <p className="text-[10px] text-yellow-400 font-bold mb-3 uppercase tracking-wider text-center">
+                  최종 매치 정산 처리
+                </p>
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={handleSettlement}
+                    disabled={settlementStatus === 'loading' || settlementStatus === 'success'}
+                    className={`w-full py-3 text-sm rounded-xl font-black text-white transition-colors shadow-lg
+                      ${settlementStatus === 'idle' ? 'bg-cyan-600 hover:bg-cyan-500' : ''}
+                      ${settlementStatus === 'loading' ? 'bg-slate-500 cursor-not-allowed' : ''}
+                      ${settlementStatus === 'success' ? 'bg-emerald-600 cursor-default' : ''}
+                      ${settlementStatus === 'error' ? 'bg-rose-600 hover:bg-rose-500' : ''}
+                    `}
+                  >
+                    {settlementStatus === 'idle' && '💰 매치 최종 정산 실행'}
+                    {settlementStatus === 'loading' && '정산 처리 중... ⏳'}
+                    {settlementStatus === 'success' && '정산 완료 ✅'}
+                    {settlementStatus === 'error' && '정산 실패 (재시도 ↻)'}
+                  </button>
+                  
+                  {/* 에러 발생 시 상세 원인 노출 */}
+                  {settlementStatus === 'error' && (
+                    <span className="text-rose-400 text-xs mt-2 font-mono break-all text-center">
+                      실패 원인: {settlementError}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* ▲ 추가 끝 ▲ */}
+
             {!isManagementRole && (
-              <p className="text-[10px] text-gray-500 mt-2">
-                팀 캡틴만 세트 결과를 확정할 수 있습니다. (A팀 캡틴: 첫 번째 A팀 인원, B팀 캡틴: 첫 번째 B팀 인원)
+              <p className="text-[10px] text-gray-500 mt-4">
+                팀 캡틴만 세트 결과를 확정할 수 있습니다.
               </p>
             )}
           </div>
