@@ -497,7 +497,21 @@ export default function MyProfile() {
   if (loading) return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">LOADING...</div>;
   if (!profile) return <div className="text-center py-24 text-red-500">프로필 정보를 찾을 수 없습니다.</div>;
 
-  const ladderMmr = profile.ladder_mmr ?? 1000;
+// 💡 오직 total_mmr만 참조합니다. 
+  // 로딩이 끝났음에도 이 값이 없다는 것은 DB 기록 생성에 문제가 있다는 뜻입니다.
+  const ladderMmr = profile.total_mmr;
+
+  if (ladderMmr === undefined || ladderMmr === null) {
+    return (
+      <div className="text-center py-24">
+        <p className="text-red-400 font-bold text-xl mb-2">데이터 동기화 오류</p>
+        <p className="text-gray-500 text-sm">래더 랭킹 정보(total_mmr)가 존재하지 않습니다.</p>
+        <p className="text-gray-600 text-xs mt-4 font-mono">UID: {profile.id}</p>
+        <button onClick={() => window.location.reload()} className="mt-6 px-4 py-2 bg-gray-800 rounded-lg text-xs">새로고침</button>
+      </div>
+    );
+  }
+
   const ladderTier = getTier(ladderMmr);
   const ladderWins = profile.wins ?? 0;
   const ladderLosses = profile.losses ?? 0;

@@ -205,25 +205,16 @@ async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Prom
     supabase.from('ladder_rankings').select('*').eq('user_id', userId).maybeSingle(),
   ]);
 
-  if (rankError) {
-    console.error("🚨 래더 랭킹 정보를 불러오지 못했습니다:", rankError);
+  if (rankError || !rankData) {
+    // 💡 데이터가 없는 것을 숨기지 않고 콘솔에 명확한 경고를 띄웁니다.
+    console.error(`🚨 [Critical] ${profile.by_id} 유저의 ladder_rankings 데이터가 없습니다.`);
   }
-
-  // 💡 rankData가 없으면 래더 관련 필드들을 명시적으로 초기화하여 
-  // profiles 테이블의 옛날 값이 덮어씌워지게 합니다.
-  const ladderStats = rankData || {
-    ladder_mmr: 0,
-    team_mmr: 0,
-    total_mmr: 0,
-    wins: 0,
-    losses: 0
-  };
 
   return { 
     ...profile, 
     ...(oauthData || {}), 
     ...(metaData || {}), 
-    ...ladderStats 
+    ...(rankData || {}) // 존재할 때만 덮어씌움
   };
 }
 
