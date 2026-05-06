@@ -1,8 +1,6 @@
 import * as cheerio from 'cheerio';
 import { NextResponse } from 'next/server';
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
 export async function GET(request) {
   try {
     // 1. 프론트엔드에서 몇 페이지를 원하는지 번호를 받습니다. (기본값 1)

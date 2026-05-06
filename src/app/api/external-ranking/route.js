@@ -6,8 +6,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY // 마스터 키 권장
 );
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
 export async function GET() {
   try {
     // 1. DB에서 가장 최근에 업데이트된 기록 하나를 가져와 시간을 확인합니다.

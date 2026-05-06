@@ -8,7 +8,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function GET(request) {
