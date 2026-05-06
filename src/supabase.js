@@ -17,8 +17,6 @@
  *   템플릿: .env.example 파일 참고
  * =====================================================================
  */
-// ✅ [보안망 우회] 파일 최상단에 추가하세요!
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 import { createClient } from '@supabase/supabase-js';
 
