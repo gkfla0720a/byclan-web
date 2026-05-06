@@ -90,7 +90,7 @@ export default function AdminBoard() {
         title, 
         content, 
         created_at,
-        profiles:author_id ( by_id, role ) 
+        profiles:user_id ( by_id, role ) 
       `)
       .order('created_at', { ascending: false }); 
 
@@ -129,7 +129,7 @@ export default function AdminBoard() {
         .insert({ 
           title: newPost.title, 
           content: newPost.content,
-          author_id: myProfile.id
+          user_id: myProfile.id
         });
 
       if (error) throw error;

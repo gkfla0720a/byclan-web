@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
 
 CREATE TABLE IF NOT EXISTS public.admin_posts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    author_id UUID REFERENCES public.profiles(id),
+    user_id UUID REFERENCES public.profiles(id),
     title TEXT NOT NULL,
     content TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS public.admin_posts (
 
 CREATE TABLE IF NOT EXISTS public.notice_posts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    author_id UUID REFERENCES public.profiles(id),
+    user_id UUID REFERENCES public.profiles(id),
     title TEXT NOT NULL,
     content TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

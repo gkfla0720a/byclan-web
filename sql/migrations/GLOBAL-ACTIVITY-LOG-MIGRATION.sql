@@ -216,13 +216,13 @@ DECLARE
   v_user_id uuid;
   v_row     jsonb;
 BEGIN
-  -- posts(user_id) / admin_posts(author_id) 공통 처리
+  -- posts(user_id) / admin_posts(user_id) 공통 처리
   -- NEW.column 직접 접근 시 존재하지 않는 컬럼이면 오류가 발생하므로
   -- row_to_json() 으로 변환 후 안전하게 추출한다.
   v_row := row_to_json(NEW)::jsonb;
   v_user_id := COALESCE(
     (v_row->>'user_id')::uuid,
-    (v_row->>'author_id')::uuid
+    (v_row->>'user_id')::uuid
   );
 
   INSERT INTO public.activity_logs (

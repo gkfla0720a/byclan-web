@@ -203,7 +203,7 @@ export interface NoticePostRow extends TestDataFlags {
   id: UUID;
   title: string;
   content: string;
-  author_id: UUID | null;
+  user_id: UUID | null;
   created_at: ISODateString | null;
 }
 
@@ -211,7 +211,7 @@ export interface AdminPostRow extends TestDataFlags {
   id: UUID;
   title: string;
   content: string;
-  author_id: UUID | null;
+  user_id: UUID | null;
   created_at: ISODateString | null;
 }
 

@@ -516,8 +516,8 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 | `ladder_matches` | id, status, match_type, team_a_ids, team_b_ids, score_a, score_b, created_by | 래더 매치 기록 |
 | `notifications` | id, user_id, title, message, is_read | 사용자 알림 |
 | `applications` | id, user_id, status, ... | 가입 신청 |
-| `admin_posts` | id, title, content, author_id, ... | 운영진 게시글 |
-| `posts` | id, title, content, author_id, category, ... | 일반 게시글 |
+| `admin_posts` | id, title, content, user_id, ... | 운영진 게시글 |
+| `posts` | id, title, content, user_id, category, ... | 일반 게시글 |
 | `match_bets` | id, match_id, user_id, amount, ... | 매치 베팅 (RLS 적용) |
 | `developer_settings` | key, value | 시스템 런타임 설정 |
 

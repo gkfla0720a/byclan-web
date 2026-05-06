@@ -5,12 +5,12 @@ CREATE TABLE IF NOT EXISTS public.admin_posts (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   title text NOT NULL,
   content text NOT NULL,
-  author_id uuid DEFAULT auth.uid(),
+  user_id uuid DEFAULT auth.uid(),
   created_at timestamp with time zone DEFAULT now(),
   is_test_data boolean DEFAULT false,
   is_test_data_active boolean DEFAULT true,
   CONSTRAINT admin_posts_pkey PRIMARY KEY (id),
-  CONSTRAINT admin_posts_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id)
+  CONSTRAINT admin_posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE IF NOT EXISTS public.applications (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,

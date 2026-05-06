@@ -134,7 +134,7 @@ async function run() {
     console.log('  ✓ posts 삭제');
 
     // 1-5. admin_posts
-    await client.query(`DELETE FROM public.admin_posts WHERE author_id = ANY($1::uuid[])`, [TEST_IDS]);
+    await client.query(`DELETE FROM public.admin_posts WHERE user_id = ANY($1::uuid[])`, [TEST_IDS]);
     console.log('  ✓ admin_posts 삭제');
 
     // 1-6. notifications

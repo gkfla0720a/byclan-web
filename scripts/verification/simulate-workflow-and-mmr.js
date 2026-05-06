@@ -100,7 +100,7 @@ async function main() {
     ].join('\n');
 
     await client.query(`
-      insert into public.admin_posts (title, content, author_id, is_test_data, is_test_data_active)
+      insert into public.admin_posts (title, content, user_id, is_test_data, is_test_data_active)
       values ('[운영 공지] MMR 정산 규칙 및 적용 안내', $1, $2::uuid, false, true)
     `, [memo, REAL.MASTER]);
 

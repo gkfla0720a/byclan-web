@@ -34,10 +34,10 @@ create index if not exists idx_match_bets_match_user on public.match_bets(match_
 create index if not exists idx_posts_user_id on public.posts(user_id);
 create index if not exists idx_posts_created_at on public.posts(created_at desc);
 
-create index if not exists idx_notice_posts_author_id on public.notice_posts(author_id);
+create index if not exists idx_notice_posts_user_id on public.notice_posts(user_id);
 create index if not exists idx_notice_posts_created_at on public.notice_posts(created_at desc);
 
-create index if not exists idx_admin_posts_author_id on public.admin_posts(author_id);
+create index if not exists idx_admin_posts_user_id on public.admin_posts(user_id);
 create index if not exists idx_admin_posts_created_at on public.admin_posts(created_at desc);
 
 create index if not exists idx_notifications_user_id on public.notifications(user_id);

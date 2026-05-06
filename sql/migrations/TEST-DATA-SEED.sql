@@ -398,8 +398,8 @@ begin
 
   delete from public.admin_posts where is_test_data = true;
 
-  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'admin_posts' and column_name = 'author_id') then
-    columns_sql := columns_sql || ', author_id';
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'admin_posts' and column_name = 'user_id') then
+    columns_sql := columns_sql || ', user_id';
     row1_sql := row1_sql || ', ' || quote_literal('11111111-1111-4111-8111-111111111111');
     row2_sql := row2_sql || ', ' || quote_literal('22222222-2222-4222-8222-222222222222');
     row3_sql := row3_sql || ', ' || quote_literal('11111111-1111-4111-8111-111111111111');

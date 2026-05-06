@@ -330,7 +330,7 @@ profiles (PK: id)
   ↑
   ├─ admin_audit_logs (actor_id)
   ├─ activity_logs (actor_id, target_user_id)
-  ├─ admin_posts (author_id)
+  ├─ admin_posts (user_id)
   ├─ applications (user_id, tester_id, reviewed_by)
   ├─ ladder_record (host_id, created_by - 개편 구조에 따라 달라질 수 있음)
   ├─ match_bets (user_id)

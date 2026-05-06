@@ -64,7 +64,7 @@ export default function NoticeBoard() {
         const { data, error } = await filterVisibleTestData(
           supabase
             .from('notice_posts')
-            .select('id, title, content, created_at, profiles:author_id ( by_id, role )')
+            .select('id, title, content, created_at, profiles:user_id ( by_id, role )')
             .order('created_at', { ascending: false })
         );
 
@@ -137,7 +137,7 @@ export default function NoticeBoard() {
       if (authError || !user) throw authError || new Error('로그인이 필요합니다.');
       const { error } = await supabase
         .from('notice_posts')
-        .insert({ title: newPost.title, content: newPost.content, author_id: user.id });
+        .insert({ title: newPost.title, content: newPost.content, user_id: user.id });
 
       if (error) throw error;
 
@@ -148,7 +148,7 @@ export default function NoticeBoard() {
       const { data } = await filterVisibleTestData(
         supabase
           .from('notice_posts')
-          .select('id, title, content, created_at, profiles:author_id ( by_id, role )')
+          .select('id, title, content, created_at, profiles:user_id ( by_id, role )')
           .order('created_at', { ascending: false })
       );
       setNotices(

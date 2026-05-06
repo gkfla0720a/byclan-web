@@ -292,7 +292,7 @@ function buildAdminPosts() {
   return [
     {
       id: 'c1111111-1111-4111-8111-111111111111',
-      author_id: TEST_USERS[0].id,
+      user_id: TEST_USERS[0].id,
       title: '테스트 시즌 오픈 안내',
       content: '홈 화면과 공지 보드가 비어 보이지 않도록 테스트 시즌 공지를 등록했습니다.',
       created_at: daysAgo(1),
@@ -301,7 +301,7 @@ function buildAdminPosts() {
     },
     {
       id: 'c2222222-2222-4222-8222-222222222222',
-      author_id: TEST_USERS[1].id,
+      user_id: TEST_USERS[1].id,
       title: '랭킹 보드 검증용 포인트 반영',
       content: 'test1~test10 계정의 래더 포인트와 전적이 함께 반영됩니다.',
       created_at: daysAgo(2),
@@ -310,7 +310,7 @@ function buildAdminPosts() {
     },
     {
       id: 'c3333333-3333-4333-8333-333333333333',
-      author_id: TEST_USERS[0].id,
+      user_id: TEST_USERS[0].id,
       title: '주말 내전 예고',
       content: '3v3, 4v4, 5v5 화면 확인이 가능하도록 더미 매치 데이터도 함께 들어갑니다.',
       created_at: daysAgo(4),
