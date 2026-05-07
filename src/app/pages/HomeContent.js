@@ -182,13 +182,18 @@ function HomeContent({ profile = null, user = null, userPermissions = {} }) {
 
       const { data: rawRankData } = await supabase
         .from('ladder_rankings')
-        .select('user_id, by_id, total_mmr, ladder_mmr, team_mmr, profiles!inner(role)')
+        .select('user_id, total_mmr, ladder_mmr, team_mmr, profiles!inner(by_id, role)')
         .neq('profiles.role', 'visitor')
         .neq('profiles.role', 'applicant')
         .neq('profiles.role', 'expelled')
         .order('total_mmr', { ascending: false })
         .limit(3);
-      const rankData = (rawRankData || []).map(r => ({ ...r, id: r.user_id }));
+        
+      const rankData = (rawRankData || []).map(r => ({ 
+        ...r, 
+        id: r.user_id, 
+        by_id: r.profiles?.by_id 
+      }));
 
       const { data: noticeData } = await filterVisibleTestData(supabase
         .from('admin_posts')

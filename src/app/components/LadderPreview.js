@@ -100,7 +100,8 @@ export default function LadderPreview({ isGuest }) {
           // 2단계: 대기열이 비어 있으면 ladder_rankings 기준 상위 5명 조회
           const { data: rankRows } = await supabase
             .from('ladder_rankings')
-            .select('user_id, by_id, total_mmr, ladder_mmr, team_mmr, profiles!inner(role, race)')
+            // 💡 수정됨: user_id 옆에 있던 by_id 삭제, profiles!inner 안에 by_id 추가
+            .select('user_id, total_mmr, ladder_mmr, team_mmr, profiles!inner(by_id, role, race)')
             .neq('profiles.role', 'visitor')
             .neq('profiles.role', 'applicant')
             .neq('profiles.role', 'expelled')
@@ -109,7 +110,8 @@ export default function LadderPreview({ isGuest }) {
 
           rows = (rankRows || []).map((row, index) => ({
             id: row.user_id || `ladder-${index}`,
-            by_id: row.by_id,
+            // 💡 수정됨: row.by_id 가 아니라 row.profiles?.by_id 로 변경
+            by_id: row.profiles?.by_id, 
             race: row.profiles?.race,
             clan_point: row.total_mmr ?? ((row.ladder_mmr ?? 1500) + (row.team_mmr ?? 0)),
             is_in_queue: false,

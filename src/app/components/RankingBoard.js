@@ -156,14 +156,14 @@ export default function RankingBoard() {
         const isTestViewer = typeof window !== 'undefined' &&
           window.localStorage.getItem('byclan_current_is_test_account') === 'true';
 
-        // 💡 수정 1: profiles 안의 profile_meta를 가져오도록 select 문 변경
+        // profiles 안의 profile_meta를 가져오도록 select 문 변경
         const query = supabase
           .from('ladder_rankings')
           .select(`
-            user_id, by_id, ladder_mmr, team_mmr, total_mmr,
+            user_id, ladder_mmr, team_mmr, total_mmr,
             wins, losses, recent_total_delta, race_combo_stats, favorite_race,
             profiles!inner (
-              role, is_active,
+              by_id, role, is_active, 
               profile_meta (is_test_account, is_test_account_active)
             )
           `)
@@ -173,26 +173,20 @@ export default function RankingBoard() {
           .neq('profiles.role', 'expelled')
           .order('total_mmr', { ascending: false });
 
-        // 💡 주의: Supabase 쿼리단에서 is_test_account 필터링(.or, .eq)을 제거했습니다!
-        // (profile_meta 같은 손자 테이블 필터링은 JS에서 하는 것이 에러 없이 안전합니다.)
-
         const { data: rawData, error: fetchError } = await query;
         if (fetchError) throw fetchError;
 
-        // 💡 수정 2: 자바스크립트로 테스트 계정을 안전하게 분리해냅니다.
         const filteredData = (rawData || []).filter(r => {
-          // profile_meta가 배열로 넘어올 수도 있고 객체로 넘어올 수도 있으므로 안전하게 처리
           const meta = Array.isArray(r.profiles?.profile_meta) 
             ? r.profiles.profile_meta[0] 
             : r.profiles?.profile_meta;
             
           const isTest = meta?.is_test_account === true;
           const isActive = meta?.is_test_account_active === true;
-          
+
           return isTestViewer ? (isTest && isActive) : !isTest;
         });
 
-        // 💡 수정 3: 분리해낸 데이터를 화면에 맞게 매핑합니다.
         const data = filteredData.map(r => {
           const meta = Array.isArray(r.profiles?.profile_meta) 
             ? r.profiles.profile_meta[0] 
@@ -200,7 +194,7 @@ export default function RankingBoard() {
 
           return {
             id: r.user_id,
-            by_id: r.by_id,
+            by_id: r.profiles?.by_id,
             race: r.favorite_race,
             ladder_mmr: r.ladder_mmr,
             team_mmr: r.team_mmr,

@@ -200,13 +200,12 @@ function getSocialIdentity(authUser: Record<string, unknown>) {
 
 async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Promise<UserProfile> {
   const [{ data: oauthData }, { data: metaData }, { data: rankData, error: rankError }] = await Promise.all([
-    supabase.from('profile_oauth').select('*').eq('user_id', userId).maybeSingle(),
-    supabase.from('profile_meta').select('*').eq('user_id', userId).maybeSingle(),
-    supabase.from('ladder_rankings').select('*').eq('user_id', userId).maybeSingle(),
+    supabase.from('profile_oauth').select('discord_id, google_email, google_name').eq('user_id', userId).maybeSingle(),
+    supabase.from('profile_meta').select('is_test_account_active').eq('user_id', userId).maybeSingle(),
+    supabase.from('ladder_rankings').select('ladder_mmr, wins, losses, total_mmr').eq('user_id', userId).maybeSingle(),
   ]);
 
   if (rankError || !rankData) {
-    // 💡 데이터가 없는 것을 숨기지 않고 콘솔에 명확한 경고를 띄웁니다.
     console.error(`🚨 [Critical] ${profile.by_id} 유저의 ladder_rankings 데이터가 없습니다.`);
   }
 

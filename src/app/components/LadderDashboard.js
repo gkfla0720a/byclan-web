@@ -475,7 +475,7 @@ export default function LadderDashboard({ onMatchEnter }) {
       if (allTeamIds.length > 0) {
         const { data: teamProfs } = await supabase
           .from('ladder_rankings')
-          .select('user_id, ladder_mmr, team_mmr, total_mmr, profiles!inner(id, by_id, clan_point)')
+          .select('user_id, ladder_mmr, team_mmr, total_mmr, profiles!inner(id, by_id, clan_point)') 
           .in('user_id', allTeamIds);
 
         profMap = Object.fromEntries((teamProfs || []).map(p => [p.user_id, {
