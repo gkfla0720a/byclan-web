@@ -56,7 +56,7 @@ export default function MyProfile() {
   const [race, setRace] = useState('미지정');
   const [intro, setIntro] = useState('');
   const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
-  const [originalById, setOriginalById] = useState('');
+  const [originalById, setOriginalById] = useState(profile?.by_id || '');
   const [newEmail, setNewEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -486,7 +486,7 @@ export default function MyProfile() {
         <div className="lg:col-span-2 bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-700 shadow-xl space-y-6">
           
         {/* by_id 미설정 경고 배너 */}
-          {!originalById && (
+          {!profile?.by_id && (
             <div className="bg-red-900/30 border border-red-500/50 rounded-xl px-4 py-3 text-red-300 text-sm font-bold flex items-center gap-2">
               ⚠️ By닉네임이 설정되지 않았습니다. 아이디를 입력하고 중복 확인 후 저장해주세요.
             </div>
