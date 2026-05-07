@@ -133,25 +133,45 @@ export default function MyProfile() {
    * By_ 접두사가 있는 닉네임이 있으면 래더 데이터도 함께 조회합니다.
    * @async
    */
-  const fetchProfileData = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setAuthEmail(user.email || '');
-      setUsesInternalLogin(isInternalAuthEmail(user.email || ''));
+const fetchProfileData = async () => {
+  try {
+    setLoading(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      const [{ data: profileDataRaw }, { data: oauthData }, { data: ladderData }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('profile_oauth').select('discord_id, google_email, google_name, google_avatar_url, auth_provider').eq('user_id', user.id).maybeSingle(),
-        supabase.from('ladder_rankings').select('ladder_mmr, wins, losses').eq('user_id', user.id).maybeSingle(),
-      ]);
-      const profileData = normalizeProfileRow({
-        ...profileDataRaw,
-        ...(oauthData || {}),
-        ladder_mmr: ladderData?.ladder_mmr ?? 1500,
-        wins: ladderData?.wins ?? 0,
-        losses: ladderData?.losses ?? 0,
-      });
+    // 1. 요청을 병렬로 던지고 결과를 이름으로 받습니다.
+    const [profileRes, oauthRes, ladderRes] = await Promise.allSettled([
+      supabase.from('profiles').select('*').eq('id', user.id).single(),
+      supabase.from('profile_oauth').select('discord_id, google_email, google_name, google_avatar_url, auth_provider').eq('user_id', user.id).maybeSingle(),
+      supabase.from('ladder_rankings').select('ladder_mmr, wins, losses, total_mmr').eq('user_id', user.id).maybeSingle(),
+    ]);
+
+    // 2. 각각의 에러를 구체적인 이름과 함께 로그에 남깁니다.
+    if (profileRes.status === 'rejected' || profileRes.value.error) {
+      console.error("Profiles 로드 실패:", profileRes.value?.error?.message || profileRes.reason);
+    }
+    if (oauthRes.status === 'rejected' || oauthRes.value.error) {
+      console.error("OAuth 정보 로드 실패:", oauthRes.value?.error?.message || oauthRes.reason);
+    }
+    if (ladderRes.status === 'rejected' || ladderRes.value.error) {
+      console.error("MMR 정보 로드 실패:", ladderRes.value?.error?.message || ladderRes.reason);
+    }
+
+    // 3. 성공한 데이터들을 꺼내옵니다. (실패했다면 value가 없을 테니 기본값을 세팅)
+    const profileDataRaw = profileRes.status === 'fulfilled' ? profileRes.value.data : null;
+    const oauthData = oauthRes.status === 'fulfilled' ? oauthRes.value.data : {};
+    const ladderData = ladderRes.status === 'fulfilled' ? ladderRes.value.data : null;
+
+    // 4. 기존 로직 그대로 가공 (null 병합 연산자 ?? 활용)
+    const profileData = normalizeProfileRow({
+      ...profileDataRaw,
+      ...(oauthData || {}),
+      ladder_mmr: ladderData?.ladder_mmr ?? 1500,
+      total_mmr: ladderData?.total_mmr ?? 0, // 추가하신 컬럼
+      wins: ladderData?.wins ?? 0,
+      losses: ladderData?.losses ?? 0,
+    });
 
       if (profileData) {
         setProfile(profileData);
@@ -169,7 +189,7 @@ export default function MyProfile() {
 
       }
     } catch (error) {
-      console.error("데이터 로드 에러:", error);
+      console.error("데이터 로드 or 시스템 에러:", error);
     } finally {
       setLoading(false);
     }
