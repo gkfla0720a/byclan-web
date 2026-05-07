@@ -734,7 +734,7 @@ const fetchProfileData = async () => {
           <div className="bg-linear-to-br from-gray-800 to-gray-900 rounded-3xl p-6 border border-gray-700 shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl group-hover:scale-110 transition-transform duration-500">🏆</div>
             <h3 className="text-white font-black text-xs mb-6 border-b border-gray-700/50 pb-2 uppercase tracking-[0.2em]">Ladder Status</h3>
-            // 'Unranked(배치 전)' 상태를 렌더링
+            {/*'Unranked(배치 전)' 상태를 렌더링*/}
             {(totalMmr === undefined || totalMmr === null) ? (
                 <div className="text-center py-8">
                   <p className="text-gray-400 font-bold text-lg mb-2">Unranked</p>
