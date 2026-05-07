@@ -25,6 +25,7 @@ import { useNavigate } from '../hooks/useNavigate';
 import { useAuthContext } from '../context/AuthContext';
 import { invalidateCache } from '../utils/queryCache';
 
+
 function normalizeProfileRow(profileData) {
   if (!profileData) return profileData;
   const clanPoint =
@@ -56,55 +57,27 @@ function getTier(mmr) {
  */
 export default function MyProfile() {
   const router = useRouter();
-  /** 페이지 전환(탭 이동)을 위한 내비게이션 함수 */
   const navigateTo = useNavigate();
-  /** AuthContext에서 전역 프로필 재조회 함수를 가져옵니다. */
-  const { reloadProfile } = useAuthContext();
-  /** Supabase profiles 테이블에서 불러온 전체 프로필 데이터 */
-  const [profile, setProfile] = useState(null);
-  /** 현재 계정의 내부 인증 이메일 (재인증용) */
+  // 방송국(Context)에서 profile뿐만 아니라 'user' 정보도 같이 가져옵니다
+  const { profile, user, reloadProfile } = useAuthContext();
+  const [loading, setLoading] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
-  /** 현재 유저에게 표시할 로그인 아이디 */
   const [accountId, setAccountId] = useState('');
-  /** 숨김 이메일 기반 로컬 계정 여부 */
   const [usesInternalLogin, setUsesInternalLogin] = useState(false);
-  /** 프로필 데이터를 불러오는 중인지 여부 */
-  const [loading, setLoading] = useState(true);
-  /** 프로필 저장 요청이 진행 중인지 여부 (버튼 중복 클릭 방지) */
   const [isUpdating, setIsUpdating] = useState(false);
-
-  // 소셜 계정 연동 상태
-  /** Discord 연동 처리 중 여부 */
   const [discordLinking, setDiscordLinking] = useState(false);
-  /** Google 연동 처리 중 여부 */
   const [googleLinking, setGoogleLinking] = useState(false);
-  /** 연동 관련 메시지 (성공/에러) */
   const [linkMessage, setLinkMessage] = useState(null);
-
-  // 수정용 입력 상태들
-  /** By_ 접두사를 제외한 클랜 닉네임 입력값 (예: 'By_홍길동'에서 '홍길동') */
   const [clanNameInput, setClanNameInput] = useState(''); 
-  /** 선택된 주종족 (Protoss / Terran / Zerg / Random / 미지정) */
   const [race, setRace] = useState('미지정');
-  /** 한줄 자기소개 입력값 */
   const [intro, setIntro] = useState('');
-  /** 닉네임 중복 확인 통과 여부. false이면 저장 버튼이 비활성화됩니다. */
   const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
-  /** 최초 로드 시 DB에 저장된 원본 by_id 값 (중복 확인 시 본인 닉네임 허용 판단에 사용) */
   const [originalById, setOriginalById] = useState('');
-
-  // ── 계정 보안 (아이디/비밀번호 변경) ─────────────────────────────────────
-  /** 이메일 변경 입력값 */
   const [newEmail, setNewEmail] = useState('');
-  /** 현재 비밀번호 (비밀번호 변경 재인증에 사용) */
   const [currentPassword, setCurrentPassword] = useState('');
-  /** 새 비밀번호 입력값 */
   const [newPassword, setNewPassword] = useState('');
-  /** 새 비밀번호 확인 입력값 */
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  /** 계정 보안 섹션 로딩 여부 */
   const [securityLoading, setSecurityLoading] = useState(false);
-  /** 계정 보안 작업 결과 메시지 { type: 'success'|'error', text: string } */
   const [securityMsg, setSecurityMsg] = useState(null);
 
   /** 역할 코드를 한국어 표시 이름(+이모지)으로 변환하는 매핑 테이블 */
@@ -124,81 +97,33 @@ export default function MyProfile() {
    * URL 파라미터에서 연동 결과 메시지를 읽습니다.
    */
   useEffect(() => {
-    fetchProfileData();
-    readLinkResultFromUrl();
+    if (typeof readLinkResultFromUrl === 'function') {
+       readLinkResultFromUrl();
+    }
   }, []);
 
-  /**
-   * Supabase에서 현재 유저의 프로필 및 래더 데이터를 불러옵니다.
-   * By_ 접두사가 있는 닉네임이 있으면 래더 데이터도 함께 조회합니다.
-   * @async
-   */
-const fetchProfileData = async () => {
-  try {
-    setLoading(true);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    setAuthEmail(user.email || '');
-    setUsesInternalLogin(isInternalAuthEmail(user.email || ''));
-
-    // 1. 요청을 병렬로 던지고 결과를 이름으로 받습니다.
-    const [profileRes, oauthRes, ladderRes] = await Promise.allSettled([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('profile_oauth').select('discord_id, google_email, google_name, google_avatar_url, auth_provider').eq('user_id', user.id).maybeSingle(),
-      supabase.from('ladder_rankings').select('ladder_mmr, wins, losses, total_mmr').eq('user_id', user.id).maybeSingle(),
-    ]);
-
-    // 2. 각각의 에러를 구체적인 이름과 함께 로그에 남깁니다.
-    if (profileRes.status === 'rejected' || profileRes.value.error) {
-      console.error("Profiles 로드 실패:", profileRes.value?.error?.message || profileRes.reason);
-    }
-    if (oauthRes.status === 'rejected' || oauthRes.value.error) {
-      console.error("OAuth 정보 로드 실패:", oauthRes.value?.error?.message || oauthRes.reason);
-    }
-    if (ladderRes.status === 'rejected' || ladderRes.value.error) {
-      console.error("MMR 정보 로드 실패:", ladderRes.value?.error?.message || ladderRes.reason);
-    }
-
-    // 3. 성공한 데이터들을 꺼내옵니다. (실패했다면 value가 없을 테니 기본값을 세팅)
-    const profileDataRaw = profileRes.status === 'fulfilled' ? profileRes.value.data : null;
-    const oauthData = oauthRes.status === 'fulfilled' ? oauthRes.value.data : {};
-    const ladderData = ladderRes.status === 'fulfilled' ? ladderRes.value.data : null;
-
-    if (!profileDataRaw) { setLoading(false); return; }
-
-    // 4. 기존 로직 그대로 가공 (null 병합 연산자 ?? 활용)
-    const profileData = normalizeProfileRow({
-      ...profileDataRaw,
-      ...(oauthData || {}),
-      rookie_since: profileDataRaw.rookie_since ?? null,
-      ladder_mmr: ladderData?.ladder_mmr ?? null,
-      total_mmr: ladderData?.total_mmr ?? null,
-      wins: ladderData?.wins ?? 0,
-      losses: ladderData?.losses ?? 0,
-    });
-
-      if (profileData) {
-        setProfile(profileData);
-        setRace(profileData.race || '미지정');
-        setIntro(profileData.intro || '');
-        
-        const currentById = profileData.by_id || '';
-        if (currentById.startsWith('By_')) {
-          setClanNameInput(currentById.replace('By_', ''));
-          setOriginalById(currentById);
-          setIsNicknameAvailable(true); // 기존에 By_ 닉네임이 있으면 일단 활성화
-        }
-
-        setAccountId(extractAccountIdFromAuthUser(user, profileData));
-
+  
+  // 핵심! profile과 user가 모두 준비되었을 때 로컬 상태들을 채워줍니다.
+  useEffect(() => {
+    if (profile && user) {
+      // 래더 및 프로필 정보 세팅
+      setRace(profile.race || '미지정');
+      setIntro(profile.intro || '');
+      
+      const currentById = profile.by_id || '';
+      if (currentById.startsWith('By_')) {
+        setClanNameInput(currentById.replace('By_', ''));
+        setOriginalById(currentById);
+        setIsNicknameAvailable(true);
       }
-    } catch (error) {
-      console.error("데이터 로드 or 시스템 에러:", error);
-    } finally {
-      setLoading(false);
+
+      // 예전 fetchProfileData에 있던 계정(Auth) 정보 세팅 복구
+      setAuthEmail(user.email || '');
+      setUsesInternalLogin(isInternalAuthEmail(user.email || ''));
+      setAccountId(extractAccountIdFromAuthUser(user, profile));
     }
-  };
+  }, [profile, user]); // profile이나 user가 바뀌면 이 코드가 다시 돕니다.
+
 
   /**
    * URL 파라미터에서 소셜 계정 연동 결과를 읽어 메시지를 표시합니다.
@@ -301,7 +226,6 @@ const fetchProfileData = async () => {
         // 다른 로그인 수단이 있으므로 identity만 해제하고 로그아웃하지 않습니다
         await supabase.auth.unlinkIdentity(discordIdentity);
         await reloadProfile();
-        await fetchProfileData();
         setLinkMessage({ type: 'success', text: 'Discord 연동이 해제되었습니다.' });
       } else {
         // Discord가 유일한 로그인 수단: 로그아웃 후 홈으로 이동
@@ -337,7 +261,6 @@ const fetchProfileData = async () => {
       if (googleIdentity && identityCount > 1) {
         await supabase.auth.unlinkIdentity(googleIdentity);
         await reloadProfile();
-        await fetchProfileData();
         setLinkMessage({ type: 'success', text: 'Google 연동이 해제되었습니다.' });
       } else {
         await supabase.auth.signOut();
@@ -422,7 +345,6 @@ const fetchProfileData = async () => {
       alert('프로필이 성공적으로 업데이트되었습니다.');
       invalidateCache('ranking_board');
       await reloadProfile();
-      fetchProfileData();
     } catch (error) {
       alert('업데이트 실패: ' + error.message);
     } finally {
