@@ -25,22 +25,6 @@ import { useNavigate } from '../hooks/useNavigate';
 import { useAuthContext } from '../context/AuthContext';
 import { invalidateCache } from '../utils/queryCache';
 
-
-function normalizeProfileRow(profileData) {
-  if (!profileData) return profileData;
-  const clanPoint =
-    typeof profileData.clan_point === 'number'
-      ? profileData.clan_point
-      : typeof profileData.points === 'number'
-        ? profileData.points
-        : 0;
-
-  return {
-    ...profileData,
-    clan_point: clanPoint,
-  };
-}
-
 function getTier(mmr) {
   if (mmr >= 2400) return 'Challenger';
   if (mmr >= 2200) return 'Master';
@@ -339,7 +323,7 @@ export default function MyProfile() {
         by_id: `By_${clanNameInput}`,
         race: race,
         intro: intro,
-      }).eq('id', profile.id);
+      }).eq('id', user.id).select();
 
       if (error) throw error;
       alert('프로필이 성공적으로 업데이트되었습니다.');
