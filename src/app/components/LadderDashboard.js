@@ -26,9 +26,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
+// 💡 1. AuthContext 임포트 추가
+import { useAuthContext } from '@/context/AuthContext'; 
 
 // ── 상수 ─────────────────────────────────────────────────────────────
-/** 지원하는 매치 유형 정보. 키는 선택 값, 값은 레이블·최소 인원·포맷 등을 담습니다. */
 const MATCH_TYPES = {
   '3v3': { label: '3대3', minPlayers: 6, perTeam: 3, isLadder: true, format: 'BO5 (3선승)' },
   '4v4': { label: '4대4', minPlayers: 8, perTeam: 4, isLadder: true, format: 'BO5 (3선승)' },
@@ -37,30 +38,17 @@ const MATCH_TYPES = {
   '2v2': { label: '2대2', minPlayers: 4, perTeam: 2, isLadder: false, format: '일반게임' },
 };
 
-/** 팀 MMR 차이가 이 값(200점)을 초과하면 불균형 경고를 표시합니다. */
 const BALANCE_THRESHOLD = 200;
-/** 대기열 최대 대기 시간(분). 이 시간이 지나면 자동으로 대기열에서 제거됩니다. */
 const MAX_QUEUE_MINUTES = 20;
-/** 매치 제안 동의/거절 팝업에서 카운트다운 시작 시간(초) */
 const PROPOSAL_CONSENT_SECONDS = 40;
-/**
- * 매치 제안 실패(거절) 시 적용되는 쿨다운 시간 단계(초)
- * 첫 번째 실패: 0초, 두 번째: 10초, 세 번째: 30초, 네 번째 이상: 180초
- */
 const COOLDOWN_STEPS = [0, 10, 30, 180];
 
-/** 티어별 텍스트 색상 클래스 (Tailwind CSS) */
 const TIER_COLORS = {
   Challenger: 'text-rose-400',
   Master: 'text-purple-400', Diamond: 'text-blue-400', Platinum: 'text-cyan-400',
   Gold: 'text-yellow-400', Silver: 'text-gray-400', Bronze: 'text-orange-700',
 };
 
-/**
- * MMR 포인트로 티어 이름을 반환합니다.
- * @param {number} pts - 플레이어의 MMR 포인트
- * @returns {string} 티어 이름
- */
 function getTier(pts) {
   if (pts >= 2400) return 'Challenger';
   if (pts >= 2200) return 'Master';
@@ -71,40 +59,60 @@ function getTier(pts) {
   return 'Bronze';
 }
 
-/**
- * 종족 영문명을 한글 약자로 변환합니다.
- * @param {string} race - 종족 이름
- * @returns {string} 한글 약자 ('테', '프', '저', '랜') 또는 '?'
- */
 function getRaceIcon(race) {
   const icons = { Terran: '테', Protoss: '프', Zerg: '저', Random: '랜' };
   return icons[race] || '?';
 }
 
+// 💡 2. MMR 폴백 제거 (total_mmr 강제화)
 function getPlayerMmr(player) {
-  return player?.total_mmr ?? player?.ladder_mmr ?? player?.clan_point ?? 1000;
+  if (player?.total_mmr === undefined || player?.total_mmr === null) {
+    console.error(`[데이터 오류] ${player.by_id || '유저'}의 total_mmr 데이터가 존재하지 않습니다.`, player);
+    return 1000; // 에러 방지용 임시 기본값 (실제 배포 시엔 throw Error 처리 가능)
+  }
+  return player.total_mmr;
 }
 
-/**
- * 대기열 플레이어 배열을 두 팀으로 분배합니다.
- *
- * @param {Array} players - 대기열 플레이어 목록
- * @param {number} perTeam - 팀당 인원 수
- * @param {string} sortOption - 팀 구성 방식
- *   - 'balance': MMR 교차 배분 (뱀 드래프트 방식, 가장 균형적)
- *   - 'top': 상위 MMR 순으로 A팀, 나머지 B팀
- *   - 'bottom': 하위 MMR 순으로 A팀, 나머지 B팀
- * @returns {{ teamA: Array, teamB: Array } | null} 두 팀 객체 또는 인원 부족 시 null
- */
+// 💡 3. 최적 밸런스 알고리즘 적용 (Snake Draft의 한계 극복)
 function buildTeams(players, perTeam, sortOption) {
   if (players.length < perTeam * 2) return null;
   const pool = [...players].slice(0, perTeam * 2);
+
   if (sortOption === 'balance') {
-    const sorted = [...pool].sort((a, b) => getPlayerMmr(b) - getPlayerMmr(a));
-    const teamA = [], teamB = [];
-    sorted.forEach((p, i) => { if (i % 2 === 0) teamA.push(p); else teamB.push(p); });
-    return { teamA, teamB };
+    let bestDiff = Infinity;
+    let bestTeamA = [];
+    let bestTeamB = [];
+
+    // 조합 구하기 재귀 함수
+    function getCombinations(arr, selectNumber) {
+      const results = [];
+      if (selectNumber === 1) return arr.map((value) => [value]);
+      arr.forEach((fixed, index, origin) => {
+        const rest = origin.slice(index + 1);
+        const combinations = getCombinations(rest, selectNumber - 1);
+        const attached = combinations.map((combination) => [fixed, ...combination]);
+        results.push(...attached);
+      });
+      return results;
+    }
+
+    const allCombinations = getCombinations(pool, perTeam);
+
+    for (const teamA of allCombinations) {
+      const teamB = pool.filter(p => !teamA.some(a => a.id === p.id));
+      const avgA = teamA.reduce((s, p) => s + getPlayerMmr(p), 0) / perTeam;
+      const avgB = teamB.reduce((s, p) => s + getPlayerMmr(p), 0) / perTeam;
+      const diff = Math.abs(avgA - avgB);
+
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestTeamA = teamA;
+        bestTeamB = teamB;
+      }
+    }
+    return { teamA: bestTeamA, teamB: bestTeamB };
   }
+
   if (sortOption === 'top') {
     const sorted = [...pool].sort((a, b) => getPlayerMmr(b) - getPlayerMmr(a));
     return { teamA: sorted.slice(0, perTeam), teamB: sorted.slice(perTeam) };
@@ -113,284 +121,50 @@ function buildTeams(players, perTeam, sortOption) {
     const sorted = [...pool].sort((a, b) => getPlayerMmr(a) - getPlayerMmr(b));
     return { teamA: sorted.slice(0, perTeam), teamB: sorted.slice(perTeam) };
   }
-  return buildTeams(players, perTeam, 'balance');
 }
 
-/**
- * 매치 시작 제안 시 표시되는 동의/거절 팝업 컴포넌트입니다.
- * PROPOSAL_CONSENT_SECONDS(40초) 카운트다운 후 자동으로 거절 처리됩니다.
- *
- * @param {object} proposal - 제안된 매치 정보 (팀 구성, 매치 타입 등)
- * @param {string} myUserId - 현재 로그인 유저의 ID
- * @param {function} onAccept - 동의 버튼 클릭 시 호출되는 콜백
- * @param {function} onReject - 거절 또는 시간 초과 시 호출되는 콜백
+/* * ... (중간에 있는 ConsentPopup, TwoMatchSuggestion 컴포넌트는 기존 코드 그대로 두시면 됩니다!) ... 
  */
-// ── 매치 동의 팝업 ────────────────────────────────────────────────────
-function ConsentPopup({ proposal, myUserId, onAccept, onReject }) {
-  /** 남은 동의 시간(초). 0이 되면 자동 거절됩니다. */
-  const [timeLeft, setTimeLeft] = useState(PROPOSAL_CONSENT_SECONDS);
-  /** 거절 처리 여부. true이면 UI가 회색으로 변하고 닫힘 안내가 표시됩니다. */
-  const [rejected, setRejected] = useState(false);
 
-  /**
-   * 1초마다 timeLeft를 감소시킵니다.
-   * timeLeft가 0이 되거나 이미 거절 상태면 onReject()를 호출합니다.
-   */
-  useEffect(() => {
-    if (timeLeft <= 0 && !rejected) { onReject(); return; }
-    if (rejected) return;
-    const t = setTimeout(() => setTimeLeft(p => p - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timeLeft, rejected, onReject]);
-
-  const handleReject = () => {
-    setRejected(true);
-    setTimeout(() => onReject(), 1800);
-  };
-
-  const isProposer = proposal.proposedBy === myUserId;
-  const radius = 34;
-  const circumference = 2 * Math.PI * radius;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
-      <div className={`relative max-w-md w-full mx-4 rounded-2xl border-2 p-8 transition-all duration-500 ${
-        rejected
-          ? 'border-gray-700 bg-gray-900 grayscale'
-          : 'border-blue-500 bg-[#0a0f1e] shadow-[0_0_40px_rgba(59,130,246,0.4)]'
-      }`}>
-        <div className="flex justify-center mb-6">
-          <div className={`relative w-20 h-20 ${rejected ? 'opacity-30' : ''}`}>
-            <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r={radius} fill="none" stroke="#1e3a5f" strokeWidth="6" />
-              <circle
-                cx="40" cy="40" r={radius} fill="none"
-                stroke={rejected ? '#6b7280' : '#3b82f6'}
-                strokeWidth="6"
-                strokeDasharray={circumference}
-                strokeDashoffset={circumference * (1 - timeLeft / PROPOSAL_CONSENT_SECONDS)}
-                style={{ transition: 'stroke-dashoffset 1s linear' }}
-              />
-            </svg>
-            <div className={`absolute inset-0 flex items-center justify-center font-black text-xl ${rejected ? 'text-gray-600' : 'text-blue-400'}`}>
-              {rejected ? '✕' : timeLeft}
-            </div>
-          </div>
-        </div>
-
-        <h3 className={`text-center font-black text-xl mb-2 ${rejected ? 'text-gray-500' : 'text-white'}`}>
-          {rejected ? '매치 거절됨' : '⚡ 매치 시작 제안!'}
-        </h3>
-        <p className={`text-center text-sm mb-1 ${rejected ? 'text-gray-600' : 'text-gray-300'}`}>
-          {proposal.matchType} 레더 매치
-        </p>
-
-        {!rejected && (
-          <>
-            <div className="grid grid-cols-2 gap-3 my-5">
-              {['A', 'B'].map(team => (
-                <div key={team} className={`p-3 rounded-xl border ${team === 'A' ? 'border-blue-800 bg-blue-950/20' : 'border-red-800 bg-red-950/20'}`}>
-                  <p className={`text-xs font-bold mb-2 text-center ${team === 'A' ? 'text-blue-400' : 'text-red-400'}`}>TEAM {team}</p>
-                  {(team === 'A' ? proposal.teamA : proposal.teamB).map(p => (
-                    <div key={p.id} className="text-xs text-gray-300 truncate flex items-center gap-1 mb-1">
-                      <span className="text-cyan-600 w-4 text-center">{getRaceIcon(p.race)}</span>
-                      <span className="flex-1 truncate">{p.by_id || <span className="text-red-400 text-[10px]">[by_id 없음]</span>}</span>
-                      <span className="text-yellow-500 text-[10px]">{getPlayerMmr(p)}점</span>
-                    </div>
-                  ))}
-                  <div className={`text-center text-[10px] mt-1 font-bold ${team === 'A' ? 'text-blue-400' : 'text-red-400'}`}>
-                    평균 MMR {Math.round(team === 'A' ? proposal.avgA : proposal.avgB)}점
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className={`text-center text-xs mb-5 ${proposal.diff > BALANCE_THRESHOLD ? 'text-yellow-400' : 'text-green-400'}`}>
-              팀 MMR 차이: {Math.round(proposal.diff)}점
-              {proposal.diff > BALANCE_THRESHOLD && ' ⚠️ 200점 초과 — 불균형 주의'}
-            </div>
-            <p className="text-center text-xs text-gray-500 mb-6">
-              {isProposer ? '상대방의 동의를 기다리고 있습니다...' : '매치 시작에 동의하시겠습니까?'}
-            </p>
-            <div className="flex gap-3">
-              {!isProposer && (
-                <button
-                  onClick={onAccept}
-                  className="flex-1 py-3 font-black rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-[0_0_15px_rgba(59,130,246,0.4)]"
-                >
-                  ✓ 동의
-                </button>
-              )}
-              <button
-                onClick={handleReject}
-                className={`${isProposer ? 'w-full' : 'flex-1'} py-3 font-black rounded-xl border border-gray-700 text-gray-400 hover:border-red-700 hover:text-red-400 transition-colors`}
-              >
-                {isProposer ? '제안 취소' : '✗ 거절'}
-              </button>
-            </div>
-          </>
-        )}
-        {rejected && (
-          <div className="text-center text-gray-600 text-sm mt-4 animate-pulse">잠시 후 닫힙니다...</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/**
- * 대기열에 12명 이상일 때, 상위/하위 두 그룹으로 나눠 동시에 두 경기를 제안하는 컴포넌트입니다.
- * 각 경기마다 팀 구성 정렬 방식을 독립적으로 선택할 수 있습니다.
- *
- * @param {Array} players - 전체 대기열 플레이어 목록
- * @param {function} onSelectMatch - 매치를 선택했을 때 호출되는 콜백. {teamA, teamB} 전달.
- */
-// ── 12명+ 두 팀 분리 제안 ─────────────────────────────────────────────
-function TwoMatchSuggestion({ players, onSelectMatch }) {
-  /** 상위 매치의 팀 구성 정렬 방식 ('balance' | 'top' | 'bottom') */
-  const [sortA, setSortA] = useState('balance');
-  /** 하위 매치의 팀 구성 정렬 방식 ('balance' | 'top' | 'bottom') */
-  const [sortB, setSortB] = useState('balance');
-  const perTeam = 3;
-  const sorted = [...players].sort((a, b) => getPlayerMmr(b) - getPlayerMmr(a));
-  const half = Math.floor(sorted.length / 2);
-  const upperPool = sorted.slice(0, half);
-  const lowerPool = sorted.slice(half);
-  const match1 = buildTeams(upperPool, perTeam, sortA);
-  const match2 = buildTeams(lowerPool, perTeam, sortB);
-  const calcAvg = (team) => (team && team.length > 0) ? team.reduce((s, p) => s + getPlayerMmr(p), 0) / team.length : 0;
-  const diff1 = match1 ? Math.abs(calcAvg(match1.teamA) - calcAvg(match1.teamB)) : 0;
-  const diff2 = match2 ? Math.abs(calcAvg(match2.teamA) - calcAvg(match2.teamB)) : 0;
-  const SORT_OPTIONS = [
-    { value: 'top', label: '상픽 우선' },
-    { value: 'balance', label: '밸런스 우선' },
-    { value: 'bottom', label: '하픽 우선' },
-  ];
-  return (
-    <div className="mt-4 p-4 rounded-xl border border-purple-500/30 bg-purple-950/10">
-      <p className="text-purple-400 text-xs font-bold mb-3 uppercase tracking-wider">⚡ 두 경기 동시 진행 제안 (12명+)</p>
-      <div className="grid grid-cols-2 gap-4">
-        {[
-          { label: '상위 매치', sort: sortA, setSort: setSortA, teams: match1, diff: diff1, color: 'yellow' },
-          { label: '하위 매치', sort: sortB, setSort: setSortB, teams: match2, diff: diff2, color: 'cyan' },
-        ].map(({ label, sort, setSort, teams: t, diff, color }) => (
-          <div key={label} className="p-3 rounded-lg border border-gray-700 bg-gray-900/40">
-            <p className={`text-${color}-400 text-xs font-bold mb-2`}>{label}</p>
-            <select
-              value={sort}
-              onChange={e => setSort(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 text-xs text-gray-300 rounded px-2 py-1 mb-2 outline-none"
-            >
-              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            {t && (
-              <div className="space-y-0.5 text-[10px]">
-                <div className="text-blue-400">A: {t.teamA.map(p => p.by_id || '[by_id 없음]').join(', ')}</div>
-                <div className="text-red-400">B: {t.teamB.map(p => p.by_id || '[by_id 없음]').join(', ')}</div>
-                <div className={diff > BALANCE_THRESHOLD ? 'text-yellow-400' : 'text-green-400'}>
-                  차이: {Math.round(diff)}점 {diff > BALANCE_THRESHOLD ? '⚠️' : '✓'}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <button
-        onClick={() => match1 && onSelectMatch(match1)}
-        className="mt-3 w-full py-2 text-xs font-bold rounded-lg border border-purple-500/40 text-purple-300 hover:bg-purple-950/30 transition-colors"
-      >
-        이 구성으로 상위 매치 제안
-      </button>
-    </div>
-  );
-}
-
-/**
- * 래더 대시보드 메인 컴포넌트입니다.
- * 대기열 현황, 팀 밸런스 미리보기, 매치 제안/동의, 진행 중 매치 목록을 통합 제공합니다.
- *
- * @param {function} onMatchEnter - 매치에 입장할 때 호출되는 콜백 (matchId: string 전달)
- * @returns {JSX.Element} 래더 대시보드 UI
- */
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────
 export default function LadderDashboard({ onMatchEnter }) {
-  /** 현재 로그인한 Supabase 유저 객체. 비로그인 상태면 null. */
-  const [user, setUser] = useState(null);
-  /** 현재 유저의 profiles 테이블 데이터 (닉네임, 종족, MMR 등) */
-  const [myProfile, setMyProfile] = useState(null);
-  /** 현재 대기열에 있는 플레이어 목록 (참가 시간 오름차순 정렬) */
+  // 💡 4. AuthContext에서 바로 꺼내오기 (useState 2개 삭제 완료!)
+  const { user, profile: myProfile, authLoading } = useAuthContext();
+  
   const [queuePlayers, setQueuePlayers] = useState([]);
-  /** 진행 중(진행중/제안중) 래더 매치 목록 (최대 8개) */
   const [ongoingMatches, setOngoingMatches] = useState([]);
-  /** 최초 데이터 로딩 여부. true이면 로딩 화면 표시. */
   const [loading, setLoading] = useState(true);
-  /** 내가 현재 대기열에 있는지 여부 */
   const [inQueue, setInQueue] = useState(false);
-  /** 현재 선택된 매치 유형 (예: '4v4') */
   const [queueMatchType, setQueueMatchType] = useState('4v4');
-  /** 대기열 참가 API 요청 처리 중 여부 */
   const [joiningQueue, setJoiningQueue] = useState(false);
-  /** 팀 구성 정렬 방식 ('balance' | 'top' | 'bottom') */
   const [sortOption, setSortOption] = useState('balance');
-  /** 현재 활성화된 매치 제안 정보. null이면 팝업 미표시. */
   const [activeProposal, setActiveProposal] = useState(null);
-  /** 매치 제안 재시도 쿨다운 남은 시간(초). 0이면 즉시 제안 가능. */
   const [proposalCooldown, setProposalCooldown] = useState(0);
-  /** 매치 제안 시도 횟수 (쿨다운 단계 계산에 사용) */
   const [proposalAttempts, setProposalAttempts] = useState(0);
-  /** 5v5 경고 모달 표시 여부 */
   const [show5v5Warning, setShow5v5Warning] = useState(false);
-  /** 5v5 경고를 확인하고 동의했는지 여부 */
   const [accepted5v5, setAccepted5v5] = useState(false);
-  /** 진행 중 매치에 참여한 플레이어 프로필 조회 맵 (userId → profile) */
   const [matchProfiles, setMatchProfiles] = useState({});
-  /** 쿨다운 카운트다운 타이머 참조 (clearTimeout에 사용) */
   const cooldownTimerRef = useRef(null);
-  /** 대기열 자동 이탈 타이머 참조 (MAX_QUEUE_MINUTES 후 자동 취소) */
   const queueTimerRef = useRef(null);
-  /** 대기열 이탈 함수에서 최신 유저 ID를 참조하기 위한 ref (클로저 문제 방지) */
   const currentUserRef = useRef(null);
-  /** 대기열 인원 변경 감지용 - 플레이어 ID 목록의 이전 상태를 저장 */
   const lastQueueKeyRef = useRef('');
 
-  /**
-   * Supabase에서 모든 필요 데이터를 한꺼번에 조회하는 함수입니다.
-   * - 현재 유저 정보 및 프로필
-   * - 래더 통계 (ladders 테이블)
-   * - 대기열 플레이어 목록
-   * - 진행 중인 매치 목록
-   * - 내가 포함된 활성 제안(activeProposal) 여부
-   * useCallback으로 감싸 불필요한 재생성을 방지합니다.
-   */
   const fetchData = useCallback(async () => {
+    // 💡 5. 전역 지갑에 유저 정보가 들어올 때까지 대기
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
-      setUser(authUser);
-      currentUserRef.current = authUser;
-
-      // [보완 1] 초기 프로필 로드 시 ladder_rankings에서 total_mmr도 함께 가져옵니다.
-      const [{ data: profile }, { data: profileMeta }, { data: ladderData }] = await Promise.all([
-        supabase.from('profiles').select('id, by_id, role, race, clan_point').eq('id', authUser.id).single(),
-        supabase.from('profile_meta').select('is_test_account').eq('user_id', authUser.id).maybeSingle(),
-        supabase.from('ladder_rankings').select('ladder_mmr, wins, losses, total_mmr').eq('user_id', authUser.id).maybeSingle(),
-      ]);
-
-      if (profile) {
-        setMyProfile({
-          ...profile,
-          ladder_mmr: ladderData?.ladder_mmr || 0,
-          total_mmr: ladderData?.total_mmr || 0, // 💡 누락되었던 total_mmr 추가
-          wins: ladderData?.wins || 0,
-          losses: ladderData?.losses || 0,
-          is_test_account: profileMeta?.is_test_account ?? false,
-        });
-      }
+      // ✅ 여기서 삭제됨: supabase.auth.getUser() 및 profiles 단독 조회 등 30줄 가량의 불필요한 코드 전부 증발!
+      currentUserRef.current = user;
 
       // 내 대기열 상태 조회
       const { data: myQueue } = await supabase
         .from('ladder_queue')
         .select('is_in_queue')
-        .eq('user_id', authUser.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       setInQueue(myQueue?.is_in_queue || false);
 
@@ -422,18 +196,20 @@ export default function LadderDashboard({ onMatchEnter }) {
         const rankings = Array.isArray(r.profiles?.ladder_rankings) ? r.profiles.ladder_rankings[0] : r.profiles?.ladder_rankings;
         return {
           id: r.user_id,
-          by_id: r.profiles?.by_id,
+          by_id: r.profiles?.by_id, // ✅ by_id 매핑 확인 완료 포인트
           race: r.profiles?.race,
           clan_point: r.profiles?.clan_point,
           role: r.profiles?.role,
           ladder_mmr: rankings?.ladder_mmr ?? 1000,
           team_mmr: rankings?.team_mmr ?? 0,
-          total_mmr: rankings?.total_mmr ?? 1000,
+          total_mmr: rankings?.total_mmr, // 💡 여기서 total_mmr을 온전히 넘겨줍니다.
           is_test_account: Array.isArray(r.profiles?.profile_meta) ? r.profiles.profile_meta[0]?.is_test_account : r.profiles?.profile_meta?.is_test_account,
           queue_joined_at: r.queue_joined_at,
         };
       });
       setQueuePlayers(qPlayers);
+
+// ... (이하 fetchData 내부의 진행 중인 매치 조회 등 기존 로직 그대로 이어짐) ...
 
       // 대기열 인원 변경 시 쿨다운 리셋 로직 (기존 유지)
       const newKey = qPlayers.map(p => p.id).sort().join(',');
