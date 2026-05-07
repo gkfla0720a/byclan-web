@@ -43,7 +43,7 @@ export default function MyProfile() {
   const router = useRouter();
   const navigateTo = useNavigate();
   // 방송국(Context)에서 profile뿐만 아니라 'user' 정보도 같이 가져옵니다
-  const { profile, user, reloadProfile } = useAuthContext();
+  const { profile, user, reloadProfile, authLoading } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
   const [accountId, setAccountId] = useState('');
@@ -427,6 +427,16 @@ export default function MyProfile() {
 
   if (loading) return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">LOADING...</div>;
   if (!profile) return <div className="text-center py-24 text-red-500">프로필 정보를 찾을 수 없습니다.</div>;
+
+  // 로딩 중일 때는 로딩 화면만 보여줌
+  if (authLoading || loading) {
+    return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">인증 정보를 확인하는 중입니다...</div>;
+  }
+  
+  // 로딩이 끝났는데도 정보가 없으면 진짜 에러!
+  if (!profile || !user) {
+    return <div className="text-center py-24 text-red-500">프로필 정보를 찾을 수 없습니다.</div>;
+  }
 
   const totalMmr = profile.total_mmr;
   const ladderTier = getTier(totalMmr);
