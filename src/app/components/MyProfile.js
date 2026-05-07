@@ -136,9 +136,11 @@ export default function MyProfile() {
 const fetchProfileData = async () => {
   try {
     setLoading(true);
-    
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    setAuthEmail(user.email || '');
+    setUsesInternalLogin(isInternalAuthEmail(user.email || ''));
 
     // 1. 요청을 병렬로 던지고 결과를 이름으로 받습니다.
     const [profileRes, oauthRes, ladderRes] = await Promise.allSettled([
@@ -163,12 +165,15 @@ const fetchProfileData = async () => {
     const oauthData = oauthRes.status === 'fulfilled' ? oauthRes.value.data : {};
     const ladderData = ladderRes.status === 'fulfilled' ? ladderRes.value.data : null;
 
+    if (!profileDataRaw) { setLoading(false); return; }
+
     // 4. 기존 로직 그대로 가공 (null 병합 연산자 ?? 활용)
     const profileData = normalizeProfileRow({
       ...profileDataRaw,
       ...(oauthData || {}),
-      ladder_mmr: ladderData?.ladder_mmr ?? 1500,
-      total_mmr: ladderData?.total_mmr ?? 0, // 추가하신 컬럼
+      rookie_since: profileDataRaw.rookie_since ?? null,
+      ladder_mmr: ladderData?.ladder_mmr ?? null,
+      total_mmr: ladderData?.total_mmr ?? null,
       wins: ladderData?.wins ?? 0,
       losses: ladderData?.losses ?? 0,
     });
@@ -517,22 +522,8 @@ const fetchProfileData = async () => {
   if (loading) return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">LOADING...</div>;
   if (!profile) return <div className="text-center py-24 text-red-500">프로필 정보를 찾을 수 없습니다.</div>;
 
-// 💡 오직 total_mmr만 참조합니다. 
-  // 로딩이 끝났음에도 이 값이 없다는 것은 DB 기록 생성에 문제가 있다는 뜻입니다.
-  const ladderMmr = profile.total_mmr;
-
-  if (ladderMmr === undefined || ladderMmr === null) {
-    return (
-      <div className="text-center py-24">
-        <p className="text-red-400 font-bold text-xl mb-2">데이터 동기화 오류</p>
-        <p className="text-gray-500 text-sm">래더 랭킹 정보(total_mmr)가 존재하지 않습니다.</p>
-        <p className="text-gray-600 text-xs mt-4 font-mono">UID: {profile.id}</p>
-        <button onClick={() => window.location.reload()} className="mt-6 px-4 py-2 bg-gray-800 rounded-lg text-xs">새로고침</button>
-      </div>
-    );
-  }
-
-  const ladderTier = getTier(ladderMmr);
+  const totalMmr = profile.total_mmr;
+  const ladderTier = getTier(totalMmr);
   const ladderWins = profile.wins ?? 0;
   const ladderLosses = profile.losses ?? 0;
 
@@ -743,22 +734,31 @@ const fetchProfileData = async () => {
           <div className="bg-linear-to-br from-gray-800 to-gray-900 rounded-3xl p-6 border border-gray-700 shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl group-hover:scale-110 transition-transform duration-500">🏆</div>
             <h3 className="text-white font-black text-xs mb-6 border-b border-gray-700/50 pb-2 uppercase tracking-[0.2em]">Ladder Status</h3>
-            <div className="space-y-5">
-              <div>
-                <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">Rating Points</p>
-                <p className="text-4xl font-black text-cyan-400">{ladderMmr} <span className="text-xs text-gray-500 font-normal">PTS</span></p>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
+            // 'Unranked(배치 전)' 상태를 렌더링
+            {(totalMmr === undefined || totalMmr === null) ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 font-bold text-lg mb-2">Unranked</p>
+                  <p className="text-gray-500 text-sm">아직 래더 게임 기록이 없습니다.</p>
+                  <p className="text-gray-500 text-sm">첫 배치고사를 완료하고 점수를 획득해 보세요!</p>
+                </div>
+            ) : (
+              <div className="space-y-5">
                 <div>
-                  <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">Tier</p>
-                  <p className="text-white font-bold italic">{ladderTier}</p>
+                  <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">Rating Points</p>
+                  <p className="text-4xl font-black text-cyan-400">{totalMmr} <span className="text-xs text-gray-500 font-normal">PTS</span></p>
                 </div>
-                <div className="text-right">
-                  <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">W / L</p>
-                  <p className="text-white font-bold">{ladderWins}승 {ladderLosses}패</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">Tier</p>
+                    <p className="text-white font-bold italic">{ladderTier}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-500 text-[10px] font-bold mb-1 uppercase">W / L</p>
+                    <p className="text-white font-bold">{ladderWins}승 {ladderLosses}패</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* 포인트 카드 */}
