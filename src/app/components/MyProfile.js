@@ -444,9 +444,6 @@ const handleUpdate = async () => {
     }
   };
 
-  if (loading) return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">LOADING...</div>;
-  if (!profile) return <div className="text-center py-24 text-red-500">프로필 정보를 찾을 수 없습니다.</div>;
-
   // 로딩 중일 때는 로딩 화면만 보여줌
   if (authLoading || loading) {
     return <div className="text-center py-24 text-gray-500 font-mono animate-pulse">인증 정보를 확인하는 중입니다...</div>;
