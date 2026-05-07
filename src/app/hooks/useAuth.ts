@@ -211,10 +211,10 @@ async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Prom
   }
 
   return { 
-    ...profile, 
     ...(oauthData || {}), 
     ...(metaData || {}), 
-    ...(rankData || {}) // 존재할 때만 덮어씌움
+    ...(rankData || {}),
+    ...profile
   };
 }
 

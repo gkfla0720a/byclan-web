@@ -311,49 +311,40 @@ export default function MyProfile() {
    * @async
    */
   // 프로필 업데이트 저장
-// 프로필 업데이트 저장 (디버깅 모드)
-const handleUpdate = async () => {
-  if (!isNicknameAvailable) {
-    alert('닉네임 중복 확인을 먼저 완료해 주세요.');
-    return;
-  }
-
-  setIsUpdating(true);
-  try {
-    // 🕵️‍♂️ [수사망 1] 내가 DB로 던지려는 데이터가 정확한지 확인
-    const updatePayload = { 
-      by_id: `By_${clanNameInput}`,
-      race: race,
-      intro: intro,
-    };
-    console.log("🕵️‍♂️ [1] DB로 전송 시도:", updatePayload);
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updatePayload)
-      .eq('id', user.id)
-      .select();
-
-    // 🕵️‍♂️ [수사망 2] DB가 저장을 완료하고 다시 뱉어낸 실제 데이터 확인
-    console.log("🕵️‍♂️ [2] DB 저장 완료 후 반환값:", data);
-
-    if (error) throw error;
-    if (!data || data.length === 0) {
-      throw new Error('데이터가 저장되지 않았습니다. 권한 설정을 확인해주세요.');
+  const handleUpdate = async () => {
+    if (!isNicknameAvailable) {
+      alert('닉네임 중복 확인을 먼저 완료해 주세요.');
+      return;
     }
-
-    alert('프로필이 성공적으로 업데이트되었습니다.');
-    invalidateCache('ranking_board');
-    await reloadProfile();
     
-    console.log("🕵️‍♂️ [3] reloadProfile 완료. 전역 지갑(Context) 업데이트 됨!");
-  } catch (error) {
-    console.error("🕵️‍♂️ 에러 발생:", error);
-    alert('업데이트 실패: ' + error.message);
-  } finally {
-    setIsUpdating(false);
-  }
-};
+    setIsUpdating(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ 
+          by_id: `By_${clanNameInput}`,
+          race: race,
+          intro: intro,
+        })
+        .eq('id', user.id)
+        .select();
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('데이터가 저장되지 않았습니다. 권한 설정을 확인해주세요.');
+      }
+
+      alert('프로필이 성공적으로 업데이트되었습니다.');
+      invalidateCache('ranking_board');
+      await reloadProfile();
+      
+    } catch (error) {
+      console.error("에러 발생:", error);
+      alert('업데이트 실패: ' + error.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   /**
    * 현재 유저를 Supabase에서 로그아웃하고 홈으로 이동합니다.
