@@ -25,214 +25,17 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
-import { filterVisibleTestData } from '@/app/utils/testData';
-import { useAuthContext } from '@/app/context/AuthContext'; 
-// LadderDashboard.js 
-import { getTier, getRaceIcon, buildTeams, getPlayerMmr } from '@/app/utils/ladderUtils';
-import { useNavigate } from '@/app/hooks/useNavigate';
-import ConsentPopup from '@/components/ConsentPopup';
-import TwoMatchSuggestion from '@/components/TwoMatchSuggestion';
-
-// ── 상수 ─────────────────────────────────────────────────────────────
-const MATCH_TYPES = {
-  '3v3': { label: '3대3', minPlayers: 6, perTeam: 3, isLadder: true, format: 'BO5 (3선승)' },
-  '4v4': { label: '4대4', minPlayers: 8, perTeam: 4, isLadder: true, format: 'BO5 (3선승)' },
-  '5v5': { label: '5대5', minPlayers: 10, perTeam: 5, isLadder: true, format: 'BO7 (4선승)', warning: true },
-  '1v1': { label: '1대1', minPlayers: 2, perTeam: 1, isLadder: false, format: '일반게임' },
-  '2v2': { label: '2대2', minPlayers: 4, perTeam: 2, isLadder: false, format: '일반게임' },
-};
+// 💡 1. 요리사가 쓸 냉장고(Context)와 도구(Utils), 팝업 부품을 가져옵니다!
+import { useAuthContext } from '@/app/context/AuthContext';
+import { getPlayerMmr, getRaceIcon, getTier, TIER_COLORS } from '@/utils/profiles';
+import { buildTeams, MATCH_TYPES } from '@/utils/matchmaking';
+import ConsentPopup from '@/components/ladder/ConsentPopup';
+import TwoMatchSuggestion from '@/components/ladder/TwoMatchSuggestion';
 
 const BALANCE_THRESHOLD = 200;
 const MAX_QUEUE_MINUTES = 20;
-const PROPOSAL_CONSENT_SECONDS = 40;
 const COOLDOWN_STEPS = [0, 10, 30, 180];
 
-function getRaceIcon(race) {
-  const icons = { Terran: '테', Protoss: '프', Zerg: '저', Random: '랜' };
-  return icons[race] || '?';
-}
-
-function ConsentPopup({ proposal, myUserId, onAccept, onReject }) {
-  /** 남은 동의 시간(초). 0이 되면 자동 거절됩니다. */
-  const [timeLeft, setTimeLeft] = useState(PROPOSAL_CONSENT_SECONDS);
-  /** 거절 처리 여부. true이면 UI가 회색으로 변하고 닫힘 안내가 표시됩니다. */
-  const [rejected, setRejected] = useState(false);
-
-  /**
-   * 1초마다 timeLeft를 감소시킵니다.
-   * timeLeft가 0이 되거나 이미 거절 상태면 onReject()를 호출합니다.
-   */
-  useEffect(() => {
-    if (timeLeft <= 0 && !rejected) { onReject(); return; }
-    if (rejected) return;
-    const t = setTimeout(() => setTimeLeft(p => p - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timeLeft, rejected, onReject]);
-
-  const handleReject = () => {
-    setRejected(true);
-    setTimeout(() => onReject(), 1800);
-  };
-
-  const isProposer = proposal.proposedBy === myUserId;
-  const radius = 34;
-  const circumference = 2 * Math.PI * radius;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
-      <div className={`relative max-w-md w-full mx-4 rounded-2xl border-2 p-8 transition-all duration-500 ${
-        rejected
-          ? 'border-gray-700 bg-gray-900 grayscale'
-          : 'border-blue-500 bg-[#0a0f1e] shadow-[0_0_40px_rgba(59,130,246,0.4)]'
-      }`}>
-        <div className="flex justify-center mb-6">
-          <div className={`relative w-20 h-20 ${rejected ? 'opacity-30' : ''}`}>
-            <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r={radius} fill="none" stroke="#1e3a5f" strokeWidth="6" />
-              <circle
-                cx="40" cy="40" r={radius} fill="none"
-                stroke={rejected ? '#6b7280' : '#3b82f6'}
-                strokeWidth="6"
-                strokeDasharray={circumference}
-                strokeDashoffset={circumference * (1 - timeLeft / PROPOSAL_CONSENT_SECONDS)}
-                style={{ transition: 'stroke-dashoffset 1s linear' }}
-              />
-            </svg>
-            <div className={`absolute inset-0 flex items-center justify-center font-black text-xl ${rejected ? 'text-gray-600' : 'text-blue-400'}`}>
-              {rejected ? '✕' : timeLeft}
-            </div>
-          </div>
-        </div>
-
-        <h3 className={`text-center font-black text-xl mb-2 ${rejected ? 'text-gray-500' : 'text-white'}`}>
-          {rejected ? '매치 거절됨' : '⚡ 매치 시작 제안!'}
-        </h3>
-        <p className={`text-center text-sm mb-1 ${rejected ? 'text-gray-600' : 'text-gray-300'}`}>
-          {proposal.matchType} 레더 매치
-        </p>
-
-        {!rejected && (
-          <>
-            <div className="grid grid-cols-2 gap-3 my-5">
-              {['A', 'B'].map(team => (
-                <div key={team} className={`p-3 rounded-xl border ${team === 'A' ? 'border-blue-800 bg-blue-950/20' : 'border-red-800 bg-red-950/20'}`}>
-                  <p className={`text-xs font-bold mb-2 text-center ${team === 'A' ? 'text-blue-400' : 'text-red-400'}`}>TEAM {team}</p>
-                  {(team === 'A' ? proposal.teamA : proposal.teamB).map(p => (
-                    <div key={p.id} className="text-xs text-gray-300 truncate flex items-center gap-1 mb-1">
-                      <span className="text-cyan-600 w-4 text-center">{getRaceIcon(p.race)}</span>
-                      <span className="flex-1 truncate">{p.by_id || <span className="text-red-400 text-[10px]">[by_id 없음]</span>}</span>
-                      <span className="text-yellow-500 text-[10px]">{getPlayerMmr(p)}점</span>
-                    </div>
-                  ))}
-                  <div className={`text-center text-[10px] mt-1 font-bold ${team === 'A' ? 'text-blue-400' : 'text-red-400'}`}>
-                    평균 MMR {Math.round(team === 'A' ? proposal.avgA : proposal.avgB)}점
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className={`text-center text-xs mb-5 ${proposal.diff > BALANCE_THRESHOLD ? 'text-yellow-400' : 'text-green-400'}`}>
-              팀 MMR 차이: {Math.round(proposal.diff)}점
-              {proposal.diff > BALANCE_THRESHOLD && ' ⚠️ 200점 초과 — 불균형 주의'}
-            </div>
-            <p className="text-center text-xs text-gray-500 mb-6">
-              {isProposer ? '상대방의 동의를 기다리고 있습니다...' : '매치 시작에 동의하시겠습니까?'}
-            </p>
-            <div className="flex gap-3">
-              {!isProposer && (
-                <button
-                  onClick={onAccept}
-                  className="flex-1 py-3 font-black rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-[0_0_15px_rgba(59,130,246,0.4)]"
-                >
-                  ✓ 동의
-                </button>
-              )}
-              <button
-                onClick={handleReject}
-                className={`${isProposer ? 'w-full' : 'flex-1'} py-3 font-black rounded-xl border border-gray-700 text-gray-400 hover:border-red-700 hover:text-red-400 transition-colors`}
-              >
-                {isProposer ? '제안 취소' : '✗ 거절'}
-              </button>
-            </div>
-          </>
-        )}
-        {rejected && (
-          <div className="text-center text-gray-600 text-sm mt-4 animate-pulse">잠시 후 닫힙니다...</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/**
- * 대기열에 12명 이상일 때, 상위/하위 두 그룹으로 나눠 동시에 두 경기를 제안하는 컴포넌트입니다.
- * 각 경기마다 팀 구성 정렬 방식을 독립적으로 선택할 수 있습니다.
- *
- * @param {Array} players - 전체 대기열 플레이어 목록
- * @param {function} onSelectMatch - 매치를 선택했을 때 호출되는 콜백. {teamA, teamB} 전달.
- */
-// ── 12명+ 두 팀 분리 제안 ─────────────────────────────────────────────
-function TwoMatchSuggestion({ players, onSelectMatch }) {
-  /** 상위 매치의 팀 구성 정렬 방식 ('balance' | 'top' | 'bottom') */
-  const [sortA, setSortA] = useState('balance');
-  /** 하위 매치의 팀 구성 정렬 방식 ('balance' | 'top' | 'bottom') */
-  const [sortB, setSortB] = useState('balance');
-  const perTeam = 3;
-  const sorted = [...players].sort((a, b) => getPlayerMmr(b) - getPlayerMmr(a));
-  const half = Math.floor(sorted.length / 2);
-  const upperPool = sorted.slice(0, half);
-  const lowerPool = sorted.slice(half);
-  const match1 = buildTeams(upperPool, perTeam, sortA);
-  const match2 = buildTeams(lowerPool, perTeam, sortB);
-  const calcAvg = (team) => (team && team.length > 0) ? team.reduce((s, p) => s + getPlayerMmr(p), 0) / team.length : 0;
-  const diff1 = match1 ? Math.abs(calcAvg(match1.teamA) - calcAvg(match1.teamB)) : 0;
-  const diff2 = match2 ? Math.abs(calcAvg(match2.teamA) - calcAvg(match2.teamB)) : 0;
-  const SORT_OPTIONS = [
-    { value: 'top', label: '상픽 우선' },
-    { value: 'balance', label: '밸런스 우선' },
-    { value: 'bottom', label: '하픽 우선' },
-  ];
-  return (
-    <div className="mt-4 p-4 rounded-xl border border-purple-500/30 bg-purple-950/10">
-      <p className="text-purple-400 text-xs font-bold mb-3 uppercase tracking-wider">⚡ 두 경기 동시 진행 제안 (12명+)</p>
-      <div className="grid grid-cols-2 gap-4">
-        {[
-          { label: '상위 매치', sort: sortA, setSort: setSortA, teams: match1, diff: diff1, color: 'yellow' },
-          { label: '하위 매치', sort: sortB, setSort: setSortB, teams: match2, diff: diff2, color: 'cyan' },
-        ].map(({ label, sort, setSort, teams: t, diff, color }) => (
-          <div key={label} className="p-3 rounded-lg border border-gray-700 bg-gray-900/40">
-            <p className={`text-${color}-400 text-xs font-bold mb-2`}>{label}</p>
-            <select
-              value={sort}
-              onChange={e => setSort(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 text-xs text-gray-300 rounded px-2 py-1 mb-2 outline-none"
-            >
-              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            {t && (
-              <div className="space-y-0.5 text-[10px]">
-                <div className="text-blue-400">A: {t.teamA.map(p => p.by_id || '[by_id 없음]').join(', ')}</div>
-                <div className="text-red-400">B: {t.teamB.map(p => p.by_id || '[by_id 없음]').join(', ')}</div>
-                <div className={diff > BALANCE_THRESHOLD ? 'text-yellow-400' : 'text-green-400'}>
-                  차이: {Math.round(diff)}점 {diff > BALANCE_THRESHOLD ? '⚠️' : '✓'}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <button
-        onClick={() => match1 && onSelectMatch(match1)}
-        className="mt-3 w-full py-2 text-xs font-bold rounded-lg border border-purple-500/40 text-purple-300 hover:bg-purple-950/30 transition-colors"
-      >
-        이 구성으로 상위 매치 제안
-      </button>
-    </div>
-  );
-}
-
-
-
-// ── 메인 컴포넌트 ─────────────────────────────────────────────────────
 export default function LadderDashboard({ onMatchEnter }) {
   const { user, profile: myProfile, authLoading } = useAuthContext();
   const [queuePlayers, setQueuePlayers] = useState([]);
@@ -253,15 +56,16 @@ export default function LadderDashboard({ onMatchEnter }) {
   const currentUserRef = useRef(null);
   const lastQueueKeyRef = useRef('');
 
+  // 대기열과 매치 정보만 가져옵니다.
   const fetchData = useCallback(async () => {
-    // 💡 5. 전역 지갑에 유저 정보가 들어올 때까지 대기
+    // 로딩 중이거나 유저가 없으면 멈춤
+    if (authLoading) return;
     if (!user?.id) {
       setLoading(false);
       return;
     }
 
     try {
-      // ✅ 여기서 삭제됨: supabase.auth.getUser() 및 profiles 단독 조회 등 30줄 가량의 불필요한 코드 전부 증발!
       currentUserRef.current = user;
 
       // 내 대기열 상태 조회
@@ -272,11 +76,12 @@ export default function LadderDashboard({ onMatchEnter }) {
         .maybeSingle();
       setInQueue(myQueue?.is_in_queue || false);
 
-      // [보완 2] 대기열 전체 목록 조회 (JS 필터링 유지)
+      // 테스트 계정 필터링 값
       const isTestViewer = typeof window !== 'undefined' &&
         window.localStorage.getItem('byclan_current_is_test_account') === 'true';
 
-      let queueQuery = supabase
+      // 대기열 전체 목록 조회
+      const { data: queueRaw } = await supabase
         .from('ladder_queue')
         .select(`
           user_id, queue_joined_at,
@@ -289,8 +94,6 @@ export default function LadderDashboard({ onMatchEnter }) {
         .eq('is_in_queue', true)
         .order('queue_joined_at', { ascending: true });
 
-      const { data: queueRaw } = await queueQuery;
-
       const qPlayers = (queueRaw || []).filter(r => {
         const meta = Array.isArray(r.profiles?.profile_meta) ? r.profiles.profile_meta[0] : r.profiles?.profile_meta;
         const isTest = meta?.is_test_account === true;
@@ -300,22 +103,16 @@ export default function LadderDashboard({ onMatchEnter }) {
         const rankings = Array.isArray(r.profiles?.ladder_rankings) ? r.profiles.ladder_rankings[0] : r.profiles?.ladder_rankings;
         return {
           id: r.user_id,
-          by_id: r.profiles?.by_id, // ✅ by_id 매핑 확인 완료 포인트
+          by_id: r.profiles?.by_id, // 💡 profiles에서 by_id를 정확히 꺼냄
           race: r.profiles?.race,
-          clan_point: r.profiles?.clan_point,
           role: r.profiles?.role,
-          ladder_mmr: rankings?.ladder_mmr ?? 1000,
-          team_mmr: rankings?.team_mmr ?? 0,
-          total_mmr: rankings?.total_mmr, // 💡 여기서 total_mmr을 온전히 넘겨줍니다.
-          is_test_account: Array.isArray(r.profiles?.profile_meta) ? r.profiles.profile_meta[0]?.is_test_account : r.profiles?.profile_meta?.is_test_account,
+          total_mmr: rankings?.total_mmr, // 💡 total_mmr을 온전히 담아줌
           queue_joined_at: r.queue_joined_at,
         };
       });
       setQueuePlayers(qPlayers);
 
-// ... (이하 fetchData 내부의 진행 중인 매치 조회 등 기존 로직 그대로 이어짐) ...
-
-      // 대기열 인원 변경 시 쿨다운 리셋 로직 (기존 유지)
+      // 대기열 쿨다운 초기화 로직
       const newKey = qPlayers.map(p => p.id).sort().join(',');
       if (lastQueueKeyRef.current && lastQueueKeyRef.current !== newKey) {
         setProposalAttempts(0);
@@ -403,7 +200,7 @@ export default function LadderDashboard({ onMatchEnter }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, authLoading]); // 의존성 배열에 user와 authLoading 추가
 
   /**
    * 컴포넌트 마운트 시 데이터를 불러오고, Supabase Realtime 채널을 구독합니다.
