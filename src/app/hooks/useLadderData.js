@@ -1,8 +1,8 @@
 // 파일명: src/hooks/useLadderData.js
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
-import { getPlayerMmr } from '@/utils/profiles';
-import { buildTeams, MATCH_TYPES } from '@/utils/matchmaking';
+import { getPlayerMmr } from '@/app/utils/profiles';
+import { buildTeams, MATCH_TYPES } from '@/app/utils/matchmaking';
 
 const MAX_QUEUE_MINUTES = 20;
 const COOLDOWN_STEPS = [0, 10, 30, 180];
