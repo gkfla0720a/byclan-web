@@ -25,7 +25,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
-// 💡 1. 요리사가 쓸 냉장고(Context)와 도구(Utils), 팝업 부품을 가져옵니다!
 import { useAuthContext } from '@/app/context/AuthContext';
 import { getPlayerMmr, getRaceIcon, getTier, TIER_COLORS } from '@/utils/profiles';
 import { buildTeams, MATCH_TYPES } from '@/utils/matchmaking';
@@ -415,21 +414,22 @@ export default function LadderDashboard({ onMatchEnter }) {
     );
   }
 
-  return (
+return (
     <div className="w-full max-w-5xl mx-auto py-6 px-4 font-mono animate-fade-in-down">
       {/* 1. 팝업 모달 영역 */}
       {activeProposal && <ConsentPopup proposal={activeProposal} myUserId={user?.id} onAccept={handleAccept} onReject={handleReject} />}
+      
       {/* 5v5 경고 모달 */}
-            {show5v5Warning && (
-              <Warning5v5Modal 
-                onAccept={() => {
-                  setAccepted5v5(true);
-                  setShow5v5Warning(false);
-                  setTimeout(() => handleJoinQueue(), 100);
-                }}
-                onCancel={() => setShow5v5Warning(false)}
-              />
-            )}
+      {show5v5Warning && (
+        <Warning5v5Modal 
+          onAccept={() => {
+            setAccepted5v5(true);
+            setShow5v5Warning(false);
+            setTimeout(() => handleJoinQueue(), 100);
+          }}
+          onCancel={() => setShow5v5Warning(false)}
+        />
+      )}
 
       {/* 2. 대시보드 헤더 */}
       <div className="flex items-end justify-between mb-6 border-b border-cyan-500/40 pb-3">
@@ -442,24 +442,144 @@ export default function LadderDashboard({ onMatchEnter }) {
         <span className="text-cyan-600 text-xs animate-pulse">LIVE //</span>
       </div>
 
-      {/* 3. 내 통계 요약 (이 부분도 MyStatsCard로 빼면 더욱 깔끔해집니다) */}
+      {/* 3. 내 통계 요약 (복구됨!) */}
       {myProfile && (
         <div className="bg-[#0A1128] border border-cyan-500/30 rounded-xl p-5 mb-4 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-           {/* ... 기존 통계 UI 내용 유지 ... */}
+          <p className="text-cyan-600 text-xs mb-3 uppercase tracking-widest">{'//'} MY STATS</p>
+          <div className="flex flex-wrap gap-6">
+            <div>
+              <p className="text-gray-500 text-[10px] uppercase tracking-wider">플레이어</p>
+              <p className="text-white font-bold text-lg">{getDisplayName(myProfile)}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-[10px] uppercase tracking-wider">종족</p>
+              <p className="text-cyan-300 font-bold">{myProfile?.race || '-'}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-[10px] uppercase tracking-wider">MMR</p>
+              <p className="text-yellow-400 font-bold text-xl drop-shadow-[0_0_5px_rgba(234,179,8,0.6)]">
+                {getPlayerMmr(myProfile)}점
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-[10px] uppercase tracking-wider">티어</p>
+              <p className={`font-bold ${TIER_COLORS[getTier(getPlayerMmr(myProfile))]}`}>
+                {getTier(getPlayerMmr(myProfile))}
+              </p>
+            </div>
+            {(myProfile?.wins !== undefined || myProfile?.losses !== undefined) && (
+              <div>
+                <p className="text-gray-500 text-[10px] uppercase tracking-wider">전적</p>
+                <p className="font-bold">
+                  <span className="text-emerald-400">{myProfile?.wins ?? 0}W</span>
+                  <span className="text-gray-600 mx-1">/</span>
+                  <span className="text-red-400">{myProfile?.losses ?? 0}L</span>
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* 4. 매칭 대기열 메인 박스 */}
       <div className="bg-[#0A1128] border border-cyan-500/30 rounded-xl overflow-hidden mb-4 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-        {/* 대기열 컨트롤 헤더 (셀렉트 박스 등) */}
+        
+        {/* 대기열 헤더 (복구됨!) */}
         <div className="px-5 py-4 border-b border-cyan-500/30 flex items-center justify-between flex-wrap gap-2">
-           {/* ... 기존 헤더 내용 유지 ... */}
+          <div className="flex items-center gap-3">
+            <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${queuePlayers.length > 0 ? 'bg-green-400 animate-ping' : 'bg-gray-600'}`}></span>
+            <p className="text-cyan-400 text-sm font-bold uppercase tracking-widest">
+              매칭 대기열 — {queuePlayers.length}명 대기 중
+            </p>
+            {matchTypeInfo && (
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${matchTypeInfo.isLadder ? 'border-yellow-700 text-yellow-500 bg-yellow-950/20' : 'border-gray-700 text-gray-500'}`}>
+                {matchTypeInfo.isLadder ? '래더' : '일반'}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={queueMatchType}
+              onChange={e => { setQueueMatchType(e.target.value); setAccepted5v5(false); }}
+              className="bg-gray-900 border border-cyan-500/40 text-cyan-300 rounded px-2 py-1 text-xs outline-none cursor-pointer"
+            >
+              <optgroup label="── 래더 매치 ──">
+                <option value="3v3">3대3 래더 (BO5 3선승)</option>
+                <option value="4v4">4대4 래더 (BO5 3선승)</option>
+                <option value="5v5">5대5 래더 (BO7 4선승)</option>
+              </optgroup>
+              <optgroup label="── 일반 게임 ──">
+                <option value="1v1">1대1 일반 (래더 미반영)</option>
+                <option value="2v2">2대2 일반 (래더 미반영)</option>
+              </optgroup>
+            </select>
+            <button onClick={fetchData} className="text-cyan-700 hover:text-cyan-400 text-xs transition-colors uppercase tracking-wider">
+              새로고침
+            </button>
+          </div>
         </div>
 
-        {/* 대기열 리스트 (맵핑 로직) */}
-        <div className="divide-y divide-cyan-900/20">
-           {/* ... 기존 queuePlayers.map 내용 유지 ... */}
-        </div>
+        {/* 대기열 리스트 (복구됨!) */}
+        {queuePlayers.length === 0 ? (
+          <div className="text-center py-12 text-cyan-700 text-sm">
+            [ 현재 대기 중인 플레이어가 없습니다 ]
+          </div>
+        ) : (
+          <div className="divide-y divide-cyan-900/20">
+            {queuePlayers.map((p, idx) => {
+              const tier = getTier(getPlayerMmr(p));
+              const isMe = p.id === user?.id;
+              const queueMinutes = p.queue_joined_at
+                ? Math.floor((Date.now() - new Date(p.queue_joined_at).getTime()) / 60000)
+                : 0;
+              return (
+                <div key={p.id} className={`px-5 py-3 flex items-center justify-between hover:bg-cyan-900/10 transition-colors ${isMe ? 'bg-cyan-950/20' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-700 text-xs w-5 text-right">{idx + 1}</span>
+                    <div className="w-7 h-7 rounded-full bg-cyan-900/50 border border-cyan-700/40 flex items-center justify-center text-xs font-bold text-cyan-400">
+                      {getRaceIcon(p.race)}
+                    </div>
+                    <span className={`font-semibold text-sm ${isMe ? 'text-cyan-300' : 'text-gray-200'}`}>
+                      {getDisplayName(p)}
+                      {isMe && <span className="ml-2 text-[10px] text-cyan-600 border border-cyan-800 px-1 rounded">나</span>}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className={`font-bold ${TIER_COLORS[tier]}`}>{tier}</span>
+                    <span className="text-yellow-400 font-bold">{getPlayerMmr(p)}점</span>
+                    <span className="text-gray-600 hidden sm:inline">{queueMinutes}분</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 8명+ 소팅 옵션 (복구됨!) */}
+        {has8Plus && canPropose && (
+          <div className="px-5 py-3 border-t border-cyan-900/30 bg-[#08101e]">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-cyan-700 text-xs uppercase tracking-wider">팀 구성:</span>
+              {[
+                { value: 'top', label: '상픽 우선' },
+                { value: 'balance', label: '밸런스 우선' },
+                { value: 'bottom', label: '하픽 우선' },
+              ].map(o => (
+                <button
+                  key={o.value}
+                  onClick={() => setSortOption(o.value)}
+                  className={`px-3 py-1 text-xs rounded font-bold transition-all ${
+                    sortOption === o.value
+                      ? 'bg-cyan-700 text-white shadow-[0_0_8px_rgba(34,211,238,0.3)]'
+                      : 'bg-gray-900 text-gray-500 border border-gray-700 hover:border-cyan-700 hover:text-cyan-400'
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 💡 레고 블록 장착 1: 팀 밸런스 미리보기 */}
         {canPropose && teams && (
@@ -477,9 +597,56 @@ export default function LadderDashboard({ onMatchEnter }) {
           </div>
         )}
 
-        {/* 하단 대기열 액션 버튼 (참가, 제안 등) */}
+        {/* 하단 대기열 액션 버튼 (복구됨!) */}
         <div className="px-5 py-4 border-t border-cyan-900/30 flex items-center justify-between flex-wrap gap-3">
-           {/* ... 기존 액션 버튼들 내용 유지 ... */}
+          <div className="flex items-center gap-3">
+            {!inQueue ? (
+              <button
+                onClick={handleJoinQueue}
+                disabled={joiningQueue}
+                className="px-5 py-2.5 rounded-lg text-sm font-bold btn-neon disabled:opacity-40 transition-all"
+              >
+                {joiningQueue ? '참여 중...' : `▶ ${matchTypeInfo?.label || queueMatchType} 대기열 참여`}
+              </button>
+            ) : (
+              <button
+                onClick={handleLeaveQueue}
+                className="px-5 py-2.5 rounded-lg text-sm font-bold border border-red-700/50 text-red-400 hover:bg-red-950/20 transition-all"
+              >
+                ✗ 대기 취소
+              </button>
+            )}
+            {inQueue && (
+              <span className="text-cyan-700 text-xs font-mono animate-pulse">
+                대기 중 — 최대 {MAX_QUEUE_MINUTES}분
+              </span>
+            )}
+          </div>
+
+          {canPropose && (
+            <div className="flex items-center gap-2">
+              {proposalCooldown > 0 && (
+                <span className="text-gray-600 text-xs font-mono">{proposalCooldown}s 후 재시도</span>
+              )}
+              <button
+                onClick={() => teams && handleProposeMatch(String(perTeam), teams.teamA, teams.teamB)}
+                disabled={proposalCooldown > 0 || !teams || !!activeProposal}
+                className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all disabled:opacity-40 ${
+                  !proposalCooldown && !activeProposal
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] border border-blue-400/20 animate-pulse-neon'
+                    : 'bg-gray-900 text-gray-600 border border-gray-700 cursor-not-allowed'
+                }`}
+              >
+                ⚡ 매치 시작 제안
+              </button>
+            </div>
+          )}
+
+          {!canPropose && queuePlayers.length > 0 && (
+            <span className="text-gray-600 text-xs font-mono">
+              {queueMatchType} 매치까지 {minPlayers - queuePlayers.length}명 더 필요
+            </span>
+          )}
         </div>
       </div>
 
