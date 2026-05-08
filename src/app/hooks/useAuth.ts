@@ -41,6 +41,7 @@ import { withRetry, isRetryableError } from '../utils/retry';
 import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '../utils/testData';
 import logger, { Severity } from '../utils/errorLogger';
 import { checkAndGrantDailyBonus } from '../utils/pointSystem';
+import { ensureHomeGateAuthorized } from './useHomeGate';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,12 +93,6 @@ export interface AuthPermissions {
 }
 
 export interface UseAuthReturn {
-  // Home-gate fields
-  password: string;
-  setPassword: React.Dispatch<React.SetStateAction<string>>;
-  isAuthorized: boolean;
-  homeGateReady: boolean;
-  setIsAuthorized: (value: boolean) => void;
   // Auth state
   profile: UserProfile | null;
   setProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
@@ -261,6 +256,32 @@ async function resolveUniqueById(seed: string, currentUserId?: string): Promise<
   return `${base}${suffix}`;
 }
 
+function syncViewerTestAccountFlag(profile: UserProfile | null): void {
+  if (typeof window === 'undefined') return;
+  if (!profile) {
+    clearCurrentViewerTestAccountFlag();
+    return;
+  }
+  setCurrentViewerTestAccountFlag(Boolean(profile.is_test_account));
+}
+
+async function recordLoginTimestamp(userId: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  if (!userId) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `byclan_login_recorded_${userId}_${today}`;
+  if (window.sessionStorage.getItem(key) === '1') return;
+
+  const { error } = await supabase
+    .from('profile_meta')
+    .upsert({ user_id: userId, last_login_at: new Date().toISOString() }, { onConflict: 'user_id' });
+
+  if (!error) {
+    window.sessionStorage.setItem(key, '1');
+  }
+}
+
 async function syncSocialProfileData(
   authUser: Record<string, unknown>,
   currentProfile: UserProfile
@@ -338,72 +359,6 @@ async function syncSocialProfileData(
   return updatedProfile;
 }
 
-// ─── HomeGate external store ─────────────────────────────────────────────────
-// useSyncExternalStore avoids hydration mismatches (React error #418) because
-// it accepts separate server and client snapshots. The server snapshot always
-// returns false; the client snapshot lazily reads sessionStorage on first call
-// and then tracks in-memory updates from setIsAuthorized / ensureHomeGateAuthorized.
-
-let _homeGateAuthorized = false;
-let _homeGateInitialized = false;
-const _homeGateListeners = new Set<() => void>();
-
-function _subscribeHomeGate(listener: () => void): () => void {
-  _homeGateListeners.add(listener);
-  return () => { _homeGateListeners.delete(listener); };
-}
-
-function _getHomeGateSnapshot(): boolean {
-  if (!_homeGateInitialized) {
-    _homeGateInitialized = true;
-    _homeGateAuthorized = window.sessionStorage.getItem('byclan_home_gate') === 'authorized';
-    if (!_homeGateAuthorized) {
-      window.localStorage.removeItem('byclan_home_gate');
-    }
-  }
-  return _homeGateAuthorized;
-}
-
-function _getHomeGateServerSnapshot(): boolean {
-  return false;
-}
-
-function _updateHomeGateStore(value: boolean): void {
-  _homeGateAuthorized = value;
-  _homeGateInitialized = true;
-  _homeGateListeners.forEach(l => l());
-}
-
-function syncViewerTestAccountFlag(profile: UserProfile | null): void {
-  if (typeof window === 'undefined') return;
-  if (!profile) {
-    clearCurrentViewerTestAccountFlag();
-    return;
-  }
-  setCurrentViewerTestAccountFlag(Boolean(profile.is_test_account));
-}
-
-async function recordLoginTimestamp(userId: string): Promise<void> {
-  if (typeof window === 'undefined') return;
-  if (!userId) return;
-
-  const today = new Date().toISOString().slice(0, 10);
-  const key = `byclan_login_recorded_${userId}_${today}`;
-  if (window.sessionStorage.getItem(key) === '1') return;
-
-  const { error } = await supabase
-    .from('profile_meta')
-    .upsert({ user_id: userId, last_login_at: new Date().toISOString() }, { onConflict: 'user_id' });
-
-  if (!error) {
-    window.sessionStorage.setItem(key, '1');
-  }
-}
-
-// homeGateReady never changes after mount (client = true, server = false),
-// so no subscription is needed; this noop satisfies the useSyncExternalStore API.
-const _noopSubscribe = () => () => {};
-
 export function useAuth(): UseAuthReturn {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
@@ -415,22 +370,6 @@ export function useAuth(): UseAuthReturn {
   // by_id 재확인 진행 상태를 추적하는 ref입니다.
   // state가 아닌 ref를 사용하여 불필요한 재렌더링을 방지합니다.
   const byIDRecheckRef = useRef<'idle' | 'checking'>('idle');
-  const [password, setPassword] = useState('');
-
-  // HomeGate 인증 상태입니다.
-  // useSyncExternalStore를 사용하여 SSR/hydration 불일치(React error #418)를 방지합니다.
-  // 서버 스냅샷은 항상 false를 반환하고, 클라이언트 스냅샷은 sessionStorage를 읽습니다.
-  const isAuthorizedState = useSyncExternalStore(
-    _subscribeHomeGate,
-    _getHomeGateSnapshot,
-    _getHomeGateServerSnapshot,
-  );
-  // 클라이언트 마운트 후에만 true가 됩니다 (서버에서는 false → 로딩 화면 표시).
-  const homeGateReady = useSyncExternalStore(
-    _noopSubscribe,
-    () => true,
-    () => false,
-  );
 
   // ─── by_id 유효성 파생 ──────────────────────────────────────────────────────
   // needsByIdSetup은 profile에서 직접 파생되는 계산값입니다. (별도 state 불필요)
@@ -654,15 +593,6 @@ export function useAuth(): UseAuthReturn {
     setAuthLoading(false);
   };
 
-  // Grants HomeGate access for authenticated users so that board, ranking,
-  // and member sections are visible without re-entering the password.
-  const ensureHomeGateAuthorized = () => {
-    if (window.sessionStorage.getItem('byclan_home_gate') !== 'authorized') {
-      window.sessionStorage.setItem('byclan_home_gate', 'authorized');
-      _updateHomeGateStore(true);
-    }
-  };
-
   useEffect(() => {
     const syncAuthFromServer = async () => {
       const { data, error } = await supabase.auth.getUser();
@@ -772,8 +702,8 @@ export function useAuth(): UseAuthReturn {
     if (user) {
       const loadProfile = async () => {
         try {
-          const result = await withRetry(() =>
-            Promise.resolve(supabase.from('profiles').select('*').eq('id', user.id).single())
+          const result = await withRetry(async () =>
+            await supabase.from('profiles').select('*').eq('id', user.id).single()
           ) as { data: UserProfile | null; error: unknown };
           const { data, error } = result;
           if (error) {
@@ -798,22 +728,11 @@ export function useAuth(): UseAuthReturn {
     }
   };
 
-  const setIsAuthorized = (value: boolean) => {
-    _updateHomeGateStore(value);
-    if (value) {
-      window.sessionStorage.setItem('byclan_home_gate', 'authorized');
-      window.localStorage.removeItem('byclan_home_gate');
-    } else {
-      window.sessionStorage.removeItem('byclan_home_gate');
-      window.localStorage.removeItem('byclan_home_gate');
-    }
-  };
-
   const reloadProfile = async () => {
     if (!user) return;
     try {
       const result = await withRetry(
-        () => Promise.resolve(supabase.from('profiles').select('*').eq('id', user.id).single()),
+        async () => await supabase.from('profiles').select('*').eq('id', user.id).single(),
         {
           onRetry: (attempt: number, delay: number) => {
             logger.info(`프로필 재로드 재시도 ${attempt}회 (${delay}ms 후)`);
@@ -841,13 +760,6 @@ export function useAuth(): UseAuthReturn {
   };
 
   return {
-    // Password gate fields for homepage security gate
-    password,
-    setPassword,
-    isAuthorized: isAuthorizedState,
-    homeGateReady,
-    setIsAuthorized,
-    // ─────────────────────────────────────────────
     profile,
     setProfile,
     activeMatchId,
