@@ -1,4 +1,3 @@
-// 파일명: src/hooks/useLadderData.js
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 import { getPlayerMmr } from '@/app/utils/profiles';
@@ -6,9 +5,12 @@ import { buildTeams, MATCH_TYPES } from '@/app/utils/matchmaking';
 
 const MAX_QUEUE_MINUTES = 20;
 const COOLDOWN_STEPS = [0, 10, 30, 180];
+const BALANCE_THRESHOLD = 200;
 
 export function useLadderData(user, authLoading) {
-  // 1. 모든 상태(기억)는 이제 비서가 관리합니다.
+  const [queueMatchType, setQueueMatchType] = useState('4v4'); 
+  const [sortOption, setSortOption] = useState('balance');
+
   const [queuePlayers, setQueuePlayers] = useState([]);
   const [ongoingMatches, setOngoingMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,16 +21,13 @@ export function useLadderData(user, authLoading) {
   const [proposalAttempts, setProposalAttempts] = useState(0);
   const [matchProfiles, setMatchProfiles] = useState({});
 
-  // 2. 티타늄 금고(Ref)들도 비서의 주머니로 들어갑니다.
   const cooldownTimerRef = useRef(null);
   const queueTimerRef = useRef(null);
   const currentUserRef = useRef(null);
   const lastQueueKeyRef = useRef('');
 
-  // 유저 정보 최신화
   currentUserRef.current = user;
 
-  // 3. 데이터 가져오기 로직 (fetchData)
   const fetchData = useCallback(async () => {
     if (authLoading || !user?.id) {
       if (!authLoading) setLoading(false);
@@ -36,11 +35,9 @@ export function useLadderData(user, authLoading) {
     }
 
     try {
-      // 내 대기열 상태
       const { data: myQueue } = await supabase.from('ladder_queue').select('is_in_queue').eq('user_id', user.id).maybeSingle();
       setInQueue(myQueue?.is_in_queue || false);
 
-      // 대기열 전체 목록 (테스트 계정 필터링 포함)
       const isTestViewer = typeof window !== 'undefined' && window.localStorage.getItem('byclan_current_is_test_account') === 'true';
       const { data: queueRaw } = await supabase
         .from('ladder_queue')
@@ -60,9 +57,25 @@ export function useLadderData(user, authLoading) {
       }));
       setQueuePlayers(qPlayers);
 
-      // 진행 중인 매치 조회 로직 (기존 복잡한 로직을 비서가 묵묵히 수행)
+      const newKey = qPlayers.map(p => p.id).sort().join(',');
+      if (lastQueueKeyRef.current && lastQueueKeyRef.current !== newKey) {
+        setProposalAttempts(0);
+        setProposalCooldown(0);
+        clearTimeout(cooldownTimerRef.current);
+      }
+      lastQueueKeyRef.current = newKey;
+
       const { data: ongoingRaw } = await supabase.from('ladder_match_sets').select('*, ladder_record!inner(*)').in('status', ['in_progress', 'proposed']).order('created_at', { ascending: false }).limit(10);
       setOngoingMatches(ongoingRaw || []);
+
+      const allTeamIds = [...new Set((ongoingRaw || []).flatMap(m => (m.ladder_record || []).map(r => r.user_id)))];
+      if (allTeamIds.length > 0) {
+        const { data: teamProfs } = await supabase.from('ladder_rankings').select('user_id, total_mmr, profiles!inner(by_id)').in('user_id', allTeamIds);
+        const profMap = Object.fromEntries((teamProfs || []).map(p => [
+          p.user_id, { id: p.user_id, by_id: p.profiles?.by_id, total_mmr: p.total_mmr }
+        ]));
+        setMatchProfiles(profMap);
+      }
 
     } catch (err) {
       console.error('데이터 로드 실패:', err);
@@ -71,30 +84,82 @@ export function useLadderData(user, authLoading) {
     }
   }, [user, authLoading]);
 
-  // 4. 실시간 구독 설정 (비서가 하루 종일 DB를 감시합니다)
   useEffect(() => {
     fetchData();
     const channel = supabase.channel('ladder-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'ladder_queue' }, fetchData).subscribe();
     return () => supabase.removeChannel(channel);
   }, [fetchData]);
 
-  // 5. 액션 함수들 (참가, 취소, 제안 등)
+  useEffect(() => {
+    if (proposalCooldown <= 0) return;
+    cooldownTimerRef.current = setTimeout(() => setProposalCooldown(p => Math.max(0, p - 1)), 1000);
+    return () => clearTimeout(cooldownTimerRef.current);
+  }, [proposalCooldown]);
+
   const joinQueue = async () => {
-    await supabase.from('ladder_queue').upsert({ user_id: user.id, is_in_queue: true, queue_joined_at: new Date().toISOString() });
-    setInQueue(true);
-    fetchData();
+    try {
+      setJoiningQueue(true);
+      await supabase.from('ladder_queue').upsert({ user_id: currentUserRef.current.id, is_in_queue: true, queue_joined_at: new Date().toISOString() });
+      setInQueue(true);
+      fetchData();
+      
+      clearTimeout(queueTimerRef.current);
+      queueTimerRef.current = setTimeout(() => {
+        leaveQueue();
+      }, MAX_QUEUE_MINUTES * 60 * 1000);
+    } finally {
+      setJoiningQueue(false);
+    }
   };
 
   const leaveQueue = async () => {
-    await supabase.from('ladder_queue').update({ is_in_queue: false }).eq('user_id', user.id);
+    const uid = currentUserRef.current?.id;
+    if (!uid) return;
+    clearTimeout(queueTimerRef.current);
+    await supabase.from('ladder_queue').update({ is_in_queue: false }).eq('user_id', uid);
     setInQueue(false);
     fetchData();
   };
 
-  // 6. 컴포넌트가 화면을 그리는 데 필요한 것들만 쏙 빼서 돌려줍니다.
+  const proposeMatch = async (typeStr, teamA, teamB) => {
+    if (!currentUserRef.current || proposalCooldown > 0) return;
+    const avgA = teamA.reduce((s, p) => s + getPlayerMmr(p), 0) / teamA.length;
+    const avgB = teamB.reduce((s, p) => s + getPlayerMmr(p), 0) / teamB.length;
+    
+    if (Math.abs(avgA - avgB) > BALANCE_THRESHOLD) {
+      if (!window.confirm('⚠️ 팀 점수 차이가 200점을 초과합니다. 진행하시겠습니까?')) return;
+    }
+
+    try {
+      const matchId = crypto.randomUUID();
+      await supabase.from('ladder_match_sets').insert({ match_id: matchId, set_number: 1, status: 'proposed', race_type: `${typeStr}v${typeStr}` });
+      
+      const records = [
+        ...teamA.map(p => ({ match_id: matchId, user_id: p.id, team: 'A' })),
+        ...teamB.map(p => ({ match_id: matchId, user_id: p.id, team: 'B' }))
+      ];
+      await supabase.from('ladder_record').insert(records);
+
+      const newAttempts = proposalAttempts + 1;
+      setProposalAttempts(newAttempts);
+      setProposalCooldown(COOLDOWN_STEPS[Math.min(newAttempts, COOLDOWN_STEPS.length - 1)]);
+
+      setActiveProposal({ matchId, matchType: `${typeStr}v${typeStr}`, teamA, teamB, avgA, avgB, diff: Math.abs(avgA - avgB), proposedBy: currentUserRef.current.id });
+    } catch (err) {
+      alert('제안 실패: ' + err.message);
+    }
+  };
+
+  // 💡 여기서 팀을 계산해서 요리사에게 넘겨줍니다!
+  const perTeam = MATCH_TYPES[queueMatchType]?.perTeam || 4;
+  const teams = buildTeams(queuePlayers, perTeam, sortOption);
+
   return {
     queuePlayers, ongoingMatches, loading, inQueue, joiningQueue,
     activeProposal, setActiveProposal, proposalCooldown, matchProfiles,
-    joinQueue, leaveQueue, fetchData
+    queueMatchType, setQueueMatchType, // 넘겨줌
+    sortOption, setSortOption,         // 넘겨줌
+    teams, perTeam,                    // 넘겨줌
+    joinQueue, leaveQueue, proposeMatch, fetchData
   };
 }

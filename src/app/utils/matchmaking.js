@@ -1,4 +1,4 @@
-// 파일명: src/utils/matchmaking.js
+// 파일명: src/app/utils/matchmaking.js
 import { getPlayerMmr } from './profiles';
 
 // 매치 유형 정의: 각 유형별 최소 인원, 팀당 인원, 래더 여부, 경기 형식 등을 명확히 정의합니다.
