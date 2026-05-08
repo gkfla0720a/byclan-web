@@ -54,7 +54,7 @@ export default function AdminBoard() {
         
         setMyProfile(profile);
         /** 역할 문자열을 소문자로 정규화하여 비교 */
-        const currentRole = profile?.role?.trim().toLowerCase();
+        const currentRole = profile?.role?;
         
         // ✨ 최고 개발자(developer) 권한 추가
         if (['developer', 'master', 'admin'].includes(currentRole)) {
@@ -120,7 +120,7 @@ export default function AdminBoard() {
    */
   const handleCreatePost = async (e) => {
     e.preventDefault();
-    if (!newPost.title.trim() || !newPost.content.trim()) return;
+    if (!newPost.title || !newPost.content) return;
 
     try {
       setIsSubmitting(true);

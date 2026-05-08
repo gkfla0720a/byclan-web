@@ -20,7 +20,7 @@ function requireAdminTypingConfirm(actionText) {
     '계속하려면 정확히 확인 을 입력하세요.',
   ].join('\n');
   const typed = window.prompt(message, '');
-  return (typed || '').trim() === '확인';
+  return (typed || '') === '확인';
 }
 
 export default function AdminMatchManager() {
@@ -51,7 +51,7 @@ export default function AdminMatchManager() {
 
       setMyProfile(profile || null);
 
-      const role = (profile?.role || '').trim().toLowerCase();
+      const role = (profile?.role || '');
       const allowed = ['developer', 'master', 'admin'].includes(role);
       setIsAdmin(allowed);
       if (!allowed) {
@@ -80,13 +80,13 @@ export default function AdminMatchManager() {
   }, [loadData]);
 
   const filteredMatches = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = search;
     if (!q) return matches;
     return matches.filter((m) =>
-      String(m.id || '').toLowerCase().includes(q)
-      || String(m.status || '').toLowerCase().includes(q)
-      || String(m.map_name || '').toLowerCase().includes(q)
-      || String(m.match_type || '').toLowerCase().includes(q)
+      String(m.id || '').includes(q)
+      || String(m.status || '').includes(q)
+      || String(m.map_name || '').includes(q)
+      || String(m.match_type || '').includes(q)
     );
   }, [matches, search]);
 

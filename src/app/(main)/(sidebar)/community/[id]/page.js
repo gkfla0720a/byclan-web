@@ -76,7 +76,7 @@ export default function PostDetailPage() {
 
   // --- 이벤트 핸들러 ---
   const handleCommentSubmit = async () => {
-    if (!comment.trim()) return;
+    if (!comment) return;
     if (!user) return alert('로그인한 길드원만 작성 가능합니다!');
     
     const { error } = await supabase.from('comments').insert([{ post_id: postId, user_id: user.id, content: comment }]);
@@ -103,7 +103,7 @@ export default function PostDetailPage() {
 
   // 댓글 수정 완료 (DB 저장)
   const handleUpdateComment = async (commentId) => {
-    if (!editContent.trim()) return;
+    if (!editContent) return;
     const { error } = await supabase.from('comments').update({ content: editContent }).eq('id', commentId);
     if (!error) {
       setEditingCommentId(null);

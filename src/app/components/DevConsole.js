@@ -28,7 +28,7 @@ export default function DevConsole() {
   const [backupProgress, setBackupProgress] = useState('');
 
   const shouldIgnoreToggleError = (error) => {
-    const message = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+    const message = `${error?.message || ''} ${error?.details || ''}`;
     return error?.code === '42P01' || error?.code === '42703' || message.includes('does not exist');
   };
 

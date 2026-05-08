@@ -192,7 +192,7 @@ function EmailLoginForm({ onSuccess }) {
         setTermsAccepted(false);
       } else {
         // 로그인
-        if (!userId.trim()) {
+        if (!userId) {
           setError('아이디를 입력하세요.');
           setLoading(false);
           return;
@@ -287,7 +287,7 @@ function EmailLoginForm({ onSuccess }) {
               id="account-id"
               type="text"
               value={userId}
-              onChange={(e) => setUserId(isSignUp ? normalizeAccountId(e.target.value) : e.target.value.trimStart())}
+              onChange={(e) => setUserId(isSignUp ? normalizeAccountId(e.target.value) : e.target.value())}
               placeholder={isSignUp ? 'yourid' : '아이디 또는 기존 이메일'}
               className={`w-full py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 ${isSignUp ? 'pl-10 pr-3' : 'px-3'}`}
               maxLength={isSignUp ? 20 : 80}

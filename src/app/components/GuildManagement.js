@@ -150,7 +150,7 @@ export default function GuildManagement() {
 
       if (error) throw error;
 
-      const role = profile?.role?.trim?.().toLowerCase?.() || null;
+      const role = profile?.role? || null;
       const authEmail = user.email || '';
       const hasPublicEmail = authEmail && !isInternalAuthEmail(authEmail);
 
@@ -388,7 +388,7 @@ export default function GuildManagement() {
    * @async
    */
   const handlePasswordVerification = async () => {
-    if (!delegationVerification.password.trim()) {
+    if (!delegationVerification.password) {
       setDelegationVerification((prev) => ({
         ...prev,
         error: '현재 계정 비밀번호를 입력하세요.',
@@ -489,7 +489,7 @@ export default function GuildManagement() {
    * @async
    */
   const handleVerifyOtp = async () => {
-    if (!delegationVerification.otp.trim()) {
+    if (!delegationVerification.otp) {
       setDelegationVerification((prev) => ({
         ...prev,
         error: '이메일로 받은 인증 코드를 입력하세요.',
@@ -503,7 +503,7 @@ export default function GuildManagement() {
 
       const { data, error } = await supabase.auth.verifyOtp({
         email: currentManager.email,
-        token: delegationVerification.otp.trim(),
+        token: delegationVerification.otp,
         type: 'email',
       });
 
@@ -840,7 +840,7 @@ export default function GuildManagement() {
                   </div>
                   <button
                     onClick={handleVerifyOtp}
-                    disabled={delegationVerification.verifying || !delegationVerification.otp.trim()}
+                    disabled={delegationVerification.verifying || !delegationVerification.otp}
                     className="w-full rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white py-2 font-bold transition-colors"
                   >
                     {delegationVerification.verifying ? '확인 중...' : '이메일 코드 확인'}

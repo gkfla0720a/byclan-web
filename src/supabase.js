@@ -21,8 +21,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // env 값 정리(앞뒤 공백 제거)
-const envUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
-const envKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
+const envUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '');
+const envKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
 
 /**
  * isSupabaseConfigured

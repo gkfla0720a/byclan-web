@@ -38,7 +38,7 @@ export default function AdminActivityLogViewer() {
         .eq('id', user.id)
         .single();
 
-      const role = (profile?.role || '').trim().toLowerCase();
+      const role = (profile?.role || '');
       const allowed = ['developer', 'master', 'admin'].includes(role);
       setIsAdmin(allowed);
       if (!allowed) {
@@ -72,8 +72,8 @@ export default function AdminActivityLogViewer() {
 
   const filtered = useMemo(() => {
     return rows.filter((row) => {
-      const targetOk = !targetSearch.trim() || String(row.target_id || '').toLowerCase().includes(targetSearch.toLowerCase()) || String(row.target_user_id || '').toLowerCase().includes(targetSearch.toLowerCase());
-      const actorOk = !actorSearch.trim() || String(row.actor_by_id || '').toLowerCase().includes(actorSearch.toLowerCase()) || String(row.actor_id || '').toLowerCase().includes(actorSearch.toLowerCase());
+      const targetOk = !targetSearch || String(row.target_id || '').includes(targetSearch) || String(row.target_user_id || '').includes(targetSearch);
+      const actorOk = !actorSearch || String(row.actor_by_id || '').includes(actorSearch) || String(row.actor_id || '').includes(actorSearch);
       return targetOk && actorOk;
     });
   }, [rows, targetSearch, actorSearch]);

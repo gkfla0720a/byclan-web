@@ -85,7 +85,7 @@ function applyDemoStreamers(memberList) {
  */
 function normalizeMemberRole(member) {
   if (!member) return null;
-  const normalizedRole = member?.role?.trim?.().toLowerCase?.();
+  const normalizedRole = member?.role?.();
   return {
     ...member,
     role: normalizedRole || member?.role || '',
@@ -153,7 +153,7 @@ async function fetchMembersWithSchemaFallback() {
       return result;
     }
 
-    const message = `${result.error?.message || ''} ${result.error?.details || ''} ${result.error?.hint || ''}`.toLowerCase();
+    const message = `${result.error?.message || ''} ${result.error?.details || ''} ${result.error?.hint || ''}`;
     const isMissingColumn =
       result.error?.code === '42703' ||
       result.error?.code === 'PGRST204' ||
@@ -206,7 +206,7 @@ export default function ClanMembers() {
         .single();
       // 현재 사용자 ID와 역할을 상태로 저장합니다.
       setCurrentUserId(user.id);
-      setCurrentRole(profile?.role?.trim?.().toLowerCase?.() || null);
+      setCurrentRole(profile?.role?.() || null);
     };
 
     const fetchMembers = async () => {

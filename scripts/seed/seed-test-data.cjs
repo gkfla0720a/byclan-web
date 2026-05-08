@@ -17,7 +17,7 @@ function loadEnvFile(filePath) {
 
   const content = fs.readFileSync(filePath, 'utf8');
   for (const line of content.split(/\r?\n/)) {
-    const trimmed = line.trim();
+    const trimmed = line;
     if (!trimmed || trimmed.startsWith('#')) {
       continue;
     }
@@ -27,8 +27,8 @@ function loadEnvFile(filePath) {
       continue;
     }
 
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const rawValue = trimmed.slice(separatorIndex + 1).trim();
+    const key = trimmed.slice(0, separatorIndex);
+    const rawValue = trimmed.slice(separatorIndex + 1);
     const normalizedValue = rawValue.replace(/^['"]|['"]$/g, '');
 
     if (!(key in process.env)) {
@@ -38,7 +38,7 @@ function loadEnvFile(filePath) {
 }
 
 function relationMissing(error) {
-  const message = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+  const message = `${error?.message || ''} ${error?.details || ''}`;
   return (
     message.includes('does not exist') ||
     message.includes('relation') && message.includes('not found') ||
@@ -47,7 +47,7 @@ function relationMissing(error) {
 }
 
 function missingColumn(error) {
-  const message = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+  const message = `${error?.message || ''} ${error?.details || ''}`;
   return (
     message.includes('column') && message.includes('does not exist') ||
     error?.code === '42703'

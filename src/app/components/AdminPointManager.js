@@ -77,7 +77,7 @@ export default function AdminPointManager() {
 
       const flatProf = prof ? { ...prof, is_test_account: prof.profile_meta?.is_test_account ?? false, profile_meta: undefined } : null;
       setMyProfile(flatProf);
-      const role = flatProf?.role?.trim().toLowerCase();
+      const role = flatProf?.role?;
       if (!['developer', 'master', 'admin'].includes(role)) return;
 
       setIsAdmin(true);
@@ -119,9 +119,9 @@ export default function AdminPointManager() {
       if (error) throw error;
 
       let filtered = data || [];
-      if (searchById.trim()) {
+      if (searchById) {
         filtered = filtered.filter(log =>
-          log.profiles?.by_id?.toLowerCase().includes(searchById.toLowerCase())
+          log.profiles?.by_id?.includes(searchById)
         );
       }
 
@@ -141,7 +141,7 @@ export default function AdminPointManager() {
   const handleSubmitPoints = async (e) => {
     e.preventDefault();
     const amount = parseInt(grantAmount, 10);
-    if (!selectedUserId || !amount || amount <= 0 || !grantReason.trim()) {
+    if (!selectedUserId || !amount || amount <= 0 || !grantReason) {
       alert('대상 유저, 포인트 금액, 사유를 모두 입력해주세요.');
       return;
     }
@@ -155,7 +155,7 @@ export default function AdminPointManager() {
       '계속하려면 아래 입력창에 정확히 확인 을 입력하세요.',
     ].join('\n');
     const typed = window.prompt(guideText, '');
-    if ((typed || '').trim() !== '확인') {
+    if ((typed || '') !== '확인') {
       alert('취소되었습니다. 확인 문자열이 일치하지 않습니다.');
       return;
     }
@@ -171,7 +171,7 @@ export default function AdminPointManager() {
       const isTest = Boolean(targetMember?.is_test_account);
       const fn = isDeduct ? deductPoints : grantPoints;
       const type = isDeduct ? 'admin_deduct' : 'admin_grant';
-      const result = await fn(supabase, selectedUserId, amount, grantReason.trim(), type, null, isTest);
+      const result = await fn(supabase, selectedUserId, amount, grantReason, type, null, isTest);
 
       if (result.ok) {
         const { data: targetAfter } = await supabase
@@ -200,7 +200,7 @@ export default function AdminPointManager() {
             role: targetAfter?.role,
           },
           summary: `${targetMember?.by_id || '대상유저'} 포인트 ${isDeduct ? '회수' : '지급'} ${amount}CP`,
-          note: `${isDeduct ? '포인트 회수' : '포인트 지급'} ${amount}CP / 사유: ${grantReason.trim()}`,
+          note: `${isDeduct ? '포인트 회수' : '포인트 지급'} ${amount}CP / 사유: ${grantReason}`,
           isTestData: isTest,
         });
 
@@ -320,7 +320,7 @@ export default function AdminPointManager() {
 
           <button
             type="submit"
-            disabled={submitting || !selectedUserId || !grantAmount || !grantReason.trim()}
+            disabled={submitting || !selectedUserId || !grantAmount || !grantReason}
             className={`w-full py-3 rounded-xl font-black text-sm transition-all disabled:opacity-30 ${
               isDeduct
                 ? 'bg-red-700 hover:bg-red-600 text-white'

@@ -71,10 +71,10 @@ export default function AuthForm() {
    */
   // [추가] 닉네임 중복 확인
   const checkNicknameDuplicate = async () => {
-    if (!nickname.trim()) return alert("닉네임을 입력해주세요.");
+    if (!nickname) return alert("닉네임을 입력해주세요.");
     if (nickname.length < 2) return alert("닉네임은 최소 2글자 이상이어야 합니다.");
     
-    const fullID = `By_${nickname.trim()}`;
+    const fullID = `By_${nickname}`;
     const { count, error } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })

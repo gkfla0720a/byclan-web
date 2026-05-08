@@ -96,12 +96,12 @@ export default function Header() {
   // by_id 없을 때 표시할 에러 메시지 (데스크톱/모바일 공통으로 사용)
   const NO_BYID_MESSAGE = 'By닉네임이 없습니다. 재설정해주세요.';
   // by_id만 사용합니다. 없으면 null로 처리하며 폴백 닉네임을 사용하지 않습니다.
-  const hasValidById = !!(profile?.by_id && profile.by_id.trim() !== '');
+  const hasValidById = !!(profile?.by_id && profile.by_id !== '');
   const nickname = hasValidById ? profile.by_id : null;
 
   // 권한 체크: 역할 문자열을 소문자로 정규화하여 비교합니다
   // 🛡️ 권한 체크 로직 (소문자 및 공백 완벽 제거)
-  const currentRole = role?.toString().trim().toLowerCase();
+  const currentRole = role?.toString();
   
   // isDeveloper: 개발자 역할 여부 (개발자 전용 메뉴 표시에 사용)
   // 최고 개발자(developer)는 모든 관리자/정예 권한을 상속받습니다.

@@ -100,7 +100,7 @@ export default function ApplicationList() {
           .single();
         
         if (profile) {
-          const currentRole = profile.role.trim().toLowerCase();
+          const currentRole = profile.role;
           setMyProfile({ ...profile, role: currentRole });
           
           // 새로운 권한 시스템으로 변경

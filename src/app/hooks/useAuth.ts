@@ -317,7 +317,7 @@ async function syncSocialProfileData(
     oauthUpdates.auth_provider = authProvider;
   }
 
-  if (!currentProfile.by_id || !currentProfile.by_id.trim()) {
+  if (!currentProfile.by_id || !currentProfile.by_id) {
     const loginId = extractAccountIdFromAuthUser(authUser, currentProfile);
     const seed = googleName || discordName || loginId || (authUser.email as string)?.split('@')[0] || 'User';
     profileUpdates.by_id = await resolveUniqueById(seed, authUser.id as string);
@@ -374,7 +374,7 @@ export function useAuth(): UseAuthReturn {
   // ─── by_id 유효성 파생 ──────────────────────────────────────────────────────
   // needsByIdSetup은 profile에서 직접 파생되는 계산값입니다. (별도 state 불필요)
   // profile이 null이면 아직 로딩 중이므로 false로 처리합니다.
-  const needsByIdSetup = profile !== null && !(profile.by_id && profile.by_id.trim() !== '');
+  const needsByIdSetup = profile !== null && !(profile.by_id && profile.by_id !== '');
 
   // Auto-clear authError after 4 seconds
   useEffect(() => {
@@ -395,7 +395,7 @@ export function useAuth(): UseAuthReturn {
       return;
     }
 
-    const hasValidById = !!(profile.by_id && profile.by_id.trim() !== '');
+    const hasValidById = !!(profile.by_id && profile.by_id !== '');
     // by_id가 유효하면 재확인 상태를 초기화하고 종료합니다.
     if (hasValidById) {
       byIDRecheckRef.current = 'idle';
@@ -419,7 +419,7 @@ export function useAuth(): UseAuthReturn {
         .eq('id', userId)
         .single();
 
-      const freshHasValidById = !!(fresh?.by_id && (fresh.by_id as string).trim() !== '');
+      const freshHasValidById = !!(fresh?.by_id && (fresh.by_id as string) !== '');
 
       if (freshHasValidById) {
         // 일시적인 문제였음 - 전체 프로필을 다시 로드하고 종료합니다.
@@ -654,7 +654,7 @@ export function useAuth(): UseAuthReturn {
 
   const getPermissions = (): AuthPermissions => {
     const profileRole = profile?.role;
-    const rawRole = profileRole?.trim().toLowerCase();
+    const rawRole = profileRole?.toLowerCase();
 
     // 로그인은 됐지만 role이 없거나 유효하지 않은 경우(프로필 로드 실패, 삭제된 role 등)
     // visitor 수준으로 처리해 기능이 완전히 죽지 않게 합니다.

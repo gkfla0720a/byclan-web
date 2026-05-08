@@ -59,7 +59,7 @@ export function isRetryableError(error) {
   if (typeof status === 'number' && status >= 500) return true;
 
   // Network / fetch failures
-  const msg = (error?.message ?? '').toLowerCase();
+  const msg = (error?.message ?? '');
   if (
     msg.includes('failed to fetch') ||
     msg.includes('network') ||
@@ -97,7 +97,7 @@ export function isRetryableError(error) {
 export function isRelationshipError(error) {
   if (!error) return false;
   if (error?.code === 'PGRST200' || error?.code === '42703') return true;
-  const msg = ((error?.message ?? '') + ' ' + (error?.details ?? '')).toLowerCase();
+  const msg = ((error?.message ?? '') + ' ' + (error?.details ?? ''));
   return msg.includes('relationship') || msg.includes('does not exist');
 }
 

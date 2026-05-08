@@ -21,25 +21,25 @@ export async function GET(request) {
     const matches = [];
 
     $('.rec-match-card').each((index, element) => {
-      const matchIdText = $(element).find('.rec-match-id').text().trim();
+      const matchIdText = $(element).find('.rec-match-id').text();
       const matchId = matchIdText.split(' ')[0];
-      const host = $(element).find('.rec-match-id span').text().replace('호스트:', '').trim();
-      const date = $(element).find('.rec-match-date').text().trim();
-      const status = $(element).find('.rec-match-status').text().trim();
-      const teamAScore = $(element).find('.rec-score-num').first().text().trim();
-      const teamBScore = $(element).find('.rec-score-num').last().text().trim();
+      const host = $(element).find('.rec-match-id span').text().replace('호스트:', '');
+      const date = $(element).find('.rec-match-date').text();
+      const status = $(element).find('.rec-match-status').text();
+      const teamAScore = $(element).find('.rec-score-num').first().text();
+      const teamBScore = $(element).find('.rec-score-num').last().text();
 
       const sets = [];
       $(element).find('.rec-set-row').each((setIdx, setEl) => {
-        const setNumber = $(setEl).find('.rec-set-num').text().trim();
-        const mmrChange = $(setEl).find('.rec-mmr-val').text().trim();
+        const setNumber = $(setEl).find('.rec-set-num').text();
+        const mmrChange = $(setEl).find('.rec-mmr-val').text();
 
         const extractPlayers = (sideClass) => {
           const players = [];
           $(setEl).find(sideClass).find('.rec-player').each((pIdx, pEl) => {
             players.push({
-              name: $(pEl).find('.rec-name').text().trim(),
-              race: $(pEl).find('.rec-race').text().trim(),
+              name: $(pEl).find('.rec-name').text(),
+              race: $(pEl).find('.rec-race').text(),
               tier: $(pEl).find('.rec-tier-icon').attr('alt'),
               isAce: $(pEl).find('.badge-ace').length > 0
             });

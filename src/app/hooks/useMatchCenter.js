@@ -161,10 +161,38 @@ export function useMatchCenter(matchId) {
     return () => clearTimeout(setTimerRef.current);
   }, [betTimer, betTimerActive]);
 
-  // ─── 파생 변수들 ───
-  const isManagementRole = ['admin', 'master', 'developer'].includes((myRole || '').trim().toLowerCase());
-  const teamACaptainId = match?.team_a_ids?.[0] || null;
-  const teamBCaptainId = match?.team_b_ids?.[0] || null;
+// ─── 파생 변수들 ───
+  
+  // 💡 [수정] 엄격한 문자열 검사 (오염된 데이터는 얄짤없이 권한 거부)
+  const isManagementRole = ['admin', 'master', 'developer'].includes(myRole);
+
+  // 💡 [혁신] 최고 MMR 유저를 팀장으로 자동 선출하는 헬퍼 함수
+  const getCaptainId = (teamIds) => {
+    if (!teamIds || teamIds.length === 0) return null;
+    const profilesArray = Array.isArray(match?.profiles) ? match.profiles : (match?.profiles ? [match.profiles] : []);
+    
+    const teamMembers = profilesArray.filter(p => teamIds.includes(p.id));
+    
+    // 🚨 [안전장치] 프로필 데이터가 없거나 덜 불러와졌다면 치명적 오류 발생
+    if (teamMembers.length !== teamIds.length) {
+      console.error('🚨 [Critical Error] 매치 참여자의 프로필 데이터를 완벽히 불러오지 못했습니다.');
+      return null; 
+    }
+    
+    const captain = [...teamMembers].sort((a, b) => {
+      // 🚨 [안전장치] total_mmr 데이터가 아예 없다면 게임 진행 불가 처리
+      if (a.total_mmr === undefined || a.total_mmr === null || b.total_mmr === undefined || b.total_mmr === null) {
+        console.error(`🚨 [Critical Error] MMR 데이터 누락! (${a.by_id} 또는 ${b.by_id}) - 비정상적인 매치입니다.`);
+      }
+      return b.total_mmr - a.total_mmr; // 순수 total_mmr만 깐깐하게 비교
+    })[0];
+    
+    return captain?.id || null;
+  };
+
+  const teamACaptainId = getCaptainId(match?.team_a_ids);
+  const teamBCaptainId = getCaptainId(match?.team_b_ids);
+  
   const isTeamCaptain = (myUserId && (myUserId === teamACaptainId || myUserId === teamBCaptainId)) || false;
   const canReportSetResult = Boolean(isManagementRole || isTeamCaptain);
   const perspectiveTeam = (managementMode && isManagementRole) ? 'D' : (myTeam || 'C');
@@ -192,8 +220,8 @@ export function useMatchCenter(matchId) {
     const teamIds = teamLetter === 'A' ? (match?.team_a_ids || []) : (match?.team_b_ids || []);
     return profilesArray.filter((p) => teamIds.includes(p.id));
   };
-  const currentTeamEntry = (teamLetter) => currentSet?.[`team_${teamLetter.toLowerCase()}_entry`] || [];
-  const currentTeamReady = (teamLetter) => Boolean(currentSet?.[`team_${teamLetter.toLowerCase()}_ready`]);
+  const currentTeamEntry = (teamLetter) => currentSet?.[`team_${teamLetter}_entry`] || [];
+  const currentTeamReady = (teamLetter) => Boolean(currentSet?.[`team_${teamLetter}_ready`]);
 
   const getRestStatus = (playerId, teamLetter) => {
     if (!match?.match_sets || !teamLetter) return { count: 0, canRest: true };
@@ -359,8 +387,9 @@ export function useMatchCenter(matchId) {
     settlementStatus, settlementError, selectedEntryByTeam, betTeam, betAmount, bettingDone, bettingLoading, 
     betOdds, myClanPoint, raceCombo, showRaceSelector, isManagementRole, canReportSetResult, perspectiveTeam, 
     editingTeam, selectedEntry, remainingRequiredCombos, needWins, matchEnded, isLadderMatch, matchFormat, 
-    canBetOnA, canBetOnB, setBetTeam, setBetAmount, setShowRaceSelector, setRaceCombo, toggleManagementMode, 
-    handleSelect, submitEntry, requestWithdraw, approveWithdraw, forceRetract, handleSetWin, handleBet, 
-    handleSettlement, getTeamMembersByLetter, currentTeamEntry, currentTeamReady, getRestStatus
+    canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId, setBetTeam, setBetAmount, setShowRaceSelector, 
+    setRaceCombo, toggleManagementMode, handleSelect, submitEntry, requestWithdraw, approveWithdraw, 
+    forceRetract, handleSetWin, handleBet, handleSettlement, getTeamMembersByLetter, currentTeamEntry, 
+    currentTeamReady, getRestStatus,
   };
 }

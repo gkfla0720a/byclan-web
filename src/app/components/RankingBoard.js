@@ -224,9 +224,9 @@ export default function RankingBoard() {
   }, []);
 
   const filteredRankings = rankings.filter((player) => {
-    const query = search.trim().toLowerCase();
+    const query = search;
     if (!query) return true;
-    return (player.by_id || '').toLowerCase().includes(query);
+    return (player.by_id || '').includes(query);
   });
 
   return (

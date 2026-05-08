@@ -276,7 +276,7 @@ export default function MyProfile() {
    */
   // 닉네임 중복 확인
   const checkDuplicate = async () => {
-    if (!clanNameInput.trim()) return alert('닉네임을 입력해 주세요.');
+    if (!clanNameInput) return alert('닉네임을 입력해 주세요.');
     const fullNickname = `By_${clanNameInput}`;
 
     if (fullNickname === originalById) {
@@ -376,7 +376,7 @@ export default function MyProfile() {
    * 기존 이메일과 새 이메일 양쪽 모두에 확인 링크가 발송됩니다.
    */
   const handleEmailChange = async () => {
-    if (!newEmail.trim()) return setSecurityMsg({ type: 'error', text: '새 이메일 주소를 입력하세요.' });
+    if (!newEmail) return setSecurityMsg({ type: 'error', text: '새 이메일 주소를 입력하세요.' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return setSecurityMsg({ type: 'error', text: '올바른 이메일 형식이 아닙니다.' });
     if (newEmail === authEmail) return setSecurityMsg({ type: 'error', text: '현재 이메일과 동일합니다.' });
 
@@ -450,7 +450,7 @@ export default function MyProfile() {
   const ladderLosses = profile.losses ?? 0;
 
   // 권한 체크: 소문자로 변환하여 정확히 비교
-  const currentRole = profile.role?.trim().toLowerCase();
+  const currentRole = profile.role?;
   /** 현재 유저가 개발자 등급인지 여부 (개발자 콘솔 버튼 표시 여부 결정) */
   const isDeveloper = currentRole === 'developer';
   /** 화면에 표시할 현재 역할의 한국어 라벨 */

@@ -173,12 +173,12 @@ const canEnterQueue =
 
 ```javascript
 // ❌ 현재 — role이 null/undefined일 때 .toString()이 TypeError를 던질 수 있음
-const currentRole = role?.toString().trim().toLowerCase();
+const currentRole = role?.toString();
 ```
 
 ```javascript
 // ✅ 개선 — 빈 문자열 fallback으로 null 안전 처리
-const currentRole = (profile?.role ?? '').toLowerCase().trim() || 'visitor';
+const currentRole = (profile?.role ?? '') || 'visitor';
 ```
 
 **이유:** `role?.toString()` 이후 `trim()`·`toLowerCase()` 체이닝은 옵셔널 체이닝이 적용되지 않아 `null`이 중간에 끼면 런타임 오류가 발생할 수 있습니다.

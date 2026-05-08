@@ -125,7 +125,7 @@ export default function NoticeBoard() {
    */
   const handleCreatePost = async (e) => {
     e.preventDefault();
-    if (!newPost.title.trim() || !newPost.content.trim()) return;
+    if (!newPost.title || !newPost.content) return;
     if (!canPost) {
       alert('공지사항 작성 권한이 없습니다.');
       return;

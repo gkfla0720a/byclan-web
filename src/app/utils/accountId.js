@@ -2,11 +2,11 @@ const INTERNAL_AUTH_DOMAIN = 'auth.byclan.local';
 const INTERNAL_AUTH_PREFIX = 'login.';
 
 export function normalizeAccountId(value = '') {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  return value.replace(/[^a-z0-9]/g, '');
 }
 
 export function isLegacyEmailLogin(value = '') {
-  return /@/.test(value.trim());
+  return /@/.test(value);
 }
 
 export function buildInternalAuthEmail(accountId) {
@@ -16,7 +16,7 @@ export function buildInternalAuthEmail(accountId) {
 }
 
 export function isInternalAuthEmail(email = '') {
-  return email.toLowerCase().endsWith(`@${INTERNAL_AUTH_DOMAIN}`);
+  return email.endsWith(`@${INTERNAL_AUTH_DOMAIN}`);
 }
 
 export function extractAccountIdFromInternalEmail(email = '') {
@@ -34,8 +34,8 @@ export function extractAccountIdFromById(byId = '') {
 
 export function extractAccountIdFromAuthUser(authUser, profile) {
   const metaLoginId = authUser?.user_metadata?.login_id;
-  if (typeof metaLoginId === 'string' && metaLoginId.trim()) {
-    return metaLoginId.trim();
+  if (typeof metaLoginId === 'string' && metaLoginId) {
+    return metaLoginId;
   }
 
   const internalEmailLoginId = extractAccountIdFromInternalEmail(authUser?.email || '');
@@ -47,5 +47,5 @@ export function extractAccountIdFromAuthUser(authUser, profile) {
 }
 
 export function getLoginEmailFromInput(input) {
-  return isLegacyEmailLogin(input) ? input.trim() : buildInternalAuthEmail(input);
+  return isLegacyEmailLogin(input) ? input : buildInternalAuthEmail(input);
 }

@@ -230,7 +230,7 @@ function pickThree(teamIds, teamRaces, setNo) {
 }
 
 function normalizeRace(r) {
-  return String(r || '').trim().toLowerCase();
+  return String(r || '');
 }
 
 function getComboCode(races) {

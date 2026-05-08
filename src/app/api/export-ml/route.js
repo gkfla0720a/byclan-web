@@ -43,7 +43,7 @@ export async function GET(request) {
       matchCards.each((index, element) => {
         if (shouldStop) return false;
 
-        const matchIdStr = $(element).find('.rec-match-id').text().trim().split(' ')[0];
+        const matchIdStr = $(element).find('.rec-match-id').text().split(' ')[0];
         const currentId = parseInt(matchIdStr.replace('#', ''), 10);
 
         // 엑셀에 있는 ID와 만나면 즉시 파싱 중단 (매크로 전용)
@@ -53,16 +53,16 @@ export async function GET(request) {
           return false;
         }
 
-        const date = $(element).find('.rec-match-date').text().trim();
+        const date = $(element).find('.rec-match-date').text();
         const isTeamAWin = $(element).find('.rec-set-left').hasClass('rec-set-win');
 
         $(element).find('.rec-set-row').each((setIdx, setEl) => {
-          const setNumber = $(setEl).find('.rec-set-num').text().trim();
-          const mmrChange = $(setEl).find('.rec-mmr-val').text().trim();
+          const setNumber = $(setEl).find('.rec-set-num').text();
+          const mmrChange = $(setEl).find('.rec-mmr-val').text();
 
           const extractPlayers = (sideClass, teamName, isWin) => {
             $(setEl).find(sideClass + ' .rec-player').each((_, pEl) => {
-              flatData.push({ Match_ID: matchIdStr, Date: date, Set: setNumber, Team: teamName, Name: $(pEl).find('.rec-name').text().trim(), Race: $(pEl).find('.rec-race').text().trim(), Tier: $(pEl).find('.rec-tier-icon').attr('alt'), Is_Ace: $(pEl).find('.badge-ace').length > 0 ? 'O' : 'X', Win_Loss: isWin ? '승' : '패', MMR_Change: mmrChange });
+              flatData.push({ Match_ID: matchIdStr, Date: date, Set: setNumber, Team: teamName, Name: $(pEl).find('.rec-name').text(), Race: $(pEl).find('.rec-race').text(), Tier: $(pEl).find('.rec-tier-icon').attr('alt'), Is_Ace: $(pEl).find('.badge-ace').length > 0 ? 'O' : 'X', Win_Loss: isWin ? '승' : '패', MMR_Change: mmrChange });
             });
           };
 
