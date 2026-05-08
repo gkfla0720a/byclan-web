@@ -1,0 +1,353 @@
+// 파일명: src/app/hooks/useMatchCenter.js
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/supabase';
+
+// ─── 상수 (Constants) ───
+export const BET_AMOUNTS = [500, 1000, 5000, 10000];
+export const BET_WINDOW_SECONDS = 300;
+export const RACE_COMBOS = [
+  { id: 'PPP', label: '프프프', races: ['Protoss', 'Protoss', 'Protoss'] },
+  { id: 'PPT', label: '프프테', races: ['Protoss', 'Protoss', 'Terran'] },
+  { id: 'PPZ', label: '프프저', races: ['Protoss', 'Protoss', 'Zerg'] },
+  { id: 'PZT', label: '프저테', races: ['Protoss', 'Zerg', 'Terran'] },
+  { id: 'RANDOM', label: '대포 (랜덤)', races: null },
+];
+export const REQUIRED_RACE_COMBOS = ['PPP', 'PPT', 'PPZ', 'PZT', 'RANDOM'];
+export const RACE_ICONS = { Protoss: '프', Terran: '테', Zerg: '저' };
+
+// ─── 헬퍼 함수 (Helper Functions) ───
+export function formatTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+export function getComboIdFromRaceCards(cards) {
+  if (!Array.isArray(cards) || cards.length !== 3) return null;
+  const map = { Protoss: 'P', Terran: 'T', Zerg: 'Z' };
+  const code = cards.map((race) => map[race] || 'X').sort().join('');
+  if (code === 'PTZ') return 'PZT';
+  if (REQUIRED_RACE_COMBOS.includes(code)) return code;
+  return null;
+}
+
+export function getRemainingRequiredCombos(matchSets) {
+  const used = new Set();
+  (matchSets || []).forEach((setRow) => {
+    const comboFromCode = typeof setRow?.combo_code === 'string' ? setRow.combo_code : null;
+    const normalized = comboFromCode === 'PTZ' ? 'PZT' : comboFromCode;
+    const combo = REQUIRED_RACE_COMBOS.includes(normalized) ? normalized : getComboIdFromRaceCards(setRow?.race_cards);
+    if (combo) used.add(combo);
+  });
+  return REQUIRED_RACE_COMBOS.filter((combo) => !used.has(combo));
+}
+
+export function getRaceCards(comboId) {
+  const combo = RACE_COMBOS.find(c => c.id === comboId);
+  if (!combo || !combo.races) {
+    const pool = ['Protoss', 'Terran', 'Zerg'];
+    return [0, 1, 2].map(() => pool[Math.floor(Math.random() * pool.length)]);
+  }
+  return combo.races;
+}
+
+// ─── 메인 훅 (Main Hook) ───
+export function useMatchCenter(matchId) {
+  const [match, setMatch] = useState(null);
+  const [currentSet, setCurrentSet] = useState(null);
+  const [betTimer, setBetTimer] = useState(BET_WINDOW_SECONDS);
+  const [betTimerActive, setBetTimerActive] = useState(false);
+  const [myTeam, setMyTeam] = useState(null);
+  const [myUserId, setMyUserId] = useState(null);
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [myRole, setMyRole] = useState(null);
+  const [managementMode, setManagementMode] = useState(false);
+  const [settlementStatus, setSettlementStatus] = useState('idle'); 
+  const [settlementError, setSettlementError] = useState('');
+
+  const [selectedEntryByTeam, setSelectedEntryByTeam] = useState({
+    A: [{ id: '', by_id: '', race: '' }, { id: '', by_id: '', race: '' }, { id: '', by_id: '', race: '' }],
+    B: [{ id: '', by_id: '', race: '' }, { id: '', by_id: '', race: '' }, { id: '', by_id: '', race: '' }],
+  });
+  const [betTeam, setBetTeam] = useState(null);
+  const [betAmount, setBetAmount] = useState(null);
+  const [bettingDone, setBettingDone] = useState(false);
+  const [bettingLoading, setBettingLoading] = useState(false);
+  const [betOdds, setBetOdds] = useState({ total_a: 0, total_b: 0, count_a: 0, count_b: 0, odds_a: 0, odds_b: 0 });
+  const [myClanPoint, setMyClanPoint] = useState(0);
+  const [raceCombo, setRaceCombo] = useState('PPT');
+  const [showRaceSelector, setShowRaceSelector] = useState(false);
+  
+  const setTimerRef = useRef(null);
+
+  const fetchMatchData = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setMyUserId(user.id);
+
+    const { data: sets } = await supabase.from('ladder_match_sets').select('*').eq('match_id', matchId).order('set_number', { ascending: true });
+    const { data: records } = await supabase.from('ladder_record').select('*, profiles(*)').eq('match_id', matchId);
+
+    if (!sets || sets.length === 0 || !records) return;
+    
+    const scoreA = sets.filter(s => s.winner_team === 'A').length;
+    const scoreB = sets.filter(s => s.winner_team === 'B').length;
+    const matchType = records.filter(r => r.team === 'A').length;
+    
+    const m = {
+      ...sets[0], 
+      match_sets: sets,
+      team_a_ids: records.filter(r => r.team === 'A').map(r => r.user_id),
+      team_b_ids: records.filter(r => r.team === 'B').map(r => r.user_id),
+      profiles: records.map(r => r.profiles),
+      score_a: scoreA,
+      score_b: scoreB,
+      match_type: matchType
+    };
+    setMatch(m);
+
+    const [{ data: prof }, { data: profMeta }] = await Promise.all([
+      supabase.from('profiles').select('id, role, clan_point').eq('id', user.id).single(),
+      supabase.from('profile_meta').select('is_test_account').eq('user_id', user.id).maybeSingle(),
+    ]);
+    if (prof && profMeta) prof.is_test_account = profMeta.is_test_account;
+    if (prof) {
+      setMyClanPoint(prof.clan_point ?? 0);
+      setMyRole(prof.role || null);
+    }
+
+    const inTeamA = (m.team_a_ids || []).includes(user.id);
+    const inTeamB = (m.team_b_ids || []).includes(user.id);
+    const teamLetter = inTeamA ? 'A' : inTeamB ? 'B' : null;
+    setMyTeam(teamLetter);
+
+    const activeSet = m.match_sets?.find(s => s.status !== 'completed') || m.match_sets?.[m.match_sets.length - 1];
+    setCurrentSet(activeSet);
+    setIsRevealed(Boolean(activeSet?.team_a_ready && activeSet?.team_b_ready));
+
+    if (activeSet?.started_at) {
+      const elapsed = Math.floor((Date.now() - new Date(activeSet.started_at).getTime()) / 1000);
+      const remaining = Math.max(0, BET_WINDOW_SECONDS - elapsed);
+      setBetTimer(remaining);
+      setBetTimerActive(remaining > 0);
+    }
+
+    try {
+      const { data: oddsData } = await supabase.rpc('fn_get_match_bet_odds', { p_match_id: matchId });
+      if (oddsData) setBetOdds(oddsData);
+    } catch {}
+  }, [matchId]);
+
+  useEffect(() => {
+    void fetchMatchData();
+    const channel = supabase.channel(`m-${matchId}`).on('postgres_changes', { event: '*', schema: 'public' }, fetchMatchData).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [matchId, fetchMatchData]);
+
+  useEffect(() => {
+    const loadManagementMode = async () => {
+      const { data } = await supabase.from('developer_settings').select('value_bool').eq('key', 'match_admin_live_mode').maybeSingle();
+      setManagementMode(Boolean(data?.value_bool));
+    };
+    loadManagementMode().catch(() => setManagementMode(false));
+  }, []);
+
+  useEffect(() => {
+    if (!betTimerActive || betTimer <= 0) return;
+    setTimerRef.current = setTimeout(() => setBetTimer(p => {
+      if (p <= 1) { setBetTimerActive(false); return 0; }
+      return p - 1;
+    }), 1000);
+    return () => clearTimeout(setTimerRef.current);
+  }, [betTimer, betTimerActive]);
+
+  // ─── 파생 변수들 ───
+  const isManagementRole = ['admin', 'master', 'developer'].includes((myRole || '').trim().toLowerCase());
+  const teamACaptainId = match?.team_a_ids?.[0] || null;
+  const teamBCaptainId = match?.team_b_ids?.[0] || null;
+  const isTeamCaptain = (myUserId && (myUserId === teamACaptainId || myUserId === teamBCaptainId)) || false;
+  const canReportSetResult = Boolean(isManagementRole || isTeamCaptain);
+  const perspectiveTeam = (managementMode && isManagementRole) ? 'D' : (myTeam || 'C');
+  const editingTeam = perspectiveTeam === 'A' || perspectiveTeam === 'B' ? perspectiveTeam : null;
+  const selectedEntry = editingTeam ? selectedEntryByTeam[editingTeam] : [];
+  const remainingRequiredCombos = getRemainingRequiredCombos(match?.match_sets);
+  
+  useEffect(() => {
+    if (remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(raceCombo)) {
+      setRaceCombo(remainingRequiredCombos[0]);
+    }
+  }, [remainingRequiredCombos, raceCombo]);
+
+  const needWins = Number(match?.match_type) >= 5 ? 4 : 3;
+  const matchEnded = match && (match.score_a >= needWins || match.score_b >= needWins);
+  const isLadderMatch = match?.match_type >= 3;
+  const matchFormat = match?.match_type >= 5 ? 'BO7 (4선승)' : 'BO5 (3선승)';
+  const canBetOnA = myTeam !== 'A';
+  const canBetOnB = myTeam !== 'B';
+
+  // ─── 헬퍼 함수들 (내부 상태 참조용) ───
+  const getProfilesArray = () => (Array.isArray(match?.profiles) ? match.profiles : (match?.profiles ? [match.profiles] : []));
+  const getTeamMembersByLetter = (teamLetter) => {
+    const profilesArray = getProfilesArray();
+    const teamIds = teamLetter === 'A' ? (match?.team_a_ids || []) : (match?.team_b_ids || []);
+    return profilesArray.filter((p) => teamIds.includes(p.id));
+  };
+  const currentTeamEntry = (teamLetter) => currentSet?.[`team_${teamLetter.toLowerCase()}_entry`] || [];
+  const currentTeamReady = (teamLetter) => Boolean(currentSet?.[`team_${teamLetter.toLowerCase()}_ready`]);
+
+  const getRestStatus = (playerId, teamLetter) => {
+    if (!match?.match_sets || !teamLetter) return { count: 0, canRest: true };
+    const completedSets = match.match_sets.filter(s => s.status === 'completed');
+    const restCount = completedSets.filter(s => {
+      const entry = teamLetter === 'A' ? s.team_a_entry : s.team_b_entry;
+      return !entry?.some(e => e.id === playerId);
+    }).length;
+    let maxRest = 1;
+    if (match.match_type >= 5) maxRest = completedSets.length < 5 ? 2 : 3;
+    return { count: restCount, canRest: restCount < maxRest };
+  };
+
+  // ─── 액션 함수들 ───
+  const toggleManagementMode = async () => {
+    const nextMode = !managementMode;
+    const { error } = await supabase.from('developer_settings').upsert(
+      { key: 'match_admin_live_mode', value_bool: nextMode, description: '운영진/개발자 매치 실시간 관리모드', updated_at: new Date().toISOString() },
+      { onConflict: 'key' }
+    );
+    if (error) { alert('관리모드 전환 실패: ' + error.message); return; }
+    setManagementMode(nextMode);
+  };
+
+  const handleSelect = (teamLetter, idx, playerId, race) => {
+    const player = getTeamMembersByLetter(teamLetter).find((m) => m.id === playerId);
+    if (player && player.race && player.race !== 'Random' && player.race !== race) {
+      const raceLabel = { Terran: '테란', Protoss: '프로토스', Zerg: '저그' };
+      alert(`종족전 규칙: 이 슬롯은 ${raceLabel[race] || race} 선수만 배치할 수 있습니다.\n${player.by_id}님의 주종은 ${raceLabel[player.race] || player.race}입니다.`);
+      return;
+    }
+    setSelectedEntryByTeam((prev) => {
+      const nextEntry = [...prev[teamLetter]];
+      nextEntry[idx] = { id: playerId, by_id: player?.by_id || '', race };
+      return { ...prev, [teamLetter]: nextEntry };
+    });
+  };
+
+  const submitEntry = async (teamLetter) => {
+    const team = teamLetter || editingTeam;
+    if (!currentSet || !team) return;
+    const column = team === 'A' ? 'team_a_ready' : 'team_b_ready';
+    const entryCol = team === 'A' ? 'team_a_entry' : 'team_b_entry';
+    const reqCol = team === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
+    
+    const { error } = await supabase.from('ladder_match_sets').update({
+      [column]: true, [entryCol]: selectedEntryByTeam[team], [reqCol]: false,
+    }).eq('id', currentSet.id);
+    
+    if (error) { alert('엔트리 제출 실패: ' + error.message); return; }
+    alert(managementMode && isManagementRole ? `${team}팀 엔트리를 관리모드로 제출했습니다.` : '엔트리 제출 완료! 상대방을 기다립니다.');
+  };
+
+  const requestWithdraw = async (teamLetter) => {
+    if (!currentSet || currentSet.winner_team) return;
+    const col = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
+    await supabase.from('ladder_match_sets').update({ [col]: true }).eq('id', currentSet.id);
+  };
+
+  const approveWithdraw = async (teamLetter) => {
+    if (!currentSet || currentSet.winner_team) return;
+    const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
+    const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
+    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false }).eq('id', currentSet.id);
+  };
+
+  const forceRetract = async (teamLetter) => {
+    if (!currentSet || !isManagementRole || !managementMode) return;
+    const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
+    const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
+    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false }).eq('id', currentSet.id);
+  };
+
+  const handleSetWin = async (winnerTeam) => {
+    if (!currentSet || !canReportSetResult) return;
+    try {
+      const { error } = await supabase.from('ladder_match_sets').update({
+        winner_team: winnerTeam, status: 'completed',
+        team_a_ready: false, team_b_ready: false, team_a_withdraw_req: false, team_b_withdraw_req: false,
+      }).eq('id', currentSet.id);
+      if (error) throw error;
+
+      const nextA = (match?.score_a || 0) + (winnerTeam === 'A' ? 1 : 0);
+      const nextB = (match?.score_b || 0) + (winnerTeam === 'B' ? 1 : 0);
+      
+      if (nextA < needWins && nextB < needWins) {
+        let nextCombo = raceCombo;
+        if (remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(nextCombo)) {
+          nextCombo = remainingRequiredCombos[0];
+          setRaceCombo(nextCombo);
+          alert(`종족전 규칙 적용: ${remainingRequiredCombos.join(', ')} 중 하나를 먼저 사용해야 합니다.`);
+        }
+        await supabase.from('ladder_match_sets').insert({
+          match_id: matchId, set_number: (match.match_sets.length) + 1, race_type: match.match_type || '4v4',
+          status: 'entry_pending', race_cards: getRaceCards(nextCombo), team_a_ready: false, team_b_ready: false,
+        });
+      }
+      await fetchMatchData();
+      alert(`세트 결과 반영 완료: TEAM ${winnerTeam} 승리`);
+    } catch (err) { alert('세트 결과 반영 실패: ' + err.message); }
+  };
+
+  const handleBet = async () => {
+    if (!betTeam || !betAmount || bettingDone || !betTimerActive) return;
+    if (betTeam === myTeam) { alert('자신의 팀에는 베팅할 수 없습니다.'); return; }
+    if (betAmount > myClanPoint) { alert('보유 클랜 포인트가 부족합니다.'); return; }
+    
+    setBettingLoading(true);
+    try {
+      const newBalance = myClanPoint - betAmount;
+      await supabase.from('profiles').update({ clan_point: newBalance }).eq('id', myUserId);
+      await supabase.from('point_logs').insert({ user_id: myUserId, amount: -betAmount, reason: `배팅 차감 (${betTeam}팀)`, type: 'bet_deduct', balance_after: newBalance, related_id: matchId }).catch(() => {});
+      
+      const { error: betError } = await supabase.from('match_bets').insert({ match_id: matchId, user_id: myUserId, team_choice: betTeam, bet_amount: betAmount, status: 'pending' });
+      if (betError) {
+        await supabase.from('profiles').update({ clan_point: myClanPoint }).eq('id', myUserId);
+        throw betError;
+      }
+      
+      setMyClanPoint(newBalance);
+      setBettingDone(true);
+      await fetchMatchData();
+      alert(`✅ ${betTeam}팀에 ${betAmount.toLocaleString()} CP 배팅 완료!`);
+    } catch (err) { alert('베팅 실패: ' + err.message); } 
+    finally { setBettingLoading(false); }
+  };
+
+  const handleSettlement = async () => {
+    setSettlementStatus('loading');
+    setSettlementError('');
+    try {
+      const { data: matchData, error: checkError } = await supabase.from('ladder_record').select('status').eq('id', matchId).single();
+      if (checkError) throw checkError;
+      if (matchData?.status === 'completed') {
+        setSettlementStatus('success');
+        throw new Error('이미 정산이 완료된 경기입니다.');
+      }
+      const { error } = await supabase.rpc('fn_process_settlement', { p_match_id: matchId });
+      if (error) throw error;
+      setSettlementStatus('success');
+      alert('매치 정산이 완벽하게 처리되었습니다!');
+    } catch (err) {
+      setSettlementError(err.message || '알 수 없는 오류가 발생했습니다.');
+      setSettlementStatus('error');
+    }
+  };
+
+  return {
+    match, currentSet, betTimer, betTimerActive, myTeam, myUserId, isRevealed, myRole, managementMode, 
+    settlementStatus, settlementError, selectedEntryByTeam, betTeam, betAmount, bettingDone, bettingLoading, 
+    betOdds, myClanPoint, raceCombo, showRaceSelector, isManagementRole, canReportSetResult, perspectiveTeam, 
+    editingTeam, selectedEntry, remainingRequiredCombos, needWins, matchEnded, isLadderMatch, matchFormat, 
+    canBetOnA, canBetOnB, setBetTeam, setBetAmount, setShowRaceSelector, setRaceCombo, toggleManagementMode, 
+    handleSelect, submitEntry, requestWithdraw, approveWithdraw, forceRetract, handleSetWin, handleBet, 
+    handleSettlement, getTeamMembersByLetter, currentTeamEntry, currentTeamReady, getRestStatus
+  };
+}
