@@ -269,56 +269,69 @@ export function useMatchCenter(matchId) {
 
   const handleSetWin = async (winnerTeam) => {
     if (!currentSet || !canReportSetResult) return;
+    
     try {
-      const { error } = await supabase.from('ladder_match_sets').update({
-        winner_team: winnerTeam, status: 'completed',
-        team_a_ready: false, team_b_ready: false, team_a_withdraw_req: false, team_b_withdraw_req: false,
-      }).eq('id', currentSet.id);
-      if (error) throw error;
-
+      // 1. 프론트엔드에서는 필수 종족전 규칙만 가볍게 검사합니다.
       const nextA = (match?.score_a || 0) + (winnerTeam === 'A' ? 1 : 0);
       const nextB = (match?.score_b || 0) + (winnerTeam === 'B' ? 1 : 0);
+      let nextCombo = raceCombo;
       
+      // 매치가 안 끝났을 때만 종족전 규칙 체크
       if (nextA < needWins && nextB < needWins) {
-        let nextCombo = raceCombo;
         if (remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(nextCombo)) {
           nextCombo = remainingRequiredCombos[0];
           setRaceCombo(nextCombo);
           alert(`종족전 규칙 적용: ${remainingRequiredCombos.join(', ')} 중 하나를 먼저 사용해야 합니다.`);
         }
-        await supabase.from('ladder_match_sets').insert({
-          match_id: matchId, set_number: (match.match_sets.length) + 1, race_type: match.match_type || '4v4',
-          status: 'entry_pending', race_cards: getRaceCards(nextCombo), team_a_ready: false, team_b_ready: false,
-        });
       }
+
+      // 💡 2. [혁신] 모든 복잡한 처리를 백엔드 RPC 함수 단 하나에 위임합니다!
+      const { error } = await supabase.rpc('fn_declare_set_winner', {
+        p_set_id: currentSet.id,
+        p_match_id: matchId,
+        p_winner_team: winnerTeam,
+        p_next_combo_id: nextCombo
+      });
+
+      if (error) throw error;
+
       await fetchMatchData();
       alert(`세트 결과 반영 완료: TEAM ${winnerTeam} 승리`);
-    } catch (err) { alert('세트 결과 반영 실패: ' + err.message); }
+
+    } catch (err) { 
+      alert('세트 결과 반영 실패: ' + (err.message || '알 수 없는 오류')); 
+    }
   };
 
   const handleBet = async () => {
+    // UI 단의 기본적인 방어막
     if (!betTeam || !betAmount || bettingDone || !betTimerActive) return;
     if (betTeam === myTeam) { alert('자신의 팀에는 베팅할 수 없습니다.'); return; }
-    if (betAmount > myClanPoint) { alert('보유 클랜 포인트가 부족합니다.'); return; }
     
     setBettingLoading(true);
     try {
-      const newBalance = myClanPoint - betAmount;
-      await supabase.from('profiles').update({ clan_point: newBalance }).eq('id', myUserId);
-      await supabase.from('point_logs').insert({ user_id: myUserId, amount: -betAmount, reason: `배팅 차감 (${betTeam}팀)`, type: 'bet_deduct', balance_after: newBalance, related_id: matchId }).catch(() => {});
+      // 💡 [혁신] 프론트엔드의 수학 계산과 3단 DB 통신이 단 한 줄의 RPC 호출로 끝납니다!
+      const { error } = await supabase.rpc('fn_place_bet', {
+        p_match_id: matchId,
+        p_user_id: myUserId,
+        p_team_choice: betTeam,
+        p_bet_amount: betAmount
+      });
+
+      // 백엔드에서 잔액 부족 등으로 에러를 던지면 여기서 캐치됩니다.
+      if (error) throw error;
       
-      const { error: betError } = await supabase.from('match_bets').insert({ match_id: matchId, user_id: myUserId, team_choice: betTeam, bet_amount: betAmount, status: 'pending' });
-      if (betError) {
-        await supabase.from('profiles').update({ clan_point: myClanPoint }).eq('id', myUserId);
-        throw betError;
-      }
-      
-      setMyClanPoint(newBalance);
+      // 베팅 성공 시 UI 업데이트
       setBettingDone(true);
-      await fetchMatchData();
-      alert(`✅ ${betTeam}팀에 ${betAmount.toLocaleString()} CP 배팅 완료!`);
-    } catch (err) { alert('베팅 실패: ' + err.message); } 
-    finally { setBettingLoading(false); }
+      await fetchMatchData(); // 내 포인트와 배당률을 DB에서 다시 최신화
+      alert(`✅ ${betTeam}팀에 ${betAmount.toLocaleString()} CP 베팅 완료!`);
+
+    } catch (err) { 
+      // Supabase 에러 메시지 정리해서 보여주기
+      alert('베팅 실패: ' + (err.message || '알 수 없는 오류가 발생했습니다.')); 
+    } finally { 
+      setBettingLoading(false); 
+    }
   };
 
   const handleSettlement = async () => {
