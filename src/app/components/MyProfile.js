@@ -42,7 +42,6 @@ function getTier(mmr) {
 export default function MyProfile() {
   const router = useRouter();
   const navigateTo = useNavigate();
-  // 방송국(Context)에서 profile뿐만 아니라 'user' 정보도 같이 가져옵니다
   const { profile, user, reloadProfile, authLoading } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [authEmail, setAuthEmail] = useState('');

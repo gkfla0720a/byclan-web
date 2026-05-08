@@ -265,7 +265,7 @@ export default function Header() {
                 {nickname ? (
                   <span className="text-xs font-bold text-slate-100">{nickname}</span>
                 ) : (
-                  <span className="text-xs text-slate-400 max-w-[180px] truncate" title={NO_BYID_MESSAGE}>
+                  <span className="text-xs text-slate-400 max-w-45 truncate" title={NO_BYID_MESSAGE}>
                     {authError || NO_BYID_MESSAGE}
                   </span>
                 )}

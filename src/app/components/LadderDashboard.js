@@ -26,8 +26,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
-// 💡 1. AuthContext 임포트 추가
-import { useAuthContext } from '@/context/AuthContext'; 
+import { useAuthContext } from '@app/context/AuthContext'; 
 
 // ── 상수 ─────────────────────────────────────────────────────────────
 const MATCH_TYPES = {
@@ -128,9 +127,7 @@ function buildTeams(players, perTeam, sortOption) {
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────
 export default function LadderDashboard({ onMatchEnter }) {
-  // 💡 4. AuthContext에서 바로 꺼내오기 (useState 2개 삭제 완료!)
   const { user, profile: myProfile, authLoading } = useAuthContext();
-  
   const [queuePlayers, setQueuePlayers] = useState([]);
   const [ongoingMatches, setOngoingMatches] = useState([]);
   const [loading, setLoading] = useState(true);
