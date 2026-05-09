@@ -96,10 +96,27 @@ export function useLadderData(user, authLoading) {
     return () => clearTimeout(cooldownTimerRef.current);
   }, [proposalCooldown]);
 
+// 💡 [수정됨] 에러를 잡아서 화면에 경고창을 띄워주는 joinQueue
   const joinQueue = async () => {
+    // 1. 혹시 유저 정보가 아직 로드되지 않았을 때의 방어막
+    if (!currentUserRef.current?.id) {
+      alert('로그인 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
     try {
       setJoiningQueue(true);
-      await supabase.from('ladder_queue').upsert({ user_id: currentUserRef.current.id, is_in_queue: true, queue_joined_at: new Date().toISOString() });
+      
+      // 2. Supabase에 데이터 넣기 (에러가 발생하면 error 변수에 담김)
+      const { error } = await supabase.from('ladder_queue').upsert({ 
+        user_id: currentUserRef.current.id, 
+        is_in_queue: true, 
+        queue_joined_at: new Date().toISOString() 
+      });
+
+      // 3. 에러가 있다면 catch 블록으로 던져서 알림을 띄우게 만듭니다!
+      if (error) throw error; 
+
       setInQueue(true);
       fetchData();
       
@@ -107,6 +124,12 @@ export function useLadderData(user, authLoading) {
       queueTimerRef.current = setTimeout(() => {
         leaveQueue();
       }, MAX_QUEUE_MINUTES * 60 * 1000);
+
+    } catch (err) {
+      // 💡 여기서 어떤 에러인지 정확하게 콘솔과 알림창으로 알려줍니다.
+      console.error('대기열 참여 에러:', err);
+      alert('대기열 참여 실패: ' + (err.message || '알 수 없는 오류'));
+      setInQueue(false); // 실패했으니 상태를 다시 원복합니다.
     } finally {
       setJoiningQueue(false);
     }
