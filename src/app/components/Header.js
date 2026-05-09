@@ -156,17 +156,30 @@ const handleLogout = async () => {
     // 로컬 스토리지 초기화
     localStorage.clear();
 
-    // 💡 팝업창(런처)에서 로그아웃을 눌렀는지 확인합니다.
+    const currentPath = window.location.pathname;
+    
+    // 💡 [핵심] 비로그인(Visitor) 상태로는 볼 수 없는 "보안 페이지" 목록을 정의합니다.
+    // 이 배열에 있는 경로(하위 경로 포함)에서 로그아웃하면 /logout 안내 페이지로 보냅니다.
+    const PROTECTED_PATHS = ['/ladder', '/profile', '/admin', '/developer', '/points', '/matches'];
+    
+    // 현재 주소가 보안 페이지 목록에 포함되어 있는지 검사 (예: /admin/guild 도 포함되도록 startsWith 사용)
+    const isProtectedPage = PROTECTED_PATHS.some(path => currentPath.startsWith(path));
+    
+    const targetLogoutUrl = `/logout?from=${encodeURIComponent(currentPath)}`;
+
     if (window.opener) {
-      // 1. 뒤에 켜져 있는 부모 창(메인 홈페이지)을 새로고침하여 로그아웃 상태를 동기화합니다.
+      // 팝업창인 경우: 보통 래더(/ladder) 같은 특수 목적 앱이므로 로그아웃 페이지로 보냅니다.
       window.opener.location.reload();
-      
-      // 2. [수정됨] 팝업창을 닫지 않고, 만들어두신 '내 프로필' 페이지로 이동시킵니다.
-      // 이렇게 하면 profile/page.js의 비로그인 안내 화면(안전망)이 예쁘게 나타납니다.
-      window.location.href = '/profile';
+      window.location.href = targetLogoutUrl;
     } else {
-      // 팝업창이 아닌 일반 메인 화면에서 로그아웃한 경우 원래대로 새로고침합니다.
-      window.location.reload();
+      // 일반 창인 경우: 현재 페이지의 권한에 따라 똑똑하게 분기 처리!
+      if (isProtectedPage) {
+        // 권한이 필요한 페이지에 있었다면 로그아웃 전용 안내 페이지로 이동
+        window.location.href = targetLogoutUrl;
+      } else {
+        // 홈, 공지사항, 커뮤니티 등 누구나 볼 수 있는 페이지라면 그 자리에서 새로고침만 수행 (조용히 방문자로 전환)
+        window.location.reload();
+      }
     }
   };
 

@@ -2,37 +2,29 @@
  * 파일명: login/page.js
  *
  * 역할: /login 경로의 Next.js 페이지 컴포넌트입니다.
- *       이미 로그인한 사용자는 홈(/)으로 자동 리다이렉트하고,
- *       비로그인 사용자에게 ImprovedAuthForm을 보여줍니다.
- * 주요 기능: 로그인 상태 감지 후 리다이렉트, 인증 성공 시 홈 이동, 뒤로가기 버튼
- * 사용 방법: Next.js 라우터가 자동으로 렌더링합니다. (/login 접근 시)
+ * 이미 로그인한 사용자는 홈(/) 또는 요청한 이전 경로로 자동 리다이렉트하고,
+ * 비로그인 사용자에게 ImprovedAuthForm을 보여줍니다.
  */
 'use client';
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ImprovedAuthForm from '../components/ImprovedAuthForm';
 import { useAuthContext } from '../context/AuthContext';
 
-/**
- * LoginPage 컴포넌트
- *
- * 로그인 페이지 진입점입니다.
- * 이미 로그인된 상태라면 즉시 홈(/)으로 이동합니다.
- *
- * @returns {JSX.Element|null} 인증 폼 UI, 또는 이미 로그인 시 null
- */
-export default function LoginPage() {
-  /** Next.js 라우터 (페이지 이동에 사용) */
+function LoginContent() {
   const router = useRouter();
-  /** AuthContext에서 가져온 현재 사용자 정보와 로그인 성공 핸들러 */
+  const searchParams = useSearchParams(); // 💡 URL의 쿼리(?redirect=...)를 읽기 위한 훅
   const { user, handleAuthSuccess } = useAuthContext();
 
-  /** user가 존재할 때(이미 로그인) 홈으로 리다이렉트합니다 */
+  // 💡 URL에서 돌아갈 주소(redirect)를 가져옵니다. 없다면 기본값은 홈('/')
+  const redirectUrl = searchParams.get('redirect') || '/';
+
+  /** user가 존재할 때(이미 로그인) 원래 가려던 곳으로 리다이렉트합니다 */
   useEffect(() => {
     if (user) {
-      router.replace('/');
+      router.replace(redirectUrl);
     }
-  }, [user, router]);
+  }, [user, router, redirectUrl]);
 
   if (user) {
     return null;
@@ -43,7 +35,8 @@ export default function LoginPage() {
       <ImprovedAuthForm
         onSuccess={(u) => {
           handleAuthSuccess(u);
-          router.replace('/');
+          // 💡 로그인에 성공하면 무조건 홈('/')이 아니라, 원래 있던 곳(redirectUrl)으로 보냅니다!
+          router.replace(redirectUrl);
         }}
       />
       <button
@@ -53,5 +46,16 @@ export default function LoginPage() {
         ← 돌아가기
       </button>
     </div>
+  );
+}
+
+/**
+ * Next.js 13+ 규칙: useSearchParams를 사용하는 컴포넌트는 반드시 Suspense로 감싸야 합니다.
+ */
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-20 text-gray-500 font-mono">로딩 중...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
