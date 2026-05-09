@@ -181,7 +181,21 @@ export default function Header() {
     };
   }).filter(category => category.items.length > 0);
 
-  const handleNav = (viewName) => {
+const handleNav = (viewName) => {
+    // 💡 [추가] 클릭한 메뉴가 래더 시스템일 경우 팝업창(런처)으로 엽니다.
+    if (viewName === 'BY래더' || viewName === 'BY래더시스템') {
+      window.open(
+        '/ladder', 
+        'ByClanLadderClient', 
+        'width=1280,height=800,menubar=no,toolbar=no,location=no,status=no,resizable=yes'
+      );
+      // 창을 띄웠으니 열려있던 메뉴판은 닫아줍니다.
+      setOpenMenuIndex(null);
+      setIsMobileMenuOpen(false);
+      return; // 아래의 일반 페이지 이동 로직이 실행되지 않도록 여기서 함수를 끝냅니다.
+    }
+
+    // 래더가 아닌 일반 메뉴(자유게시판, 클랜원 등)는 기존 방식대로 부드럽게 이동합니다.
     navigateTo(viewName);
     setOpenMenuIndex(null);
     setIsMobileMenuOpen(false);

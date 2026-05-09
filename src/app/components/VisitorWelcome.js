@@ -384,7 +384,7 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
     return accountId ? `By_${accountId}` : 'By_Visitor';
   })();
   /** 현재 사용자 역할 (소문자 정규화) */
-  const currentRole = profile?.role?.() || 'guest';
+  const currentRole = profile?.role || 'guest';
   /** 이미 가입 신청 완료 여부 */
   const isApplied = currentRole === 'applicant';
   /** 신입 이상(정식 멤버) 여부 */
@@ -394,7 +394,7 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
   /** 역할 표시 레이블 */
   const roleLabel = ROLE_LABELS[currentRole] || '클랜 유저';
   /** 프로필 자기소개 텍스트 */
-  const introText = profile?.intro?.() || '클랜 활동을 이어가고 있는 멤버입니다.';
+  const introText = profile?.intro || '클랜 활동을 이어가고 있는 멤버입니다.';
 
   const handleApplicationSubmit = async (applicationData) => {
     setLoading(true);

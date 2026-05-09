@@ -85,7 +85,7 @@ function applyDemoStreamers(memberList) {
  */
 function normalizeMemberRole(member) {
   if (!member) return null;
-  const normalizedRole = member?.role?.();
+  const normalizedRole = member?.role;
   return {
     ...member,
     role: normalizedRole || member?.role || '',
@@ -206,7 +206,7 @@ export default function ClanMembers() {
         .single();
       // 현재 사용자 ID와 역할을 상태로 저장합니다.
       setCurrentUserId(user.id);
-      setCurrentRole(profile?.role?.() || null);
+      setCurrentRole(profile?.role || null);
     };
 
     const fetchMembers = async () => {

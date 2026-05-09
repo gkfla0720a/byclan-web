@@ -9,6 +9,20 @@ import ConsentPopup from '@/app/components/ladder/ConsentPopup';
 import TeamBalancePreview from '@/app/components/ladder/TeamBalancePreview';
 import OngoingMatchList from '@/app/components/ladder/OngoingMatchList';
 
+const QueueTimer = ({ joinedAt }) => {
+  const [elapsed, setElapsed] = React.useState(0);
+  React.useEffect(() => {
+    if (!joinedAt) return;
+    const start = new Date(joinedAt).getTime();
+    const interval = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(interval);
+  }, [joinedAt]);
+
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  return <span className="font-mono text-yellow-400 font-bold ml-3">{m}:{String(s).padStart(2, '0')} 대기 중</span>;
+};
+
 export default function LadderDashboard({ onMatchEnter }) {
   const { user, profile: myProfile, authLoading } = useAuthContext();
   
@@ -21,6 +35,7 @@ export default function LadderDashboard({ onMatchEnter }) {
     teams, perTeam,                    // 훅에서 계산해서 줌
     joinQueue, leaveQueue, proposeMatch, fetchData 
   } = useLadderData(user, authLoading);
+  const myQueueData = queuePlayers.find(p => p.id === user?.id);
 
   if (loading) return <div className="text-center py-24 text-cyan-400 font-mono animate-pulse">[ CONNECTING... ]</div>;
 
@@ -73,17 +88,23 @@ export default function LadderDashboard({ onMatchEnter }) {
 
         {/* 대기열 액션 버튼 */}
         <div className="p-4 border-t border-cyan-900/30 flex justify-between items-center bg-[#060A18]">
-          {!inQueue ? (
-            <button 
-              onClick={joinQueue} 
-              disabled={joiningQueue}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold transition-colors"
-            >
-              {joiningQueue ? '참여 중...' : '대기열 참여'}
-            </button>
-          ) : (
-            <button onClick={leaveQueue} className="px-6 py-2 border border-red-500 text-red-500 rounded font-bold">대기 취소</button>
-          )}
+            {!inQueue ? (
+              <button 
+                onClick={joinQueue} 
+                disabled={joiningQueue}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold transition-colors"
+              >
+                {joiningQueue ? '참여 중...' : '대기열 참여'}
+              </button>
+            ) : (
+              <div className="flex items-center">
+                <button onClick={leaveQueue} className="px-6 py-2 border border-red-500 text-red-500 rounded font-bold hover:bg-red-950/30">
+                  대기 취소
+                </button>
+                {/* 💡 방금 만든 타이머 컴포넌트를 여기에 붙입니다! */}
+                {myQueueData?.queue_joined_at && <QueueTimer joinedAt={myQueueData.queue_joined_at} />}
+              </div>
+            )}
 
           {/* 제안 버튼 */}
           {teams && (
