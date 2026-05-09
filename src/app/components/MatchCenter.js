@@ -17,8 +17,8 @@ export default function MatchCenter({ matchId, onExit }) {
     settlementStatus, settlementError, selectedEntryByTeam, betTeam, betAmount, bettingDone, 
     bettingLoading, betOdds, myClanPoint, raceCombo, showRaceSelector, isManagementRole, 
     canReportSetResult, perspectiveTeam, editingTeam, selectedEntry, remainingRequiredCombos, 
-    matchEnded, isLadderMatch, matchFormat, canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId,
-    setBetTeam, setBetAmount, setShowRaceSelector, setRaceCombo,
+    matchEnded, isLadderMatch, matchFormat, canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId, vetoTimeLeft, 
+    setBetTeam, setBetAmount, setShowRaceSelector, setRaceCombo, handleVeto,
     toggleManagementMode, handleSelect, submitEntry, requestWithdraw, approveWithdraw, 
     forceRetract, handleSetWin, handleBet, handleSettlement, 
     getTeamMembersByLetter, currentTeamEntry, currentTeamReady, getRestStatus
@@ -470,7 +470,7 @@ export default function MatchCenter({ matchId, onExit }) {
                 {isManagementRole ? '운영진 세트 결과 처리' : '세트 결과 처리'}
               </p>
 
-              {/* 💡 [추가] 우측 상단 30초 대기열 및 수정요청 버튼 */}
+              {/* 우측 상단 30초 대기열 및 수정요청 버튼 */}
               {currentSet?.status === 'pending_review' && (
                 <div className="flex items-center gap-2 animate-fade-in">
                   <span className="text-yellow-400 text-xs font-mono font-bold tracking-widest">
@@ -486,20 +486,18 @@ export default function MatchCenter({ matchId, onExit }) {
               )}
             </div>
 
-            {/* 진행 중일 때만 승리 버튼 표시 (캡틴 권한) */}
-            {currentSet?.status !== 'pending_review' && canReportSetResult && (
+            {/* 💡 [수정됨] 세트가 완전히 종료되지 않았을 때(in_progress 등)만 승리 버튼 표시 */}
+            {currentSet?.status !== 'pending_review' && currentSet?.status !== 'completed' && canReportSetResult && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                 <button
                   onClick={() => handleSetWin('A')}
-                  disabled={!currentSet || currentSet?.status === 'completed'}
-                  className="py-2 rounded-lg bg-blue-900/50 border border-blue-700 text-blue-300 font-bold text-xs disabled:opacity-30 transition-colors hover:bg-blue-800"
+                  className="py-2 rounded-lg bg-blue-900/50 border border-blue-700 text-blue-300 font-bold text-xs transition-colors hover:bg-blue-800"
                 >
                   TEAM A 승리 보고
                 </button>
                 <button
                   onClick={() => handleSetWin('B')}
-                  disabled={!currentSet || currentSet?.status === 'completed'}
-                  className="py-2 rounded-lg bg-red-900/50 border border-red-700 text-red-300 font-bold text-xs disabled:opacity-30 transition-colors hover:bg-red-800"
+                  className="py-2 rounded-lg bg-red-900/50 border border-red-700 text-red-300 font-bold text-xs transition-colors hover:bg-red-800"
                 >
                   TEAM B 승리 보고
                 </button>
@@ -511,6 +509,15 @@ export default function MatchCenter({ matchId, onExit }) {
               <div className="text-center py-3 bg-gray-900/40 rounded-xl border border-gray-800 mt-2">
                 <p className="text-gray-400 text-xs">
                   <span className="font-black text-white">{currentSet.claimed_winner}팀</span>의 승리로 세트 결산이 진행 중입니다.
+                </p>
+              </div>
+            )}
+            
+            {/* 완전히 끝난 세트(completed)일 때 보여줄 깔끔한 문구 (선택 사항) */}
+            {currentSet?.status === 'completed' && !matchEnded && (
+              <div className="text-center py-3 bg-gray-900/40 rounded-xl border border-gray-800 mt-2">
+                <p className="text-gray-500 text-xs font-bold">
+                  세트가 종료되었습니다. 다음 세트를 준비하세요.
                 </p>
               </div>
             )}

@@ -8,11 +8,9 @@ import { getRaceIcon, getPlayerMmr } from '@/app/utils/profiles';
 import ConsentPopup from '@/app/components/ladder/ConsentPopup';
 import TeamBalancePreview from '@/app/components/ladder/TeamBalancePreview';
 import OngoingMatchList from '@/app/components/ladder/OngoingMatchList';
-import Warning5v5Modal from '@/app/components/ladder/Warning5v5Modal';
 
 export default function LadderDashboard({ onMatchEnter }) {
   const { user, profile: myProfile, authLoading } = useAuthContext();
-  const [show5v5Warning, setShow5v5Warning] = useState(false);
   
   // 💡 [혁신] 로컬 useState를 다 지우고, 비서가 주는 걸 그대로 받습니다.
   const { 
@@ -31,7 +29,6 @@ export default function LadderDashboard({ onMatchEnter }) {
       
       {/* 팝업/모달 관리 */}
       {activeProposal && <ConsentPopup proposal={activeProposal} myUserId={user?.id} onAccept={() => {}} onReject={() => setActiveProposal(null)} />}
-      <Warning5v5Modal isOpen={show5v5Warning} onConfirm={joinQueue} onClose={() => setShow5v5Warning(false)} />
 
       {/* 내 통계 카드 */}
       <div className="bg-[#0A1128] border border-cyan-500/30 rounded-xl p-5 mb-4 flex justify-between items-center">
@@ -78,9 +75,9 @@ export default function LadderDashboard({ onMatchEnter }) {
         <div className="p-4 border-t border-cyan-900/30 flex justify-between items-center bg-[#060A18]">
           {!inQueue ? (
             <button 
-              onClick={() => queueMatchType === '5v5' ? setShow5v5Warning(true) : joinQueue()} 
+              onClick={joinQueue} 
               disabled={joiningQueue}
-              className="px-6 py-2 bg-blue-600 text-white rounded font-bold"
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold transition-colors"
             >
               {joiningQueue ? '참여 중...' : '대기열 참여'}
             </button>
