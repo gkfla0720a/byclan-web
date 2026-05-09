@@ -449,7 +449,7 @@ export default function MyProfile() {
   const ladderWins = profile.wins ?? 0;
   const ladderLosses = profile.losses ?? 0;
 
-  const currentRole = profile.role ?? 'visitor'; // role이 없으면 visitor로 간주
+  const currentRole = profile.role || 'visitor'; // role이 없으면 visitor로 간주
   /** 현재 유저가 개발자 등급인지 여부 (개발자 콘솔 버튼 표시 여부 결정) */
   const isDeveloper = currentRole === 'developer';
   /** 화면에 표시할 현재 역할의 한국어 라벨 */
