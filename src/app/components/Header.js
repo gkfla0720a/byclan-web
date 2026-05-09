@@ -146,15 +146,26 @@ export default function Header() {
   // 대신: Header는 단순히 by_id 표시 또는 에러 메시지만 처리
   // 사용자가 설정할 기회를 주고 싶으면 개별 페이지에서 명시적으로 처리
 
-  const handleLogout = async () => {
+const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
     } catch (error) {
-      // signOut 실패 시에도 로컬 상태를 초기화하고 페이지를 새로고침합니다.
       console.error('로그아웃 중 오류 발생:', error);
     }
+    
+    // 로컬 스토리지 초기화
     localStorage.clear();
-    window.location.reload();
+
+    // 💡 [혁신] 팝업창(런처)에서 로그아웃을 눌렀는지 확인합니다.
+    if (window.opener) {
+      // 1. 뒤에 켜져 있는 부모 창(메인 홈페이지)을 새로고침하여 로그아웃 상태를 반영합니다.
+      window.opener.location.reload();
+      // 2. 로그아웃된 런처(팝업창)는 스스로를 닫습니다.
+      window.close();
+    } else {
+      // 팝업창이 아닌 일반 메인 화면에서 로그아웃한 경우 원래대로 새로고침합니다.
+      window.location.reload();
+    }
   };
 
   const handleLogin = () => {
