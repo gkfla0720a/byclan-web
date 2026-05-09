@@ -156,12 +156,14 @@ const handleLogout = async () => {
     // 로컬 스토리지 초기화
     localStorage.clear();
 
-    // 💡 [혁신] 팝업창(런처)에서 로그아웃을 눌렀는지 확인합니다.
+    // 💡 팝업창(런처)에서 로그아웃을 눌렀는지 확인합니다.
     if (window.opener) {
-      // 1. 뒤에 켜져 있는 부모 창(메인 홈페이지)을 새로고침하여 로그아웃 상태를 반영합니다.
+      // 1. 뒤에 켜져 있는 부모 창(메인 홈페이지)을 새로고침하여 로그아웃 상태를 동기화합니다.
       window.opener.location.reload();
-      // 2. 로그아웃된 런처(팝업창)는 스스로를 닫습니다.
-      window.close();
+      
+      // 2. [수정됨] 팝업창을 닫지 않고, 만들어두신 '내 프로필' 페이지로 이동시킵니다.
+      // 이렇게 하면 profile/page.js의 비로그인 안내 화면(안전망)이 예쁘게 나타납니다.
+      window.location.href = '/profile';
     } else {
       // 팝업창이 아닌 일반 메인 화면에서 로그아웃한 경우 원래대로 새로고침합니다.
       window.location.reload();
