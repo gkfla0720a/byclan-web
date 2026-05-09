@@ -464,26 +464,57 @@ export default function MatchCenter({ matchId, onExit }) {
 
         {/* 세트 결과 처리 영역 */}
         {canReportSetResult && (
-          <div className="mt-5 pt-4 border-t border-gray-700/50">
-            <p className="text-[10px] text-orange-400 font-bold mb-2 uppercase tracking-wider">
-              {isManagementRole ? '운영진 세트 결과 처리' : '팀 캡틴 세트 결과 처리'}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
-                onClick={() => handleSetWin('A')}
-                disabled={!currentSet || currentSet?.status === 'completed'}
-                className="py-2 rounded-lg bg-blue-900/50 border border-blue-700 text-blue-300 font-bold text-xs disabled:opacity-30"
-              >
-                TEAM A 세트 승리 확정
-              </button>
-              <button
-                onClick={() => handleSetWin('B')}
-                disabled={!currentSet || currentSet?.status === 'completed'}
-                className="py-2 rounded-lg bg-red-900/50 border border-red-700 text-red-300 font-bold text-xs disabled:opacity-30"
-              >
-                TEAM B 세트 승리 확정
-              </button>
+          <div className="mt-5 pt-4 border-t border-gray-700/50 relative">
+            <div className="flex justify-between items-center mb-2 h-8">
+              <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">
+                {isManagementRole ? '운영진 세트 결과 처리' : '세트 결과 처리'}
+              </p>
+
+              {/* 💡 [추가] 우측 상단 30초 대기열 및 수정요청 버튼 */}
+              {currentSet?.status === 'pending_review' && (
+                <div className="flex items-center gap-2 animate-fade-in">
+                  <span className="text-yellow-400 text-xs font-mono font-bold tracking-widest">
+                    결산 전 {String(vetoTimeLeft).padStart(2, '0')}초
+                  </span>
+                  <button
+                    onClick={handleVeto}
+                    className="text-white bg-red-700 hover:bg-red-600 text-[10px] px-2.5 py-1 rounded font-bold transition-all shadow-[0_0_8px_rgba(185,28,28,0.4)]"
+                  >
+                    [수정요청]
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* 진행 중일 때만 승리 버튼 표시 (캡틴 권한) */}
+            {currentSet?.status !== 'pending_review' && canReportSetResult && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                <button
+                  onClick={() => handleSetWin('A')}
+                  disabled={!currentSet || currentSet?.status === 'completed'}
+                  className="py-2 rounded-lg bg-blue-900/50 border border-blue-700 text-blue-300 font-bold text-xs disabled:opacity-30 transition-colors hover:bg-blue-800"
+                >
+                  TEAM A 승리 보고
+                </button>
+                <button
+                  onClick={() => handleSetWin('B')}
+                  disabled={!currentSet || currentSet?.status === 'completed'}
+                  className="py-2 rounded-lg bg-red-900/50 border border-red-700 text-red-300 font-bold text-xs disabled:opacity-30 transition-colors hover:bg-red-800"
+                >
+                  TEAM B 승리 보고
+                </button>
+              </div>
+            )}
+
+            {/* 결재 대기 중일 때 표시되는 안내 문구 */}
+            {currentSet?.status === 'pending_review' && (
+              <div className="text-center py-3 bg-gray-900/40 rounded-xl border border-gray-800 mt-2">
+                <p className="text-gray-400 text-xs">
+                  <span className="font-black text-white">{currentSet.claimed_winner}팀</span>의 승리로 세트 결산이 진행 중입니다.
+                </p>
+              </div>
+            )}
+  
             
             {/* 최종 정산 버튼 영역 */}
             {matchEnded && (

@@ -295,25 +295,45 @@ export function useMatchCenter(matchId) {
     await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false }).eq('id', currentSet.id);
   };
 
-  const handleSetWin = async (winnerTeam) => {
+  const [vetoTimeLeft, setVetoTimeLeft] = useState(0);
+
+// 💡 [변경] 즉시 확정 짓지 않고, '결재(Pending)'를 올립니다.
+const handleSetWin = async (winnerTeam) => {
     if (!currentSet || !canReportSetResult) return;
-    
     try {
-      // 1. 프론트엔드에서는 필수 종족전 규칙만 가볍게 검사합니다.
+      const { error } = await supabase.rpc('fn_claim_set_win', { p_set_id: currentSet.id, p_winner_team: winnerTeam });
+      if (error) throw error;
+      await fetchMatchData();
+    } catch (err) { 
+      alert('승리 요청 실패: ' + (err.message || '알 수 없는 오류')); 
+    }
+  };
+
+// 💡 [수정/추가] 수정 요청(Veto) 함수
+  const handleVeto = async () => {
+    if (!currentSet) return;
+    try {
+      const { error } = await supabase.rpc('fn_veto_set_win', { p_set_id: currentSet.id });
+      if (error) throw error;
+      await fetchMatchData();
+    } catch (err) {
+      alert('수정 요청 실패: ' + err.message);
+    }
+  };
+
+  // 💡 [추가] 30초가 지나면 백엔드에 '최종 승인'을 내리는 함수 (기존 handleSetWin의 2단계 로직)
+  const finalizeSetWin = useCallback(async (winnerTeam) => {
+    try {
       const nextA = (match?.score_a || 0) + (winnerTeam === 'A' ? 1 : 0);
       const nextB = (match?.score_b || 0) + (winnerTeam === 'B' ? 1 : 0);
       let nextCombo = raceCombo;
       
-      // 매치가 안 끝났을 때만 종족전 규칙 체크
       if (nextA < needWins && nextB < needWins) {
         if (remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(nextCombo)) {
           nextCombo = remainingRequiredCombos[0];
-          setRaceCombo(nextCombo);
-          alert(`종족전 규칙 적용: ${remainingRequiredCombos.join(', ')} 중 하나를 먼저 사용해야 합니다.`);
         }
       }
 
-      // 💡 2. [혁신] 모든 복잡한 처리를 백엔드 RPC 함수 단 하나에 위임합니다!
       const { error } = await supabase.rpc('fn_declare_set_winner', {
         p_set_id: currentSet.id,
         p_match_id: matchId,
@@ -321,15 +341,49 @@ export function useMatchCenter(matchId) {
         p_next_combo_id: nextCombo
       });
 
-      if (error) throw error;
-
+      // 여러 캡틴이 동시에 호출해도 DB 자물쇠 덕분에 1번만 성공하고 나머지는 무시됩니다.
+      if (error && !error.message.includes('이미 결과가 반영된 세트입니다')) throw error;
+      
       await fetchMatchData();
-      alert(`세트 결과 반영 완료: TEAM ${winnerTeam} 승리`);
-
-    } catch (err) { 
-      alert('세트 결과 반영 실패: ' + (err.message || '알 수 없는 오류')); 
+    } catch (err) {
+      console.error('자동 승인 실패:', err);
     }
-  };
+  }, [match, currentSet, matchId, raceCombo, needWins, remainingRequiredCombos, fetchMatchData]);
+
+  // 💡 [추가] 결재 대기 상태(pending_review) 감지 및 30초 타이머 & 사운드 이펙트
+  useEffect(() => {
+    let intervalId;
+
+    if (currentSet?.status === 'pending_review' && currentSet?.claim_time) {
+      // 1. Pending 시작 알람 소리 (public 폴더에 짧은 mp3 파일 필요)
+      try { new Audio('/sounds/pending-start.mp3').play().catch(() => {}); } catch(e){}
+
+      const endTime = new Date(currentSet.claim_time).getTime() + (30 * 1000);
+      
+      intervalId = setInterval(() => {
+        const left = Math.ceil((endTime - Date.now()) / 1000);
+        
+        if (left <= 0) {
+          clearInterval(intervalId);
+          setVetoTimeLeft(0);
+          
+          // 타이머가 0이 되면 Pending 종료 알람 소리 재생
+          try { new Audio('/sounds/pending-end.mp3').play().catch(() => {}); } catch(e){}
+          
+          // 캡틴 중 한 명이 대표로 자동 결재 API 호출 (DB 무결성 덕분에 중복 호출 안전함)
+          if (isTeamCaptain && currentSet.claimed_winner) {
+            finalizeSetWin(currentSet.claimed_winner);
+          }
+        } else {
+          setVetoTimeLeft(left);
+        }
+      }, 1000);
+    } else {
+      setVetoTimeLeft(0);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [currentSet?.status, currentSet?.claim_time, currentSet?.claimed_winner, isTeamCaptain, finalizeSetWin]);
 
   const handleBet = async () => {
     // UI 단의 기본적인 방어막
@@ -387,9 +441,9 @@ export function useMatchCenter(matchId) {
     settlementStatus, settlementError, selectedEntryByTeam, betTeam, betAmount, bettingDone, bettingLoading, 
     betOdds, myClanPoint, raceCombo, showRaceSelector, isManagementRole, canReportSetResult, perspectiveTeam, 
     editingTeam, selectedEntry, remainingRequiredCombos, needWins, matchEnded, isLadderMatch, matchFormat, 
-    canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId, setBetTeam, setBetAmount, setShowRaceSelector, 
+    canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId, vetoTimeLeft, handleVetosetBetTeam, setBetAmount,
     setRaceCombo, toggleManagementMode, handleSelect, submitEntry, requestWithdraw, approveWithdraw, 
     forceRetract, handleSetWin, handleBet, handleSettlement, getTeamMembersByLetter, currentTeamEntry, 
-    currentTeamReady, getRestStatus,
+    currentTeamReady, getRestStatus, handleVeto, setShowRaceSelector, setBetTeam
   };
 }
