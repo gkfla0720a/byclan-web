@@ -77,7 +77,7 @@ export default function AdminPointManager() {
 
       const flatProf = prof ? { ...prof, is_test_account: prof.profile_meta?.is_test_account ?? false, profile_meta: undefined } : null;
       setMyProfile(flatProf);
-      const role = flatProf?.role?;
+      const role = flatProf?.role || 'visitor';
       if (!['developer', 'master', 'admin'].includes(role)) return;
 
       setIsAdmin(true);

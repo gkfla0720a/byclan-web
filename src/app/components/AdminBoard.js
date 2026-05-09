@@ -65,8 +65,7 @@ export default function AdminBoard() {
           .single();
 
         setMyProfile(profile);
-        /** 역할 문자열을 소문자로 정규화하여 정확히 비교 */
-        const currentRole = profile?.role?;
+        const currentRole = profile?.role;
 
         // 디버그 로그
         console.log('🔐 AdminBoard 권한 체크:', {

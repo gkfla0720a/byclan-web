@@ -54,7 +54,7 @@ export default function AdminBoard() {
         
         setMyProfile(profile);
         /** 역할 문자열을 소문자로 정규화하여 비교 */
-        const currentRole = profile?.role?;
+        const currentRole = profile?.role;
         
         // ✨ 최고 개발자(developer) 권한 추가
         if (['developer', 'master', 'admin'].includes(currentRole)) {

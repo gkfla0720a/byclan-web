@@ -150,7 +150,7 @@ export default function GuildManagement() {
 
       if (error) throw error;
 
-      const role = profile?.role? || null;
+      const role = profile?.role || null;
       const authEmail = user.email || '';
       const hasPublicEmail = authEmail && !isInternalAuthEmail(authEmail);
 

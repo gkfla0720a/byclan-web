@@ -53,7 +53,7 @@ export default function PostWritePage() {
     try {
       // 1. 권한 확인
       if (!user) throw new Error('로그인이 필요합니다.');
-      const userRole = profile?.role?;
+      const userRole = profile?.role || null;
       if (!PermissionChecker.hasPermission(userRole, 'community.post')) {
         throw new Error('게시글 작성 권한이 없습니다.');
       }
@@ -169,7 +169,7 @@ export default function PostWritePage() {
                 <ul className="mt-3 space-y-1">
                   {files.map((file, idx) => (
                     <li key={idx} className="flex justify-between items-center bg-gray-800 px-3 py-1.5 rounded text-sm text-gray-300">
-                      <span className="truncate max-w-[200px]">{file.name}</span>
+                      <span className="truncate max-w-50">{file.name}</span>
                       <button onClick={() => removeFile(idx)} className="text-red-400 hover:text-red-300 font-bold">X</button>
                     </li>
                   ))}
@@ -194,7 +194,7 @@ export default function PostWritePage() {
             placeholder="클랜원들과 나눌 이야기를 적어주세요.&#13;&#10;업로드된 파일과 링크는 글 저장 시 자동으로 함께 첨부됩니다." 
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full p-4 min-h-[400px] rounded-xl bg-gray-900 text-gray-200 border border-gray-700 focus:outline-none focus:border-yellow-500 transition-colors resize-y text-lg leading-relaxed"
+            className="w-full p-4 min-h-100 rounded-xl bg-gray-900 text-gray-200 border border-gray-700 focus:outline-none focus:border-yellow-500 transition-colors resize-y text-lg leading-relaxed"
           />
 
           {/* 하단 버튼 영역 */}

@@ -17,7 +17,7 @@ export default function MatchCenter({ matchId, onExit }) {
     settlementStatus, settlementError, selectedEntryByTeam, betTeam, betAmount, bettingDone, 
     bettingLoading, betOdds, myClanPoint, raceCombo, showRaceSelector, isManagementRole, 
     canReportSetResult, perspectiveTeam, editingTeam, selectedEntry, remainingRequiredCombos, 
-    matchEnded, isLadderMatch, matchFormat, canBetOnA, canBetOnB,
+    matchEnded, isLadderMatch, matchFormat, canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId,
     setBetTeam, setBetAmount, setShowRaceSelector, setRaceCombo,
     toggleManagementMode, handleSelect, submitEntry, requestWithdraw, approveWithdraw, 
     forceRetract, handleSetWin, handleBet, handleSettlement, 
@@ -282,12 +282,40 @@ export default function MatchCenter({ matchId, onExit }) {
 
                 {isRevealed || canSeeEntryBeforeReveal ? (
                   <div className="space-y-2">
-                    {teamEntry.length > 0 ? teamEntry.map((p, i) => (
-                      <div key={i} className="bg-gray-900/60 p-2.5 rounded-lg border border-gray-800 text-xs text-center text-white font-bold">
-                        {p.by_id}
-                        <span className="text-cyan-400 ml-2">({RACE_ICONS[p.race] || p.race})</span>
-                      </div>
-                    )) : (
+                    {teamEntry.length > 0 ? teamEntry.map((p, i) => {
+                      // 💡 [추가] 이 선수가 양 팀의 캡틴(최고 MMR) 중 한 명인지 확인합니다.
+                      const isCaptain = p.id === teamACaptainId || p.id === teamBCaptainId;
+                      
+                      return (
+                        <div 
+                          key={i} 
+                          className={`p-2.5 rounded-lg border text-xs text-center font-bold relative transition-all ${
+                            isCaptain 
+                              ? 'bg-yellow-900/30 border-yellow-500/50 text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.2)]' // 👑 팀장 특별 스타일
+                              : 'bg-gray-900/60 border-gray-800 text-white' // 일반 팀원 스타일
+                          }`}
+                        >
+                          {/* 👑 팀장 뱃지 (왼쪽 위에 통통 튀는 왕관) */}
+                          {isCaptain && (
+                            <span className="absolute -top-2 -left-2 text-lg drop-shadow-md animate-bounce" title="팀 대표 (최고 점수)">
+                              👑
+                            </span>
+                          )}
+                          
+                          {p.by_id}
+                          <span className={isCaptain ? "text-yellow-500 ml-2" : "text-cyan-400 ml-2"}>
+                            ({RACE_ICONS[p.race] || p.race})
+                          </span>
+                          
+                          {/* 👑 본인이 팀장일 때만 보이는 특별한 메시지 */}
+                          {isCaptain && p.id === myUserId && (
+                            <p className="text-[9px] text-yellow-500/80 mt-1 font-normal tracking-tighter">
+                              당신은 팀의 승패를 결정할 권한이 있습니다.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    }) : (
                       <p className="text-center text-gray-600 text-[10px] italic">아직 제출된 엔트리가 없습니다.</p>
                     )}
                   </div>

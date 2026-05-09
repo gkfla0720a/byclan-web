@@ -5,7 +5,6 @@
  * 
  * 주요 기능:
  *   - Header와 Footer 표시 (메인 페이지들에만)
- *   - 개발자 권한이 있을 때만 DevSettingsPanel 표시
  * 
  * 참고:
  *   - Root layout은 로그인/인증 페이지를 포함한 모든 페이지에 적용됨
@@ -21,7 +20,6 @@
 import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { useAuthContext } from '../context/AuthContext';
 
 /**
  * MainLayout - 메인 레이아웃 컴포넌트
@@ -35,15 +33,12 @@ import { useAuthContext } from '../context/AuthContext';
  *   <Footer />        - 하단 푸터
  */
 export default function MainLayout({ children }) {
-  const { getPermissions } = useAuthContext();
-  const permissions = getPermissions();
-
   return (
     <div className="min-h-screen flex flex-col bg-[#06060a]">
       <Header />
-      <main className="flex-grow w-full mx-auto px-4 sm:px-8 mb-10 mt-6 relative z-10 flex flex-col items-stretch">
-          {children}
-      </main>
+        <main className="flex-grow w-full mx-auto px-4 sm:px-8 mb-10 mt-6 relative z-10 flex flex-col items-stretch">
+            {children}
+        </main>
       <Footer />
     </div>
   );
