@@ -22,10 +22,10 @@
  * =====================================================================
  */
 import "./globals.css";
-import { AuthProvider } from "./context/AuthContext";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import { ToastProvider } from "./context/ToastContext";
-import ToastContainer from "./components/ToastContainer";
+import { AuthProvider } from "@/context/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ToastProvider } from "@/context/ToastContext";
+import ToastContainer from "@/components/ToastContainer";
 import { Analytics } from "@vercel/analytics/next";
 
 /**

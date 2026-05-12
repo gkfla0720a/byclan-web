@@ -12,7 +12,7 @@
 import React from 'react';
 import GuildManagement from '@/components/GuildManagement';
 import PagePlaceholder from '@/views/PagePlaceholder';
-import { useAuthContext } from '../../../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 /**
  * GuildPage - 길드 관리 페이지 컴포넌트

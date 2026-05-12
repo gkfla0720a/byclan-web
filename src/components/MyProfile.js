@@ -22,7 +22,7 @@ import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser, isInternalAuthEmail } from '@/app/utils/accountId';
 import { isMarkedTestAccount } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 import { invalidateCache } from '../utils/queryCache';
 
 function getTier(mmr) {

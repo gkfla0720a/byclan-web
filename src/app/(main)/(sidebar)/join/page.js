@@ -15,7 +15,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation'; // useRouter 추가
 import VisitorWelcome from '@/components/VisitorWelcome';
-import { useAuthContext } from '../../../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 export default function JoinPage() {
   const router = useRouter();

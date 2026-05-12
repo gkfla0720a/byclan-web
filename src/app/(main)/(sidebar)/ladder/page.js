@@ -16,7 +16,7 @@ import MatchCenter from '@/components/MatchCenter';
 import LadderPreview from '@/components/LadderPreview';
 // 1. 외부 매치 리스트 컴포넌트를 불러옵니다.
 import ExternalMatchList from '@/components/ExternalMatchList';
-import { useAuthContext } from '../../../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 
 /**

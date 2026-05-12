@@ -14,7 +14,7 @@
  *   - 인증 완료(isAuthorized=true): 자식 컴포넌트(children)를 그대로 렌더링
  *
  * @관련컴포넌트
- *   - AuthContext (../context/AuthContext): 인증 상태·비밀번호 관리
+ *   - AuthContext (@/context/AuthContext): 인증 상태·비밀번호 관리
  *   - DevSettingsPanel (./DevSettingsPanel): 홈게이트 on/off 토글
  *   - 루트 layout.js 또는 최상위 페이지에서 감싸서 사용
  *
@@ -26,7 +26,7 @@
 'use client';
 
 import React, { useSyncExternalStore } from 'react';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 import { loadDevSettings, DEV_SETTINGS } from '../utils/permissions';
 
 // ─── Dev Settings 외부 스토어 ─────────────────────────────────────────────

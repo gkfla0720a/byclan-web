@@ -12,7 +12,7 @@
  *   - ToastContainer: 활성 토스트 목록 전체를 화면에 표시하는 루트 컴포넌트
  *
  * @관련컴포넌트
- *   - ToastContext (../context/ToastContext): 토스트 목록·추가·제거 상태 관리
+ *   - ToastContext (@/context/ToastContext): 토스트 목록·추가·제거 상태 관리
  *   - 루트 layout.js에 한 번만 마운트하면 앱 전체에서 토스트 사용 가능
  *
  * @사용방법
@@ -26,14 +26,14 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '@/context/ToastContext';
 
 /**
  * 토스트 종류(type)에 따라 배경·테두리·텍스트 색상 Tailwind 클래스를 반환합니다.
  * @param {'success'|'warning'|'error'|'info'} type - 토스트 종류
  * @returns {string} Tailwind CSS 클래스 문자열
  */
-/** @param {{ type: import('../context/ToastContext').ToastType }} props */
+/** @param {{ type: import('@/context/ToastContext').ToastType }} props */
 function toastStyles(type) {
   switch (type) {
     case 'success':
@@ -68,7 +68,7 @@ function toastIcon(type) {
  * 마운트 시 페이드인, duration 경과 시 페이드아웃 후 자동 제거됩니다.
  * 하단에는 남은 시간을 나타내는 진행바(progress bar)가 표시됩니다.
  *
- * @param {{ toast: import('../context/ToastContext').Toast, onRemove: (id: string) => void }} props
+ * @param {{ toast: import('@/context/ToastContext').Toast, onRemove: (id: string) => void }} props
  * @param {object} props.toast - 표시할 토스트 객체 (id, type, message, duration 포함)
  * @param {function} props.onRemove - 토스트를 목록에서 제거하는 콜백 함수
  */

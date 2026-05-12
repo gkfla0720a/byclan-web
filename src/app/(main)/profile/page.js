@@ -13,7 +13,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation'; // 💡 홈으로 가기 위해 라우터 추가
 import MyProfile from '@/components/MyProfile';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 import { useNavigate } from '../../hooks/useNavigate';
 

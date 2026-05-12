@@ -12,7 +12,7 @@
 import React from 'react';
 import NotificationCenter from '@/components/NotificationCenter';
 import PagePlaceholder from '@/views/PagePlaceholder';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 /**
  * NotificationsPage - 알림 페이지 컴포넌트

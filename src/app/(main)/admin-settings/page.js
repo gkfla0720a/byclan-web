@@ -12,7 +12,7 @@
 'use client';
 
 import React from 'react';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate } from '../../hooks/useNavigate';
 import DevSettingsPanel from '@/components/DevSettingsPanel';
 

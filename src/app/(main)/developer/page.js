@@ -12,7 +12,7 @@
 import React from 'react';
 import DevConsole from '@/components/DevConsole';
 import PagePlaceholder from '@/views/PagePlaceholder';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 /**
  * DeveloperPage - 개발자 콘솔 페이지 컴포넌트

@@ -12,7 +12,7 @@
 import React from 'react';
 import ApplicationList from '@/components/ApplicationList';
 import PagePlaceholder from '@/views/PagePlaceholder';
-import { useAuthContext } from '../../../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 /**
  * ApplicationsPage - 가입 신청 관리 페이지 컴포넌트

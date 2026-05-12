@@ -9,7 +9,7 @@
 import React, { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ImprovedAuthForm from '@/components/ImprovedAuthForm';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 function LoginContent() {
   const router = useRouter();
