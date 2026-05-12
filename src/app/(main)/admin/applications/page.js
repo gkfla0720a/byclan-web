@@ -11,7 +11,7 @@
 
 import React from 'react';
 import ApplicationList from '../../../components/ApplicationList';
-import PagePlaceholder from '../../views/PagePlaceholder';
+import PagePlaceholder from '@/views/PagePlaceholder';
 import { useAuthContext } from '../../../context/AuthContext';
 
 /**

@@ -11,7 +11,7 @@
 
 import React from 'react';
 import DevConsole from '../../components/DevConsole';
-import PagePlaceholder from '../views/PagePlaceholder';
+import PagePlaceholder from '@/views/PagePlaceholder';
 import { useAuthContext } from '../../context/AuthContext';
 
 /**

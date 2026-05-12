@@ -7,7 +7,7 @@
  */
 'use client';
 
-import MatchRecords from '../../views/MatchRecords';
+import MatchRecords from '@/views/MatchRecords';
 
 /** MatchesPage - 경기 기록 페이지 컴포넌트. MatchRecords를 렌더링합니다. */
 export default function MatchesPage() {

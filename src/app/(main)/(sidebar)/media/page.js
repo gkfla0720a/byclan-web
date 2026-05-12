@@ -7,7 +7,7 @@
  */
 'use client';
 
-import MediaGallery from '../../views/MediaGallery';
+import MediaGallery from '@/views/MediaGallery';
 
 /** MediaPage - 미디어 갤러리 페이지 컴포넌트. MediaGallery를 렌더링합니다. */
 export default function MediaPage() {

@@ -19,7 +19,7 @@
 
 import React from 'react';
 import AuthDashboard from '../../components/AuthDashboard';
-import HomeContent from '../views/HomeContent';
+import HomeContent from '@/views/HomeContent';
 import { useAuthContext } from '../../context/AuthContext';
 
 export default function Home() {
