@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
-import { isRelationshipError } from '../utils/retry';
+import { isRelationshipError } from '@/utils/retry';
 
 /**
  * AdminBoard 컴포넌트

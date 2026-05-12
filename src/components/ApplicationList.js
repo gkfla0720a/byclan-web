@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
-import { PermissionChecker } from '../utils/permissions';
+import { PermissionChecker } from '@/utils/permissions';
 import { filterVisibleTestData } from '@/app/utils/testData';
 
 /**

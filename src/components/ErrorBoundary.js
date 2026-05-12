@@ -14,7 +14,7 @@
  *   - fallback prop으로 커스텀 오류 UI 지정 가능
  *
  * @관련컴포넌트
- *   - errorLogger (../utils/errorLogger): 오류 로깅 유틸리티
+ *   - errorLogger (@/utils/errorLogger): 오류 로깅 유틸리티
  *   - 루트 layout.js 또는 각 섹션 컴포넌트에서 감싸서 사용
  *
  * @사용방법
@@ -31,7 +31,7 @@
 'use client';
 
 import React from 'react';
-import logger, { Severity } from '../utils/errorLogger';
+import logger, { Severity } from '@/utils/errorLogger';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Full-page error boundary (wraps the whole app)

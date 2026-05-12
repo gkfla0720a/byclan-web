@@ -14,7 +14,7 @@
 'use client';
 
 import React, { useState, useSyncExternalStore } from 'react';
-import { saveDevSettings, loadDevSettings, DEV_SETTINGS } from '../utils/permissions';
+import { saveDevSettings, loadDevSettings, DEV_SETTINGS } from '@/utils/permissions';
 
 // ─── Dev settings external store ─────────────────────────────────────────────
 // useSyncExternalStore를 사용하여 React error #418(hydration 불일치)을 방지합니다.

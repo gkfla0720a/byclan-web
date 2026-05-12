@@ -19,7 +19,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
-import { buildInternalAuthEmail, getLoginEmailFromInput, isLegacyEmailLogin, normalizeAccountId } from '../utils/accountId';
+import { buildInternalAuthEmail, getLoginEmailFromInput, isLegacyEmailLogin, normalizeAccountId } from '@/utils/accountId';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
 // ── 유효성 검사 헬퍼 ─────────────────────────────────────────────────────────
