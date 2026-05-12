@@ -1,3 +1,5 @@
+[수정이 필요함]
+
 | grantee       | table_name               | privilege_type |
 | ------------- | ------------------------ | -------------- |
 | postgres      | posts                    | INSERT         |

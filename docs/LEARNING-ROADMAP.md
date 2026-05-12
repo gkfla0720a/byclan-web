@@ -1,3 +1,5 @@
+[수정이 필요함]
+
 # 📚 학습 로드맵
 
 ByClan Web 프로젝트를 단계별로 학습하기 위한 가이드입니다. 5단계를 순서대로 따라가면 전체 코드베이스를 체계적으로 이해할 수 있습니다.
@@ -252,7 +254,7 @@ function MyPage() {
 목표: '이벤트' (/events) 페이지 추가하기
 
 1. src/app/(main)/(sidebar)/events/page.js 생성
-2. src/app/pages/EventsContent.js 생성 (실제 콘텐츠)
+2. src/views/EventsContent.js 생성 (실제 콘텐츠)
 3. useNavigate.js의 VIEW_TO_PATH에 '이벤트' → '/events' 추가
 4. Header.js 또는 Sidebar.js에 메뉴 항목 추가
 5. 권한 설정: 모든 로그인 사용자가 볼 수 있도록

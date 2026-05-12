@@ -1,3 +1,5 @@
+[수정이 필요함]
+
 # ⚡ 빠른 참조 가이드
 
 개발 중 자주 찾게 되는 정보를 한곳에 모았습니다.
@@ -260,7 +262,7 @@ async function fetchData() {
 
 ```
 1. [ ] src/app/(main)/(sidebar)/[route]/page.js 생성
-2. [ ] src/app/pages/[PageName].js 생성 (실제 콘텐츠)
+2. [ ] src/views/[PageName].js 생성 (실제 콘텐츠)
 3. [ ] useNavigate.js VIEW_TO_PATH에 한국어 이름 → URL 추가
 4. [ ] Header.js 또는 Sidebar.js 메뉴에 항목 추가
 5. [ ] 권한 체크: getPermissions() 또는 hasLevel() 적용

@@ -1,3 +1,5 @@
+[수정이 필요함]
+
 # ByClan Web — 코드 구조 문서
 
 ByClan 클랜 공식 홈페이지(Next.js 16 + React 19 + Supabase)의 전체 코드 구조를 설명하는 문서입니다.
@@ -236,7 +238,7 @@ RootLayout (src/app/layout.js)
 
 ## 6. 페이지 컴포넌트 목록
 
-`src/app/pages/` 는 Next.js 라우트 파일이 아닌, 페이지 콘텐츠를 담당하는 컴포넌트 파일들입니다.
+`src/views/` 는 Next.js 라우트 파일이 아닌, 페이지 콘텐츠를 담당하는 컴포넌트 파일들입니다.
 
 | 파일 | 설명 |
 |------|------|
