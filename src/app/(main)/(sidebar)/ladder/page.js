@@ -11,13 +11,13 @@
 'use client';
 
 import React from 'react';
-import LadderDashboard from '../../../components/LadderDashboard';
-import MatchCenter from '../../../components/MatchCenter';
-import LadderPreview from '../../../components/LadderPreview';
+import LadderDashboard from '@/components/LadderDashboard';
+import MatchCenter from '@/components/MatchCenter';
+import LadderPreview from '@/components/LadderPreview';
 // 1. 외부 매치 리스트 컴포넌트를 불러옵니다.
-import ExternalMatchList from '../../../components/ExternalMatchList';
+import ExternalMatchList from '@/components/ExternalMatchList';
 import { useAuthContext } from '../../../context/AuthContext';
-import { SectionErrorBoundary } from '../../../components/ErrorBoundary';
+import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 
 /**
  * LadderPage - 래더 페이지 컴포넌트

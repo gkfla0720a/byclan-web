@@ -14,7 +14,7 @@
 import React from 'react';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNavigate } from '../../hooks/useNavigate';
-import DevSettingsPanel from '../../components/DevSettingsPanel';
+import DevSettingsPanel from '@/components/DevSettingsPanel';
 
 export default function AdminSettingsPage() {
   const navigateTo = useNavigate();

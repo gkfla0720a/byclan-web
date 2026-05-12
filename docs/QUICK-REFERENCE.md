@@ -178,8 +178,8 @@ import logger, { Severity } from '@/app/utils/errorLogger';
 import { withRetry, isRetryableError } from '@/app/utils/retry';
 
 // Components
-import { SectionErrorBoundary } from '@/app/components/ErrorBoundary';
-import ToastContainer from '@/app/components/ToastContainer';
+import { SectionErrorBoundary } from '@/components/ErrorBoundary';
+import ToastContainer from '@/components/ToastContainer';
 
 // Supabase Client
 import { supabase, isSupabaseConfigured } from '@/supabase';

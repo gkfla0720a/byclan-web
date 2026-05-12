@@ -10,7 +10,7 @@
 'use client';
 
 import React from 'react';
-import NotificationCenter from '../../components/NotificationCenter';
+import NotificationCenter from '@/components/NotificationCenter';
 import PagePlaceholder from '@/views/PagePlaceholder';
 import { useAuthContext } from '../../context/AuthContext';
 

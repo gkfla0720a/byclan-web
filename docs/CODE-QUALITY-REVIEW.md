@@ -72,7 +72,7 @@ hasPermission(role, permission) { ... }
 - `PATH_TO_VIEW` 역방향 생성 로직 설명
 - 경고 동작(unmapped view name) 문서화
 
-#### `src/app/components/Header.js` — ⭐⭐⭐⭐
+#### `src/components/Header.js` — ⭐⭐⭐⭐
 - 컴포넌트 목적, 렌더링 조건 주석
 - `openMenuIndex`, `isMobileMenuOpen` 등 상태 변수 설명
 - 조건부 렌더링 블록마다 의도 명시
@@ -111,7 +111,7 @@ const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repos
 ```javascript
 /**
  * =====================================================================
- * 파일명: src/app/components/MyComponent.js
+ * 파일명: src/components/MyComponent.js
  * 역할  : 한 문장으로 컴포넌트 역할 설명
  *
  * ■ 주요 기능
@@ -119,7 +119,7 @@ const logoUrl = "https://raw.githubusercontent.com/gkfla0720a/First-Coding-Repos
  *   2. 기능 B
  *
  * ■ 사용 방법
- *   import MyComponent from '@/app/components/MyComponent';
+ *   import MyComponent from '@/components/MyComponent';
  *   <MyComponent propA="값" />
  *
  * ■ Props

@@ -59,13 +59,13 @@ Completed in this phase
 
 Important files touched recently
 - src/app/utils/permissions.js
-- src/app/components/GuildManagement.js
-- src/app/components/AdminBoard.js
+- src/components/GuildManagement.js
+- src/components/AdminBoard.js
 - src/views/ClanMembers.js
 - src/app/page.js
-- src/app/components/ProfileSidebar.js
-- src/app/components/VisitorWelcome.js
-- src/app/components/MyProfile.js
+- src/components/ProfileSidebar.js
+- src/components/VisitorWelcome.js
+- src/components/MyProfile.js
 - sql/policies/MATCH-BETS-RLS.sql
 
 Recommended next work
@@ -135,7 +135,7 @@ Done today
 4) Build verified successfully.
 
 Important files
-- src/app/components/Header.js
+- src/components/Header.js
 - src/app/auth/callback/page.js
 - src/app/hooks/useAuth.js
 

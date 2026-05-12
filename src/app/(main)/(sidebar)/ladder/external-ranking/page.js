@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import ExternalMatchList from '@/app/components/ExternalMatchList';
-import { SectionErrorBoundary } from '@/app/components/ErrorBoundary';
+import ExternalMatchList from '@/components/ExternalMatchList';
+import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function ExternalLadderPage() {
   return (

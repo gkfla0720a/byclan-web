@@ -18,7 +18,7 @@
 'use client';
 
 import React from 'react';
-import AuthDashboard from '../../components/AuthDashboard';
+import AuthDashboard from '@/components/AuthDashboard';
 import HomeContent from '@/views/HomeContent';
 import { useAuthContext } from '../../context/AuthContext';
 

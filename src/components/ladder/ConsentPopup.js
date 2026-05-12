@@ -1,4 +1,4 @@
-// 파일명: src/app/components/ladder/ConsentPopup.js
+// 파일명: src/components/ladder/ConsentPopup.js
 'use client';
 
 import React, { useState, useEffect } from 'react';

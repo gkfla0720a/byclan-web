@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import ProfileSidebar from '@/app/components/ProfileSidebar';
+import ProfileSidebar from '@/components/ProfileSidebar';
 import { useAuthContext } from '@/app/context/AuthContext';
 
 export default function SidebarLayout({ children }) {

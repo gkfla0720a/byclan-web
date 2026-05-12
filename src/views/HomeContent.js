@@ -21,8 +21,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { SkeletonLoader, EmptyState } from '../components/UIStates';
-import { MatchStatus, ActivityLog } from '../components/HomeSections';
+import { SkeletonLoader, EmptyState } from '@/components/UIStates';
+import { MatchStatus, ActivityLog } from '@/components/HomeSections';
 import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
 import { useNavigate } from '../hooks/useNavigate';
 

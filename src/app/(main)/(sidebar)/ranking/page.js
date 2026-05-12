@@ -7,7 +7,7 @@
  */
 'use client';
 
-import RankingBoard from '../../../components/RankingBoard';
+import RankingBoard from '@/components/RankingBoard';
 
 /** RankingPage - 랭킹 페이지 컴포넌트. RankingBoard를 렌더링합니다. */
 export default function RankingPage() {

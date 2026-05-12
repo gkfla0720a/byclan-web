@@ -5,9 +5,9 @@ import { useAuthContext } from '@/app/context/AuthContext';
 import { useLadderData } from '@/app/hooks/useLadderData'; 
 import { getRaceIcon, getPlayerMmr } from '@/app/utils/profiles';
 
-import ConsentPopup from '@/app/components/ladder/ConsentPopup';
-import TeamBalancePreview from '@/app/components/ladder/TeamBalancePreview';
-import OngoingMatchList from '@/app/components/ladder/OngoingMatchList';
+import ConsentPopup from '@/components/ladder/ConsentPopup';
+import TeamBalancePreview from '@/components/ladder/TeamBalancePreview';
+import OngoingMatchList from '@/components/ladder/OngoingMatchList';
 
 const QueueTimer = ({ joinedAt }) => {
   const [elapsed, setElapsed] = React.useState(0);

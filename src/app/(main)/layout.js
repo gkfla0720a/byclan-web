@@ -18,8 +18,8 @@
 'use client';
 
 import React from 'react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 /**
  * MainLayout - 메인 레이아웃 컴포넌트

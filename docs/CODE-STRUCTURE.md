@@ -180,7 +180,7 @@ RootLayout (src/app/layout.js)
 
 ## 5. 컴포넌트 목록
 
-`src/app/components/` 에 위치한 재사용 가능한 React 컴포넌트입니다.
+`src/components/` 에 위치한 재사용 가능한 React 컴포넌트입니다.
 
 ### 5-1. 레이아웃 / 공통 UI
 

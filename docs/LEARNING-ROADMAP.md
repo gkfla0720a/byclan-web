@@ -76,8 +76,8 @@ ByClan Web 프로젝트를 단계별로 학습하기 위한 가이드입니다. 
 | 2 | `src/app/hooks/useAuth.ts` | 인증 핵심 로직 |
 | 3 | `src/app/context/AuthContext.ts` | 전역 인증 상태 |
 | 4 | `src/app/(main)/auth/callback/` | Discord OAuth 콜백 |
-| 5 | `src/app/components/AuthForm.js` | 로그인 폼 UI |
-| 6 | `src/app/components/HomeGate.js` | 비밀번호 인증 게이트 |
+| 5 | `src/components/AuthForm.js` | 로그인 폼 UI |
+| 6 | `src/components/HomeGate.js` | 비밀번호 인증 게이트 |
 | 7 | `docs/DATA-FLOW-VISUALIZATION.md` | 인증 시퀀스 다이어그램 |
 
 ### 핵심 코드 패턴 익히기
@@ -127,7 +127,7 @@ if (needsSetup) {
 | 1 | `src/app/utils/permissions.js` | 전체 권한 시스템 |
 | 2 | `docs/QUICK-REFERENCE.md` | 권한 매트릭스 표 |
 | 3 | `docs/ARCHITECTURE-DIAGRAMS.md` | 권한 계층도 |
-| 4 | `src/app/components/Header.js` | 실제 권한 활용 예시 |
+| 4 | `src/components/Header.js` | 실제 권한 활용 예시 |
 
 ### 핵심 코드 패턴 익히기
 
@@ -182,10 +182,10 @@ developer(100) > master(90) > admin(80) > elite(60) > associate/member(50) > roo
 | 1 | `src/app/layout.js` | 루트 레이아웃 (Context 공급) |
 | 2 | `src/app/(main)/layout.js` | 메인 레이아웃 (Header, HomeGate) |
 | 3 | `src/app/(main)/(sidebar)/layout.js` | 사이드바 레이아웃 |
-| 4 | `src/app/components/Header.js` | 헤더 컴포넌트 |
+| 4 | `src/components/Header.js` | 헤더 컴포넌트 |
 | 5 | `src/app/hooks/useNavigate.js` | 한국어 라우팅 훅 |
 | 6 | `src/app/page.js` | 홈 페이지 |
-| 7 | `src/app/components/ErrorBoundary.js` | 에러 격리 |
+| 7 | `src/components/ErrorBoundary.js` | 에러 격리 |
 | 8 | `src/app/context/ToastContext.js` | 알림 시스템 |
 
 ### 핵심 코드 패턴 익히기
@@ -222,7 +222,7 @@ function MyComponent() {
 
 ```javascript
 // 패턴 3: SectionErrorBoundary로 에러 격리
-import { SectionErrorBoundary } from '@/app/components/ErrorBoundary';
+import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 
 function MyPage() {
   return (

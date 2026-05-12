@@ -1,4 +1,4 @@
-// 파일명: src/app/components/MatchCenter.js
+// 파일명: src/components/MatchCenter.js
 'use client';
 
 import React from 'react';

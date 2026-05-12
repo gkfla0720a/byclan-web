@@ -12,13 +12,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import AdminBoard from '../../components/AdminBoard';
-import AdminPointManager from '../../components/AdminPointManager';
-import AdminMatchManager from '../../components/AdminMatchManager';
-import AdminActivityLogViewer from '../../components/AdminActivityLogViewer';
+import AdminBoard from '@/components/AdminBoard';
+import AdminPointManager from '@/components/AdminPointManager';
+import AdminMatchManager from '@/components/AdminMatchManager';
+import AdminActivityLogViewer from '@/components/AdminActivityLogViewer';
 import PagePlaceholder from '@/views/PagePlaceholder';
 import { useAuthContext } from '../../context/AuthContext';
-import { SectionErrorBoundary } from '../../components/ErrorBoundary';
+import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 
 const TABS = [
   { id: 'board', label: '🔐 기밀 게시판' },

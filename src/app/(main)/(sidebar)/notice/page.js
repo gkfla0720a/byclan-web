@@ -7,7 +7,7 @@
  */
 'use client';
 
-import NoticeBoard from '../../../components/NoticeBoard';
+import NoticeBoard from '@/components/NoticeBoard';
 
 /** NoticePage - 공지사항 페이지 컴포넌트. NoticeBoard를 렌더링합니다. */
 export default function NoticePage() {
