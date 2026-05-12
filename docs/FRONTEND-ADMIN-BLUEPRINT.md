@@ -1,3 +1,5 @@
+[수정이 필요함]
+
 # ByClan Frontend/Admin Blueprint
 
 라이브 DB의 public 스키마를 기준으로, 프론트엔드 화면 구조와 관리자 IA를 바로 구현 가능한 수준으로 정리한 문서입니다.
