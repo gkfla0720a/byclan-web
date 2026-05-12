@@ -16,7 +16,7 @@ import React, { useState } from 'react';
 import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser } from '@/app/utils/accountId';
 import { ErrorMessage } from './UIStates';
-import { useNavigate } from '../hooks/useNavigate';
+import { useNavigate } from '../app/hooks/useNavigate';
 
 const ROLE_LABELS = {
   visitor: '방문자',
