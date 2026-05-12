@@ -19,7 +19,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { useNavigate } from '../hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 
 /**
  * ByClanLogo()

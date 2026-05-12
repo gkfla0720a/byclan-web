@@ -21,7 +21,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { useNavigate } from '../hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 
 /**
  * 포인트를 받아 해당하는 래더 티어 이름을 반환합니다.

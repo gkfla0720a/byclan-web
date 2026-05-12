@@ -34,7 +34,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import { useAuth, UseAuthReturn } from '../app/hooks/useAuth';
+import { useAuth, UseAuthReturn } from '@/hooks/useAuth';
 
 /**
  * AuthContext

@@ -21,7 +21,7 @@ import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from './UIStates';
 import { filterVisibleTestData } from '@/app/utils/testData';
-import { useNavigate } from '../hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 
 /**
  * 날짜 문자열을 현재 시각 기준 상대적 시간 문자열로 변환합니다.

@@ -35,12 +35,12 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import type { AuthProfile as UserProfile } from '@/types/domain';
-import { extractAccountIdFromAuthUser } from '../utils/accountId';
-import { PermissionChecker, ROLE_PERMISSIONS } from '../utils/permissions';
-import { withRetry, isRetryableError } from '../utils/retry';
-import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '../utils/testData';
-import logger, { Severity } from '../utils/errorLogger';
-import { checkAndGrantDailyBonus } from '../utils/pointSystem';
+import { extractAccountIdFromAuthUser } from '@/utils/accountId';
+import { PermissionChecker, ROLE_PERMISSIONS } from '@/utils/permissions';
+import { withRetry, isRetryableError } from '@/utils/retry';
+import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '@/utils/testData';
+import logger, { Severity } from '@/utils/errorLogger';
+import { checkAndGrantDailyBonus } from '@/utils/pointSystem';
 import { ensureHomeGateAuthorized } from './useHomeGate';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

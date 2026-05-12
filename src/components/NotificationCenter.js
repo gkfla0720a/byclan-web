@@ -14,7 +14,7 @@
  *
  * @관련컴포넌트
  *   - supabase (@/supabase): 알림 데이터 조회 및 읽음 처리
- *   - useNavigate (../hooks/useNavigate): 가입 안내·홈 페이지 이동
+ *   - useNavigate (@/hooks/useNavigate): 가입 안내·홈 페이지 이동
  *
  * @사용방법
  *   <NotificationCenter profile={profile} />
@@ -25,7 +25,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
-import { useNavigate } from '../hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 
 /**
  * NotificationCenter 컴포넌트

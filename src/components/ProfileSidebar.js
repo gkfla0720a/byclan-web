@@ -13,7 +13,7 @@
  *   - 프로필 카드 클릭 시 프로필 페이지로 이동
  *
  * @관련컴포넌트
- *   - useNavigate (../hooks/useNavigate): 페이지 이동 훅
+ *   - useNavigate (@/hooks/useNavigate): 페이지 이동 훅
  *
  * @사용방법
  *   <ProfileSidebar profile={profile} user={user} />
@@ -23,7 +23,7 @@
 'use client';
 
 import React from 'react';
-import { useNavigate } from '../hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 
 /** 티어별 텍스트 색상 클래스 매핑 (Tailwind CSS 클래스 사용) */
 const TIER_COLORS = {

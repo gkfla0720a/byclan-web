@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation'; // 💡 홈으로 가기 위해 라
 import MyProfile from '@/components/MyProfile';
 import { useAuthContext } from '@/context/AuthContext';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
-import { useNavigate } from '../../hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 
 /**
  * ProfilePage - 내 프로필 페이지 컴포넌트

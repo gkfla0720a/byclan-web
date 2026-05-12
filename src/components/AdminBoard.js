@@ -17,9 +17,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/app/utils/testData';
-import { ROLE_PERMISSIONS } from '../utils/permissions';
-import { useNavigate } from '../hooks/useNavigate';
-import { isRelationshipError } from '../utils/retry';
+import { ROLE_PERMISSIONS } from '@/utils/permissions';
+import { useNavigate } from '@/hooks/useNavigate';
+import { isRelationshipError } from '@/utils/retry';
 
 /**
  * AdminBoard 컴포넌트

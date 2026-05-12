@@ -21,9 +21,9 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser, isInternalAuthEmail } from '@/app/utils/accountId';
 import { isMarkedTestAccount } from '@/app/utils/testData';
-import { useNavigate } from '../hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 import { useAuthContext } from '@/context/AuthContext';
-import { invalidateCache } from '../utils/queryCache';
+import { invalidateCache } from '@/utils/queryCache';
 
 function getTier(mmr) {
   if (mmr >= 2400) return 'Challenger';

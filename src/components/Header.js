@@ -33,7 +33,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { useNavigate } from '../hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 import { useAuthContext } from '@/context/AuthContext';
 import { PermissionChecker } from '@/app/utils/permissions';
 
