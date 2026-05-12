@@ -36,6 +36,7 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '@/hooks/useNavigate';
 import { useAuthContext } from '@/context/AuthContext';
 import { PermissionChecker } from '@/utils/permissions';
+import { useToast } from '@/context/ToastContext';
 
 /**
  * ByClanLogo()
@@ -90,6 +91,7 @@ export default function Header() {
   const [mobileAccordionIndex, setMobileAccordionIndex] = useState(null);
   // unreadCount: 읽지 않은 알림 개수 (헤더 뱃지에 표시)
   const [unreadCount, setUnreadCount] = useState(0);
+  const toast = useToast();
 
   // profile에서 역할과 닉네임을 파생합니다.
   const role = profile?.role || null;
@@ -146,40 +148,43 @@ export default function Header() {
   // 대신: Header는 단순히 by_id 표시 또는 에러 메시지만 처리
   // 사용자가 설정할 기회를 주고 싶으면 개별 페이지에서 명시적으로 처리
 
-const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
+      // 1. Supabase 로그아웃 실행
       await supabase.auth.signOut();
+  
+      // 2. 알림 띄우기 (이제 toast가 정의되어 있어 작동합니다)
+      toast.success('안전하게 로그아웃 되었습니다.');
+  
+      // 3. 로컬 스토리지 비우기
+      localStorage.clear();
+  
+      // --- 여기서부터 중요: 페이지 이동 로직을 setTimeout으로 감쌉니다 ---
+      setTimeout(() => {
+        const currentPath = window.location.pathname;
+        const PROTECTED_PATHS = ['/ladder', '/profile', '/admin', '/developer', '/points', '/matches'];
+        const isProtectedPage = PROTECTED_PATHS.some(path => currentPath.startsWith(path));
+        const targetLogoutUrl = `/logout?from=${encodeURIComponent(currentPath)}`;
+  
+        if (window.opener) {
+          // 팝업창인 경우
+          window.opener.location.reload();
+          window.location.href = targetLogoutUrl;
+        } else {
+          // 일반 창인 경우
+          if (isProtectedPage) {
+            // 권한 필요한 페이지면 로그아웃 페이지로 이동
+            window.location.href = targetLogoutUrl;
+          } else {
+            // 일반 페이지면 그 자리에서 새로고침 (이래야 알림이 보인 뒤 전환됨)
+            window.location.reload();
+          }
+        }
+      }, 800); // 0.8초(800ms) 동안 유저가 알림을 볼 시간을 줍니다.
+  
     } catch (error) {
       console.error('로그아웃 중 오류 발생:', error);
-    }
-    
-    // 로컬 스토리지 초기화
-    localStorage.clear();
-
-    const currentPath = window.location.pathname;
-    
-    // 💡 [핵심] 비로그인(Visitor) 상태로는 볼 수 없는 "보안 페이지" 목록을 정의합니다.
-    // 이 배열에 있는 경로(하위 경로 포함)에서 로그아웃하면 /logout 안내 페이지로 보냅니다.
-    const PROTECTED_PATHS = ['/ladder', '/profile', '/admin', '/developer', '/points', '/matches'];
-    
-    // 현재 주소가 보안 페이지 목록에 포함되어 있는지 검사 (예: /admin/guild 도 포함되도록 startsWith 사용)
-    const isProtectedPage = PROTECTED_PATHS.some(path => currentPath.startsWith(path));
-    
-    const targetLogoutUrl = `/logout?from=${encodeURIComponent(currentPath)}`;
-
-    if (window.opener) {
-      // 팝업창인 경우: 보통 래더(/ladder) 같은 특수 목적 앱이므로 로그아웃 페이지로 보냅니다.
-      window.opener.location.reload();
-      window.location.href = targetLogoutUrl;
-    } else {
-      // 일반 창인 경우: 현재 페이지의 권한에 따라 똑똑하게 분기 처리!
-      if (isProtectedPage) {
-        // 권한이 필요한 페이지에 있었다면 로그아웃 전용 안내 페이지로 이동
-        window.location.href = targetLogoutUrl;
-      } else {
-        // 홈, 공지사항, 커뮤니티 등 누구나 볼 수 있는 페이지라면 그 자리에서 새로고침만 수행 (조용히 방문자로 전환)
-        window.location.reload();
-      }
+      toast.error('로그아웃 중 문제가 발생했습니다.');
     }
   };
 

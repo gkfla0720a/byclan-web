@@ -19,7 +19,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { SkeletonLoader, EmptyState } from './UIStates';
+import { SkeletonLoader, EmptyState } from '@/components/UIStates';
 import { filterVisibleTestData } from '@/utils/testData';
 import { useNavigate } from '@/hooks/useNavigate';
 
