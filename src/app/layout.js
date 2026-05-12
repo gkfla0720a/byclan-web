@@ -27,6 +27,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/context/ToastContext";
 import ToastContainer from "@/components/ToastContainer";
 import { Analytics } from "@vercel/analytics/next";
+import { Noto_Sans_KR } from "next/font/google";
 
 /**
  * metadata
@@ -72,14 +73,16 @@ export const metadata = {
  *   Provider들(AuthProvider, ToastProvider 등)은 이 파일 내에서
  *   클라이언트 컴포넌트이므로 정상 작동합니다.
  */
+const notoSansKr = Noto_Sans_KR({
+  subsets: ["latin"], // Next.js 필수 설정
+  weight: ["400", "600", "700"], // 본문용(400), 부제목용(600), 제목용(700) 굵기만 가져와서 용량을 줄입니다.
+  display: "swap", // 폰트가 로딩되는 동안 기본 글꼴을 보여주어 깜빡임을 방지합니다.
+});
 
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="ko"
-      className="h-full antialiased"
-    >
-      <body className="min-h-full flex flex-col bg-[#06060a] text-gray-200 font-semibold relative" style={{ fontFamily: "'Pretendard', sans-serif" }}>
+    <html lang="ko" className="h-full antialiased">
+      <body className={`${notoSansKr.className} min-h-full flex flex-col bg-[#06060a] text-gray-200 font-semibold relative`}>
         <ErrorBoundary>
           <ToastProvider>
             <AuthProvider>
