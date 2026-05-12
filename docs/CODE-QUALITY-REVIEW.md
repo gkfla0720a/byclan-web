@@ -27,7 +27,7 @@ ByClan Web 프로젝트의 코드 품질 및 주석 분석 리포트입니다.
 
 ### ✅ 우수 파일
 
-#### `src/app/utils/permissions.js` — ⭐⭐⭐⭐⭐
+#### `src/utils/permissions.js` — ⭐⭐⭐⭐⭐
 - **파일 상단** JSDoc 블록으로 파일 역할, 사용법, 개념 설명 완비
 - 권한 키 각각에 한글 인라인 주석 (`// 시스템 관리`, `// 데이터베이스 수정`)
 - `ROLE_PERMISSIONS` 객체의 모든 역할에 구조화된 설명 포함
@@ -48,7 +48,7 @@ ByClan Web 프로젝트의 코드 품질 및 주석 분석 리포트입니다.
 hasPermission(role, permission) { ... }
 ```
 
-#### `src/app/hooks/useAuth.ts` — ⭐⭐⭐⭐⭐
+#### `src/hooks/useAuth.ts` — ⭐⭐⭐⭐⭐
 - TypeScript 인터페이스(UserProfile, AuthPermissions, UseAuthReturn)에 각 필드 설명 포함
 - 6개 주요 기능을 상단 블록에 번호로 나열
 - 각 내부 함수(`loadServerSettings`, `loadUserData`, `getPermissions`)에 목적 주석
@@ -66,7 +66,7 @@ hasPermission(role, permission) { ... }
  */
 ```
 
-#### `src/app/hooks/useNavigate.js` — ⭐⭐⭐⭐⭐
+#### `src/hooks/useNavigate.js` — ⭐⭐⭐⭐⭐
 - 파일 역할 배경(Background) 설명 포함
 - `VIEW_TO_PATH` 매핑 목적 명시
 - `PATH_TO_VIEW` 역방향 생성 로직 설명

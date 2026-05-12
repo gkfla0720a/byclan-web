@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * 파일명: src/app/hooks/useAuth.ts
+ * 파일명: src/hooks/useAuth.ts
  * 역할  : ByClan 웹앱의 핵심 인증(Authentication) 훅입니다.
  *         로그인/로그아웃 상태, 사용자 프로필, 권한 정보를 관리합니다.
  *
@@ -14,7 +14,7 @@
  *
  * ■ 사용 방법
  *   이 훅은 직접 사용하지 말고, AuthContext를 통해 접근하세요.
- *   import { useAuthContext } from '@/app/context/AuthContext';
+ *   import { useAuthContext } from '@/context/AuthContext';
  *   const { profile, getPermissions, reloadProfile } = useAuthContext();
  *
  * ■ 반환하는 주요 상태

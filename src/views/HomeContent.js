@@ -23,7 +23,7 @@ import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from '@/components/UIStates';
 import { MatchStatus, ActivityLog } from '@/components/HomeSections';
-import { filterVisibleTestData, isMarkedTestData } from '@/app/utils/testData';
+import { filterVisibleTestData, isMarkedTestData } from '@/utils/testData';
 import { useNavigate } from '@/hooks/useNavigate';
 
 /** 티어별 텍스트 색상 클래스 매핑 */

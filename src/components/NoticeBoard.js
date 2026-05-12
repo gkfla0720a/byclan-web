@@ -21,10 +21,10 @@
 import React, { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { EmptyState, SkeletonLoader } from './UIStates';
-import { filterVisibleTestData } from '@/app/utils/testData';
-import { isRelationshipError } from '@/app/utils/retry';
-import { PermissionChecker } from '@/app/utils/permissions';
-import { useAuthContext } from '@/app/context/AuthContext';
+import { filterVisibleTestData } from '@/utils/testData';
+import { isRelationshipError } from '@/utils/retry';
+import { PermissionChecker } from '@/utils/permissions';
+import { useAuthContext } from '@/context/AuthContext';
 
 /**
  * NoticeBoard 컴포넌트

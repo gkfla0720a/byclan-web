@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * 파일명: src/app/utils/retry.js
+ * 파일명: src/utils/retry.js
  * 역할  : 네트워크 오류나 서버 일시적 오류 발생 시 자동으로 요청을 재시도하는
  *         유틸리티 함수들을 제공합니다.
  *
@@ -10,7 +10,7 @@
  *   - withRetry(fn, options)   : 함수를 최대 N번 재시도하는 래퍼
  *
  * ■ 사용 방법 (다른 파일에서 import)
- *   import { withRetry, isRetryableError } from '@/app/utils/retry';
+ *   import { withRetry, isRetryableError } from '@/utils/retry';
  *
  *   // 예: Supabase 쿼리를 최대 3번 재시도
  *   const result = await withRetry(() =>

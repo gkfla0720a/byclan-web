@@ -9,7 +9,7 @@ import {
   RACE_ICONS, 
   formatTime, 
   getRaceCards 
-} from '@/app/hooks/useMatchCenter'; 
+} from '@/hooks/useMatchCenter'; 
 
 export default function MatchCenter({ matchId, onExit }) {
   const {

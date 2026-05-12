@@ -17,8 +17,8 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { filterVisibleTestData } from '@/app/utils/testData';
-import { MATCH_STATUS_LABEL } from '@/app/utils/statusConstants';
+import { filterVisibleTestData } from '@/utils/testData';
+import { MATCH_STATUS_LABEL } from '@/utils/statusConstants';
 
 const PAGE_SIZE = 30;
 

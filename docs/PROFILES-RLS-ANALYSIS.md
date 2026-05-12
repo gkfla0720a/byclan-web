@@ -3,7 +3,7 @@
 # ByClan Profiles 테이블 RLS 정책 분석 보고서
 
 **작성일**: 2026-04-24  
-**범위**: `sql/advisors/*.sql`, `sql/migrations/*.sql`, `sql/policies/*.sql`, `src/app/hooks/useAuth.ts`
+**범위**: `sql/advisors/*.sql`, `sql/migrations/*.sql`, `sql/policies/*.sql`, `src/hooks/useAuth.ts`
 
 ---
 
@@ -255,7 +255,7 @@ profiles 테이블에 대한 INSERT 정책 발견 불가.
 ## 5️⃣ LoadUserData 함수 (useAuth.ts)
 
 ### 위치
-**파일**: [src/app/hooks/useAuth.ts](src/app/hooks/useAuth.ts#L502-L620)
+**파일**: [src/hooks/useAuth.ts](src/hooks/useAuth.ts#L502-L620)
 
 ### 함수 흐름
 
@@ -581,7 +581,7 @@ WHERE tablename = 'profiles';
 | [sql/advisors/ADVISOR-WARNING-FIXES.sql](sql/advisors/ADVISOR-WARNING-FIXES.sql) | UPDATE 3개 | ⚠️ RLS 미활성화 |
 | [sql/advisors/PERFORMANCE-ADVISOR-FIXES.sql](sql/advisors/PERFORMANCE-ADVISOR-FIXES.sql) | UPDATE 1개 (통합) | ⚠️ RLS 미활성화 |
 | [sql/migrations/PROFILE-SCHEMA-UNIFIED-MIGRATION.sql](sql/migrations/PROFILE-SCHEMA-UNIFIED-MIGRATION.sql) | 마이그레이션만 | ✅ 무관 |
-| [src/app/hooks/useAuth.ts](src/app/hooks/useAuth.ts) | SELECT/INSERT (클라이언트) | ✅ 로직상 안전 |
+| [src/hooks/useAuth.ts](src/hooks/useAuth.ts) | SELECT/INSERT (클라이언트) | ✅ 로직상 안전 |
 
 ### 종합 보안 평가
 

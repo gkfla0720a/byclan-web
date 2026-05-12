@@ -73,8 +73,8 @@ ByClan Web 프로젝트를 단계별로 학습하기 위한 가이드입니다. 
 | 순서 | 파일 | 핵심 내용 |
 |------|------|--------|
 | 1 | `src/app/supabase.js` | Supabase 클라이언트 초기화 |
-| 2 | `src/app/hooks/useAuth.ts` | 인증 핵심 로직 |
-| 3 | `src/app/context/AuthContext.ts` | 전역 인증 상태 |
+| 2 | `src/hooks/useAuth.ts` | 인증 핵심 로직 |
+| 3 | `src/context/AuthContext.ts` | 전역 인증 상태 |
 | 4 | `src/app/(main)/auth/callback/` | Discord OAuth 콜백 |
 | 5 | `src/components/AuthForm.js` | 로그인 폼 UI |
 | 6 | `src/components/HomeGate.js` | 비밀번호 인증 게이트 |
@@ -84,7 +84,7 @@ ByClan Web 프로젝트를 단계별로 학습하기 위한 가이드입니다. 
 
 ```typescript
 // 패턴 1: useAuthContext() 사용
-import { useAuthContext } from '@/app/context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 function MyComponent() {
   const { user, profile, authLoading, getPermissions } = useAuthContext();
@@ -124,7 +124,7 @@ if (needsSetup) {
 
 | 순서 | 파일 | 핵심 내용 |
 |------|------|--------|
-| 1 | `src/app/utils/permissions.js` | 전체 권한 시스템 |
+| 1 | `src/utils/permissions.js` | 전체 권한 시스템 |
 | 2 | `docs/QUICK-REFERENCE.md` | 권한 매트릭스 표 |
 | 3 | `docs/ARCHITECTURE-DIAGRAMS.md` | 권한 계층도 |
 | 4 | `src/components/Header.js` | 실제 권한 활용 예시 |
@@ -183,16 +183,16 @@ developer(100) > master(90) > admin(80) > elite(60) > associate/member(50) > roo
 | 2 | `src/app/(main)/layout.js` | 메인 레이아웃 (Header, HomeGate) |
 | 3 | `src/app/(main)/(sidebar)/layout.js` | 사이드바 레이아웃 |
 | 4 | `src/components/Header.js` | 헤더 컴포넌트 |
-| 5 | `src/app/hooks/useNavigate.js` | 한국어 라우팅 훅 |
+| 5 | `src/hooks/useNavigate.js` | 한국어 라우팅 훅 |
 | 6 | `src/app/page.js` | 홈 페이지 |
 | 7 | `src/components/ErrorBoundary.js` | 에러 격리 |
-| 8 | `src/app/context/ToastContext.js` | 알림 시스템 |
+| 8 | `src/context/ToastContext.js` | 알림 시스템 |
 
 ### 핵심 코드 패턴 익히기
 
 ```javascript
 // 패턴 1: useNavigate 훅으로 페이지 이동
-import { useNavigate } from '@/app/hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 
 function MyComponent() {
   const navigateTo = useNavigate();
@@ -204,7 +204,7 @@ function MyComponent() {
 
 ```javascript
 // 패턴 2: useToast 훅으로 알림 표시
-import { useToast } from '@/app/context/ToastContext';
+import { useToast } from '@/context/ToastContext';
 
 function MyComponent() {
   const toast = useToast();

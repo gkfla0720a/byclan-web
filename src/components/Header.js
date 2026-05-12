@@ -35,7 +35,7 @@ import Image from 'next/image';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '@/hooks/useNavigate';
 import { useAuthContext } from '@/context/AuthContext';
-import { PermissionChecker } from '@/app/utils/permissions';
+import { PermissionChecker } from '@/utils/permissions';
 
 /**
  * ByClanLogo()

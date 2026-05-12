@@ -19,9 +19,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { filterVisibleTestData } from '@/app/utils/testData';
-import { PermissionChecker } from '@/app/utils/permissions';
-import { useAuthContext } from '@/app/context/AuthContext';
+import { filterVisibleTestData } from '@/utils/testData';
+import { PermissionChecker } from '@/utils/permissions';
+import { useAuthContext } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 /**

@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getRaceIcon, getPlayerMmr } from '@/app/utils/profiles'; 
+import { getRaceIcon, getPlayerMmr } from '@/utils/profiles'; 
 
 const PROPOSAL_CONSENT_SECONDS = 40;
 const BALANCE_THRESHOLD = 200;

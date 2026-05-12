@@ -3,7 +3,7 @@
 
 import React from 'react';
 import ProfileSidebar from '@/components/ProfileSidebar';
-import { useAuthContext } from '@/app/context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 export default function SidebarLayout({ children }) {
   const { user, profile, needsSetup, authLoading } = useAuthContext();

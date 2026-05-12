@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * 파일명: src/app/hooks/useNavigate.js
+ * 파일명: src/hooks/useNavigate.js
  * 역할  : 한국어 뷰(페이지) 이름을 실제 URL 경로로 변환하여 페이지를 이동시키는
  *         커스텀 훅(hook)입니다.
  *
@@ -9,7 +9,7 @@
  *   한국어 이름으로 페이지를 참조하는데, 이를 실제 URL로 변환해 줍니다.
  *
  * ■ 사용 방법
- *   import { useNavigate } from '@/app/hooks/useNavigate';
+ *   import { useNavigate } from '@/hooks/useNavigate';
  *
  *   function MyComponent() {
  *     const navigateTo = useNavigate();

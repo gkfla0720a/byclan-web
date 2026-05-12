@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * 파일명: src/app/context/AuthContext.ts
+ * 파일명: src/context/AuthContext.ts
  * 역할  : useAuth 훅의 결과값을 React Context로 앱 전체에 공유합니다.
  *         이 파일을 통해 어떤 컴포넌트에서든 로그인 상태와 프로필에 접근할 수 있습니다.
  *
@@ -12,7 +12,7 @@
  *   1. 루트 레이아웃(layout.js)에서 <AuthProvider>로 앱을 감싼다 (이미 설정됨)
  *   2. 어떤 컴포넌트에서든 useAuthContext()로 인증 정보에 접근한다
  *
- *   import { useAuthContext } from '@/app/context/AuthContext';
+ *   import { useAuthContext } from '@/context/AuthContext';
  *
  *   function MyComponent() {
  *     const { profile, getPermissions, reloadProfile } = useAuthContext();

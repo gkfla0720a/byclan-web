@@ -58,7 +58,7 @@ Completed in this phase
 - Standardized role/title rendering to use ROLE_PERMISSIONS as the single source of truth in active management/admin surfaces.
 
 Important files touched recently
-- src/app/utils/permissions.js
+- src/utils/permissions.js
 - src/components/GuildManagement.js
 - src/components/AdminBoard.js
 - src/views/ClanMembers.js
@@ -137,7 +137,7 @@ Done today
 Important files
 - src/components/Header.js
 - src/app/auth/callback/page.js
-- src/app/hooks/useAuth.js
+- src/hooks/useAuth.js
 
 Before next test
 1) Supabase Auth URL config must include:

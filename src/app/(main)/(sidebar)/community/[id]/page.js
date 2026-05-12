@@ -3,8 +3,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
-import { useAuthContext } from '@/app/context/AuthContext';
-import { PermissionChecker } from '@/app/utils/permissions';
+import { useAuthContext } from '@/context/AuthContext';
+import { PermissionChecker } from '@/utils/permissions';
 
 
 export default function PostDetailPage() {

@@ -20,7 +20,7 @@
 import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from './UIStates';
-import { filterVisibleTestData } from '@/app/utils/testData';
+import { filterVisibleTestData } from '@/utils/testData';
 import { useNavigate } from '@/hooks/useNavigate';
 
 /**

@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * 파일명: src/app/context/AuthContext.js
+ * 파일명: src/context/AuthContext.js
  * 역할  : TypeScript로 마이그레이션된 AuthContext의 호환성 유지용 래퍼 파일입니다.
  *
  * ■ 실제 구현은 AuthContext.ts에 있습니다.
@@ -8,7 +8,7 @@
  *   빌드 시스템은 AuthContext.ts를 우선적으로 사용합니다.
  *
  * ■ 사용 방법
- *   import { useAuthContext } from '@/app/context/AuthContext';
+ *   import { useAuthContext } from '@/context/AuthContext';
  *   const { profile, getPermissions } = useAuthContext();
  * =====================================================================
  */

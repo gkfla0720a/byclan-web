@@ -1,4 +1,4 @@
-// 파일명: src/app/hooks/useMatchCenter.js
+// 파일명: src/hooks/useMatchCenter.js
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 

@@ -10,8 +10,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import { isMarkedTestData } from '@/app/utils/testData';
-import { getCached, setCached } from '@/app/utils/queryCache';
+import { isMarkedTestData } from '@/utils/testData';
+import { getCached, setCached } from '@/utils/queryCache';
 
 const CACHE_KEY = 'ranking_board_v2';
 

@@ -6,7 +6,7 @@
  * UI 표시용 한글 레이블은 이 파일의 *_LABEL 객체를 사용하세요.
  *
  * 사용 예:
- *   import { MATCH_STATUS, MATCH_STATUS_LABEL } from '@/app/utils/statusConstants';
+ *   import { MATCH_STATUS, MATCH_STATUS_LABEL } from '@/utils/statusConstants';
  *   .eq('status', MATCH_STATUS.IN_PROGRESS)
  *   label = MATCH_STATUS_LABEL[match.status] ?? match.status
  */

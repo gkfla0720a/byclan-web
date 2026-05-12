@@ -11,7 +11,7 @@ import {
   TEST_ACCOUNT_SETTING_EVENT,
   TEST_ACCOUNT_SETTING_KEY,
   TEST_MODE_SETTING_KEY,
-} from '@/app/utils/testData';
+} from '@/utils/testData';
 import { useNavigate } from '@/hooks/useNavigate';
 
 const DISCORD_UNLINK_SETTING_KEY = 'discord_unlink_enabled';

@@ -19,7 +19,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
-import { filterVisibleTestData } from '@/app/utils/testData';
+import { filterVisibleTestData } from '@/utils/testData';
 
 /**
  * 파일명: MediaGallery.js (계속)

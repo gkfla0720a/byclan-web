@@ -17,7 +17,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker } from '@/utils/permissions';
-import { filterVisibleTestData } from '@/app/utils/testData';
+import { filterVisibleTestData } from '@/utils/testData';
 
 /**
  * ApplicationList 컴포넌트

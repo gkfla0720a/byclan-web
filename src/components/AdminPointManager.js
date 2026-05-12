@@ -12,8 +12,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
-import { grantPoints, deductPoints } from '@/app/utils/pointSystem';
-import { recordAdminAudit } from '@/app/utils/adminAudit';
+import { grantPoints, deductPoints } from '@/utils/pointSystem';
+import { recordAdminAudit } from '@/utils/adminAudit';
 
 /** 포인트 거래 유형 한국어 레이블 */
 const TYPE_LABEL = {

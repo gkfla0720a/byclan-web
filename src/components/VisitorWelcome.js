@@ -14,7 +14,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
-import { extractAccountIdFromAuthUser } from '@/app/utils/accountId';
+import { extractAccountIdFromAuthUser } from '@/utils/accountId';
 import { ErrorMessage } from './UIStates';
 import { useNavigate } from '@/hooks/useNavigate';
 

@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { checkAndGrantDailyBonus } from '@/app/utils/pointSystem';
+import { checkAndGrantDailyBonus } from '@/utils/pointSystem';
 
 // 서버 전용 마스터 클라이언트 생성
 const supabaseAdmin = createClient(

@@ -1,4 +1,4 @@
-// 파일명: src/app/hooks/useHomeGate.ts
+// 파일명: src/hooks/useHomeGate.ts
 import { useState, useSyncExternalStore } from 'react';
 
 // ─── HomeGate external store (전역 상태 관리) ─────────────────────────────

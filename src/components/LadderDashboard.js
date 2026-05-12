@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAuthContext } from '@/app/context/AuthContext'; 
-import { useLadderData } from '@/app/hooks/useLadderData'; 
-import { getRaceIcon, getPlayerMmr } from '@/app/utils/profiles';
+import { useAuthContext } from '@/context/AuthContext'; 
+import { useLadderData } from '@/hooks/useLadderData'; 
+import { getRaceIcon, getPlayerMmr } from '@/utils/profiles';
 
 import ConsentPopup from '@/components/ladder/ConsentPopup';
 import TeamBalancePreview from '@/components/ladder/TeamBalancePreview';

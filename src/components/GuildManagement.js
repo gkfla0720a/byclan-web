@@ -16,10 +16,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
-import { isInternalAuthEmail } from '@/app/utils/accountId';
+import { isInternalAuthEmail } from '@/utils/accountId';
 import { PermissionChecker, ROLE_PERMISSIONS } from '@/utils/permissions';
 import { grantRankPromotionBonus } from '@/utils/pointSystem';
-import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/app/utils/testData';
+import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 
 /** 마스터 위임 재인증의 유효 시간: 5분 (밀리초 단위) */
 const DELEGATION_VERIFY_WINDOW_MS = 5 * 60 * 1000;

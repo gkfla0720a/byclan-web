@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * 파일명: src/app/context/ToastContext.js
+ * 파일명: src/context/ToastContext.js
  * 역할  : 화면 상단/하단에 잠깐 나타났다 사라지는 알림 메시지(Toast)를
  *         관리하는 Context를 제공합니다.
  *
@@ -20,7 +20,7 @@
  *   toastReducer:  Toast 목록을 추가/제거하는 상태 관리 함수
  *
  * ■ 사용 방법 (컴포넌트에서)
- *   import { useToast } from '@/app/context/ToastContext';
+ *   import { useToast } from '@/context/ToastContext';
  *
  *   function MyComponent() {
  *     const toast = useToast();

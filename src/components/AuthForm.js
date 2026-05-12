@@ -20,7 +20,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/supabase';
-import { buildInternalAuthEmail, getLoginEmailFromInput, normalizeAccountId } from '@/app/utils/accountId';
+import { buildInternalAuthEmail, getLoginEmailFromInput, normalizeAccountId } from '@/utils/accountId';
 
 /**
  * 로그인/회원가입 폼 컴포넌트

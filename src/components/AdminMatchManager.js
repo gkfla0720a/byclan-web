@@ -6,7 +6,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/supabase';
-import { recordAdminAudit } from '@/app/utils/adminAudit';
+import { recordAdminAudit } from '@/utils/adminAudit';
 
 const STATUS_OPTIONS = ['모집중', '진행중', '완료', '거절됨'];
 const WINNING_TEAM_OPTIONS = ['', 'A', 'B'];

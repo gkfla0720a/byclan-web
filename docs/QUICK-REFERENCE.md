@@ -95,7 +95,7 @@
 ### useAuthContext()
 
 ```typescript
-import { useAuthContext } from '@/app/context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 const {
   user,              // Supabase User 객체 (미로그인 시 null)
@@ -138,7 +138,7 @@ permissions.canAccessMenu('/admin')       // 메뉴 접근 가능 여부
 ### useNavigate()
 
 ```javascript
-import { useNavigate } from '@/app/hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 
 const navigateTo = useNavigate();
 
@@ -151,7 +151,7 @@ navigateTo('내 프로필');      // → /profile
 ### useToast()
 
 ```javascript
-import { useToast } from '@/app/context/ToastContext';
+import { useToast } from '@/context/ToastContext';
 
 const toast = useToast();
 
@@ -166,16 +166,16 @@ toast.info('알림: 새 메시지가 있습니다.');
 
 ```javascript
 // Context Hooks
-import { useAuthContext } from '@/app/context/AuthContext';
-import { useToast } from '@/app/context/ToastContext';
+import { useAuthContext } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 
 // Custom Hooks
-import { useNavigate } from '@/app/hooks/useNavigate';
+import { useNavigate } from '@/hooks/useNavigate';
 
 // Utilities
-import { PermissionChecker, ROLE_PERMISSIONS, loadDevSettings } from '@/app/utils/permissions';
-import logger, { Severity } from '@/app/utils/errorLogger';
-import { withRetry, isRetryableError } from '@/app/utils/retry';
+import { PermissionChecker, ROLE_PERMISSIONS, loadDevSettings } from '@/utils/permissions';
+import logger, { Severity } from '@/utils/errorLogger';
+import { withRetry, isRetryableError } from '@/utils/retry';
 
 // Components
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
@@ -233,9 +233,9 @@ const canApproveApp = permissions.can.approveMembers;  // 가입 심사
 ## 8️⃣ 에러 처리 패턴
 
 ```javascript
-import { withRetry, isRetryableError } from '@/app/utils/retry';
-import logger, { Severity } from '@/app/utils/errorLogger';
-import { useToast } from '@/app/context/ToastContext';
+import { withRetry, isRetryableError } from '@/utils/retry';
+import logger, { Severity } from '@/utils/errorLogger';
+import { useToast } from '@/context/ToastContext';
 
 // 기본 패턴
 const toast = useToast();

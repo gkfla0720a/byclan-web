@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * 파일명: src/app/utils/permissions.js
+ * 파일명: src/utils/permissions.js
  * 역할  : ByClan 클랜의 역할(Role) 체계와 권한(Permission) 시스템을 정의합니다.
  *
  * ■ 역할 구조 (높은 레벨 = 더 많은 권한)
@@ -15,7 +15,7 @@
  *   - ROLE_CHANGE_RULES: 역할 승격/강등 경로 및 조건
  *
  * ■ 사용 방법 (다른 파일에서 import)
- *   import { PermissionChecker, ROLE_PERMISSIONS } from '@/app/utils/permissions';
+ *   import { PermissionChecker, ROLE_PERMISSIONS } from '@/utils/permissions';
  *   const canPlay = PermissionChecker.hasPermission('elite', 'ladder.play'); // true
  * =====================================================================
  */

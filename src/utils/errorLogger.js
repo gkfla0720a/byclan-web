@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * 파일명: src/app/utils/errorLogger.js
+ * 파일명: src/utils/errorLogger.js
  * 역할  : 앱 전체에서 사용하는 통합 에러 로거(기록기)입니다.
  *         콘솔 출력과 Sentry(외부 에러 모니터링 서비스) 연동을 지원합니다.
  *
@@ -15,7 +15,7 @@
  *   없으면 콘솔 출력만 합니다.
  *
  * ■ 사용 방법 (다른 파일에서 import)
- *   import logger from '@/app/utils/errorLogger';
+ *   import logger from '@/utils/errorLogger';
  *
  *   logger.info('사용자 로그인 성공');
  *   logger.warning('설정 파일을 찾을 수 없음', { file: 'config.json' });
@@ -41,7 +41,7 @@
  * - 외부에서 심각도를 직접 지정할 때도 사용할 수 있습니다.
  *
  * 사용 예시:
- *   import { Severity } from '@/app/utils/errorLogger';
+ *   import { Severity } from '@/utils/errorLogger';
  *   logger.captureException(err, { severity: Severity.CRITICAL });
  */
 

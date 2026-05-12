@@ -1,12 +1,12 @@
 /**
  * =====================================================================
- * 파일명: src/app/utils/joinProcess.js
+ * 파일명: src/utils/joinProcess.js
  * 역할  : 클랜 가입 신청 처리 로직을 담당합니다.
  *         신규 회원의 가입 신청 데이터를 처리하고 Supabase DB에 저장하는
  *         함수를 제공합니다.
  *
  * ■ 사용 방법
- *   import joinProcess from '@/app/utils/joinProcess';
+ *   import joinProcess from '@/utils/joinProcess';
  *   await joinProcess(applicationData);
  *
  * ■ 관련 DB 테이블
