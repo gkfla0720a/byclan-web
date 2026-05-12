@@ -160,7 +160,11 @@ export function ToastProvider({ children }) {
     removeToast,
   };
 
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+  return (
+  <ToastContext.Provider value={value}>
+    {children}
+  </ToastContext.Provider>
+  );
 }
 
 /**
