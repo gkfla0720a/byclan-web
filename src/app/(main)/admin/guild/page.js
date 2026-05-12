@@ -11,7 +11,7 @@
 
 import React from 'react';
 import GuildManagement from '../../../components/GuildManagement';
-import PagePlaceholder from '../../../pages/PagePlaceholder';
+import PagePlaceholder from '../../views/PagePlaceholder';
 import { useAuthContext } from '../../../context/AuthContext';
 
 /**

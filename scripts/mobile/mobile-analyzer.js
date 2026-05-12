@@ -27,12 +27,12 @@ export const FILE_STRUCTURE = {
     "AdminBoard.js": "관리자 게시판 (9KB)",
     "MatchCenter.js": "매치 센터 (9KB)"
   },
-  pages: {
+  views: {
     "HomeContent.js": "홈 컨텐츠 (분리됨)",
     "ClanOverview.js": "클랜 소개 (분리됨)",
     "ClanTournament.js": "토너먼트 (분리됨)",
     "MediaGallery.js": "미디어 갤러리 (분리됨)",
-    "PagePlaceholder.js": "페이지 플레이스홀더 (분리됨)"
+    "PagePlaceholder.js": "views 플레이스홀더 (분리됨)"
   },
   hooks: {
     "useAuth.js": "인증 관리 훅 (새로 추가)"

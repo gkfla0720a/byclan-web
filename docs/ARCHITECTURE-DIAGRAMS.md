@@ -169,11 +169,11 @@ byclan-web/
 │       │   ├── useAuth.ts               ← 핵심 인증 훅
 │       │   └── useNavigate.js           ← 한국어 뷰 이름 → URL 변환 훅
 │       │
-│       ├── 📁 pages/                    ← 페이지 콘텐츠 컴포넌트
+│       ├── 📁 views/                    ← views 콘텐츠 컴포넌트
 │       │   ├── HomeContent.js           ← 홈 화면 콘텐츠
 │       │   ├── ClanOverview.js          ← 클랜 개요
 │       │   ├── MatchRecords.js          ← 경기기록
-│       │   └── [기타 페이지]...
+│       │   └── [기타 views]...
 │       │
 │       ├── 📁 utils/                    ← 유틸리티 함수
 │       │   ├── permissions.js           ← 권한 시스템 (핵심)

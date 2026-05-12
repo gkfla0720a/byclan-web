@@ -16,7 +16,7 @@ import AdminBoard from '../../components/AdminBoard';
 import AdminPointManager from '../../components/AdminPointManager';
 import AdminMatchManager from '../../components/AdminMatchManager';
 import AdminActivityLogViewer from '../../components/AdminActivityLogViewer';
-import PagePlaceholder from '../../pages/PagePlaceholder';
+import PagePlaceholder from '../views/PagePlaceholder';
 import { useAuthContext } from '../../context/AuthContext';
 import { SectionErrorBoundary } from '../../components/ErrorBoundary';
 

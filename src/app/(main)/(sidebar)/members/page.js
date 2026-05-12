@@ -7,7 +7,7 @@
  */
 'use client';
 
-import ClanMembers from '../../../pages/ClanMembers';
+import ClanMembers from '../../views/ClanMembers';
 
 /** MembersPage - 멤버 목록 페이지 컴포넌트. ClanMembers를 렌더링합니다. */
 export default function MembersPage() {
