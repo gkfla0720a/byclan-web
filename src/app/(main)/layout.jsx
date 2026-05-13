@@ -3,11 +3,6 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-/**
- * MainLayout - 메인 레이아웃 컴포넌트
- * @param {React.ReactNode} children - 이 레이아웃 안에 렌더링될 하위 페이지 컴포넌트
- */
-
 export default function MainLayout({ children }) {
   return (
     <>

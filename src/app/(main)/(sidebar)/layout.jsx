@@ -1,6 +1,5 @@
-// src/app/(main)/(sidebar)/layout.js
+// src/app/(main)/(sidebar)/layout.jsx
 'use client';
-
 
 import ProfileSidebar from '@/components/ProfileSidebar';
 import { useAuthContext } from '@/context/AuthContext';
@@ -8,12 +7,27 @@ import { useAuthContext } from '@/context/AuthContext';
 export default function SidebarLayout({ children }) {
   const { user, profile, needsSetup, authLoading } = useAuthContext();
 
-// 오직 초기 닉네임 설정(needsSetup) 중일 때만 사이드바를 숨깁니다.
-if (!authLoading && user && needsSetup) {
-  return <div className="w-full flex justify-center">{children}</div>;
-}
+  // 💡 1. 로딩 중: 레이아웃이 널뛰기하는 것을 방지하기 위해 뼈대만 유지하거나 빈 화면 반환
+  if (authLoading) {
+    return (
+      <div className="w-full flex justify-center py-20">
+        <span className="text-cyan-500/50 font-mono animate-pulse font-bold text-sm">
+          [ AUTHENTICATING... ]
+        </span>
+      </div>
+    );
+  }
 
-  // 일반 홈 화면일 때만 사이드바 렌더링
+  // 💡 2. 초기 닉네임 설정 중: 중앙 정렬 레이아웃 (사이드바 숨김)
+  if (user && needsSetup) {
+    return (
+      <div className="w-full flex justify-center">
+        {children}
+      </div>
+    );
+  }
+
+  // 💡 3. 일반 홈 화면: 사이드바 + 콘텐츠 레이아웃
   return (
     <div className="w-full flex flex-col md:flex-row gap-4 lg:gap-6 mt-4">
       
