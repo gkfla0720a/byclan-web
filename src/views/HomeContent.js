@@ -19,11 +19,12 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from '@/components/UIStates';
 import { MatchStatus, ActivityLog } from '@/components/HomeSections';
 import { filterVisibleTestData, isMarkedTestData } from '@/utils/testData';
+import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate } from '@/hooks/useNavigate';
 
 /** 티어별 텍스트 색상 클래스 매핑 */
@@ -131,14 +132,12 @@ function MobileProfileCard({ profile, user, navigateTo }) {
  *
  * 홈 화면 전체 레이아웃을 렌더링합니다.
  * Supabase에서 상위 랭커와 최신 공지를 불러와 표시합니다.
- *
- * @param {{ profile: object|null, user: object|null, userPermissions: object }} props
  * @param {object} profile - 사용자 프로필 정보
  * @param {object} user - 인증된 사용자 정보
- * @param {object} userPermissions - 사용자 역할별 권한 정보 (ROLE_PERMISSIONS에서 전달)
  * @returns {JSX.Element} 홈 화면 전체 UI
  */
-function HomeContent({ profile = null, user = null, userPermissions = {} }) {
+function HomeContent() {
+  const { user, profile } = useAuthContext();
   // ═══════════════════════════════════════════════════════════════
   // 홈게이트 로직: 역할별 기능 접근 제어
   // ═══════════════════════════════════════════════════════════════
