@@ -15,7 +15,7 @@
  */
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Fragment } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
 import { MATCH_STATUS_LABEL } from '@/utils/statusConstants';
@@ -247,7 +247,7 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
 
           {/* 가운데 VS 세로선 */}
           {Array.from({ length: maxRows }).map((_, i) => (
-            <React.Fragment key={i}>
+            <Fragment key={i}>
               <div className="py-1 text-center leading-snug">
                 {teamARaces[i] && (
                   <span className="text-yellow-500/80 text-[10px] mr-1">[{raceLabel(teamARaces[i])}]</span>
@@ -271,7 +271,7 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
                   <span className="text-yellow-500/80 text-[10px] ml-1">[{raceLabel(teamBRaces[i])}]</span>
                 )}
               </div>
-            </React.Fragment>
+            </Fragment>
           ))}
 
           {maxRows === 0 && (
@@ -498,7 +498,7 @@ export default function MatchRecords() {
               </thead>
               <tbody>
                 {pagedMatches.map((m, idx) => (
-                  <React.Fragment key={m.id}>
+                  <Fragment key={m.id}>
                     <tr
                       onClick={() => setSelectedIndex((prev) => (prev === idx ? null : idx))}
                       className={`border-b border-cyan-500/10 transition-colors hover:bg-cyan-950/10 cursor-pointer ${
@@ -538,7 +538,7 @@ export default function MatchRecords() {
                         </td>
                       </tr>
                     )}
-                  </React.Fragment>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -546,7 +546,7 @@ export default function MatchRecords() {
             {/* 모바일 카드 */}
             <div className="sm:hidden flex flex-col divide-y divide-cyan-500/10">
               {pagedMatches.map((m, idx) => (
-                <React.Fragment key={m.id}>
+                <Fragment key={m.id}>
                   <div
                     onClick={() => setSelectedIndex((prev) => (prev === idx ? null : idx))}
                     className="px-4 py-4 flex flex-col gap-2 cursor-pointer active:bg-cyan-950/20"
@@ -586,7 +586,7 @@ export default function MatchRecords() {
                       />
                     </div>
                   )}
-                </React.Fragment>
+                </Fragment>
               ))}
             </div>
 

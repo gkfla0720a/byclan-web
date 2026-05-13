@@ -103,7 +103,7 @@ function MobileProfileCard({ profile, user, navigateTo }) {
         <span className="font-black text-sm text-cyan-400 truncate" style={{ textShadow: '0 0 8px rgba(0,212,255,0.4)' }}>
           {profile.by_id || 'By_????'}
         </span>
-        <span className={`text-xs font-bold ${tierColor}`}>{tier}</span>
+        <span className={`text-xs font-bold ${tierColor}`}>{tier} ({race})</span>
       </div>
       {/* 스탯 */}
       <div className="ml-auto flex gap-4 text-xs text-right shrink-0">
@@ -150,7 +150,7 @@ function HomeContent() {
   const isVisitor = userRole === 'visitor';
   
   // 클랜원(정식 멤버 이상) 여부
-  const isClanMember = ['member', 'rookie', 'elite', 'admin', 'master', 'developer'].includes(userRole);
+  // const isClanMember = ['member', 'rookie', 'elite', 'admin', 'master', 'developer'].includes(userRole);
 
   /** 페이지 이동 훅 */
   const navigateTo = useNavigate();

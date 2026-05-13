@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/context/AuthContext'; 
 import { useLadderData } from '@/hooks/useLadderData'; 
 import { getRaceIcon, getPlayerMmr } from '@/utils/profiles';
@@ -10,8 +10,8 @@ import TeamBalancePreview from '@/components/ladder/TeamBalancePreview';
 import OngoingMatchList from '@/components/ladder/OngoingMatchList';
 
 const QueueTimer = ({ joinedAt }) => {
-  const [elapsed, setElapsed] = React.useState(0);
-  React.useEffect(() => {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
     if (!joinedAt) return;
     const start = new Date(joinedAt).getTime();
     const interval = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
