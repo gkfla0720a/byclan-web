@@ -1,5 +1,5 @@
 // 파일명: src/components/ladder/OngoingMatchList.js
-import React from 'react';
+
 
 export default function OngoingMatchList({ matches, matchProfiles, currentUserId, onMatchEnter }) {
   const inProgressMatches = matches.filter(m => m.status === 'in_progress');
@@ -8,7 +8,7 @@ export default function OngoingMatchList({ matches, matchProfiles, currentUserId
   return (
     <div className="bg-[#0A1128] border border-emerald-500/30 rounded-xl overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.1)]">
       <div className="px-5 py-4 border-b border-emerald-500/30 flex items-center gap-2">
-        <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping flex-shrink-0"></span>
+        <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0"></span>
         <p className="text-emerald-400 text-sm font-bold uppercase tracking-widest">레더매치보드 — 진행 중</p>
       </div>
       <div className="divide-y divide-emerald-900/20">

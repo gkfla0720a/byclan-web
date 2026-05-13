@@ -16,7 +16,7 @@
  */
 'use client';
 
-import React from 'react';
+
 import { ROLE_PERMISSIONS, PermissionChecker as PermissionUtilsChecker } from '@/utils/permissions';
 
 /**

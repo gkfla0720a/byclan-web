@@ -30,7 +30,7 @@
  */
 'use client';
 
-import React from 'react';
+
 import logger, { Severity } from '@/utils/errorLogger';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ export class ErrorBoundary extends React.Component {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#06060a] text-gray-200">
+        <div className="min-h-screen flex items-center justify-center bg-(--bg-primary) text-gray-200">
           <div className="text-center space-y-4 p-8 max-w-md">
             <h2 className="text-xl font-semibold text-red-400">오류가 발생했습니다</h2>
             <p className="text-gray-400 text-sm">

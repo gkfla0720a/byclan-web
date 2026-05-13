@@ -1,7 +1,7 @@
 // src/app/(main)/(sidebar)/layout.js
 'use client';
 
-import React from 'react';
+
 import ProfileSidebar from '@/components/ProfileSidebar';
 import { useAuthContext } from '@/context/AuthContext';
 

@@ -1,5 +1,5 @@
 // 파일명: src/components/ladder/TeamBalancePreview.js
-import React from 'react';
+
 import { getRaceIcon, getPlayerMmr } from '@/utils/profiles';
 
 const BALANCE_THRESHOLD = 200;

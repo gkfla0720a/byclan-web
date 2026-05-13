@@ -10,7 +10,7 @@
  */
 'use client';
 
-import React from 'react';
+
 import LadderDashboard from '@/components/LadderDashboard';
 import MatchCenter from '@/components/MatchCenter';
 import LadderPreview from '@/components/LadderPreview';

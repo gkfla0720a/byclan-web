@@ -1,7 +1,7 @@
 // 파일명: src/components/MatchCenter.js
 'use client';
 
-import React from 'react';
+
 import { 
   useMatchCenter, 
   BET_AMOUNTS, 
@@ -61,7 +61,7 @@ export default function MatchCenter({ matchId, onExit }) {
       }`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            {betTimerActive && <div className="w-2 h-2 bg-red-500 rounded-full animate-ping flex-shrink-0"></div>}
+            {betTimerActive && <div className="w-2 h-2 bg-red-500 rounded-full animate-ping shrink-0"></div>}
             <span className={`font-bold text-xs uppercase tracking-widest ${betTimerActive ? 'text-yellow-500' : 'text-gray-600'}`}>
               {betTimerActive ? '💰 베팅 창 열림' : bettingDone ? '✓ 베팅 완료' : '베팅 창 종료'}
             </span>

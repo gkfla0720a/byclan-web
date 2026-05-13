@@ -8,8 +8,6 @@
  */
 'use client';
 
-import React from 'react';
-
 /**
  * ClanOverview 컴포넌트
  *

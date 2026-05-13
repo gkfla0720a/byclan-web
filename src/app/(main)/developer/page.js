@@ -9,7 +9,7 @@
  */
 'use client';
 
-import React from 'react';
+
 import DevConsole from '@/components/DevConsole';
 import PagePlaceholder from '@/views/PagePlaceholder';
 import { useAuthContext } from '@/context/AuthContext';
@@ -23,7 +23,7 @@ export default function DeveloperPage() {
   const { user } = useAuthContext();
 
   return (
-    <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
+    <main className="grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
       <div className="w-full mt-4">
         {user
           ? <DevConsole />

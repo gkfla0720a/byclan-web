@@ -21,7 +21,7 @@ function LogoutContent() {
   };
 
   return (
-    <main className="flex-grow w-full relative z-10 flex flex-col items-center justify-center px-2 sm:px-6 mb-10 max-w-6xl mx-auto min-h-[50vh]">
+    <main className="grow w-full relative z-10 flex flex-col items-center justify-center px-2 sm:px-6 mb-10 max-w-6xl mx-auto min-h-[50vh]">
       <div className="bg-gray-900/80 p-10 rounded-3xl border border-gray-700/50 shadow-2xl text-center animate-fade-in-down backdrop-blur-xl">
         <div className="text-5xl mb-4">👋</div>
         <h2 className="text-2xl sm:text-3xl font-black text-white mb-4">

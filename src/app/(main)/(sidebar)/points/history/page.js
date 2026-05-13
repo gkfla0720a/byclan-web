@@ -156,12 +156,12 @@ export default function PointHistoryPage() {
                     : 'bg-red-950/20 border-red-900/40'
                 }`}
               >
-                <span className="text-xl flex-shrink-0">{icon}</span>
+                <span className="text-xl shrink-0">{icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-bold truncate">{label}</p>
                   <p className="text-gray-500 text-xs truncate">{log.reason}</p>
                 </div>
-                <div className="text-right flex-shrink-0">
+                <div className="text-right shrink-0">
                   <p className={`font-black text-sm ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
                     {isPositive ? '+' : ''}{log.amount?.toLocaleString()} CP
                   </p>
@@ -193,14 +193,14 @@ export default function PointHistoryPage() {
 
             return (
               <div key={bet.id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-700/50 bg-gray-900/40">
-                <span className="text-xl flex-shrink-0">🎲</span>
+                <span className="text-xl shrink-0">🎲</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-bold">
                     {bet.ladder_matches?.match_type || '?'} 매치 — TEAM {bet.team_choice} 배팅
                   </p>
                   <p className={`text-xs font-bold ${statusColor}`}>{statusLabel}</p>
                 </div>
-                <div className="text-right flex-shrink-0">
+                <div className="text-right shrink-0">
                   <p className="text-white font-black text-sm">{bet.bet_amount?.toLocaleString()} CP</p>
                   {bet.payout > 0 && (
                     <p className="text-emerald-400 text-xs">수령: +{bet.payout.toLocaleString()} CP</p>

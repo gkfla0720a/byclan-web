@@ -10,7 +10,7 @@
  */
 'use client';
 
-import React from 'react';
+
 import { useRouter } from 'next/navigation'; // 💡 홈으로 가기 위해 라우터 추가
 import MyProfile from '@/components/MyProfile';
 import { useAuthContext } from '@/context/AuthContext';
@@ -41,7 +41,7 @@ export default function ProfilePage() {
 
   if (authLoading) {
     return (
-      <main className="flex-grow w-full relative z-10 flex flex-col items-center justify-center px-2 sm:px-6 mb-10 max-w-6xl mx-auto min-h-[50vh]">
+      <main className="grow w-full relative z-10 flex flex-col items-center justify-center px-2 sm:px-6 mb-10 max-w-6xl mx-auto min-h-[50vh]">
         <div className="text-gray-500 font-mono animate-pulse font-bold text-lg">
           인증 상태를 확인하고 있습니다...
         </div>
@@ -52,7 +52,7 @@ export default function ProfilePage() {
   // 비로그인, 방문자 방문 시 로그인 안내
   if (!user || profile?.role === 'visitor') {
     return (
-      <main className="flex-grow w-full relative z-10 flex flex-col items-center justify-center px-2 sm:px-6 mb-10 max-w-6xl mx-auto min-h-[50vh]">
+      <main className="grow w-full relative z-10 flex flex-col items-center justify-center px-2 sm:px-6 mb-10 max-w-6xl mx-auto min-h-[50vh]">
         <div className="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl text-center animate-fade-in-down">
           <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-yellow-600 mb-4">
             클랜원만 이용 가능합니다
@@ -87,7 +87,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="flex-grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
+    <main className="grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
       <div className="w-full mt-4">
         <SectionErrorBoundary name="프로필">
           <MyProfile />

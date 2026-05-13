@@ -12,7 +12,7 @@
 
 'use client';
 
-import React from 'react';
+
 import { useRouter } from 'next/navigation'; // useRouter 추가
 import VisitorWelcome from '@/components/VisitorWelcome';
 import { useAuthContext } from '@/context/AuthContext';
@@ -32,7 +32,7 @@ export default function JoinPage() {
   // 🛠️ 추가: 역할이 applicant(가입 대기자)인 경우 상태 확인 화면 렌더링
   if (user && profile?.role === 'applicant') {
     return (
-      <div className="flex-grow flex flex-col justify-center items-center p-4 relative z-10 min-h-[60vh]">
+      <div className="grow flex flex-col justify-center items-center p-4 relative z-10 min-h-[60vh]">
         <div className="cyber-card p-8 rounded-xl max-w-md w-full text-center">
           <div className="text-6xl mb-4">⏳</div>
           <h2 className="text-2xl font-bold text-yellow-400 mb-2">테스트 대기 중</h2>

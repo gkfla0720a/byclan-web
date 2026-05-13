@@ -1,5 +1,5 @@
 // 파일명: src/components/ladder/Warning5v5Modal.js
-import React from 'react';
+
 
 export default function Warning5v5Modal({ onAccept, onCancel }) {
   return (

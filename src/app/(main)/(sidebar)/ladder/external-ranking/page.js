@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import ExternalMatchList from '@/components/ExternalMatchList';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 

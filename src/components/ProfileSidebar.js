@@ -22,7 +22,7 @@
  */
 'use client';
 
-import React from 'react';
+
 import { useNavigate } from '@/hooks/useNavigate';
 
 /** 티어별 텍스트 색상 클래스 매핑 (Tailwind CSS 클래스 사용) */

@@ -1,4 +1,4 @@
-// 파일명: src/app/layout.js
+// 파일명: src/app/layout.jsx
 
 import "./globals.css";
 import Providers from "@/app/providers";
@@ -18,7 +18,7 @@ const notoSansKr = Noto_Sans_KR({
 export default function RootLayout({ children }) {
   return (
     <html lang="ko" className="h-full antialiased">
-      <body className={`${notoSansKr.className} min-h-full flex flex-col bg-[#06060a] text-gray-200 font-semibold relative`}>
+      <body className={`${notoSansKr.className} min-h-full flex flex-col bg-(--bg-primary) text-gray-200 font-semibold relative`}>
         <Providers>
           {children}
         </Providers>
