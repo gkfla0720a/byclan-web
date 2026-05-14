@@ -36,12 +36,13 @@ import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import type { AuthProfile as UserProfile } from '@/types/domain';
 import { extractAccountIdFromAuthUser } from '@/utils/accountId';
-import { PermissionChecker, ROLE_PERMISSIONS } from '@/utils/permissions';
+import { ROLE_PERMISSIONS } from '@/utils/permissions/role-permissions';
 import { withRetry, isRetryableError } from '@/utils/retry';
 import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '@/utils/testData';
 import logger, { Severity } from '@/utils/errorLogger';
 import { checkAndGrantDailyBonus } from '@/utils/pointSystem';
 import { ensureHomeGateAuthorized } from './useHomeGate';
+import { normalizeRole, PermissionChecker } from '@/utils/permissions/checker';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -653,30 +654,24 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const getPermissions = (): AuthPermissions => {
-    const profileRole = profile?.role;
-    const rawRole = profileRole?.toLowerCase();
-
-    // 로그인은 됐지만 role이 없거나 유효하지 않은 경우(프로필 로드 실패, 삭제된 role 등)
-    // visitor 수준으로 처리해 기능이 완전히 죽지 않게 합니다.
-    let userRole: string | undefined;
-    if (rawRole && (ROLE_PERMISSIONS as Record<string, unknown>)[rawRole]) {
-      userRole = rawRole;
-    } else if (user) {
-      userRole = 'visitor';
-    } else {
-      userRole = undefined;
-    }
-
-    const roleInfo = userRole ? (ROLE_PERMISSIONS as Record<string, unknown>)[userRole] : null;
+    const rawRole = profile?.role?.toLowerCase(); // string | undefined
+  
+    // 로그인 상태를 고려해서 visitor/undefined 정책만 결정
+    const userRole: string | undefined = rawRole ?? (user ? 'visitor' : undefined);
+  
+    // roleInfo가 필요하면 normalize 후 안전 조회
+    const effectiveRole = normalizeRole(userRole);
+    const roleInfo = ROLE_PERMISSIONS[effectiveRole];
+  
     const baseLadderPermission = PermissionChecker.hasPermission(userRole, 'ladder.play');
-
+  
     return {
-      isDeveloper: userRole === 'developer',
+      isDeveloper: effectiveRole === 'developer',
       isManagement: PermissionChecker.isInGroup(userRole, 'management'),
       isSenior: PermissionChecker.isInGroup(userRole, 'senior'),
       isMember: PermissionChecker.isInGroup(userRole, 'members'),
-      level: (roleInfo as { level?: number })?.level || 0,
-      roleInfo: roleInfo as Record<string, unknown> | null,
+      level: roleInfo.level,
+      roleInfo,
       can: {
         manageUsers: PermissionChecker.hasPermission(userRole, 'user.manage_all'),
         manageClan: PermissionChecker.hasPermission(userRole, 'clan.admin'),
