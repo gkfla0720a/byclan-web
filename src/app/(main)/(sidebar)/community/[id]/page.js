@@ -169,7 +169,7 @@ export default function PostDetailPage() {
           </div>
         </div>
         
-        <div className="p-8 min-h-[300px] text-gray-200 bg-gray-900/50 text-lg leading-relaxed">
+        <div className="p-8 min-h-75 text-gray-200 bg-gray-900/50 text-lg leading-relaxed">
           {/* 본문 텍스트 */}
           {post.content}
 

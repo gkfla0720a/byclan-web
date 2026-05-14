@@ -30,7 +30,7 @@
  */
 'use client';
 
-
+import { Component } from 'react';
 import logger, { Severity } from '@/utils/errorLogger';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ import logger, { Severity } from '@/utils/errorLogger';
  * @prop {React.ReactNode} children - 보호할 자식 컴포넌트
  * @prop {React.ReactNode} [fallback] - 오류 시 표시할 커스텀 UI (없으면 기본 오류 화면 사용)
  */
-export class ErrorBoundary extends React.Component {
+export class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
     /** 오류 상태 객체: hasError(오류 발생 여부)와 error(오류 객체) */
@@ -138,7 +138,7 @@ export class ErrorBoundary extends React.Component {
  * @prop {React.ReactNode | ((args: { error: Error, reset: () => void }) => React.ReactNode)} [fallback]
  *   - 오류 시 표시할 커스텀 UI. 함수로 전달하면 error와 reset을 인자로 받습니다.
  */
-export class SectionErrorBoundary extends React.Component {
+export class SectionErrorBoundary extends Component {
   constructor(props) {
     super(props);
     /** 오류 상태: hasError(오류 발생 여부)와 error(오류 객체) */
