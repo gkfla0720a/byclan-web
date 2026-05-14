@@ -155,7 +155,7 @@ export default function DevSettingsPanel() {
                   aria-label={`${title} ${settings[key] ? '비활성화' : '활성화'}`}
                 >
                   <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow ${
-                    settings[key] ? 'translate-x-[26px]' : 'translate-x-0.5'
+                    settings[key] ? 'translate-x-6.5' : 'translate-x-0.5'
                   }`} />
                 </button>
               </div>

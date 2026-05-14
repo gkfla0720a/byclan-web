@@ -14,7 +14,7 @@
  */
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { supabase } from '@/supabase';
 import { PermissionChecker } from '@/utils/permissions/checker';
 import { filterVisibleTestData } from '@/utils/testData';
@@ -119,8 +119,11 @@ export default function ApplicationList() {
    * 컴포넌트 마운트 시 및 activeTab이 바뀔 때마다 실행됩니다.
    * 탭이 바뀌면 해당 탭에 맞는 신청서 목록을 새로 불러옵니다.
    */
+  
   useEffect(() => {
-    checkAuthAndFetch();
+    startTransition(() => {
+      void checkAuthAndFetch();
+    });
   }, [checkAuthAndFetch]);
 
   /**
