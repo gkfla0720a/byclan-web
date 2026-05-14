@@ -15,22 +15,18 @@ ByClan 클랜 공식 홈페이지 — Next.js 16 + React 19 + Supabase
 
 ### 🗺️ 신규 개발자 학습 경로
 
-```text
 1. docs/CODE-STRUCTURE.md  → 전체 구조 파악 (텍스트)
 2. docs/VISUAL-DIAGRAMS.md → 다이어그램으로 시각화 확인
 3. docs/guides/DATABASE-GUIDE.md    → DB 스키마 이해
 4. docs/guides/ENVIRONMENT-SETUP.md → 로컬 환경 세팅
-```
 
 ## 저장소 분류
 
-```text
 docs/    → 아키텍처, 가이드, 워크로그 문서
 scripts/ → 시드, 모바일 보조, 검증 스크립트
 sql/     → 마이그레이션, RLS 정책, Advisor 대응, 운영 쿼리
 src/     → 실제 앱 코드
 public/  → 정적 자산
-```
 
 ---
 
@@ -40,23 +36,17 @@ Use Node.js 22 (see `.nvmrc`) or any Node.js version compatible with the `engine
 
 First, run the development server:
 
-```bash
 npm install
 npm run dev
-```
 
 Create a production build with:
 
-```bash
 npm run build
-```
 
 If build fails with `Cannot find native binding` from Tailwind, reinstall dependencies:
 
-```bash
 rm -rf node_modules package-lock.json
 npm install
-```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

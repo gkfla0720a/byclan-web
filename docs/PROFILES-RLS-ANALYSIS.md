@@ -10,12 +10,14 @@
 ## 📋 Executive Summary
 
 ### 현황
+
 - ❌ **RLS 미설정**: `profiles` 테이블에 명시적인 `ENABLE ROW LEVEL SECURITY` 구문 발견 불가
 - ⚠️ **정책만 존재**: UPDATE 정책 3개는 정의되어 있으나, 기본 보호 메커니즘이 부재
 - 🔴 **보안 위험**: 모든 인증된 사용자가 다른 사람의 프로필을 SELECT/INSERT할 수 있는 상태
 - 📊 **참조**: profiles 테이블은 15+개 다른 테이블의 외래 키(FK) 대상
 
 ### 우선 조치
+
 1. **즉시**: `ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;` 실행
 2. **SELECT 정책**: 모든 인증된 사용자가 조회 가능하도록 설정 (선택적으로 제한)
 3. **INSERT 정책**: 신규 사용자 프로필 자동 생성만 가능하도록 제한
@@ -25,6 +27,7 @@
 ## 1️⃣ Profiles 테이블 정의
 
 ### 테이블 구조
+
 **파일**: [src/database.sql](src/database.sql#L178-L210)
 
 ```sql
@@ -59,7 +62,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
-```
 
 ---
 
@@ -84,7 +86,6 @@ ALTER TABLE IF EXISTS public.activity_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.developer_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.match_sets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.match_bets ENABLE ROW LEVEL SECURITY;
-```
 
 ### 🔴 보안 영향
 - **현재**: RLS 미활성화 = **모든 정책이 무시됨**
@@ -110,7 +111,6 @@ CREATE POLICY "본인 프로필 수정 허용"
   TO authenticated
   USING ((SELECT auth.uid()) = id)
   WITH CHECK ((SELECT auth.uid()) = id);
-```
 
 **조건 분석**:
 - 현재 사용자의 UUID (`auth.uid()`)와 profiles.id가 동일할 때만 수정 가능
@@ -130,7 +130,6 @@ CREATE POLICY "관리자는 모든 프로필 수정 가능"
   TO authenticated
   USING ((SELECT public.is_admin()))
   WITH CHECK ((SELECT public.is_admin()));
-```
 
 **보조 함수** (`is_admin()`):
 ```sql
@@ -148,7 +147,6 @@ AS $$
       AND p.role = ANY(ARRAY['admin', 'master'])
   )
 $$;
-```
 
 **조건 분석**:
 - `is_admin()` 함수 내에서 profiles 테이블을 **자체 참조**
@@ -171,7 +169,6 @@ CREATE POLICY "심사관이 신입으로 승급 허용"
   TO authenticated
   USING ((SELECT public.fn_is_reviewer()))
   WITH CHECK ((SELECT public.fn_is_reviewer()));
-```
 
 **보조 함수** (`fn_is_reviewer()`):
 ```sql
@@ -186,7 +183,6 @@ AS $$
     ARRAY['master', 'admin', 'elite']
   )
 $$;
-```
 
 **조건 분석**:
 - `fn_is_reviewer()` → `fn_has_any_role()` 체인 호출
@@ -216,7 +212,6 @@ CREATE POLICY profiles_update ON public.profiles
     OR (SELECT auth.uid()) = id
     OR (SELECT fn_is_reviewer())
   );
-```
 
 **최적화 효과**:
 - 기존 3개 정책의 OR 조건 충돌 제거 → 쿼리 플래너 효율 향상
@@ -235,7 +230,6 @@ CREATE POLICY profiles_update ON public.profiles
 ```sql
 DROP POLICY IF EXISTS "로그인한 유저는 프로필을 볼 수 있음" ON public.profiles;
 -- ↑ 대체 정책 없이 삭제됨
-```
 
 **결과**: RLS 활성화 후 SELECT 정책이 없으면 모든 사용자가 모든 프로필 조회 불가능
 
@@ -292,7 +286,6 @@ const loadUserData = async (authUser: Record<string, unknown>) => {
 
   setProfile(nextProfile);
 }
-```
 
 ### RLS와의 상호작용
 
@@ -312,7 +305,6 @@ const { data: updatedProfile, error: updateError } = await supabase
   .eq('id', authUser.id)    // 필터: 자신의 레코드만
   .select('*')
   .single();
-```
 
 #### ✅ 결론: 무한 재귀 **없음**
 - 이유: `eq('id', authUser.id)` 필터가 명시적
@@ -327,7 +319,6 @@ const { data: updatedProfile, error: updateError } = await supabase
 
 **외래 키 관계**:
 
-```
 profiles (PK: id)
   ↑
   ├─ admin_audit_logs (actor_id)
@@ -340,7 +331,6 @@ profiles (PK: id)
   ├─ clanpoint_logs (user_id)
   ├─ posts (user_id)
   └─ (15+ 테이블)
-```
 
 ### RLS 설정 상태
 
@@ -373,7 +363,6 @@ CREATE TABLE IF NOT EXISTS public.match_bets (
 -- 정책은 정의되어 있음 (RLS 미활성화이므로 무시됨)
 CREATE POLICY "Users can insert own match bets" ON public.match_bets FOR INSERT ...
 CREATE POLICY "Users can view own match bets" ON public.match_bets FOR SELECT ...
-```
 
 ---
 
@@ -385,7 +374,6 @@ CREATE POLICY "Users can view own match bets" ON public.match_bets FOR SELECT ..
 ```sql
 -- ✅ 안전 (고정값)
 USING ((SELECT auth.uid()) = id)
-```
 - auth.uid()는 현재 사용자의 UUID (쿼리당 한 번 평가)
 - 같은 정책을 재트리거하지 않음
 
@@ -401,7 +389,6 @@ SELECT EXISTS (
     AND p.role = ANY(ARRAY['admin', 'master'])
 )
 -- 다른 행을 조회하므로 같은 정책 재트리거 안 됨
-```
 
 ### 🔴 위험 패턴 (감지되지 않음)
 
@@ -419,7 +406,6 @@ CREATE POLICY dangerous ON public.profiles
     )
   );
 -- UPDATE 정책 평가 → profiles 참조 → 같은 행의 같은 정책 다시 평가 → ...
-```
 
 ---
 
@@ -430,7 +416,6 @@ CREATE POLICY dangerous ON public.profiles
 #### 1. RLS 활성화
 ```sql
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-```
 
 **적용 파일**: `sql/migrations/` 또는 `sql/advisors/`  
 **이유**: 현재 모든 RLS 정책이 무시되고 있음
@@ -453,7 +438,6 @@ CREATE POLICY "Authenticated users can view public profile fields"
   TO authenticated
   USING (true);
   -- 하지만 by_id, race, ladder_mmr, wins, losses만 SELECT 가능하도록 column-level RLS 추가
-```
 
 **권장**: 옵션 A (현재 앱 동작과 호환)
 
@@ -473,7 +457,6 @@ CREATE POLICY "Service role can insert profiles"
   ON public.profiles
   FOR INSERT
   WITH CHECK (false);  -- 모든 사용자 차단
-```
 
 **이유**: 프로필 생성은 handle_new_user() 트리거 함수에서만 수행
 
@@ -488,7 +471,6 @@ ALTER TABLE public.match_bets ENABLE ROW LEVEL SECURITY;
 -- 기존 정책이 이미 정의되어 있으므로 활성화하면 작동 시작
 -- CREATE POLICY "Users can insert own match bets" ON public.match_bets ...
 -- CREATE POLICY "Users can view own match bets" ON public.match_bets ...
-```
 
 ---
 
@@ -498,7 +480,6 @@ ALTER TABLE public.match_bets ENABLE ROW LEVEL SECURITY;
 -- 기존 3개 분리 정책 → 1개 통합 정책
 DROP POLICY ... ON public.profiles;
 CREATE POLICY profiles_update ON public.profiles FOR UPDATE TO authenticated ...
-```
 
 ---
 
@@ -519,7 +500,6 @@ AS $$
       AND p.role = ANY(ARRAY['admin', 'master'])
   )
 $$;
-```
 
 **성능 개선 가능 사항**:
 - auth.uid() 반복 호출 → `(SELECT auth.uid())` 감싸기 (이미 적용됨)
@@ -527,14 +507,12 @@ $$;
   ```sql
   CREATE INDEX IF NOT EXISTS idx_profiles_role_id
     ON public.profiles(id, role);
-  ```
-
+  
 ---
 
 ### 🟢 모범 사례 (지속적 관리)
 
 #### 7. RLS 정책 문서화
-```
 📄 프로필 RLS 정책:
   ├─ SELECT: 모든 인증된 사용자 → 모든 프로필 조회 가능
   ├─ INSERT: 미사용 (트리거로 대체)
@@ -542,7 +520,6 @@ $$;
       ├─ 본인만 수정
       ├─ 관리자는 모든 프로필 수정
       └─ 심사관은 role 필드 수정 가능
-```
 
 ---
 
@@ -567,7 +544,6 @@ SELECT
   rowsecurity
 FROM pg_tables
 WHERE tablename = 'profiles';
-```
 
 ---
 
@@ -585,7 +561,6 @@ WHERE tablename = 'profiles';
 
 ### 종합 보안 평가
 
-```
 점수: 3/10 (위험)
 
 ✅ 긍정적:
@@ -604,7 +579,6 @@ WHERE tablename = 'profiles';
   • SELECT/INSERT 정책 추가
   • 정책 문서화
   • 정기 감시 절차 수립
-```
 
 ---
 

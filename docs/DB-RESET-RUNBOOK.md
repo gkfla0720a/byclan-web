@@ -37,27 +37,23 @@ from (
   union all select 'match_bets', count(*)::bigint from public.match_bets
 ) t
 order by table_name;
-```
 
 실행 후
 
 ```sql
 select * from public.v_integrity_gaps;
-```
 
 ```sql
 select coalesce(status, '<NULL>') as status, count(*)
 from public.ladder_matches
 group by 1
 order by 2 desc;
-```
 
 ```sql
 select coalesce(status, '<NULL>') as status, count(*)
 from public.match_sets
 group by 1
 order by 2 desc;
-```
 
 ## D. 주의사항
 

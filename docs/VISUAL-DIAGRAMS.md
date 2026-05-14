@@ -7,19 +7,6 @@ GitHub에서 자동으로 렌더링되며, 별도 도구 없이 바로 확인할
 
 ---
 
-## 목차
-
-1. [인증 흐름 (Flowchart)](#1-인증-흐름)
-2. [역할 상태 다이어그램 (State Diagram)](#2-역할-상태-다이어그램)
-3. [컴포넌트 상호작용 (Sequence Diagram)](#3-컴포넌트-상호작용)
-4. [권한 계층도 (Graph)](#4-권한-계층도)
-5. [함수 호출 계층 (Flowchart)](#5-함수-호출-계층)
-6. [데이터 레이어 관계도 (ER Diagram)](#6-데이터-레이어-관계도)
-7. [권한 검증 플로우 (Flowchart)](#7-권한-검증-플로우)
-8. [라우팅 트리 (Graph)](#8-라우팅-트리)
-
----
-
 ## 관련 문서
 
 | 문서 | 설명 |
@@ -65,7 +52,6 @@ flowchart TD
     style Q fill:#16a34a,color:#fff
     style H fill:#0284c7,color:#fff
     style M fill:#dc2626,color:#fff
-```
 
 ---
 
@@ -134,7 +120,6 @@ stateDiagram-v2
         level: 90
         clan.admin, master.delegate 가능
     end note
-```
 
 ---
 
@@ -176,7 +161,6 @@ sequenceDiagram
     Supabase-->>useAuth: 세션 삭제
     useAuth-->>AuthCtx: user = null, profile = null
     AuthCtx-->>Header: 비로그인 상태로 렌더링 갱신
-```
 
 ---
 
@@ -216,7 +200,6 @@ graph TD
     style APPL fill:#9ca3af,color:#fff
     style VISIT fill:#d1d5db
     style DEV_NOTE fill:#fbbf24
-```
 
 ---
 
@@ -254,7 +237,6 @@ flowchart TD
     style HEADER fill:#4f46e5,color:#fff
     style ROLEPERMS fill:#dc2626,color:#fff
     style GP fill:#0284c7,color:#fff
-```
 
 ---
 
@@ -326,7 +308,6 @@ erDiagram
     PROFILES ||--o{ LADDER_MATCHES : "1:N (created_by)"
     PROFILES ||--o{ NOTIFICATIONS : "1:N (user_id)"
     PROFILES ||--o{ APPLICATIONS : "1:N (user_id)"
-```
 
 ---
 
@@ -360,7 +341,6 @@ flowchart TD
     style DENY2 fill:#dc2626,color:#fff
     style DENY3 fill:#dc2626,color:#fff
     style DENY4 fill:#dc2626,color:#fff
-```
 
 ---
 
@@ -408,7 +388,6 @@ graph TD
     style DEV fill:#7c3aed,color:#fff
     style LOGIN fill:#6b7280,color:#fff
     style CALLBACK fill:#6b7280,color:#fff
-```
 
 ---
 

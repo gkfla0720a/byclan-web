@@ -4,27 +4,12 @@
 
 ---
 
-## 📌 목차
-
-1. [데이터베이스란?](#1-데이터베이스란)
-2. [ByClan이 사용하는 Supabase란?](#2-byclan이-사용하는-supabase란)
-3. [테이블 구조 상세 설명](#3-테이블-구조-상세-설명)
-4. [SQL 쿼리 파일 분석 (sql/queries/DATABASE-QUERIES.sql)](#4-sql-쿼리-파일-분석)
-5. [데이터 흐름 (어떻게 연결되나?)](#5-데이터-흐름)
-6. [RLS (행 수준 보안) 이해하기](#6-rls-행-수준-보안)
-7. [인덱스 (성능 최적화)](#7-인덱스)
-8. [Supabase 사용법 (코드에서)](#8-supabase-사용법)
-9. [장점과 단점](#9-장점과-단점)
-10. [자주 묻는 질문 (FAQ)](#10-자주-묻는-질문)
-11. [SQL 파일별 역할 요약](#11-sql-파일별-역할-요약)
-
----
-
 ## 1. 데이터베이스란?
 
 **데이터베이스(Database)**는 정보를 체계적으로 저장하고 꺼내 쓸 수 있는 "디지털 창고"입니다.
 
 엑셀 표(스프레드시트)와 비슷하게 생각하면 됩니다:
+
 - 각 **테이블(Table)** = 엑셀의 시트
 - 각 **열(Column)** = 엑셀의 컬럼 제목 (예: 이름, 나이, 역할)
 - 각 **행(Row)** = 실제 데이터 한 줄 (예: 홍길동, 25, 클랜원)
@@ -44,11 +29,11 @@
 | **Storage** | 파일 저장 | (현재 미사용) |
 
 ### 연결 방법
+
 ```javascript
 // src/supabase.js 에서 초기화
 import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(supabaseUrl, supabaseKey);
-```
 
 ---
 
@@ -193,100 +178,103 @@ ByClan 클랜원의 모든 정보를 저장합니다.
 이 파일은 **Supabase SQL Editor**에서 직접 실행하는 관리용 쿼리 모음입니다.
 
 #### 섹션 1: 프로필 테이블 스키마 확인
-```sql
+
 SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns
 WHERE table_name = 'profiles'
 ORDER BY ordinal_position;
-```
+
 → profiles 테이블에 어떤 컬럼이 있는지 확인합니다.
 → **언제 사용?** 새 기능을 추가하거나 테이블 구조가 맞는지 확인할 때
 
 #### 섹션 2: promotion_logs 테이블 생성
-```sql
+
 CREATE TABLE IF NOT EXISTS promotion_logs (...)
-```
+
 → 역할 변경 이력 테이블을 없으면 생성합니다.
 → `IF NOT EXISTS`로 이미 있어도 에러가 발생하지 않습니다.
 
 #### 섹션 3: ladder_record 구조 확인
+
 → 래더 매치 기록 테이블 컬럼 목록 확인
 
 #### 섹션 4: 역할별 사용자 확인
-```sql
+
 SELECT id, discord_name, role FROM profiles WHERE role = 'visitor';
-```
+
 → 특정 역할을 가진 사용자 목록을 봅니다.
 
 #### 섹션 5: applications 테이블 수정
-```sql
+
 ALTER TABLE applications
 ADD COLUMN IF NOT EXISTS test_result JSONB,
 ADD COLUMN IF NOT EXISTS tester_id UUID REFERENCES profiles(id),
 ADD COLUMN IF NOT EXISTS processed_at TIMESTAMP WITH TIME ZONE;
-```
+
 → 기존 테이블에 새 컬럼을 추가합니다.
 → `IF NOT EXISTS`로 이미 있어도 안전합니다.
 → `JSONB`는 JSON 데이터를 저장하는 타입입니다 (유연한 구조).
 → `REFERENCES profiles(id)`는 외래 키 제약 (profiles 테이블의 id와 연결).
 
 #### 섹션 6: 가입 신청 현황 확인
-```sql
+
 SELECT a.id, a.discord_name, a.status, a.created_at, p.role as profile_role
 FROM applications a
 LEFT JOIN profiles p ON a.user_id = p.id
 ORDER BY a.created_at DESC;
-```
+
 → `JOIN`: 두 테이블을 연결해서 함께 보여줍니다.
 → `LEFT JOIN`: 왼쪽(applications)에 데이터가 있으면 오른쪽(profiles)에 없어도 결과에 포함.
 → 신청서와 해당 사용자의 역할을 한 번에 조회합니다.
 
 #### 섹션 7: 역할별 통계
-```sql
+
 SELECT role, COUNT(*) as count,
     COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() as percentage
 FROM profiles GROUP BY role ORDER BY COUNT(*) DESC;
-```
+
 → `SUM(COUNT(*)) OVER()`: 윈도우 함수 - 전체 합계를 계산해 비율 산출
 → 각 역할의 사용자 수와 전체 대비 비율을 계산합니다.
 
 #### 섹션 8: Discord 연동 상태 확인
+
 → 역할별로 Discord 연동된 사용자 수와 비율 집계
 → `COUNT(discord_id) FILTER (WHERE discord_id IS NOT NULL)`: 조건부 카운트
 
 #### 섹션 10: 인덱스 생성
-```sql
+
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 -- 변경 필요: 개인 기준 테이블인 ladder_record 구조에 맞춘 인덱스로 재설정해야 합니다.
-```
+
 → 자주 검색하는 컬럼에 인덱스를 만들어 쿼리 속도를 높입니다.
 → `GIN 인덱스`: 배열 컬럼 검색에 최적화된 인덱스 유형
 
 #### 섹션 11: 데이터 정리 쿼리 (주의 필요!)
-```sql
+
 DELETE FROM applications
 WHERE status = '대기' AND created_at < NOW() - INTERVAL '30 days';
-```
+
 → 30일 이상 된 대기 신청을 삭제합니다.
 → ⚠️ **실행 전 반드시 백업하세요!** 삭제된 데이터는 복구 불가
 
 #### 섹션 12: 테스트 데이터 생성
+
 → 개발 환경에서 래더 매치 테스트 데이터를 추가합니다.
 → `WHERE NOT EXISTS`: 이미 데이터가 있으면 추가하지 않습니다.
 
 #### 섹션 13: RLS 정책 확인
-```sql
+
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual
 FROM pg_policies
 WHERE tablename IN ('profiles', 'applications', 'ladder_matches', 'ladders')
 ORDER BY tablename, policyname;
-```
+
 → 현재 적용된 RLS 보안 정책 목록을 확인합니다.
 
 #### 섹션 15: 백업 쿼리 (가장 중요!)
-```sql
+
 CREATE TABLE profiles_backup AS SELECT * FROM profiles;
-```
+
 → 현재 데이터를 그대로 복사한 백업 테이블을 만듭니다.
 → **중요 작업 전에 항상 실행하세요!**
 
@@ -295,7 +283,7 @@ CREATE TABLE profiles_backup AS SELECT * FROM profiles;
 ## 5. 데이터 흐름
 
 ### 신규 가입자 흐름
-```
+
 1. Discord 로그인
    ↓
 2. Supabase Auth에 사용자 등록 (auth.users 테이블)
@@ -310,10 +298,10 @@ CREATE TABLE profiles_backup AS SELECT * FROM profiles;
 5. 운영진이 승인 → profiles.role = 'applicant' → 'rookie' 또는 'member'
    ↓
 6. promotion_logs에 역할 변경 기록 저장
-```
+
 
 ### 래더 매치 흐름
-```
+
 1. 사용자가 대기열 참여 → profiles.is_in_queue = true
    ↓
 2. 충분한 인원 모이면 → ladder_matches 테이블에 새 행 생성
@@ -325,16 +313,17 @@ CREATE TABLE profiles_backup AS SELECT * FROM profiles;
    - status: '완료'
    ↓
 5. 참가자 Ladder_MMR, wins/losses 업데이트
-```
 
 ---
 
 ## 6. RLS (행 수준 보안)
 
 ### RLS란?
+
 **Row Level Security (행 수준 보안)**는 테이블의 각 행에 대한 접근을 제어합니다.
 
 예를 들어:
+
 - 내 프로필은 나만 수정 가능
 - 다른 사람의 비밀 데이터는 볼 수 없음
 - 관리자는 모든 데이터 조회 가능
@@ -358,9 +347,9 @@ create policy "Users can insert own match bets"
   for insert          -- 쓰기(INSERT) 작업에 적용
   to authenticated
   with check (auth.uid() = user_id);  -- 추가하려는 user_id가 내 것이어야 함
-```
 
 **핵심 개념:**
+
 - `auth.uid()`: 현재 로그인한 사용자의 UUID를 반환하는 함수
 - `using`: 읽기(SELECT) 조건
 - `with check`: 쓰기(INSERT/UPDATE) 조건
@@ -370,6 +359,7 @@ create policy "Users can insert own match bets"
 ## 7. 인덱스
 
 ### 인덱스란?
+
 책의 **색인(목차)**와 같습니다. 색인이 없으면 내용을 찾으려고 책 전체를 뒤져야 하지만, 색인이 있으면 바로 원하는 페이지로 이동할 수 있습니다.
 
 ### ByClan의 인덱스 목록
@@ -390,9 +380,9 @@ idx_ladder_matches_status    → 매치 상태별 필터링 최적화
 idx_ladder_matches_created_at → 매치 시간 정렬 최적화
 idx_ladder_matches_team_a    → A팀 멤버 검색 최적화 (GIN 인덱스)
 idx_ladder_matches_team_b    → B팀 멤버 검색 최적화 (GIN 인덱스)
-```
 
 **GIN 인덱스 특별 설명:**
+
 - `GIN (Generalized Inverted Index)`: 배열, JSON 등 복합 타입에 사용
 - `team_a_ids`는 UUID 배열이므로 일반 B-Tree 인덱스 불가 → GIN 사용
 - 예: "이 유저가 A팀에 있는 매치 찾기" 같은 쿼리가 매우 빠름
@@ -402,7 +392,7 @@ idx_ladder_matches_team_b    → B팀 멤버 검색 최적화 (GIN 인덱스)
 ## 8. Supabase 사용법
 
 ### 데이터 읽기 (SELECT)
-```javascript
+
 // 모든 프로필 조회
 const { data, error } = await supabase
   .from('profiles')    // 테이블 선택
@@ -415,10 +405,9 @@ const { data } = await supabase
   .eq('role', 'elite')                  // role = 'elite'인 행만
   .order('Ladder_MMR', { ascending: false })  // 래더 MMR 내림차순
   .limit(10);                           // 최대 10개만
-```
 
 ### 데이터 추가 (INSERT)
-```javascript
+
 const { error } = await supabase
   .from('profiles')
   .insert({
@@ -427,26 +416,23 @@ const { error } = await supabase
     role: 'visitor',
     Ladder_MMR: 1000,
   });
-```
 
 ### 데이터 수정 (UPDATE)
-```javascript
+
 const { error } = await supabase
   .from('profiles')
   .update({ role: 'member' })    // 변경할 값
   .eq('id', targetUserId);       // 어떤 행을 수정할지
-```
 
 ### 데이터 삭제 (DELETE)
-```javascript
+
 const { error } = await supabase
   .from('applications')
   .delete()
   .eq('id', applicationId);
-```
 
 ### 실시간 구독 (Realtime)
-```javascript
+
 // 래더 큐 변경사항을 실시간으로 받기
 const channel = supabase
   .channel('ladder-queue')
@@ -460,7 +446,6 @@ const channel = supabase
     // 화면 업데이트 처리
   })
   .subscribe();
-```
 
 ---
 
@@ -469,6 +454,7 @@ const channel = supabase
 ### 🟢 장점
 
 #### Supabase 전반
+
 | 장점 | 설명 |
 |------|------|
 | **빠른 개발** | 백엔드 서버 없이 DB + Auth + Realtime을 한 번에 제공 |
@@ -480,6 +466,7 @@ const channel = supabase
 | **TypeScript 지원** | 타입 안전성 확보 가능 |
 
 #### ByClan 데이터 설계의 장점
+
 | 장점 | 설명 |
 |------|------|
 | **UUID 기본 키** | 충돌 없는 전역 고유 ID |
@@ -495,6 +482,7 @@ const channel = supabase
 ### 🔴 단점 및 한계
 
 #### Supabase 한계
+
 | 단점 | 설명 | 해결 방법 |
 |------|------|-----------|
 | **무료 플랜 제한** | 월 50,000 행 읽기, 500MB 스토리지 한도 | 유료 플랜 업그레이드 |
@@ -503,6 +491,7 @@ const channel = supabase
 | **복잡한 RLS** | 정책이 많아지면 디버깅 어려움 | RLS 정책 최소화, 문서화 철저히 |
 
 #### ByClan 설계의 단점
+
 | 단점 | 설명 | 개선 방안 |
 |------|------|-----------|
 | **team_ids 배열** | GIN 인덱스는 B-Tree보다 느림 (write 시) | 별도 team_members 테이블 분리 고려 |
@@ -518,19 +507,25 @@ const channel = supabase
 ## 10. 자주 묻는 질문
 
 ### Q: UUID가 뭔가요?
+
 **A:** Universally Unique IDentifier의 약자로, `a1b2c3d4-e5f6-7890-abcd-ef1234567890` 같은 형태의 고유 번호입니다. 전 세계에서 겹칠 확률이 거의 0에 수렴합니다.
 
 ### Q: TIMESTAMP WITH TIME ZONE이 뭔가요?
+
 **A:** 날짜+시간+시간대 정보를 함께 저장하는 타입입니다. `2026-01-15 14:30:00+09`에서 `+09`는 한국 시간(UTC+9)을 의미합니다. 시간대를 포함하면 다른 나라 서버에서도 시간이 정확합니다.
 
 ### Q: JSONB와 JSON의 차이는?
+
 **A:** 둘 다 JSON 데이터를 저장하지만, JSONB는 저장 시 파싱해서 이진 형태로 최적화합니다. 검색/조회가 빠르고 인덱스도 걸 수 있어 JSONB를 권장합니다.
 
 ### Q: 외래 키(REFERENCES)가 뭔가요?
+
 **A:** 다른 테이블의 키를 참조하는 제약입니다. `tester_id UUID REFERENCES profiles(id)`는 "tester_id에 넣는 값은 반드시 profiles 테이블의 id에 존재해야 한다"는 규칙입니다. 없는 사용자 ID를 넣으면 오류가 발생합니다.
 
 ### Q: Supabase에서 SQL을 직접 실행하려면?
+
 **A:**
+
 1. [Supabase Dashboard](https://supabase.com/dashboard) 접속
 2. ByClan 프로젝트 선택
 3. 왼쪽 메뉴 → **SQL Editor** 클릭
@@ -550,13 +545,11 @@ const channel = supabase
 
 ### 실행 권장 순서 (처음 설정할 때)
 
-```
 1단계: sql/queries/DATABASE-QUERIES.sql (섹션 1,3,5) - 현재 구조 확인
 2단계: sql/queries/DATABASE-QUERIES.sql (섹션 2,5)  - 필요한 테이블/컬럼 추가
 3단계: sql/policies/MATCH-BETS-RLS.sql               - 보안 정책 설정
 4단계: sql/queries/DATABASE-QUERIES.sql (섹션 10)   - 인덱스 생성
 5단계: sql/migrations/TEST-DATA-SEED.sql             - 개발용 테스트 데이터 (개발 환경만)
-```
 
 > ⚠️ **주의:** 섹션 11 (데이터 삭제), 섹션 15 (백업)은 반드시 데이터 상태를 확인 후 신중하게 실행하세요.
 

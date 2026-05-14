@@ -108,7 +108,6 @@ const {
   handleSetupComplete, // 프로필 설정 완료 처리
   setIsAuthorized,   // HomeGate 인증 상태 설정
 } = useAuthContext();
-```
 
 ### getPermissions()
 
@@ -132,7 +131,6 @@ permissions.hasPermission('ladder.play')  // 특정 권한 키 확인
 permissions.hasLevel(80)                  // 최소 레벨 확인 (admin 이상)
 permissions.isInGroup('admin_group')      // 역할 그룹 확인
 permissions.canAccessMenu('/admin')       // 메뉴 접근 가능 여부
-```
 
 ### useNavigate()
 
@@ -145,7 +143,6 @@ navigateTo('랭킹');       // → /ranking
 navigateTo('BY래더);    // → /ladder
 navigateTo('관리자');      // → /admin
 navigateTo('내 프로필');      // → /profile
-```
 
 ### useToast()
 
@@ -157,7 +154,6 @@ const toast = useToast();
 toast.success('저장 완료!');
 toast.error('오류가 발생했습니다.');
 toast.info('알림: 새 메시지가 있습니다.');
-```
 
 ---
 
@@ -182,7 +178,6 @@ import ToastContainer from '@/components/ToastContainer';
 
 // Supabase Client
 import { supabase, isSupabaseConfigured } from '@/supabase';
-```
 
 ---
 
@@ -225,7 +220,6 @@ const isMemberUp  = permissions.hasLevel(35);  // rookie(35) 이상
 // ── 기능별 확인 ──
 const canPlayLadder = permissions.can.playLadder;  // 래더 참여
 const canApproveApp = permissions.can.approveMembers;  // 가입 심사
-```
 
 ---
 
@@ -253,13 +247,11 @@ async function fetchData() {
     return null;
   }
 }
-```
 
 ---
 
 ## 9️⃣ 새 페이지 추가 체크리스트
 
-```
 1. [ ] src/app/(main)/(sidebar)/[route]/page.js 생성
 2. [ ] src/views/[PageName].js 생성 (실제 콘텐츠)
 3. [ ] useNavigate.js VIEW_TO_PATH에 한국어 이름 → URL 추가
@@ -268,4 +260,3 @@ async function fetchData() {
 6. [ ] 에러 처리: SectionErrorBoundary 감싸기
 7. [ ] DB 접근 시: withRetry() + try-catch 적용
 8. [ ] 파일 상단 JSDoc 블록 작성
-```

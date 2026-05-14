@@ -10,8 +10,6 @@ ByClan Web 프로젝트를 단계별로 학습하기 위한 가이드입니다. 
 
 ## 🗺️ 학습 경로 개요
 
-```
-1단계: 구조 이해 (약 1시간)
     ↓
 2단계: 인증 흐름 (약 2시간)
     ↓
@@ -20,7 +18,6 @@ ByClan Web 프로젝트를 단계별로 학습하기 위한 가이드입니다. 
 4단계: 컴포넌트 연결 (약 2시간)
     ↓
 5단계: 실제 개발 (약 3시간+)
-```
 
 ---
 
@@ -82,8 +79,8 @@ ByClan Web 프로젝트를 단계별로 학습하기 위한 가이드입니다. 
 
 ### 핵심 코드 패턴 익히기
 
-```typescript
-// 패턴 1: useAuthContext() 사용
+## 패턴 1: useAuthContext() 사용
+
 import { useAuthContext } from '@/context/AuthContext';
 
 function MyComponent() {
@@ -94,16 +91,14 @@ function MyComponent() {
 
   return <div>안녕하세요, {profile?.ByID}님!</div>;
 }
-```
 
-```typescript
-// 패턴 2: needsSetup 확인 (신규 가입자)
+## 패턴 2: needsSetup 확인 (신규 가입자)
+
 const { needsSetup, handleSetupComplete } = useAuthContext();
 
 if (needsSetup) {
   // 프로필 설정 화면 표시
 }
-```
 
 ### 확인 포인트
 
@@ -131,34 +126,36 @@ if (needsSetup) {
 
 ### 핵심 코드 패턴 익히기
 
-```javascript
-// 패턴 1: getPermissions() 권한 객체 사용
+## 패턴 1: getPermissions() 권한 객체 사용
+
 const { getPermissions } = useAuthContext();
 const permissions = getPermissions();
 
-// can 객체로 편리하게 확인
-if (permissions.can.playLadder) { /* 래더 기능 표시 */ }
-if (permissions.can.approveMembers) { /* 심사 기능 표시 */ }
+## can 객체로 편리하게 확인
 
-// 패턴 2: 레벨 비교
-if (permissions.hasLevel(80)) { /* admin(80) 이상만 */ }
+if (permissions.can.playLadder) { 래더 기능 표시 }
+if (permissions.can.approveMembers) { 심사 기능 표시 }
 
-// 패턴 3: 메뉴 접근 체크
-if (permissions.canAccessMenu('/admin')) { /* 관리자 메뉴 표시 */ }
+## 패턴 2: 레벨 비교
 
-// 패턴 4: 특정 권한 키 확인
-if (permissions.hasPermission('tournament.create')) { /* 토너먼트 생성 버튼 */ }
+if (permissions.hasLevel(80)) { admin(80) 이상만 }
 
-// 패턴 5: 직접 역할 비교 (Header.js 스타일)
+## 패턴 3: 메뉴 접근 체크
+
+if (permissions.canAccessMenu('/admin')) { 관리자 메뉴 표시 }
+
+## 패턴 4: 특정 권한 키 확인
+
+if (permissions.hasPermission('tournament.create')) { 토너먼트 생성 버튼 }
+
+## 패턴 5: 직접 역할 비교 (Header.js 스타일)
+
 const isDeveloper = profile?.role === 'developer';
 const isAdminOrHigher = ['developer', 'master', 'admin'].includes(profile?.role);
-```
 
 ### 역할 레벨 암기표
 
-```
 developer(100) > master(90) > admin(80) > elite(60) > member(50) > rookie(35) > applicant(25) > visitor(10)
-```
 
 ### 확인 포인트
 
@@ -190,8 +187,8 @@ developer(100) > master(90) > admin(80) > elite(60) > member(50) > rookie(35) > 
 
 ### 핵심 코드 패턴 익히기
 
-```javascript
-// 패턴 1: useNavigate 훅으로 페이지 이동
+## 패턴 1: useNavigate 훅으로 페이지 이동
+
 import { useNavigate } from '@/hooks/useNavigate';
 
 function MyComponent() {
@@ -200,10 +197,9 @@ function MyComponent() {
     <button onClick={() => navigateTo('랭킹')}>랭킹 보기</button>
   );
 }
-```
 
-```javascript
-// 패턴 2: useToast 훅으로 알림 표시
+## 패턴 2: useToast 훅으로 알림 표시
+
 import { useToast } from '@/context/ToastContext';
 
 function MyComponent() {
@@ -218,10 +214,9 @@ function MyComponent() {
     }
   };
 }
-```
 
-```javascript
-// 패턴 3: SectionErrorBoundary로 에러 격리
+## 패턴 3: SectionErrorBoundary로 에러 격리
+
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 
 function MyPage() {
@@ -231,7 +226,6 @@ function MyPage() {
     </SectionErrorBoundary>
   );
 }
-```
 
 ### 확인 포인트
 
@@ -250,7 +244,6 @@ function MyPage() {
 
 ### 실습 과제 A: 새 페이지 추가 (초급)
 
-```
 목표: '이벤트' (/events) 페이지 추가하기
 
 1. src/app/(main)/(sidebar)/events/page.js 생성
@@ -258,21 +251,17 @@ function MyPage() {
 3. useNavigate.js의 VIEW_TO_PATH에 '이벤트' → '/events' 추가
 4. Header.js 또는 Sidebar.js에 메뉴 항목 추가
 5. 권한 설정: 모든 로그인 사용자가 볼 수 있도록
-```
 
 ### 실습 과제 B: 권한 기반 기능 (중급)
 
-```
 목표: '이벤트 생성' 버튼을 admin 이상만 볼 수 있게 구현
 
 1. useAuthContext()로 getPermissions() 호출
 2. permissions.hasLevel(80) 조건으로 버튼 표시 제어
 3. 서버 측에서도 RLS 정책으로 INSERT 권한 제한
-```
 
 ### 실습 과제 C: 에러 처리 통합 (고급)
 
-```
 목표: Supabase 쿼리에 완전한 에러 처리 추가
 
 1. try-catch로 쿼리 래핑
@@ -280,20 +269,20 @@ function MyPage() {
 3. withRetry()로 재시도 처리
 4. logger()로 오류 기록
 5. toast.error()로 사용자에게 알림
-```
 
 ### 개발 명령어
 
-```bash
 # 로컬 개발 서버 시작
+
 npm run dev
 
 # 코드 린트 검사
+
 npm run lint
 
 # 프로덕션 빌드 (배포 전 확인)
+
 npm run build
-```
 
 ---
 
@@ -327,18 +316,21 @@ npm run build
 학습을 완료했다면 다음 항목을 모두 할 수 있어야 합니다:
 
 ### 이해
+
 - [ ] Next.js App Router의 Route Group을 설명할 수 있다
 - [ ] Discord OAuth PKCE 흐름을 도식으로 그릴 수 있다
 - [ ] 역할 8가지와 각 레벨을 암기하고 있다
 - [ ] `getPermissions()`가 반환하는 객체 구조를 안다
 
 ### 개발
+
 - [ ] 새 페이지를 혼자 추가할 수 있다
 - [ ] 권한 체크를 올바르게 적용할 수 있다
 - [ ] 에러 처리 패턴을 적용할 수 있다
 - [ ] 주석 스타일 가이드를 따라 코드를 작성할 수 있다
 
 ### 디버깅
+
 - [ ] `authLoading`이 true일 때 UI가 어떻게 동작하는지 안다
 - [ ] `needsSetup` 상태를 트리거하는 조건을 안다
 - [ ] localStorage 키를 확인하여 개발자 설정을 점검할 수 있다
