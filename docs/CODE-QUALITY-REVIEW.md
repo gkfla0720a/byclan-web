@@ -243,7 +243,7 @@ export interface UserProfile {
   // ─── 필수 필드 (DB NOT NULL) ─────────────────────────
   id: string;           // Supabase Auth UUID (PK)
   ByID: string;         // 클랜 닉네임 (예: 'By_홍길동')
-  role: string;         // 역할 (visitor/applicant/rookie/associate/elite/admin/master/developer)
+  role: string;         // 역할 (visitor/applicant/rookie/member/elite/admin/master/developer)
   points: number;       // 클랜 활동 포인트
   Ladder_MMR: number; // 래더 레이팅 (기본값: 1000)
   is_in_queue: boolean; // 래더 대기열 상태

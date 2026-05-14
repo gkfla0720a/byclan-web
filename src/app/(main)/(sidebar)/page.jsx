@@ -7,7 +7,7 @@ import HomeContent from '@/views/HomeContent';
 
 export const metadata = {
   title: "홈 | ByClan",
-  description: "바이클랜 스타크래프트 길드 홈 화면입니다.",
+  description: "바이클랜 스타크래프트 클랜 홈 화면입니다.",
 };
 
 export default function Home() {

@@ -81,13 +81,13 @@ ladder.play
       member.mentor
          │
          ▼
-   associate(50) / member(50)
-   🛡️ 테스트 신청자 / 정식 멤버
-   ─────────────────────────
-   match.join
-   ladder.play
-   community.post
-   profile.edit
+      member(50)
+      🛡️ 테스트 신청자 / 정식 멤버
+      ─────────────────────────
+      match.join
+      ladder.play
+      community.post
+      profile.edit
          │
          ▼
       rookie(35)

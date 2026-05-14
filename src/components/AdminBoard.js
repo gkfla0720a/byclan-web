@@ -6,11 +6,11 @@
  *   - 기밀 문서(게시글) 목록 조회 및 신규 작성
  *   - 테스트 데이터 필터링 (filterVisibleTestData 적용)
  *   - 역할별 색상 뱃지 표시 (ROLE_PERMISSIONS 기반)
- *   - 길드원 관리 탭으로 이동하는 바로가기 버튼
+ *   - 클랜원 관리 탭으로 이동하는 바로가기 버튼
  * @사용방법
  *   관리자 탭 메뉴에서 렌더링됩니다.
  *   권한 없는 유저는 "CLASSIFIED INFORMATION" 차단 화면을 봅니다.
- * @관련컴포넌트 AdminMembers.js (구버전), GuildManagement.js (길드원 관리 탭)
+ * @관련컴포넌트 AdminMembers.js (구버전), GuildManagement.js (클랜원 관리 탭)
  */
 'use client';
 
@@ -223,10 +223,10 @@ export default function AdminBoard() {
         <div className="flex flex-wrap gap-3 justify-center sm:justify-end">
           {navigateTo && (
             <button
-              onClick={() => navigateTo('길드원 관리')}
+              onClick={() => navigateTo('클랜원 관리')}
               className="flex items-center gap-2 px-6 py-3 bg-cyan-500/10 border border-cyan-400/30 text-cyan-200 text-base font-bold rounded-full shadow-[0_0_15px_rgba(34,211,238,0.12)] transition-transform hover:scale-105"
             >
-              <span>👥</span> 길드원 관리
+              <span>👥</span> 클랜원 관리
             </button>
           )}
           {!isWriting && (

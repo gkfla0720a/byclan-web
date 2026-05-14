@@ -3,11 +3,11 @@
  * 역할: 정회원 전환 신청 페이지
  * URL 경로: /join/transfer
  * 주요 기능:
- *   - 신입 길드원(rookie)이 정회원(member) 전환을 신청하는 페이지
+ *   - 신입 클랜원(rookie)이 정회원(member) 전환을 신청하는 페이지
  *   - rookie_since 기준 7일 미만이면 신청 불가 (남은 일수 표시)
  *   - 이미 신청서가 존재하면 중복 신청 방지
  *   - 신청 시 admin 이상 전원에게 알림 발송
- * 접근 권한: 신입 길드원(rookie)만 해당
+ * 접근 권한: 신입 클랜원(rookie)만 해당
  */
 'use client';
 
@@ -90,7 +90,7 @@ export default function JoinTransferPage() {
         <p className="text-gray-300 leading-relaxed">
           {isMemberOrHigher
             ? '이미 정회원 이상으로 활동 중입니다. 전환 신청은 더 이상 필요하지 않습니다.'
-            : '정회원 전환 신청은 신입 길드원(rookie) 단계에서만 진행됩니다.'}
+            : '정회원 전환 신청은 신입 클랜원(rookie) 단계에서만 진행됩니다.'}
         </p>
 
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
@@ -140,7 +140,7 @@ export default function JoinTransferPage() {
         .select('id')
         .in('role', ['admin', 'master', 'developer']);
 
-      const notifMessage = `신입 길드원 ${profile.by_id}님이 정회원 전환을 신청했습니다.\n수습 시작일: ${rookieSince?.toLocaleDateString('ko-KR')}\n\n승인 또는 거부를 위해 길드원 관리 페이지에서 등급을 변경해 주세요.`;
+      const notifMessage = `신입 클랜원 ${profile.by_id}님이 정회원 전환을 신청했습니다.\n수습 시작일: ${rookieSince?.toLocaleDateString('ko-KR')}\n\n승인 또는 거부를 위해 클랜원 관리 페이지에서 등급을 변경해 주세요.`;
 
       const adminNotifs = (admins || []).map((admin) => ({
         user_id: admin.id,
@@ -230,7 +230,7 @@ export default function JoinTransferPage() {
         )}
 
         <p className="text-xs text-gray-600 mt-4 text-center">
-          master는 수습 기간에 관계없이 길드원 관리에서 즉시 승급할 수 있습니다.
+          master는 수습 기간에 관계없이 클랜원 관리에서 즉시 승급할 수 있습니다.
         </p>
       </div>
     </div>

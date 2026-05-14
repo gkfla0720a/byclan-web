@@ -72,12 +72,12 @@ export default function CommunityBoard() {
   const handleWriteClick = () => {
     // 1. 로그인을 아예 안 한 경우 (Visitor 등)
     if (!user) {
-      alert('로그인한 길드원 만 작성 가능합니다. 먼저 로그인을 해주세요!');
+      alert('로그인한 클랜원 만 작성 가능합니다. 먼저 로그인을 해주세요!');
       return;
     }
     // 2. 로그인은 했지만 권한이 부족한 경우 (Applicant 등)
     if (!canWrite) {
-      alert('신입길드원 이상만 작성 가능합니다. 테스트 통과를 기원합니다!');
+      alert('신입클랜원 이상만 작성 가능합니다. 테스트 통과를 기원합니다!');
       return;
     }
     // 3. 통과한 경우 글쓰기 페이지로 이동

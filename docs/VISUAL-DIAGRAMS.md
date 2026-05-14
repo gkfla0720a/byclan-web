@@ -79,12 +79,10 @@ stateDiagram-v2
     visitor --> applicant : Discord 로그인 + 가입 신청
 
     applicant --> rookie : 운영진 승인\n(admin / elite 이상)
-    applicant --> visitor : 가입 거절
+    applicant --> applicant : 가입 거절(변동 없음)
 
-    rookie --> associate : 정회원 전환 신청\n+ 운영진 승인
     rookie --> member : 정회원 전환 신청\n+ 운영진 승인
 
-    associate --> elite : 활동 기여 + 운영진 승인\n(level 50 → 60)
     member --> elite : 활동 기여 + 운영진 승인\n(level 50 → 60)
 
     elite --> admin : master 이상 임명\n(level 60 → 80)
@@ -92,7 +90,7 @@ stateDiagram-v2
 
     master --> admin : 강등\n(level 90 → 80)
     admin --> elite : 강등\n(level 80 → 60)
-    elite --> associate : 강등 (level 60 → 50)
+    elite --> member : 강등 (level 60 → 50)
 
     note right of developer
         개발자 역할은 별도 채널로 부여됩니다.
@@ -117,7 +115,7 @@ stateDiagram-v2
         ladder.play 가능
     end note
 
-    note right of associate
+    note right of member
         level: 50
         community.post, profile.edit 가능
     end note
@@ -198,7 +196,7 @@ graph TD
 
     ROOT --> ELITE["⭐ elite (level 60)\nmember.approve\nmatch.host\ntournament.join\nmember.mentor"]
 
-    ROOT --> ASSOC["🛡️ associate / member (level 50)\nmatch.join\nladder.play\ncommunity.post\nprofile.edit"]
+    ROOT --> MMBER["🛡️ member (level 50)\nmatch.join\nladder.play\ncommunity.post\nprofile.edit"]
 
     ROOT --> ROOKIE["🆕 rookie (level 35)\nmatch.view\ncommunity.view\nladder.play\n⚠️ Discord 연동 필수"]
 
@@ -213,7 +211,7 @@ graph TD
     style MASTER fill:#b45309,color:#fff
     style ADMIN fill:#1d4ed8,color:#fff
     style ELITE fill:#0f766e,color:#fff
-    style ASSOC fill:#15803d,color:#fff
+    style MMBER fill:#15803d,color:#fff
     style ROOKIE fill:#6b7280,color:#fff
     style APPL fill:#9ca3af,color:#fff
     style VISIT fill:#d1d5db
@@ -401,7 +399,7 @@ graph TD
     POINTS --> HIST["/points/history\n포인트 내역"]
 
     ADMIN --> APPS["/admin/applications\n가입 심사"]
-    ADMIN --> GUILD["/admin/guild\n길드원 관리"]
+    ADMIN --> GUILD["/admin/guild\n클랜원 관리"]
 
     style ROOT fill:#4f46e5,color:#fff
     style MAIN fill:#1d4ed8,color:#fff

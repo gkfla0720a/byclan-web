@@ -12,7 +12,6 @@ export type UserRole =
   | 'member'
   | 'rookie'
   | 'applicant'
-  | 'associate'
   | 'visitor'
   | 'guest'
   | 'expelled'

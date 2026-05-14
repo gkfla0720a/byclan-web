@@ -150,16 +150,14 @@
     [*] --> visitor : 첫 방문
     visitor --> applicant : Discord 로그인 + 가입 신청
     applicant --> rookie : 운영진 승인
-    applicant --> visitor : 가입 거절
-    rookie --> associate : 정회원 전환 신청 + 승인
+    applicant --> applicant : 가입 거절(유지)
     rookie --> member : 정회원 전환 신청 + 승인
-    associate --> elite : 활동 기여 + 운영진 승인
     member --> elite : 활동 기여 + 운영진 승인
     elite --> admin : master 이상 임명
     admin --> master : master 위임
     master --> admin : 강등
     admin --> elite : 강등
-    elite --> associate : 강등`,
+    elite --> member : 강등`,
       },
       {
         id: 'sequence',
@@ -196,7 +194,7 @@
     ROOT --> MASTER["👑 master (90)\\nclan.admin / master.delegate\\ntournament.create / ladder.admin"]
     ROOT --> ADMIN["🛡️ admin (80)\\nmember.approve / member.manage\\nmatch.manage / ladder.moderate"]
     ROOT --> ELITE["⭐ elite (60)\\nmember.approve / match.host\\ntournament.join / member.mentor"]
-    ROOT --> ASSOC["🛡️ associate / member (50)\\nmatch.join / ladder.play\\ncommunity.post / profile.edit"]
+    ROOT --> MMBER["🛡️ member (50)\\nmatch.join / ladder.play\\ncommunity.post / profile.edit"]
     ROOT --> ROOKIE["🆕 rookie (35)\\nmatch.view / community.view\\nladder.play (Discord 필수)"]
     ROOT --> APPL["📝 applicant (25)\\nmatch.view / community.view\\napplication.track"]
     ROOT --> VISIT["👤 visitor (10)\\nmatch.view / community.view(제한)\\napplication.submit"]`,

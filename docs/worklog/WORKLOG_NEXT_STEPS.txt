@@ -38,9 +38,8 @@ Completed in this phase
 - Normalized ladder score wording to MMR and 점.
 
 8) Role terminology and visibility fixes
-- Renamed associate display from 준회원 to 테스트신청자.
 - Formalized member as 일반 클랜원.
-- Excluded associate/test applicants from the public clan member directory.
+- Excluded test applicants from the public clan member directory.
 - Included member role consistently in member-facing surfaces so accounts like test7/test8 are no longer omitted.
 
 9) Admin/member management improvements
@@ -89,7 +88,6 @@ Recommended next work
 5) Add regression tests or at least a repeatable checklist for role-sensitive flows.
 - Developer immutability
 - Master delegation re-auth requirement
-- Associate visibility exclusion from clan member directory
 - Member visibility inclusion across directory/profile/sidebar surfaces
 
 6) Consider DB/RLS hardening for profiles role updates.

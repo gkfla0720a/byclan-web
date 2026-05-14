@@ -103,7 +103,7 @@ export default function DevSettingsPanel() {
     {
       key: 'canManageMembers',
       title: '멤버 관리 권한',
-      desc: '길드원 등급 변경 및 관리',
+      desc: '클랜원 등급 변경 및 관리',
     },
     {
       key: 'canDelegateMaster',

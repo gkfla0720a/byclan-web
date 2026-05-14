@@ -157,7 +157,7 @@ const isAdminOrHigher = ['developer', 'master', 'admin'].includes(profile?.role)
 ### 역할 레벨 암기표
 
 ```
-developer(100) > master(90) > admin(80) > elite(60) > associate/member(50) > rookie(35) > applicant(25) > visitor(10)
+developer(100) > master(90) > admin(80) > elite(60) > member(50) > rookie(35) > applicant(25) > visitor(10)
 ```
 
 ### 확인 포인트

@@ -21,7 +21,7 @@ import { useNavigate } from '@/hooks/useNavigate';
 const ROLE_LABELS = {
   visitor: '방문자',
   applicant: '신규 가입자',
-  rookie: '신입 길드원',
+  rookie: '신입 클랜원',
   member: '일반 클랜원',
   elite: '정예 멤버',
   admin: '운영진',
@@ -512,10 +512,10 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
                 <StepItem number="2" title="테스트 진행" description="실력 테스트 및 면접"
                   done={isRookieOrHigher}
                   active={isApplied} />
-                <StepItem number="3" title="신입 길드원" description="Discord 연동 및 2주 활동"
+                <StepItem number="3" title="신입 클랜원" description="Discord 연동 및 2주 활동"
                   done={['member','elite','admin','master','developer'].includes(currentRole)}
                   active={currentRole === 'rookie'} />
-                <StepItem number="4" title="정식 길드원" description="모든 클랜 활동 참여 가능"
+                <StepItem number="4" title="정식 클랜원" description="모든 클랜 활동 참여 가능"
                   done={['member','elite','admin','master','developer'].includes(currentRole)}
                   active={false} />
               </div>
@@ -531,7 +531,7 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
                     <p>배틀태그, 주 활동 시간, 연락 가능한 번호를 정확하게 적어주세요.</p>
                     <p>자기소개와 가입 동기는 운영진이 실제로 읽고 심사에 참고합니다. 간단해도 실제 플레이 스타일이 드러나는 편이 좋습니다.</p>
                     <p>테스트 불합격 후 3일 후에 다시 테스트를 볼 수 있습니다.</p>
-                    <p>합격하시면 신입길드원으로 2주간 적응기간을 갖게 됩니다. 그동안 레더 게임과 디스코드 활동을 통해 클랜원들과 즐겁게 팀워크를 맞춰보시길 바라겠습니다.</p>
+                    <p>합격하시면 신입클랜원으로 2주간 적응기간을 갖게 됩니다. 그동안 레더 게임과 디스코드 활동을 통해 클랜원들과 즐겁게 팀워크를 맞춰보시길 바라겠습니다.</p>
                     <p>신청 후에는 프로필 권한이 applicant로 바뀌며, 심사 결과는 알림과 운영진 처리 내역으로 반영됩니다.</p>
                   </>
                 ) : (
@@ -539,7 +539,7 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
                     <p>ByClan은 래더 참여, 공지 확인, 커뮤니티 활동이 꾸준한 유저를 선호합니다.</p>
                     <p>가입 신청 전에는 로그인과 기본 프로필 설정이 먼저 필요합니다.</p>
                     <p>테스트 불합격 후 3일 후에 다시 테스트를 볼 수 있습니다.</p>
-                    <p>합격하시면 신입길드원으로 2주간 적응기간을 갖게 됩니다. 그동안 레더 게임과 디스코드 활동을 통해 클랜원들과 즐겁게 팀워크를 맞춰보시길 바라겠습니다.</p>
+                    <p>합격하시면 신입클랜원으로 2주간 적응기간을 갖게 됩니다. 그동안 레더 게임과 디스코드 활동을 통해 클랜원들과 즐겁게 팀워크를 맞춰보시길 바라겠습니다.</p>
                     <p>테스트 합격 후에는 Discord 연동과 기본 클랜 활동을 통해 정식 멤버 단계로 올라가게 됩니다.</p>
                   </>
                 )}

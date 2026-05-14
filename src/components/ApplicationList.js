@@ -10,7 +10,7 @@
  * @사용방법
  *   member.approve 권한을 가진 운영진에게만 표시됩니다.
  *   탭을 전환하면 해당 상태의 신청서 목록이 새로 로드됩니다.
- * @관련컴포넌트 AdminBoard.js (기밀 게시판), GuildManagement.js (길드원 관리)
+ * @관련컴포넌트 AdminBoard.js (기밀 게시판), GuildManagement.js (클랜원 관리)
  */
 'use client';
 

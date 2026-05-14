@@ -1,9 +1,9 @@
 /**
  * @file GuildManagement.js
- * @역할 길드원(클랜원) 관리 페이지 컴포넌트
+ * @역할 클랜원(클랜원) 관리 페이지 컴포넌트
  * @주요기능
- *   - 길드원 목록 조회 및 등급 변경 (applicant/rookie/member/elite/admin)
- *   - 길드원 제명 처리 (role을 'expelled'로 변경)
+ *   - 클랜원 목록 조회 및 등급 변경 (applicant/rookie/member/elite/admin)
+ *   - 클랜원 제명 처리 (role을 'expelled'로 변경)
  *   - 마스터 위임 기능: 비밀번호 재인증 또는 이메일 OTP 인증 후 위임 가능
  *   - 테스트 계정 필터링 지원 (profile_meta 조인 후 클라이언트 측 필터링)
  *   - 역할별 색상/아이콘 표시 (ROLE_PERMISSIONS 기반)
@@ -45,13 +45,13 @@ const createVerificationState = (email = '', phone = '') => ({
   success: '',
 });
 
-// 사이버틱 길드원 관리 컴포넌트
+// 사이버틱 클랜원 관리 컴포넌트
 /**
  * GuildManagement 컴포넌트
- * 길드원 목록을 관리하고 등급 변경/제명/마스터 위임 기능을 제공합니다.
+ * 클랜원 목록을 관리하고 등급 변경/제명/마스터 위임 기능을 제공합니다.
  */
 export default function GuildManagement() {
-  /** 길드원 목록 (visitor, expelled 제외) */
+  /** 클랜원 목록 (visitor, expelled 제외) */
   const [members, setMembers] = useState([]);
   /** 데이터를 불러오는 중인지 여부 */
   const [loading, setLoading] = useState(true);
@@ -61,13 +61,13 @@ export default function GuildManagement() {
    * 등급 변경 또는 제명 모달 상태
    * - isOpen: 모달 열림 여부
    * - action: 'role'(등급 변경) 또는 'remove'(제명)
-   * - member: 처리 대상 길드원 객체
+   * - member: 처리 대상 클랜원 객체
    */
   const [actionModal, setActionModal] = useState({ isOpen: false, action: '', member: null });
   /**
    * 마스터 위임 모달 상태
    * - isOpen: 모달 열림 여부
-   * - member: 위임 대상 길드원 객체
+   * - member: 위임 대상 클랜원 객체
    */
   const [masterDelegation, setMasterDelegation] = useState({ isOpen: false, member: null });
   /** 등급 변경 모달에서 선택 중인 새 역할값 */
@@ -77,7 +77,7 @@ export default function GuildManagement() {
 
   /**
    * 수습 기간(2주)이 경과했지만 아직 운영진에게 검토 알림이 발송되지 않은
-   * 신입 길드원(rookie)을 찾아 admin 이상 전체에게 알림을 보냅니다.
+   * 신입 클랜원(rookie)을 찾아 admin 이상 전체에게 알림을 보냅니다.
    * 중복 발송을 막기 위해 알림 제목에 rookie ID를 포함하여 존재 여부를 확인합니다.
    * @async
    * @param {string} currentUserId - 현재 로그인한 관리자 ID
@@ -120,7 +120,7 @@ export default function GuildManagement() {
         const notifRows = admins.map((admin) => ({
           user_id: admin.id,
           title: notifTitle,
-          message: `신입 길드원 ${rookie.by_id}님의 2주 수습 기간이 완료되었습니다.\n클랜 생활 지속 여부를 결정해주세요.\n\n• 승인 → 길드원 관리에서 등급 변경\n• 거부 → 길드원 관리에서 제명 처리`,
+          message: `신입 클랜원 ${rookie.by_id}님의 2주 수습 기간이 완료되었습니다.\n클랜 생활 지속 여부를 결정해주세요.\n\n• 승인 → 클랜원 관리에서 등급 변경\n• 거부 → 클랜원 관리에서 제명 처리`,
         }));
 
         await supabase.from('notifications').insert(notifRows);
@@ -173,7 +173,7 @@ export default function GuildManagement() {
   }, []);
 
   /**
-   * Supabase에서 길드원 목록을 불러옵니다.
+   * Supabase에서 클랜원 목록을 불러옵니다.
    * visitor와 expelled 역할은 제외하며, 테스트 계정도 필터링됩니다.
    * @async
    */
@@ -200,14 +200,14 @@ export default function GuildManagement() {
       );
       setMembers(flat);
     } catch (error) {
-      console.error('길드원 목록 로드 실패:', error);
+      console.error('클랜원 목록 로드 실패:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
   /**
-   * 컴포넌트가 처음 마운트될 때 관리자 정보와 길드원 목록을 병렬로 불러옵니다.
+   * 컴포넌트가 처음 마운트될 때 관리자 정보와 클랜원 목록을 병렬로 불러옵니다.
    * 데이터 로드 완료 후 수습 기간 알림을 자동으로 확인합니다.
    */
   useEffect(() => {
@@ -219,12 +219,12 @@ export default function GuildManagement() {
   }, [loadCurrentManager, fetchMembers]);
 
   /**
-   * 특정 길드원의 역할(등급)을 변경합니다.
+   * 특정 클랜원의 역할(등급)을 변경합니다.
    * 'master' 역할로의 직접 변경은 허용되지 않습니다. (위임 절차 사용)
    * rookie로 진입하면 rookie_since를 현재 시각으로 기록하고,
    * rookie에서 다른 역할로 이동하면 rookie_since를 초기화합니다.
    * @async
-   * @param {string} memberId - 등급을 변경할 길드원의 ID
+   * @param {string} memberId - 등급을 변경할 클랜원의 ID
    * @param {string} newRole - 새로 적용할 역할 문자열
    * @param {string} [previousRole] - 변경 전 역할 (rookie_since 처리에 사용)
    */
@@ -273,7 +273,7 @@ export default function GuildManagement() {
   /**
    * master 전용: 수습 기간 조건에 관계없이 rookie를 즉시 정회원(member)으로 승급합니다.
    * @async
-   * @param {object} member - 승급 대상 길드원 객체
+   * @param {object} member - 승급 대상 클랜원 객체
    */
   const handleForcePromoteToMember = async (member) => {
     if (!window.confirm(`${member.by_id}님을 수습 기간에 관계없이 즉시 정회원으로 승급하시겠습니까?`)) return;
@@ -298,7 +298,7 @@ export default function GuildManagement() {
       await supabase.from('notifications').insert({
         user_id: member.id,
         title: '🎉 정회원 승급 알림',
-        message: `마스터에 의해 즉시 정회원으로 승급되었습니다. ByClan의 정식 길드원이 된 것을 축하합니다!`,
+        message: `마스터에 의해 즉시 정회원으로 승급되었습니다. ByClan의 정식 클랜원이 된 것을 축하합니다!`,
       });
 
       await fetchMembers();
@@ -310,10 +310,10 @@ export default function GuildManagement() {
 
 
   /**
-   * 특정 길드원을 제명 처리합니다.
+   * 특정 클랜원을 제명 처리합니다.
    * 제명은 role을 'expelled'로 변경하는 방식으로 처리됩니다.
    * @async
-   * @param {string} memberId - 제명할 길드원의 ID
+   * @param {string} memberId - 제명할 클랜원의 ID
    */
   const handleRemoveMember = async (memberId) => {
     try {
@@ -335,10 +335,10 @@ export default function GuildManagement() {
   };
 
   /**
-   * 현재 마스터를 admin으로 강등하고, 대상 길드원을 새 마스터로 승급합니다.
+   * 현재 마스터를 admin으로 강등하고, 대상 클랜원을 새 마스터로 승급합니다.
    * master.delegate 권한과 5분 이내 재인증이 반드시 필요합니다.
    * @async
-   * @param {string} targetId - 마스터로 위임할 길드원의 ID
+   * @param {string} targetId - 마스터로 위임할 클랜원의 ID
    */
   const handleMasterDelegation = async (targetId) => {
     const now = Date.now();
@@ -533,7 +533,7 @@ export default function GuildManagement() {
 
   /**
    * 마스터 위임 모달을 열고 재인증 상태를 초기화합니다.
-   * @param {object} member - 위임 대상 길드원 객체
+   * @param {object} member - 위임 대상 클랜원 객체
    */
   const openMasterDelegationModal = (member) => {
     setMasterDelegation({ isOpen: true, member });
@@ -554,7 +554,7 @@ export default function GuildManagement() {
     Date.now() - delegationVerification.verifiedAt <= DELEGATION_VERIFY_WINDOW_MS
   );
 
-  /** 현재 관리자가 길드원 관리 권한을 가지고 있는지 여부 */
+  /** 현재 관리자가 클랜원 관리 권한을 가지고 있는지 여부 */
   const canManageMembers = PermissionChecker.hasPermission(currentManager.role, 'member.manage');
   /** 현재 관리자가 마스터 위임 권한을 가지고 있는지 여부 */
   const canDelegateMaster = PermissionChecker.hasPermission(currentManager.role, 'master.delegate');
@@ -590,8 +590,8 @@ export default function GuildManagement() {
       <div className="w-full py-20 px-4">
         <div className="rounded-3xl border border-red-500/30 bg-gray-950/80 px-8 py-12 text-center shadow-2xl">
           <div className="text-5xl mb-4">🚫</div>
-          <h2 className="text-3xl font-black text-red-400 mb-4">길드원 관리 권한 없음</h2>
-          <p className="text-gray-300">현재 계정에는 길드원 관리 권한이 없어 이 화면에 접근할 수 없습니다.</p>
+          <h2 className="text-3xl font-black text-red-400 mb-4">클랜원 관리 권한 없음</h2>
+          <p className="text-gray-300">현재 계정에는 클랜원 관리 권한이 없어 이 화면에 접근할 수 없습니다.</p>
         </div>
       </div>
     );
@@ -601,12 +601,12 @@ export default function GuildManagement() {
     <div className="w-full py-8 px-4">
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-purple-600 mb-2">
-          길드원 관리
+          클랜원 관리
         </h1>
-        <p className="text-gray-400">길드원 등급 변경, 제명, 마스터 위임 등의 관리 기능</p>
+        <p className="text-gray-400">클랜원 등급 변경, 제명, 마스터 위임 등의 관리 기능</p>
       </div>
 
-      {/* 길드원 목록 */}
+      {/* 클랜원 목록 */}
       <div className="bg-gray-900 border border-cyan-500/30 rounded-xl overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -720,8 +720,8 @@ export default function GuildManagement() {
                 >
                    <option value="applicant">신규 가입자</option>
                   <option value="member">일반 클랜원</option>
-                  <option value="rookie">신입 길드원</option>
-                  <option value="elite">정예 길드원</option>
+                  <option value="rookie">신입 클랜원</option>
+                  <option value="elite">정예 클랜원</option>
                   <option value="admin">관리자</option>
                 </select>
                 <p className="text-xs text-yellow-300/80">

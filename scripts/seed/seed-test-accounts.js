@@ -48,12 +48,12 @@ const REAL = {
 // 조건:
 // - developer/master 제외
 // - 모든 직급 2명 이상
-// - 일반 길드원(member) 다수
+// - 일반 클랜원(member) 다수
 // - 래더 가능 직급(admin/elite/member/rookie) 최소 14명 이상
 const ROLE_BLUEPRINT = [
   { role: 'admin', count: 2, mmr: 1450, point: 2600, intro: '테스트 관리자 계정입니다.' },
   { role: 'elite', count: 4, mmr: 1350, point: 2200, intro: '테스트 정예 계정입니다.' },
-  { role: 'member', count: 16, mmr: 1250, point: 2000, intro: '테스트 일반 길드원 계정입니다.' },
+  { role: 'member', count: 16, mmr: 1250, point: 2000, intro: '테스트 일반 클랜원 계정입니다.' },
   { role: 'rookie', count: 4, mmr: 1120, point: 1500, intro: '테스트 루키 계정입니다.' },
   { role: 'applicant', count: 2, mmr: 1000, point: 1000, intro: '테스트 가입 신청자 계정입니다.' },
   { role: 'visitor', count: 2, mmr: 1000, point: 1000, intro: '테스트 방문자 계정입니다.' },
@@ -120,7 +120,7 @@ function validateTesterComposition(testers) {
   }
 
   if ((roleCounts.member || 0) <= 10) {
-    throw new Error('일반 길드원(member) 비중이 충분하지 않습니다.');
+    throw new Error('일반 클랜원(member) 비중이 충분하지 않습니다.');
   }
 }
 

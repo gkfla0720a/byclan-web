@@ -77,7 +77,7 @@ export default function PostDetailPage() {
   // --- 이벤트 핸들러 ---
   const handleCommentSubmit = async () => {
     if (!comment) return;
-    if (!user) return alert('로그인한 길드원만 작성 가능합니다!');
+    if (!user) return alert('로그인한 클랜원만 작성 가능합니다!');
     
     const { error } = await supabase.from('comments').insert([{ post_id: postId, user_id: user.id, content: comment }]);
     if (!error) {
@@ -112,7 +112,7 @@ export default function PostDetailPage() {
   };
 
   const handleVote = async (type) => {
-    if (!user) return alert('로그인한 길드원만 투표가 가능합니다!');
+    if (!user) return alert('로그인한 클랜원만 투표가 가능합니다!');
 
     try {
       // 1. 화면의 숫자를 즉각적으로 바꿔주기 위한 임시 계산

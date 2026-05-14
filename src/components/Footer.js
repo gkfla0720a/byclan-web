@@ -78,7 +78,7 @@ export default function Footer() {
                 ByClan
               </span>
             </div>
-            <p className="text-gray-500 text-sm">스타크래프트 리마스터 빠른무한 공식 길드</p>
+            <p className="text-gray-500 text-sm">스타크래프트 리마스터 빠른무한 공식 클랜</p>
             <p className="text-gray-600 text-xs">© 2026 ByClan. All rights reserved.</p>
 
             {/* 후원 계좌 박스 */}

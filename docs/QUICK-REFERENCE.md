@@ -10,8 +10,8 @@
 
 ## 1️⃣ 권한 매트릭스
 
-| 권한 키 | developer | master | admin | elite | associate/member | rookie | applicant | visitor |
-|--------|:---------:|:------:|:-----:|:-----:|:----------------:|:------:|:---------:|:-------:|
+| 권한 키 | developer | master | admin | elite | member | rookie | applicant | visitor |
+|--------|:---------:|:------:|:-----:|:-----:|:-------:|:------:|:---------:|:-------:|
 | `system.admin` | ✅ | | | | | | | |
 | `database.modify` | ✅ | | | | | | | |
 | `code.deploy` | ✅ | | | | | | | |
@@ -54,9 +54,8 @@
 | `master` | 90 | 👑 | 클랜 총괄 운영 |
 | `admin` | 80 | 🛡️ | 클랜 일반 운영 |
 | `elite` | 60 | ⭐ | 클랜 경험 멤버 |
-| `associate` | 50 | 🛡️ | 테스트 신청자 |
 | `member` | 50 | 🛡️ | 정식 멤버 |
-| `rookie` | 35 | 🆕 | 신입 길드원 |
+| `rookie` | 35 | 🆕 | 신입 클랜원 |
 | `applicant` | 25 | 📝 | 가입 신청자 |
 | `visitor` | 10 | 👤 | 비로그인 방문자 |
 
@@ -80,7 +79,7 @@
 | `경기기록` | `/matches` | (main)/(sidebar) |
 | `가입 심사` | `/admin/applications` | (main)/admin |
 | `관리자` / `운영진게시판` | `/admin` | (main)/admin |
-| `길드원 관리` | `/admin/guild` | (main)/admin |
+| `클랜원 관리` | `/admin/guild` | (main)/admin |
 | `개발자` | `/developer` | (main) |
 | `프로필` | `/profile` | (main) |
 | `알림` | `/notifications` | (main) |
@@ -216,7 +215,7 @@ const isVisitor      = !profile || role === 'visitor';
 // ── 역할 그룹 확인 ──
 const isAdminOrHigher  = ['developer', 'master', 'admin'].includes(role);
 const isEliteOrHigher  = ['developer', 'master', 'admin', 'elite'].includes(role);
-const isMemberOrHigher = ['developer', 'master', 'admin', 'elite', 'associate', 'member', 'rookie'].includes(role);
+const isMemberOrHigher = ['developer', 'master', 'admin', 'elite', 'member', 'rookie'].includes(role);
 
 // ── 레벨 비교 ──
 const canManage   = permissions.hasLevel(80);  // admin(80) 이상

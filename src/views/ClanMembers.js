@@ -3,7 +3,7 @@
  *
  * 역할:
  *   클랜원 명단 views 컴포넌트입니다.
- *   운영진·정예 길드원·일반 길드원 세 섹션으로 멤버를 분류하여 테이블로 보여줍니다.
+ *   운영진·정예 클랜원·일반 클랜원 세 섹션으로 멤버를 분류하여 테이블로 보여줍니다.
  *
  * 주요 기능:
  *   - profiles 테이블에서 visitor·applicant·expelled를 제외한 멤버를 불러옵니다.
@@ -28,17 +28,17 @@ const CACHE_KEY = 'members_list';
 
 const ROLE_SECTIONS = [
   { key: 'leadership', title: '운영진', roles: ['developer', 'master', 'admin'] },
-  { key: 'elite', title: '정예 길드원', roles: ['elite'] },
-  { key: 'members', title: '길드원', roles: ['member', 'rookie', 'associate'] },
+  { key: 'elite', title: '정예 클랜원', roles: ['elite'] },
+  { key: 'members', title: '클랜원', roles: ['member', 'rookie'] },
 ];
 
-const VISIBLE_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie', 'associate'];
+const VISIBLE_LADDER_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie'];
 const INLINE_ROLE_OPTIONS = [
-  { value: 'applicant', label: '신규 가입자' },
-  { value: 'member', label: '일반 클랜원' },
-  { value: 'rookie', label: '신입 길드원' },
-  { value: 'elite', label: '정예 길드원' },
   { value: 'admin', label: '관리자' },
+  { value: 'elite', label: '정예 클랜원' },
+  { value: 'member', label: '일반 클랜원' },
+  { value: 'rookie', label: '신입 클랜원' },
+  { value: 'applicant', label: '신규 가입자' },
 ];
 
 /**
@@ -225,7 +225,7 @@ export default function ClanMembers() {
         const processed = applyDemoStreamers(
           (data || [])
             .map(normalizeMemberRole)
-            .filter((member) => member && member.id && VISIBLE_MEMBER_ROLES.includes(member.role))
+            .filter((member) => member && member.id && VISIBLE_LADDER_MEMBER_ROLES.includes(member.role))
         );
         setCached(CACHE_KEY, processed);
         setMembers(processed);
@@ -244,7 +244,7 @@ export default function ClanMembers() {
 
   /** 멤버 총 인원 수 */
   const totalMembers = members.length;
-  /** 정예 길드원(elite) 수 */
+  /** 정예 클랜원(elite) 수 */
   const eliteCount = members.filter((member) => member.role === 'elite').length;
   /** BJ/스트리머로 등록된 멤버 수 */
   const streamerCount = members.filter((member) => Boolean(member.is_streamer)).length;
@@ -272,7 +272,7 @@ export default function ClanMembers() {
     }
 
     if (member.role === 'master' || nextRole === 'master') {
-      alert('마스터 변경은 길드원 관리 화면에서 진행하세요.');
+      alert('마스터 변경은 클랜원 관리 화면에서 진행하세요.');
       return;
     }
 
@@ -328,7 +328,7 @@ export default function ClanMembers() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="총 인원" value={`${totalMembers}명`} accent="text-white" />
-        <StatCard label="정예 길드원" value={`${eliteCount}명`} accent="text-cyan-400" />
+        <StatCard label="정예 클랜원" value={`${eliteCount}명`} accent="text-cyan-400" />
         <StatCard label="BJ / 스트리머" value={`${streamerCount}명`} accent="text-pink-400" />
       </div>
 

@@ -28,6 +28,7 @@
  *     <RankingSection />
  *   </SectionErrorBoundary>
  */
+
 'use client';
 
 import { Component } from 'react';
@@ -45,6 +46,7 @@ import logger, { Severity } from '@/utils/errorLogger';
  * @prop {React.ReactNode} children - 보호할 자식 컴포넌트
  * @prop {React.ReactNode} [fallback] - 오류 시 표시할 커스텀 UI (없으면 기본 오류 화면 사용)
  */
+
 export class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -58,6 +60,7 @@ export class ErrorBoundary extends Component {
    * @param {Error} error - 발생한 오류 객체
    * @returns {{ hasError: boolean, error: Error }}
    */
+
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
@@ -68,6 +71,7 @@ export class ErrorBoundary extends Component {
    * @param {Error} error - 발생한 오류 객체
    * @param {React.ErrorInfo} errorInfo - 컴포넌트 스택 정보
    */
+
   componentDidCatch(error, errorInfo) {
     logger.captureException(error, {
       severity: Severity.CRITICAL,
@@ -81,6 +85,7 @@ export class ErrorBoundary extends Component {
    * 브라우저 환경이면 페이지 전체를 새로고침하고,
    * 서버 환경(SSR)이면 state를 초기화하여 재렌더링을 시도합니다.
    */
+
   handleReset = () => {
     if (typeof window !== 'undefined') {
       window.location.reload();
@@ -108,7 +113,7 @@ export class ErrorBoundary extends Component {
               </pre>
             )}
             <button
-              onClick={() => this.handleReset()}
+              onClick={this.handleReset}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
             >
               다시 시도

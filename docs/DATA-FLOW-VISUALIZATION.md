@@ -270,13 +270,13 @@ UI 에러 표시
   → /join 페이지에서 신청서 작성
   → profiles 테이블: role = 'applicant'로 업데이트
   → 운영진(admin/elite 이상) 심사
-  → 승인: role = 'rookie' 또는 'associate'
-  → 거절: role = 'visitor' 유지
+  → 승인: role = 'rookie'
+  → 거절: role = 'applicant' 유지, 재심사까지 기간 설정 필요
 ```
 
 ### 래더 참여
 ```
-래더 가능 역할(elite/associate/member/rookie/admin/master/developer)
+래더 가능 역할(elite/member/rookie/admin/master/developer)
   → permissions.can.playLadder 확인
   → discord_id 존재 확인 (rookie 이상 필요)
   → profiles.is_in_queue = true (대기열 등록)

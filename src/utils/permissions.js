@@ -1,3 +1,4 @@
+
 /**
  * =====================================================================
  * 파일명: src/utils/permissions.js
@@ -253,7 +254,7 @@ export const ROLE_PERMISSIONS = {
     icon: '⭐'
   },
 
-  // 일반 길드원 - 정식 멤버
+  // 일반 클랜원 - 정식 멤버
   member: {
     name: '일반 클랜원',
     description: '정식 일반 클랜원',
@@ -275,9 +276,9 @@ export const ROLE_PERMISSIONS = {
     icon: '🛡️'
   },
 
-  // 신입 길드원 - 신규 멤버
+  // 신입 클랜원 - 신규 멤버
   rookie: {
-    name: '신입 길드원',
+    name: '신입 클랜원',
     description: '클랜 신규 멤버 (2주 활동 기간)',
     level: 35,
     permissions: [
@@ -448,14 +449,14 @@ export const PermissionChecker = {
     const effectiveRole = userRole || 'visitor';
 
     const ALL_ROLES = ['visitor', 'applicant', 'rookie', 'member', 'elite', 'admin', 'master', 'developer'];
-    const MEMBER_ROLES = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'];
+    const LADDER_MEMBER_ROLES = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'];
 
     const menuPermissions = {
       '가입안내': ALL_ROLES,
-      '정회원 전환신청': ['rookie'], // 신입 길드원만 접근 가능
+      '정회원 전환신청': ['rookie'], // 신입 클랜원만 접근 가능
       '개요': ALL_ROLES,
       '클랜원': ALL_ROLES,
-      'BY래더': MEMBER_ROLES,
+      'BY래더': LADDER_MEMBER_ROLES,
       '랭킹': ALL_ROLES,
       '경기기록': ALL_ROLES,
       '외부 레더 랭킹': ALL_ROLES,
@@ -475,7 +476,7 @@ export const PermissionChecker = {
       '관리자': ['developer', 'master', 'admin'],
       '가입 심사 관리': ['developer', 'master', 'admin', 'elite'],
       '운영진게시판': ['developer', 'master', 'admin'],
-      '길드원 관리': ['developer', 'master', 'admin'],
+      '클랜원 관리': ['developer', 'master', 'admin'],
       '개발자': ['developer'],
     };
 

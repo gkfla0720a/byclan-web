@@ -52,7 +52,7 @@ const VIEW_TO_PATH = {
   '진행중인 토너먼트': '/tournament',
   '경기 영상': '/media',
   '사진 갤러리': '/media',
-  '길드원 관리': '/admin/guild',
+  '클랜원 관리': '/admin/guild',
   '멤버 관리': '/admin/guild',
   '경기 관리': '/admin/matches',
   '래더/경기 운영': '/admin/matches',
