@@ -17,7 +17,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
-import { ROLE_PERMISSIONS } from '@/utils/permissions';
+import { ROLE_PERMISSIONS } from '@/utils/permissions/role-permissions';
 import { useNavigate } from '@/hooks/useNavigate';
 import { isRelationshipError } from '@/utils/retry';
 

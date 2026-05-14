@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
-import { PermissionChecker } from '@/utils/permissions';
+import { PermissionChecker } from '@/utils/permissions/checker';
 import { filterVisibleTestData } from '@/utils/testData';
 
 /**
@@ -88,7 +88,6 @@ export default function ApplicationList() {
    */
   const checkAuthAndFetch = useCallback(async () => {
     try {
-      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {

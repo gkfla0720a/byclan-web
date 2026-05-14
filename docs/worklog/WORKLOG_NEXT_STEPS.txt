@@ -57,7 +57,7 @@ Completed in this phase
 - Standardized role/title rendering to use ROLE_PERMISSIONS as the single source of truth in active management/admin surfaces.
 
 Important files touched recently
-- src/utils/permissions.js
+- src/utils/permissions
 - src/components/GuildManagement.js
 - src/components/AdminBoard.js
 - src/views/ClanMembers.js

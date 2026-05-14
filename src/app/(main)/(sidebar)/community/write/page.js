@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
 import { useAuthContext } from '@/context/AuthContext';
-import { PermissionChecker } from '@/utils/permissions';
+import { PermissionChecker } from '@/utils/permissions/checker';
 
 export default function PostWritePage() {
   const router = useRouter();

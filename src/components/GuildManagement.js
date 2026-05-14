@@ -17,7 +17,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { isInternalAuthEmail } from '@/utils/accountId';
-import { PermissionChecker, ROLE_PERMISSIONS } from '@/utils/permissions';
+import { PermissionChecker } from '@/utils/permissions/checker';
+import { ROLE_PERMISSIONS } from '@/utils/permissions/role-permissions';
 import { grantRankPromotionBonus } from '@/utils/pointSystem';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 

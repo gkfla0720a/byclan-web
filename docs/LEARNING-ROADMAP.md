@@ -119,7 +119,7 @@ if (needsSetup) {
 
 | 순서 | 파일 | 핵심 내용 |
 |------|------|--------|
-| 1 | `src/utils/permissions.js` | 전체 권한 시스템 |
+| 1 | `src/utils/permissions` | 전체 권한 시스템 |
 | 2 | `docs/QUICK-REFERENCE.md` | 권한 매트릭스 표 |
 | 3 | `docs/ARCHITECTURE-DIAGRAMS.md` | 권한 계층도 |
 | 4 | `src/components/Header.js` | 실제 권한 활용 예시 |

@@ -27,7 +27,7 @@
 
 import React, { useSyncExternalStore } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
-import { loadDevSettings, DEV_SETTINGS } from '@/utils/permissions';
+import { loadDevSettings, DEV_SETTINGS } from '@/utils/permissions/dev-settings';
 
 // ─── Dev Settings 외부 스토어 ─────────────────────────────────────────────
 // HomeGate에서 현재 개발자 설정을 읽을 수 있도록 합니다.

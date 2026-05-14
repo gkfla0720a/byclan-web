@@ -20,7 +20,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import { PermissionChecker, ROLE_PERMISSIONS } from '@/utils/permissions';
+import { PermissionChecker } from '@/utils/permissions/checker';
+import { ROLE_PERMISSIONS } from '@/utils/permissions/role-permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
 

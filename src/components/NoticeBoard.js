@@ -23,7 +23,7 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { EmptyState, SkeletonLoader } from './UIStates';
 import { filterVisibleTestData } from '@/utils/testData';
 import { isRelationshipError } from '@/utils/retry';
-import { PermissionChecker } from '@/utils/permissions';
+import { PermissionChecker } from '@/utils/permissions/checker';
 import { useAuthContext } from '@/context/AuthContext';
 
 /**

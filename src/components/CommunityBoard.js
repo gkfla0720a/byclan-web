@@ -20,7 +20,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
-import { PermissionChecker } from '@/utils/permissions';
+import { PermissionChecker } from '@/utils/permissions/checker';
 import { useAuthContext } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -52,7 +52,6 @@ export default function CommunityBoard() {
    */
   const fetchPosts = useCallback(async () => {
     if (!isSupabaseConfigured) return;
-    setLoading(true);
     try {
       const { data, error } = await filterVisibleTestData(supabase
         .from('posts')

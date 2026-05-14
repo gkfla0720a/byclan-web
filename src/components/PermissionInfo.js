@@ -17,7 +17,8 @@
 'use client';
 
 
-import { ROLE_PERMISSIONS, PermissionChecker as PermissionUtilsChecker } from '@/utils/permissions';
+import { PermissionChecker as PermissionUtilsChecker } from '@/utils/permissions/checker';
+import { ROLE_PERMISSIONS } from '@/utils/permissions/role-permissions';
 
 /**
  * 특정 역할의 권한 정보를 카드 형태로 표시하는 컴포넌트입니다.
