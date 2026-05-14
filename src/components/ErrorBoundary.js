@@ -81,7 +81,7 @@ export class ErrorBoundary extends Component {
    * 브라우저 환경이면 페이지 전체를 새로고침하고,
    * 서버 환경(SSR)이면 state를 초기화하여 재렌더링을 시도합니다.
    */
-  handleReset() {
+  handleReset = () => {
     if (typeof window !== 'undefined') {
       window.location.reload();
     } else {
@@ -143,7 +143,6 @@ export class SectionErrorBoundary extends Component {
     super(props);
     /** 오류 상태: hasError(오류 발생 여부)와 error(오류 객체) */
     this.state = { hasError: false, error: null };
-    this.handleReset = this.handleReset.bind(this);
   }
 
   /**
@@ -172,8 +171,11 @@ export class SectionErrorBoundary extends Component {
    * 오류 화면에서 '다시 시도' 버튼 클릭 시 호출됩니다.
    * state를 초기화하여 해당 섹션만 재렌더링을 시도합니다 (페이지 새로고침 없음).
    */
-  handleReset() {
-    this.setState({ hasError: false, error: null });
+  handleReset = () => {
+    this.setState({
+        hasError: false,
+        error: null
+    });
   }
 
   render() {

@@ -17,7 +17,7 @@
  */
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
 import { PermissionChecker } from '@/utils/permissions';

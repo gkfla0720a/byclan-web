@@ -285,7 +285,7 @@ export default function AdminBoard() {
               {post.title}
             </h4>
 
-            <p className="text-gray-300 text-base leading-relaxed whitespace-pre-wrap mb-6 break-words">
+            <p className="text-gray-300 text-base leading-relaxed whitespace-pre-wrap mb-6 wrap-break-word">
               {post.content}
             </p>
 
