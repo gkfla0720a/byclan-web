@@ -152,7 +152,7 @@ function MediaGallery() {
               <img src={item.img} className="w-full aspect-video object-cover opacity-70" alt={item.title} />
               <div className="p-4">
                 <div className="text-[11px] text-cyan-400 font-bold mb-1">{item.type}</div>
-                <h3 className="text-white font-bold line-clamp-2 min-h-[3rem]">{item.title}</h3>
+                <h3 className="text-white font-bold line-clamp-2 min-h-12">{item.title}</h3>
                 <p className="text-gray-400 text-xs mt-2 line-clamp-2">{item.subtitle}</p>
                 <p className="text-gray-500 text-xs mt-3">{formatDate(item.date)}</p>
               </div>
