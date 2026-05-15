@@ -13,7 +13,7 @@
  */
 'use client';
 
-import React, { useState, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { saveDevSettings, loadDevSettings, DEV_SETTINGS } from '@/utils/permissions/dev-settings';
 
 // ─── Dev settings external store ─────────────────────────────────────────────

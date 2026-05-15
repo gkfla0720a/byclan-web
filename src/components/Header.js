@@ -30,7 +30,7 @@
  */
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '@/hooks/useNavigate';

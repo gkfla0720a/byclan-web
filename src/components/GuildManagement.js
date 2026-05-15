@@ -14,7 +14,7 @@
  */
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { isInternalAuthEmail } from '@/utils/accountId';
 import { PermissionChecker } from '@/utils/permissions/checker';

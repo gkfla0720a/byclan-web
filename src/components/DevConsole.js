@@ -4,7 +4,7 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import {
   TEST_ACCOUNT_NAMES,

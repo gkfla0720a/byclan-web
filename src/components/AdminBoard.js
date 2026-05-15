@@ -14,7 +14,7 @@
  */
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
 import { ROLE_PERMISSIONS } from '@/utils/permissions/role-permissions';

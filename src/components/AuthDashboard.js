@@ -19,7 +19,7 @@
  */
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser } from '@/utils/accountId';
 import { ErrorMessage, SkeletonLoader } from './UIStates';

@@ -12,7 +12,7 @@
  */
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser } from '@/utils/accountId';
 import { ErrorMessage } from './UIStates';

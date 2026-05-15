@@ -25,7 +25,7 @@
  */
 'use client';
 
-import React, { useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
 import { loadDevSettings, DEV_SETTINGS } from '@/utils/permissions/dev-settings';
 

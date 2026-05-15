@@ -18,7 +18,7 @@
  */
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { EmptyState, SkeletonLoader } from './UIStates';
 import { filterVisibleTestData } from '@/utils/testData';

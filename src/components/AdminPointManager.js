@@ -10,7 +10,7 @@
  */
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { grantPoints, deductPoints } from '@/utils/pointSystem';
 import { recordAdminAudit } from '@/utils/adminAudit';

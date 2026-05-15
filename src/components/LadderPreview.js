@@ -19,7 +19,7 @@
  */
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '@/hooks/useNavigate';
 

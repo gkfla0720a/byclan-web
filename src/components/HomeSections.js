@@ -17,7 +17,7 @@
  *   <ActivityLog />   // 최근 활동 로그 섹션
  */
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { SkeletonLoader, EmptyState } from '@/components/UIStates';
 import { filterVisibleTestData } from '@/utils/testData';

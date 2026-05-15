@@ -11,7 +11,7 @@
  */
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import AdminBoard from '@/components/AdminBoard';
 import AdminPointManager from '@/components/AdminPointManager';
 import AdminMatchManager from '@/components/AdminMatchManager';

@@ -6,7 +6,7 @@
  * 비로그인 사용자에게 ImprovedAuthForm을 보여줍니다.
  */
 'use client';
-import React, { useEffect, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ImprovedAuthForm from '@/components/ImprovedAuthForm';
 import { useAuthContext } from '@/context/AuthContext';

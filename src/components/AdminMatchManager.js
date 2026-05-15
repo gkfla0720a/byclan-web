@@ -4,7 +4,7 @@
  */
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/supabase';
 import { recordAdminAudit } from '@/utils/adminAudit';
 

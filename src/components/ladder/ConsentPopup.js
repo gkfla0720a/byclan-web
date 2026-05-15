@@ -1,7 +1,7 @@
 // 파일명: src/components/ladder/ConsentPopup.js
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getRaceIcon, getPlayerMmr } from '@/utils/profiles'; 
 
 const PROPOSAL_CONSENT_SECONDS = 40;

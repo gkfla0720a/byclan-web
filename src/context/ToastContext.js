@@ -34,7 +34,7 @@
  */
 'use client';
 
-import React, { createContext, useCallback, useContext, useReducer } from 'react';
+import { createContext, useCallback, useContext, useReducer } from 'react';
 
 /** @typedef {'success'|'warning'|'error'|'info'} ToastType */
 

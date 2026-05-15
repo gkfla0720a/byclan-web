@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 // useSearchParams를 사용할 때는 Suspense로 감싸주는 것이 Next.js 13+의 규칙입니다.
