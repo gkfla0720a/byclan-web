@@ -1,4 +1,4 @@
-// 파일명: @/utils/permissions/chechker.ts
+// 파일명: @/utils/permissions/checker.ts
 
 import { ActiveRole, PermissionAction, isActiveRole } from './types';
 import { ROLE_PERMISSIONS } from './role-permissions';
