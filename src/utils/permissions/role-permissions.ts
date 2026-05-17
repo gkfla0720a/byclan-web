@@ -16,14 +16,18 @@ const APPLICANT_PERMS: PermissionAction[] = [
   'application.track',
 ];
 
-const MEMBER_PERMS: PermissionAction[] = [
+const ROOKIE_PERMS: PermissionAction[] = [
   ...PUBLIC_PERMS,
   'community.comment',
   'community.post',
   'tournament.join',
   'ladder.play',
-  'match.host',
   'match.join',
+];
+
+const MEMBER_PERMS: PermissionAction[] = [
+  ...ROOKIE_PERMS,
+  'match.host',
 ];
 
 const ELITE_PERMS: PermissionAction[] = [
