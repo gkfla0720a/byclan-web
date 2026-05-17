@@ -1,3 +1,5 @@
+// 파일명: @/utils/permissions/menu-policy.ts
+
 import { ActiveRole, ROLES } from './types';
 
 const ALL_ROLES: ActiveRole[] = [...ROLES];

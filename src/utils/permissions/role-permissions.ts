@@ -1,3 +1,5 @@
+// 파일명: @/utils/permissions/role-permissions.ts
+
 import { ActiveRole, PermissionAction, RoleDefinition } from './types';
 
 const PUBLIC_PERMS: PermissionAction[] = [

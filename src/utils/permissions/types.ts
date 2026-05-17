@@ -1,3 +1,5 @@
+// 파일명: @/utils/permissions/types.ts
+
 export const ROLES = [
   'visitor',
   'applicant',

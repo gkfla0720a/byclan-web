@@ -1,3 +1,5 @@
+// 파일명: @/utils/permissions/index.ts
+
 export * from './types';
 export * from './dev-settings';
 export * from './role-permissions';

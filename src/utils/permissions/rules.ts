@@ -1,3 +1,5 @@
+// 파일명: @/utils/permissions/rules.ts
+
 import { PermissionAction } from './types';
 
 export const DELEGATION_RULES = {

@@ -1,3 +1,5 @@
+// 파일명: @/utils/permissions/chechker.ts
+
 import { ActiveRole, PermissionAction, isActiveRole } from './types';
 import { ROLE_PERMISSIONS } from './role-permissions';
 import { loadDevSettings } from './dev-settings';

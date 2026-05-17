@@ -1,3 +1,5 @@
+// 파일명: @/utils/permissions/dev-settings.ts
+
 export interface DevSettings {
   homeGateEnabled: boolean;
   canReviewApplications: boolean;
