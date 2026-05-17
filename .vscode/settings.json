@@ -1,5 +1,15 @@
 {
-    "files.associations": {
-      "*.css": "tailwindcss"
-    }
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true,
+    "**/.next/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true
   }
+}
