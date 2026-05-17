@@ -2,17 +2,25 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// 💡 환경 변수가 제대로 로드되었는지 체크합니다. (서버 터미널 확인용)
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const isConfigured = Boolean(supabaseUrl && supabaseKey);
+
+if (!isConfigured) {
   console.error("🚨 Supabase 환경 변수가 설정되지 않았습니다! .env.local 파일을 확인하세요.");
 }
 
+// 환경 변수가 없을 때 placeholder로 안전하게 초기화 (빌드 타임 크래시 방지)
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  supabaseUrl ?? 'https://placeholder.supabase.co',
+  supabaseKey ?? 'placeholder-key'
 );
 
 export async function GET() {
+  if (!isConfigured) {
+    return NextResponse.json({ success: false, error: 'Supabase 환경 변수 미설정' }, { status: 503 });
+  }
+
   try {
     // 1. 선수 데이터 가져오기 (에러 객체인 pError를 받아옵니다)
     const { data: players, error: pError } = await supabase

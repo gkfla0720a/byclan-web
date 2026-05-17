@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js'; // 추가된 임포트
 
 // 1. Supabase 설정 (환경변수)
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'placeholder-key'
 );
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));

@@ -25,3 +25,11 @@ export function loadDevSettings(): DevSettings {
     return DEV_SETTINGS;
   }
 }
+
+export function saveDevSettings(settings: DevSettings): void {
+  try {
+    window.localStorage.setItem('byclan_dev_settings', JSON.stringify(settings));
+  } catch (error) {
+    console.error('개발자 설정 저장 실패:', error);
+  }
+}
