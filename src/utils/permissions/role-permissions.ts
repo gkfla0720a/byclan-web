@@ -128,4 +128,12 @@ export const ROLE_PERMISSIONS = {
     color: '#C7CEEA',
     icon: '👤',
   },
+  expelled: {
+    name: '추방자',
+    description: '클랜 규칙 위반 또는 운영진 결정으로 제명된 사용자',
+    level: 0, // 방문자(10)보다도 낮은 최하 레벨
+    permissions: [], // 👈 아무 권한도 배열에 넣지 않음
+    color: '#9CA3AF', // 회색 등 눈에 띄지 않는 색
+    icon: '🚫',
+  },
 } satisfies Record<ActiveRole, RoleDefinition>;
