@@ -1,0 +1,174 @@
+// 파일명: src/hooks/useProfileData.ts
+import { useState, useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '@/supabase';
+import type { Tables } from '@/types/supabase';
+import type { AuthProfile as UserProfile } from '@/types/domain';
+import { extractAccountIdFromAuthUser } from '@/utils/accountId';
+import { normalizeRole } from '@/utils/permissions';
+import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '@/utils/testData';
+import logger from '@/utils/errorLogger';
+
+type ProfileRow = Tables<'profiles'>;
+
+// ─── 데이터 세탁 및 병합 도우미 함수들 ──────────────────────────────────────────
+
+function normalizeProfileRow(profile: ProfileRow | null): UserProfile | null {
+  if (!profile) return null;
+  return {
+    ...profile,
+    role: normalizeRole(profile.role), // DB의 문자열을 안전한 ActiveRole로 변환
+    clan_point: typeof profile.clan_point === 'number' ? profile.clan_point : 0,
+  } as unknown as UserProfile; 
+}
+
+function getSocialIdentity(authUser: User) {
+  const identities = authUser?.identities || [];
+  const discordIdentity = identities.find((id) => id.provider === 'discord');
+  const googleIdentity = identities.find((id) => id.provider === 'google');
+  const meta = authUser?.user_metadata || {};
+  const appMeta = authUser?.app_metadata || {};
+
+  return {
+    isDiscordProvider: appMeta.provider === 'discord' || meta.provider === 'discord' || !!discordIdentity,
+    isGoogleProvider: appMeta.provider === 'google' || meta.provider === 'google' || !!googleIdentity,
+    discordId: discordIdentity?.identity_data?.sub || discordIdentity?.id || null,
+    discordName: meta.preferred_username || meta.full_name || meta.name || authUser.email?.split('@')[0] || 'User',
+    googleSub: meta.sub || googleIdentity?.id || null,
+    googleEmail: meta.email || authUser.email || null,
+    googleName: meta.full_name || meta.name || authUser.email?.split('@')[0] || 'User',
+    googleAvatarUrl: meta.avatar_url || meta.picture || null,
+    authProvider: appMeta.provider || meta.provider || identities[0]?.provider || 'email',
+  };
+}
+
+function sanitizeByIdSeed(seed: string): string {
+  return seed.normalize('NFKD').replace(/[^a-zA-Z0-9]/g, '').slice(0, 20) || 'User';
+}
+
+async function resolveUniqueById(seed: string, currentUserId?: string): Promise<string> {
+  const base = `By_${sanitizeByIdSeed(seed)}`;
+  const candidates = Array.from({ length: 30 }, (_, i) => (i === 0 ? base : `${base}${i + 1}`));
+
+  const { data, error } = await supabase.from('profiles').select('id, by_id').in('by_id', candidates);
+  if (error) return base;
+
+  const taken = new Map<string, string>();
+  (data || []).forEach((row) => taken.set(row.by_id || '', row.id));
+
+  for (const candidate of candidates) {
+    if (!taken.has(candidate) || taken.get(candidate) === currentUserId) return candidate;
+  }
+  return `${base}${Date.now().toString().slice(-6)}`;
+}
+
+async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Promise<UserProfile> {
+  const [{ data: oauthData }, { data: metaData }, { data: rankData }] = await Promise.all([
+    supabase.from('profile_oauth').select('discord_id, google_email, google_name').eq('user_id', userId).maybeSingle(),
+    supabase.from('profile_meta').select('is_test_account_active').eq('user_id', userId).maybeSingle(),
+    supabase.from('ladder_rankings').select('ladder_mmr, wins, losses, total_mmr').eq('user_id', userId).maybeSingle(),
+  ]);
+
+  return { ...oauthData, ...metaData, ...rankData, ...profile };
+}
+
+async function syncSocialProfileData(authUser: User, currentProfile: UserProfile): Promise<UserProfile> {
+  const { isDiscordProvider, isGoogleProvider, discordId, discordName, googleSub, googleEmail, googleName, googleAvatarUrl, authProvider } = getSocialIdentity(authUser);
+  const profileUpdates: any = {};
+  const oauthUpdates: any = {};
+
+  if (isDiscordProvider && discordId && !currentProfile.discord_id) oauthUpdates.discord_id = discordId;
+  if (isGoogleProvider) {
+    if (googleSub && currentProfile.google_sub !== googleSub) oauthUpdates.google_sub = googleSub;
+    if (googleEmail && currentProfile.google_email !== googleEmail) oauthUpdates.google_email = googleEmail;
+    if (googleName && currentProfile.google_name !== googleName) oauthUpdates.google_name = googleName;
+    if (googleAvatarUrl && currentProfile.google_avatar_url !== googleAvatarUrl) oauthUpdates.google_avatar_url = googleAvatarUrl;
+  }
+  if (authProvider && currentProfile.auth_provider !== authProvider) oauthUpdates.auth_provider = authProvider;
+
+  if (!currentProfile.by_id) {
+    const loginId = extractAccountIdFromAuthUser(authUser as any, currentProfile);
+    const seed = googleName || discordName || loginId || authUser.email?.split('@')[0] || 'User';
+    profileUpdates.by_id = await resolveUniqueById(seed, authUser.id);
+  }
+
+  let updatedProfile = { ...currentProfile };
+
+  if (Object.keys(profileUpdates).length > 0) {
+    const { data } = await supabase.from('profiles').update(profileUpdates).eq('id', authUser.id).select('*').single();
+    if (data) updatedProfile = { ...updatedProfile, ...normalizeProfileRow(data) };
+  }
+  if (Object.keys(oauthUpdates).length > 0) {
+    await supabase.from('profile_oauth').upsert({ user_id: authUser.id, ...oauthUpdates }, { onConflict: 'user_id' });
+    updatedProfile = { ...updatedProfile, ...oauthUpdates };
+  }
+
+  return updatedProfile;
+}
+
+// ─── 메인 훅 (Main Hook) ───────────────────────────────────────────────────────
+
+export function useProfileData(user: User | null) {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // by_id가 비어있는지 확인하여 닉네임 설정 페이지로 유도하는 플래그
+  const needsByIdSetup = profile !== null && (!profile.by_id || profile.by_id.trim() === '');
+
+  const fetchAndSetProfile = async (authUser: User) => {
+    setProfileLoading(true);
+    
+    // 1. 프로필 기본 정보 로드
+    const { data: p, error: profileError } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
+
+    // 2. 신규 가입자(프로필 없음) 처리
+    if (profileError && profileError.code === 'PGRST116') {
+      const seed = authUser.email?.split('@')[0] || 'User';
+      const uniqueById = await resolveUniqueById(seed, authUser.id);
+      
+      await supabase.from('profiles').insert({
+        id: authUser.id,
+        by_id: uniqueById,
+        role: 'visitor',
+      });
+      
+      // 생성 후 다시 자신(fetchAndSetProfile)을 호출하여 로드
+      await fetchAndSetProfile(authUser);
+      return;
+    }
+
+    // 3. 기존 유저 데이터 병합 및 세탁
+    let nextProfile = normalizeProfileRow(p);
+    if (nextProfile) {
+      nextProfile = await mergeOAuthIntoProfile(nextProfile, authUser.id);
+      nextProfile = await syncSocialProfileData(authUser, nextProfile);
+      setProfile(nextProfile);
+      
+      // 테스트 계정 플래그 동기화 (전역 상태)
+      if (typeof window !== 'undefined') {
+        if (nextProfile.is_test_account) setCurrentViewerTestAccountFlag(true);
+        else clearCurrentViewerTestAccountFlag();
+      }
+    }
+    
+    setProfileLoading(false);
+  };
+
+  // user 객체가 변경될 때마다(로그인/로그아웃) 프로필을 다시 불러옴
+  useEffect(() => {
+    if (user) {
+      fetchAndSetProfile(user);
+    } else {
+      setProfile(null);
+      setProfileLoading(false);
+    }
+  }, [user]);
+
+  return { 
+    profile, 
+    setProfile, 
+    profileLoading, 
+    needsByIdSetup,
+    reloadProfile: () => user ? fetchAndSetProfile(user) : Promise.resolve() 
+  };
+}
