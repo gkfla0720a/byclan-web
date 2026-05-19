@@ -76,39 +76,6 @@ export default function MyProfile() {
   };
 
   /**
-   * 컴포넌트가 처음 마운트될 때 프로필 데이터를 불러오고
-   * URL 파라미터에서 연동 결과 메시지를 읽습니다.
-   */
-  useEffect(() => {
-    if (typeof readLinkResultFromUrl === 'function') {
-       readLinkResultFromUrl();
-    }
-  }, []);
-
-  
-  // 핵심! profile과 user가 모두 준비되었을 때 로컬 상태들을 채워줍니다.
-  useEffect(() => {
-    if (profile && user) {
-      // 래더 및 프로필 정보 세팅
-      setRace(profile.race || '미지정');
-      setIntro(profile.intro || '');
-      
-      const currentById = profile.by_id || '';
-      if (currentById.startsWith('By_')) {
-        setClanNameInput(currentById.replace('By_', ''));
-        setOriginalById(currentById);
-        setIsNicknameAvailable(true);
-      }
-
-      // 예전 fetchProfileData에 있던 계정(Auth) 정보 세팅 복구
-      setAuthEmail(user.email || '');
-      setUsesInternalLogin(isInternalAuthEmail(user.email || ''));
-      setAccountId(extractAccountIdFromAuthUser(user, profile));
-    }
-  }, [profile, user]); // profile이나 user가 바뀌면 이 코드가 다시 돕니다.
-
-
-  /**
    * URL 파라미터에서 소셜 계정 연동 결과를 읽어 메시지를 표시합니다.
    * 연동 성공: ?linked=discord|google
    * 연동 실패(충돌): ?error=discord_conflict|google_conflict|link_failed
@@ -130,7 +97,6 @@ export default function MyProfile() {
       setLinkMessage({ type: 'error', text: '소셜 계정 연동에 실패했습니다. 다시 시도해주세요.' });
     }
 
-    // 메시지를 읽은 후 URL 파라미터를 정리합니다
     if (linked || errorParam) {
       const url = new URL(window.location.href);
       url.searchParams.delete('linked');
@@ -138,6 +104,38 @@ export default function MyProfile() {
       window.history.replaceState({}, '', url.pathname + (url.search || ''));
     }
   };
+
+  /**
+   * 컴포넌트가 처음 마운트될 때 프로필 데이터를 불러오고
+   * URL 파라미터에서 연동 결과 메시지를 읽습니다.
+   */
+  useEffect(() => {
+    queueMicrotask(() => {
+      readLinkResultFromUrl();
+    });
+  }, []);
+
+  
+  // 핵심! profile과 user가 모두 준비되었을 때 로컬 상태들을 채워줍니다.
+  useEffect(() => {
+    if (profile && user) {
+      queueMicrotask(() => {
+        setRace(profile.race || '미지정');
+        setIntro(profile.intro || '');
+
+        const currentById = profile.by_id || '';
+        if (currentById.startsWith('By_')) {
+          setClanNameInput(currentById.replace('By_', ''));
+          setOriginalById(currentById);
+          setIsNicknameAvailable(true);
+        }
+
+        setAuthEmail(user.email || '');
+        setUsesInternalLogin(isInternalAuthEmail(user.email || ''));
+        setAccountId(extractAccountIdFromAuthUser(user, profile));
+      });
+    }
+  }, [profile, user]); // profile이나 user가 바뀌면 이 코드가 다시 돕니다.
 
   /**
    * Discord 계정 연동을 시작합니다.

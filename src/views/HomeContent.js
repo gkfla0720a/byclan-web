@@ -217,7 +217,11 @@ function HomeContent() {
   };
 
   /** 컴포넌트 마운트 시 fetchData를 한 번 실행합니다 */
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    queueMicrotask(() => {
+      fetchData();
+    });
+  }, []);
 
   return (
     <div className="w-full space-y-5 animate-fade-in-down">

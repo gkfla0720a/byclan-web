@@ -49,6 +49,41 @@ export default function AdminBoard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   /**
+   * Supabase에서 기밀 게시글 목록을 불러옵니다.
+   * 테스트 데이터는 필터링되며, 관계 에러 발생 시 폴백 쿼리를 실행합니다.
+   * @async
+   */
+  const fetchPosts = useCallback(async () => {
+    const { data, error } = await filterVisibleTestData(supabase
+      .from('admin_posts')
+      .select(`
+        id, 
+        title, 
+        content, 
+        created_at,
+        profiles:user_id ( by_id, role ) 
+      `)
+      .order('created_at', { ascending: false })); 
+
+    if (error) {
+      console.error("목록 불러오기 에러:", error);
+      if (isRelationshipError(error)) {
+        const { data: fallbackData, error: fallbackError } = await filterVisibleTestData(supabase
+          .from('admin_posts')
+          .select('id, title, content, created_at')
+          .order('created_at', { ascending: false }));
+        if (fallbackError) {
+          console.error("목록 폴백 쿼리 에러:", fallbackError);
+        } else {
+          setPosts(fallbackData || []);
+        }
+      }
+    } else {
+      setPosts(data);
+    }
+  }, []);
+
+  /**
    * 현재 로그인 유저의 권한을 확인하고, 운영진이면 게시글 목록을 불러옵니다.
    * @async
    */
@@ -87,49 +122,16 @@ export default function AdminBoard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchPosts]);
 
   /**
    * 컴포넌트가 처음 화면에 마운트될 때 권한 확인 및 게시글 데이터를 로드합니다.
    */
   useEffect(() => {
-    checkAdminAndFetch();
+    queueMicrotask(() => {
+      checkAdminAndFetch();
+    });
   }, [checkAdminAndFetch]);
-
-  /**
-   * Supabase에서 기밀 게시글 목록을 불러옵니다.
-   * 테스트 데이터는 필터링되며, 관계 에러 발생 시 폴백 쿼리를 실행합니다.
-   * @async
-   */
-  const fetchPosts = async () => {
-    const { data, error } = await filterVisibleTestData(supabase
-      .from('admin_posts')
-      .select(`
-        id, 
-        title, 
-        content, 
-        created_at,
-        profiles:user_id ( by_id, role ) 
-      `)
-      .order('created_at', { ascending: false })); 
-
-    if (error) {
-      console.error("목록 불러오기 에러:", error);
-      if (isRelationshipError(error)) {
-        const { data: fallbackData, error: fallbackError } = await filterVisibleTestData(supabase
-          .from('admin_posts')
-          .select('id, title, content, created_at')
-          .order('created_at', { ascending: false }));
-        if (fallbackError) {
-          console.error("목록 폴백 쿼리 에러:", fallbackError);
-        } else {
-          setPosts(fallbackData || []);
-        }
-      }
-    } else {
-      setPosts(data);
-    }
-  };
 
   /**
    * 글쓰기 폼의 입력값을 newPost 상태에 반영합니다.

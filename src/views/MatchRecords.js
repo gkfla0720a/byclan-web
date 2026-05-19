@@ -431,7 +431,9 @@ export default function MatchRecords() {
   }, []);
 
   useEffect(() => {
-    void fetchMatches();
+    queueMicrotask(() => {
+      void fetchMatches();
+    });
   }, [fetchMatches]);
 
   /** 팀 ID 배열을 닉네임 문자열로 변환합니다. */

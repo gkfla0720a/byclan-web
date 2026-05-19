@@ -25,3 +25,13 @@ export function loadDevSettings(): DevSettings {
     return DEV_SETTINGS;
   }
 }
+
+export function saveDevSettings(settings: DevSettings): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem('byclan_dev_settings', JSON.stringify(settings));
+  } catch {
+    // localStorage 접근이 막힌 환경에서는 개발자 설정 저장만 건너뜁니다.
+  }
+}

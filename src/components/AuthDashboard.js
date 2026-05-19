@@ -64,7 +64,9 @@ function DiscordLinkPanel({ user, onLinked }) {
    * 컴포넌트 최초 로드 시에도 실행됩니다.
    */
   useEffect(() => {
-    checkDiscordLink();
+    queueMicrotask(() => {
+      checkDiscordLink();
+    });
   }, [checkDiscordLink]);
 
   /**
@@ -211,12 +213,13 @@ function ProfileSetup({ user, onComplete }) {
    * user가 변경될 때 로그인 아이디 또는 이메일에서 기본 클랜 ID를 자동 설정합니다.
    */
   useEffect(() => {
-    const accountId = extractAccountIdFromAuthUser(user);
-    // 기본값 설정
-    setFormData(prev => ({
-      ...prev,
-      by_id: `By_${accountId || user.email?.split('@')[0] || 'User'}`
-    }));
+    queueMicrotask(() => {
+      const accountId = extractAccountIdFromAuthUser(user);
+      setFormData(prev => ({
+        ...prev,
+        by_id: `By_${accountId || user.email?.split('@')[0] || 'User'}`
+      }));
+    });
   }, [user]);
 
   /**

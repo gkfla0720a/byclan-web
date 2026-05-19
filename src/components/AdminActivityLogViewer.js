@@ -67,7 +67,9 @@ export default function AdminActivityLogViewer() {
   }, [manualOnly, category]);
 
   useEffect(() => {
-    loadLogs().catch(() => {});
+    queueMicrotask(() => {
+      loadLogs().catch(() => {});
+    });
   }, [loadLogs]);
 
   const filtered = useMemo(() => {

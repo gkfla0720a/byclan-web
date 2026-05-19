@@ -96,7 +96,11 @@ export default function AdminPointManager() {
     }
   }, []);
 
-  useEffect(() => { checkAndLoad(); }, [checkAndLoad]);
+  useEffect(() => {
+    queueMicrotask(() => {
+      checkAndLoad();
+    });
+  }, [checkAndLoad]);
 
   /** 포인트 로그 조회 */
   const fetchLogs = useCallback(async () => {
@@ -134,7 +138,10 @@ export default function AdminPointManager() {
   }, [page, filterType, searchById]);
 
   useEffect(() => {
-    if (isAdmin) fetchLogs();
+    if (!isAdmin) return;
+    queueMicrotask(() => {
+      fetchLogs();
+    });
   }, [isAdmin, fetchLogs]);
 
   /** 포인트 지급 또는 회수 처리 */

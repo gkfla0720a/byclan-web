@@ -139,7 +139,9 @@ export function useMatchCenter(matchId) {
   }, [matchId]);
 
   useEffect(() => {
-    void fetchMatchData();
+    queueMicrotask(() => {
+      void fetchMatchData();
+    });
     const channel = supabase.channel(`m-${matchId}`).on('postgres_changes', { event: '*', schema: 'public' }, fetchMatchData).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [matchId, fetchMatchData]);
@@ -149,7 +151,9 @@ export function useMatchCenter(matchId) {
       const { data } = await supabase.from('developer_settings').select('value_bool').eq('key', 'match_admin_live_mode').maybeSingle();
       setManagementMode(Boolean(data?.value_bool));
     };
-    loadManagementMode().catch(() => setManagementMode(false));
+    queueMicrotask(() => {
+      loadManagementMode().catch(() => setManagementMode(false));
+    });
   }, []);
 
   useEffect(() => {
@@ -202,7 +206,9 @@ export function useMatchCenter(matchId) {
   
   useEffect(() => {
     if (remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(raceCombo)) {
-      setRaceCombo(remainingRequiredCombos[0]);
+      queueMicrotask(() => {
+        setRaceCombo(remainingRequiredCombos[0]);
+      });
     }
   }, [remainingRequiredCombos, raceCombo]);
 
@@ -379,7 +385,9 @@ const handleSetWin = async (winnerTeam) => {
         }
       }, 1000);
     } else {
-      setVetoTimeLeft(0);
+      queueMicrotask(() => {
+        setVetoTimeLeft(0);
+      });
     }
 
     return () => clearInterval(intervalId);

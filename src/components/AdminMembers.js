@@ -37,6 +37,42 @@ export default function AdminBoard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   /**
+   * Supabase에서 기밀 게시글 목록을 불러옵니다.
+   * 작성자 정보(by_id, role)를 JOIN하여 가져오며,
+   * 관계 에러 발생 시 작성자 정보 없이 폴백 쿼리를 실행합니다.
+   * @async
+   */
+  const fetchPosts = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('admin_posts')
+      .select(`
+        id, 
+        title, 
+        content, 
+        created_at,
+        profiles:user_id ( by_id, role ) 
+      `)
+      .order('created_at', { ascending: false }); 
+
+    if (error) {
+      console.error("목록 불러오기 에러:", error);
+      if (isRelationshipError(error)) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('admin_posts')
+          .select('id, title, content, created_at')
+          .order('created_at', { ascending: false });
+        if (fallbackError) {
+          console.error("목록 폴백 쿼리 에러:", fallbackError);
+        } else {
+          setPosts(fallbackData || []);
+        }
+      }
+    } else {
+      setPosts(data);
+    }
+  }, []);
+
+  /**
    * 현재 로그인 유저의 권한을 확인하고, 권한이 있으면 게시글을 불러옵니다.
    * @async
    */
@@ -67,50 +103,16 @@ export default function AdminBoard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchPosts]);
 
   /**
    * 컴포넌트가 처음 화면에 표시될 때 권한 확인 및 데이터 로드를 실행합니다.
    */
   useEffect(() => {
-    checkAdminAndFetch();
+    queueMicrotask(() => {
+      checkAdminAndFetch();
+    });
   }, [checkAdminAndFetch]);
-
-  /**
-   * Supabase에서 기밀 게시글 목록을 불러옵니다.
-   * 작성자 정보(by_id, role)를 JOIN하여 가져오며,
-   * 관계 에러 발생 시 작성자 정보 없이 폴백 쿼리를 실행합니다.
-   * @async
-   */
-  const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from('admin_posts')
-      .select(`
-        id, 
-        title, 
-        content, 
-        created_at,
-        profiles:user_id ( by_id, role ) 
-      `)
-      .order('created_at', { ascending: false }); 
-
-    if (error) {
-      console.error("목록 불러오기 에러:", error);
-      if (isRelationshipError(error)) {
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('admin_posts')
-          .select('id, title, content, created_at')
-          .order('created_at', { ascending: false });
-        if (fallbackError) {
-          console.error("목록 폴백 쿼리 에러:", fallbackError);
-        } else {
-          setPosts(fallbackData || []);
-        }
-      }
-    } else {
-      setPosts(data);
-    }
-  };
 
   /**
    * 새 기밀 문서를 폼 제출 시 Supabase에 저장합니다.

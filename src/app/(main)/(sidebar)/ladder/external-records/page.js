@@ -39,7 +39,7 @@ export default function ExternalRecordsPage() {
 
   // 처음 접속 시 1페이지 로드
   useEffect(() => {
-    fetchMatches(1, false);
+    queueMicrotask(() => fetchMatches(1, false));
   }, []);
 
   // 더 보기 버튼 클릭 시 실행

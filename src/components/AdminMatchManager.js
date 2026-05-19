@@ -76,7 +76,9 @@ export default function AdminMatchManager() {
   }, []);
 
   useEffect(() => {
-    loadData().catch(() => {});
+    queueMicrotask(() => {
+      loadData().catch(() => {});
+    });
   }, [loadData]);
 
   const filteredMatches = useMemo(() => {

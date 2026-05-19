@@ -26,7 +26,9 @@ export function useLadderData(user, authLoading) {
   const currentUserRef = useRef(null);
   const lastQueueKeyRef = useRef('');
 
-  currentUserRef.current = user;
+  useEffect(() => {
+    currentUserRef.current = user;
+  }, [user]);
 
   const fetchData = useCallback(async () => {
     if (authLoading || !user?.id) {
@@ -85,7 +87,9 @@ export function useLadderData(user, authLoading) {
   }, [user, authLoading]);
 
   useEffect(() => {
-    fetchData();
+    queueMicrotask(() => {
+      fetchData();
+    });
     const channel = supabase.channel('ladder-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'ladder_queue' }, fetchData).subscribe();
     return () => supabase.removeChannel(channel);
   }, [fetchData]);
