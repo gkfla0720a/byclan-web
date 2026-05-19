@@ -1,4 +1,5 @@
-// 파일명: src/hooks/useMatchCenter.js
+// 파일명: src/hooks/useMatchCenter.ts
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 
@@ -449,9 +450,9 @@ const handleSetWin = async (winnerTeam) => {
     settlementStatus, settlementError, selectedEntryByTeam, betTeam, betAmount, bettingDone, bettingLoading, 
     betOdds, myClanPoint, raceCombo, showRaceSelector, isManagementRole, canReportSetResult, perspectiveTeam, 
     editingTeam, selectedEntry, remainingRequiredCombos, needWins, matchEnded, isLadderMatch, matchFormat, 
-    canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId, vetoTimeLeft, handleVetosetBetTeam, setBetAmount,
+    canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId, vetoTimeLeft, handleVeto, setBetTeam, setBetAmount,
     setRaceCombo, toggleManagementMode, handleSelect, submitEntry, requestWithdraw, approveWithdraw, 
     forceRetract, handleSetWin, handleBet, handleSettlement, getTeamMembersByLetter, currentTeamEntry, 
-    currentTeamReady, getRestStatus, handleVeto, setShowRaceSelector, setBetTeam
+    currentTeamReady, getRestStatus, setShowRaceSelector
   };
 }

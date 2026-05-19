@@ -1,3 +1,5 @@
+// 파일명: @/hooks/useLadderData.ts
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 import { getPlayerMmr } from '@/utils/profiles';
