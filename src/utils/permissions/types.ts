@@ -9,9 +9,9 @@ export const ROLES = [
   'admin',
   'master',
   'developer',
-] as const;
+] as const; // 역할은 고정된 문자열 집합으로 정의, 타입 안전성 확보
 
-export type ActiveRole = typeof ROLES[number];
+export type ActiveRole = typeof ROLES[number]; // ActiveRole은 ROLES 배열의 요소 중 하나로 제한, 타입 안전성 확보
 
 export function isActiveRole(value: string): value is ActiveRole {
   return (ROLES as readonly string[]).includes(value);
@@ -27,9 +27,9 @@ export const PERMISSIONS = [
   'community.view', 'community.comment', 'profile.edit',
   'profile.view', 'clan.info', 'application.submit', 'application.track',
   'discord.required',
-] as const;
+] as const; // 권한은 고정된 문자열 집합으로 정의, 타입 안전성 확보
 
-export type PermissionAction = typeof PERMISSIONS[number];
+export type PermissionAction = typeof PERMISSIONS[number]; // PermissionAction은 PERMISSIONS 배열의 요소 중 하나로 제한, 타입 안전성 확보
 
 export interface RoleDefinition {
   name: string;
