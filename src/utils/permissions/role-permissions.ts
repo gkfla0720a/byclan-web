@@ -1,19 +1,17 @@
 // 파일명: @/utils/permissions/role-permissions.ts
 
-import { ActiveRole, PermissionAction, RoleDefinition } from './types';
+import { ActiveRole, PermissionAction, RoleDefinition, } from './types';
 
 const PUBLIC_PERMS: PermissionAction[] = [
   'match.view',
   'community.view',
   'profile.edit',
   'profile.view',
-  'clan.info',
 ];
 
 const APPLICANT_PERMS: PermissionAction[] = [
   ...PUBLIC_PERMS,
   'application.submit',
-  'application.track',
 ];
 
 const ROOKIE_PERMS: PermissionAction[] = [
@@ -23,10 +21,16 @@ const ROOKIE_PERMS: PermissionAction[] = [
   'tournament.join',
   'ladder.play',
   'match.join',
+  'transfer.submit',
 ];
 
 const MEMBER_PERMS: PermissionAction[] = [
-  ...ROOKIE_PERMS,
+  ...PUBLIC_PERMS,
+  'community.comment',
+  'community.post',
+  'tournament.join',
+  'ladder.play',
+  'match.join',
   'match.host',
 ];
 
@@ -34,7 +38,6 @@ const ELITE_PERMS: PermissionAction[] = [
   ...MEMBER_PERMS,
   'member.approve',
   'member.test',
-  'member.mentor',
   'tournament.create',
   'ladder.admin',
   'ladder.moderate',
@@ -108,7 +111,7 @@ export const ROLE_PERMISSIONS = {
     name: '신입 길드원',
     description: '클랜 신규 멤버 (2주 활동 기간)',
     level: 35,
-    permissions: MEMBER_PERMS,
+    permissions: ROOKIE_PERMS,
     color: '#DDA0DD',
     icon: '🆕',
   },

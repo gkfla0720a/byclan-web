@@ -18,19 +18,38 @@ export function isActiveRole(value: string): value is ActiveRole {
   return (ROLES as readonly string[]).includes(value);
 }
 
-export const PERMISSIONS = [
-  'system.admin', 'database.modify', 'code.deploy', 'user.manage_all',
-  'clan.admin_all', 'clan.admin', 'member.approve', 'member.manage',
-  'member.test', 'member.mentor', 'master.delegate', 'tournament.create',
-  'tournament.join', 'ladder.admin', 'ladder.moderate', 'ladder.play',
-  'match.manage', 'match.host', 'match.join', 'match.view',
-  'announcement.post', 'announcement.edit', 'community.post',
-  'community.view', 'community.comment', 'profile.edit',
-  'profile.view', 'clan.info', 'application.submit', 'application.track',
-  'discord.required',
-] as const; // 권한은 고정된 문자열 집합으로 정의, 타입 안전성 확보
-
 export type PermissionAction = typeof PERMISSIONS[number]; // PermissionAction은 PERMISSIONS 배열의 요소 중 하나로 제한, 타입 안전성 확보
+
+export const PERMISSIONS = [
+  'application.submit',
+  'transfer.submit',
+  'tournament.create',
+  'tournament.join',
+  'ladder.admin',
+  'ladder.moderate',
+  'ladder.play',
+  'match.manage',
+  'match.host',
+  'match.join',
+  'match.view',
+  'announcement.post',
+  'announcement.edit',
+  'community.post',
+  'community.view',
+  'community.comment',
+  'profile.edit',
+  'profile.view',
+  'system.admin',
+  'database.modify',
+  'code.deploy',
+  'user.manage_all',
+  'clan.admin_all',
+  'clan.admin',
+  'member.approve',
+  'member.manage',
+  'member.test',
+  'master.delegate',
+] as const;
 
 export interface RoleDefinition {
   name: string;
