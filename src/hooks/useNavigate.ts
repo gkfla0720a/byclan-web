@@ -4,11 +4,7 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
-/**
- * VIEW_TO_PATH
- * - 한국어 뷰 이름과 실제 URL 경로를 매핑하는 객체입니다.
- * - 'as const'를 붙여 이 객체의 내용이 영원히 변하지 않는 고정값임을 선언합니다.
- */
+// 한국어 뷰 이름과 실제 URL 경로를 매핑하는 객체입니다.
 export const VIEW_TO_PATH = {
   'Home': '/',
   '가입안내': '/join',

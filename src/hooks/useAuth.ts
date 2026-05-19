@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import type { AuthProfile as UserProfile } from '@/types/domain';
-import { ROLE_PERMISSIONS, normalizeRole, PermissionChecker } from '@/utils/permissions';
+import { ROLE_PERMISSIONS, normalizeRole, hasPermission, hasLevel, isInGroup, canAccessMenu } from '@/utils/permissions';
 import { useAuthSession } from './useAuthSession';
 import { useProfileData } from './useProfileData';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -29,7 +29,7 @@ export interface AuthPermissions {
     moderateLadder: boolean;
     playLadder: boolean;
   };
-  canAccessMenu: (menuPath: string) => boolean;
+  canAccessMenu: (menuPath: MenuName) => boolean;
   hasLevel: (requiredLevel: number) => boolean;
 }
 
@@ -85,7 +85,7 @@ export function useAuth(): UseAuthReturn {
     });
   }, [user, profile, authLoading, authError]);
 
-  // 4. 권한 계산 (PermissionChecker 활용)
+  // 4. 권한 계산 (hasPermission 활용)
   const getPermissions = (): AuthPermissions => {
     const userRole = profile?.role || (user ? 'visitor' : undefined);
     const effectiveRole = normalizeRole(userRole);
@@ -93,24 +93,24 @@ export function useAuth(): UseAuthReturn {
   
     return {
       isDeveloper: effectiveRole === 'developer',
-      isManagement: PermissionChecker.isInGroup(userRole, 'management'),
-      isSenior: PermissionChecker.isInGroup(userRole, 'senior'),
-      isMember: PermissionChecker.isInGroup(userRole, 'members'),
+      isManagement: isInGroup(effectiveRole, 'management'),
+      isSenior: isInGroup(effectiveRole, 'senior'),
+      isMember: isInGroup(effectiveRole, 'members'),
       level: roleInfo.level,
       roleInfo,
       can: {
-        manageUsers: PermissionChecker.hasPermission(userRole, 'user.manage_all'),
-        manageClan: PermissionChecker.hasPermission(userRole, 'clan.admin'),
-        approveMembers: PermissionChecker.hasPermission(userRole, 'member.approve'),
-        manageMatches: PermissionChecker.hasPermission(userRole, 'match.manage'),
-        hostMatches: PermissionChecker.hasPermission(userRole, 'match.host'),
-        postAnnouncements: PermissionChecker.hasPermission(userRole, 'announcement.post'),
-        accessDevTools: PermissionChecker.hasPermission(userRole, 'system.admin'),
-        moderateLadder: PermissionChecker.hasPermission(userRole, 'ladder.admin'),
-        playLadder: PermissionChecker.hasPermission(userRole, 'ladder.play'),
+        manageUsers: hasPermission(effectiveRole, 'user.manage_all'),
+        manageClan: hasPermission(effectiveRole, 'clan.admin'),
+        approveMembers: hasPermission(effectiveRole, 'member.approve'),
+        manageMatches: hasPermission(effectiveRole, 'match.manage'),
+        hostMatches: hasPermission(effectiveRole, 'match.host'),
+        postAnnouncements: hasPermission(effectiveRole, 'announcement.post'),
+        accessDevTools: hasPermission(effectiveRole, 'system.admin'),
+        moderateLadder: hasPermission(effectiveRole, 'ladder.admin'),
+        playLadder: hasPermission(effectiveRole, 'ladder.play'),
       },
-      canAccessMenu: (menuPath: MenuName) => PermissionChecker.canAccessMenu(userRole, menuPath),
-      hasLevel: (requiredLevel: number) => PermissionChecker.hasLevel(userRole, requiredLevel),
+      canAccessMenu: (menuPath: MenuName) => canAccessMenu(effectiveRole, menuPath),
+      hasLevel: (requiredLevel: number) => hasLevel(effectiveRole, requiredLevel),
     };
   };
 

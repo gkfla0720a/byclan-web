@@ -4,25 +4,23 @@
  * @주요기능
  *   - PermissionInfo: 특정 역할의 권한 목록과 레벨을 카드로 표시 (compact 모드 지원)
  *   - PermissionComparison: 여러 역할의 권한을 테이블로 비교 표시
- *   - PermissionChecker: 특정 역할이 각 권한을 가졌는지 허용/거부로 표시
+ *   - hasPermission: 특정 역할이 각 권한을 가졌는지 허용/거부로 표시
  * @관련컴포넌트 GuildManagement.js, AdminBoard.js
  */
 'use client';
 
-
-import { PermissionChecker as PermissionUtilsChecker } from '@/utils/permissions';
+import { hasPermission as PermissionUtilsChecker } from '@/utils/permissions';
 import { ROLE_PERMISSIONS, PERMISSIONS, ROLES, } from '@/utils/permissions';
 
 // 권한 정보 표시 컴포넌트
 export function PermissionInfo({ userRole, compact = false }) {
   const roleInfo = ROLE_PERMISSIONS[userRole];
-  
   if (!roleInfo) return null;
 
   if (compact) {
     return (
       <div className="flex items-center space-x-2">
-        <span className="text-lg">{roleInfo.icon}</span>
+        <span className="text-lg" aria-label={roleInfo.name}>{roleInfo.icon}</span>
         <span className="font-medium" style={{ color: roleInfo.color }}>
           {roleInfo.name}
         </span>
@@ -125,14 +123,14 @@ export function PermissionComparison({ ROLES }) {
 }
 
 // 권한 검사기 컴포넌트
-export function PermissionChecker({ userRole }) {
+export function hasPermission({ userRole }) {
   return (
     <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
       <h3 className="text-xl font-bold text-white mb-4">🔍 권한 테스트</h3>
       
       <div className="space-y-3">
         {PERMISSIONS.map((PERMISSIONS) => {
-          const hasPermission = PermissionUtilsChecker.hasPermission(userRole, PERMISSIONS);  
+          const hasPermission = PermissionUtilsChecker(userRole, PERMISSIONS);  
 
           return (
             <div key={PERMISSIONS} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg">

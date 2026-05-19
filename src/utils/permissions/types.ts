@@ -60,7 +60,9 @@ export interface RoleDefinition {
   icon: string;
 }
 
-export type RoleGroup = 'developers' | 'management' | 'senior' | 'members' | 'others';
+export const ROLE_GROUPS = ['developer', 'management', 'senior', 'members', 'others'] as const;
+
+export type RoleGroup = typeof ROLE_GROUPS[number];
 
 export const LADDER_MEMBER_ROLES: ActiveRole[] = [
   'rookie',

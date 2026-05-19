@@ -37,7 +37,7 @@ export const MENU_PERMISSIONS: Record<MenuName, ActiveRole[]> = {
 };
 
 // 여기도 MenuName으로 타입을 깐깐하게 지정합니다.
-export function canAccessMenuByRole(role: ActiveRole, menuPath: MenuName): boolean {
+export function canAccessMenu(role: ActiveRole, menuPath: MenuName): boolean {
   const allowedRoles = MENU_PERMISSIONS[menuPath] || [];
   return allowedRoles.includes(role);
 }
