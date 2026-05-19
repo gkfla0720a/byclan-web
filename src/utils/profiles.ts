@@ -1,4 +1,5 @@
-// 파일명: src/utils/profiles.js
+// 파일명: src/utils/profiles.ts
+
 // 프로필 관련 유틸리티 함수들을 모아둔 파일입니다.
 // 래더 점수 계산, 티어 결정, 종족 아이콘 반환 등의 기능을 제공합니다.
 export const TIER_COLORS = {

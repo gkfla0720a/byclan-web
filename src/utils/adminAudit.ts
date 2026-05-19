@@ -1,5 +1,7 @@
-/**
- * @file adminAudit.js
+// 파일명: @/utils/adminAudit.ts
+
+ * /**
+ * @file adminAudit.ts
  * @role 관리자 데이터 변경 감사 로그 기록 유틸
  */
 

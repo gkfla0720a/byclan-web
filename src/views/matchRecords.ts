@@ -1,5 +1,7 @@
-/**
- * 파일명: MatchRecords.js
+// 파일명: @/view/matchRecords.ts
+
+ /**
+ * 파일명: matchRecords.ts
  *
  * 역할:
  *   래더 경기 기록을 표로 표시하는 컴포넌트입니다.

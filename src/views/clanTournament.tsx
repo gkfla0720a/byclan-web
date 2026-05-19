@@ -1,5 +1,7 @@
-/**
- * 파일명: ClanTournament.js
+// 파일명: @/views/clanTournament.tsx
+
+ /*
+ * 파일명: clanTournament.tsx
  *
  * 역할: 클랜 대회 및 토너먼트 일정을 카드 목록으로 보여주는 views 컴포넌트입니다.
  * 주요 기능: 하드코딩된 대회 목록을 그리드 카드로 표시합니다.

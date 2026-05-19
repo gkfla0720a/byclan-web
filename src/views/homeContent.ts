@@ -1,5 +1,7 @@
-/**
- * 파일명: HomeContent.js
+// 파일명: @/views/homeContents.ts
+ 
+  /**
+ * 파일명: homeContent.ts
  *
  * 역할:
  *   사이트 메인 홈 화면의 전체 콘텐츠를 구성하는 views 컴포넌트입니다.

@@ -1,4 +1,6 @@
-/**
+// 파일명: @/utils/statusConstants.ts
+
+ /**
  * @file statusConstants.js
  * @역할 ByClan 도메인 상태값 영문 상수 정의
  *

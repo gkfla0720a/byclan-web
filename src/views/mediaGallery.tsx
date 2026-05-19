@@ -1,5 +1,7 @@
-/**
- * 파일명: MediaGallery.js
+// 파일명: @/views/mediaGallery.tsx
+
+ /**
+ * 파일명: mediaGallery.tsx
  *
  * 역할:
  *   클랜 내부에 쌓인 공지·게시글·경기 기록을 이미지 카드 형태로 모아 보여주는

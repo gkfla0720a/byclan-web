@@ -1,3 +1,5 @@
+// 파일명: @/utils/queryCache.ts
+
 // 간단한 메모리 기반 캐시 구현입니다. TTL(Time To Live)을 설정하여
 // 일정 시간(30초)이 지난 캐시 항목은 자동으로 무효화됩니다.
 const CACHE_TTL_MS = 30_000;

@@ -1,5 +1,7 @@
-/**
- * 파일명: ClanMembers.js
+// 파일명: @/views/clanMembers.ts
+
+ /**
+ * 파일명: clanMembers.ts
  *
  * 역할:
  *   클랜원 명단 views 컴포넌트입니다.

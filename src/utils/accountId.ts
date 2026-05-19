@@ -1,3 +1,5 @@
+// 파일명: @/utils/accountId.ts
+
 const INTERNAL_AUTH_DOMAIN = 'auth.byclan.local';
 const INTERNAL_AUTH_PREFIX = 'login.';
 

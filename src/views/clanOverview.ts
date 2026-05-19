@@ -1,5 +1,7 @@
-/**
- * 파일명: ClanOverview.js
+// 파일명: clanOverView.ts
+
+ /**
+ * 파일명: clanOverview.ts
  *
  * 역할: 클랜 소개 views 컴포넌트입니다. 클랜의 메인 게임, 리더십, 활동 방식,
  *       운영 방향, 멤버 구성을 정적 콘텐츠로 설명합니다.

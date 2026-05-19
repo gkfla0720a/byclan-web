@@ -1,5 +1,7 @@
-/**
- * @file pointSystem.js
+// 파일명: @/utils/pointSystem.ts
+ 
+  /**
+ * @file pointSystem.ts
  * @역할 ByClan 클랜 포인트 시스템의 핵심 유틸리티 함수 모음
  *
  * @주요기능

@@ -1,5 +1,7 @@
-/**
- * 파일명: PagePlaceholder.js
+// 파일명: @/views/pagePlaceHolder.tsx
+
+ /**
+ * 파일명: pagePlaceHolder.tsx
  *
  * 역할: 아직 개발 중인 메뉴 페이지에 임시로 표시하는 플레이스홀더 컴포넌트입니다.
  * 주요 기능: 전달받은 title을 표시하고 "운영 정리 중" 안내 메시지를 보여줍니다.
