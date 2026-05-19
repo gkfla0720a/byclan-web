@@ -6,6 +6,7 @@ import { ROLE_PERMISSIONS, normalizeRole, PermissionChecker } from '@/utils/perm
 import { useAuthSession } from './useAuthSession';
 import { useProfileData } from './useProfileData';
 import { useAuthStore } from '@/stores/useAuthStore';
+import type { MenuName } from '@/hooks/useNavigate';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type { UserProfile };
@@ -108,7 +109,7 @@ export function useAuth(): UseAuthReturn {
         moderateLadder: PermissionChecker.hasPermission(userRole, 'ladder.admin'),
         playLadder: PermissionChecker.hasPermission(userRole, 'ladder.play'),
       },
-      canAccessMenu: (menuPath: string) => PermissionChecker.canAccessMenu(userRole, menuPath),
+      canAccessMenu: (menuPath: MenuName) => PermissionChecker.canAccessMenu(userRole, menuPath),
       hasLevel: (requiredLevel: number) => PermissionChecker.hasLevel(userRole, requiredLevel),
     };
   };

@@ -719,9 +719,9 @@ export default function GuildManagement() {
                   value={pendingRole}
                   onChange={(event) => setPendingRole(event.target.value)}
                 >
-                   <option value="applicant">신규 가입자</option>
-                  <option value="member">일반 클랜원</option>
+                  <option value="applicant">신규 가입자</option>
                   <option value="rookie">신입 클랜원</option>
+                  <option value="member">일반 클랜원</option>
                   <option value="elite">정예 클랜원</option>
                   <option value="admin">관리자</option>
                 </select>

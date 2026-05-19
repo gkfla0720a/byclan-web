@@ -4,6 +4,7 @@ import { ActiveRole, PermissionAction, isActiveRole } from './types';
 import { ROLE_PERMISSIONS } from './role-permissions';
 import { loadDevSettings } from './dev-settings';
 import { canAccessMenuByRole } from './menu-policy'; // 있으면 사용, 없으면 기존 MENU_PERMISSIONS 로직 유지
+import type { MenuName } from '@/hooks/useNavigate';
 
 type GroupName = 'developers' | 'management' | 'senior' | 'members';
 
@@ -63,7 +64,7 @@ export const PermissionChecker = {
 
   canAccessMenu: (
     userRole: ActiveRole | string | null | undefined,
-    menuPath: string
+    menuPath: MenuName
   ): boolean => {
     const role = normalizeRole(userRole);
     // 분리된 정책 함수가 있으면 그걸 쓰는 게 더 깔끔

@@ -41,7 +41,7 @@ export interface RoleDefinition {
   icon: string;
 }
 
-export type RoleGroup = 'developers' | 'management' | 'senior' | 'members';
+export type RoleGroup = 'developers' | 'management' | 'senior' | 'members' | 'others';
 
 export const LADDER_MEMBER_ROLES: ActiveRole[] = [
   'rookie',
@@ -50,4 +50,4 @@ export const LADDER_MEMBER_ROLES: ActiveRole[] = [
   'admin',
   'master',
   'developer',
-];
+] as const;
