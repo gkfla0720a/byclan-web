@@ -1,4 +1,4 @@
-// 파일명: src/utils/matchmaking.ts
+// 파일명: @/utils/matchMaking.ts
 
 import { getPlayerMmr } from './profiles';
 

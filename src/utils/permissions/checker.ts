@@ -29,8 +29,11 @@ export function hasPermission(userRole: ActiveRole,permission: PermissionAction)
   return roleDef.permissions.includes(permission);
 };
 
-export function hasLevel (userRole: ActiveRole,requiredLevel: number): boolean {
-  return ROLE_PERMISSIONS[userRole].level >= requiredLevel;
+// ✅ 수정 후 — 안전장치 추가 + 스타일 통일
+export function hasLevel(userRole: ActiveRole, requiredLevel: number): boolean {
+  const roleDef = ROLE_PERMISSIONS[userRole];
+  if (!roleDef) return false;
+  return roleDef.level >= requiredLevel;
 };
 
 export function isInGroup (userRole: ActiveRole, group: RoleGroup): boolean {
