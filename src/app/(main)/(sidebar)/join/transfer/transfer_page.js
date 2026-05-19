@@ -36,8 +36,6 @@ export default function JoinTransferPage() {
   const [resultMsg, setResultMsg] = useState('');
 
   useEffect(() => {
-    // 이미 프로필 데이터가 로드되었다면 다시 실행하지 않음
-    if (profile) return;
     const load = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();

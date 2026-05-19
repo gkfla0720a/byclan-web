@@ -1,5 +1,5 @@
 // 파일명: src/hooks/useProfileData.ts
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/supabase';
 import type { Tables } from '@/types/supabase';
@@ -110,65 +110,87 @@ async function syncSocialProfileData(authUser: User, currentProfile: UserProfile
 
 export function useProfileData(user: User | null) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const profileRequestIdRef = useRef(0);
 
   // by_id가 비어있는지 확인하여 닉네임 설정 페이지로 유도하는 플래그
   const needsByIdSetup = profile !== null && (!profile.by_id || profile.by_id.trim() === '');
 
-  const fetchAndSetProfile = async (authUser: User) => {
+  const fetchAndSetProfile = useCallback(async (authUser: User, requestId = profileRequestIdRef.current + 1) => {
+    profileRequestIdRef.current = requestId;
     setProfileLoading(true);
-    
-    // 1. 프로필 기본 정보 로드
-    const { data: p, error: profileError } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
 
-    // 2. 신규 가입자(프로필 없음) 처리
-    if (profileError && profileError.code === 'PGRST116') {
-      const seed = authUser.email?.split('@')[0] || 'User';
-      const uniqueById = await resolveUniqueById(seed, authUser.id);
-      
-      await supabase.from('profiles').insert({
-        id: authUser.id,
-        by_id: uniqueById,
-        role: 'visitor',
-      });
-      
-      // 생성 후 다시 자신(fetchAndSetProfile)을 호출하여 로드
-      await fetchAndSetProfile(authUser);
-      return;
-    }
+    try {
+      // 1. 프로필 기본 정보 로드
+      let { data: p, error: profileError } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
 
-    // 3. 기존 유저 데이터 병합 및 세탁
-    let nextProfile = normalizeProfileRow(p);
-    if (nextProfile) {
-      nextProfile = await mergeOAuthIntoProfile(nextProfile, authUser.id);
-      nextProfile = await syncSocialProfileData(authUser, nextProfile);
-      setProfile(nextProfile);
-      
-      // 테스트 계정 플래그 동기화 (전역 상태)
-      if (typeof window !== 'undefined') {
-        if (nextProfile.is_test_account) setCurrentViewerTestAccountFlag(true);
-        else clearCurrentViewerTestAccountFlag();
+      // 2. 신규 가입자(프로필 없음) 처리
+      if (profileError && profileError.code === 'PGRST116') {
+        const seed = authUser.email?.split('@')[0] || 'User';
+        const uniqueById = await resolveUniqueById(seed, authUser.id);
+
+        const { error: insertError } = await supabase.from('profiles').insert({
+          id: authUser.id,
+          by_id: uniqueById,
+          role: 'visitor',
+        });
+
+        if (insertError) throw insertError;
+
+        const result = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
+        p = result.data;
+        profileError = result.error;
       }
+
+      if (profileError) throw profileError;
+
+      // 3. 기존 유저 데이터 병합 및 세탁
+      let nextProfile = normalizeProfileRow(p);
+      if (nextProfile) {
+        nextProfile = await mergeOAuthIntoProfile(nextProfile, authUser.id);
+        nextProfile = await syncSocialProfileData(authUser, nextProfile);
+
+        if (profileRequestIdRef.current !== requestId) return;
+
+        setProfile(nextProfile);
+
+        // 테스트 계정 플래그 동기화 (전역 상태)
+        if (typeof window !== 'undefined') {
+          if (nextProfile.is_test_account) setCurrentViewerTestAccountFlag(true);
+          else clearCurrentViewerTestAccountFlag();
+        }
+      }
+    } catch (error) {
+      if (profileRequestIdRef.current !== requestId) return;
+
+      logger.error('프로필 데이터를 불러오지 못했습니다.', error, { userId: authUser.id });
+      setProfile(null);
+      if (typeof window !== 'undefined') clearCurrentViewerTestAccountFlag();
+    } finally {
+      if (profileRequestIdRef.current === requestId) setProfileLoading(false);
     }
-    
-    setProfileLoading(false);
-  };
+  }, []);
 
   // user 객체가 변경될 때마다(로그인/로그아웃) 프로필을 다시 불러옴
   useEffect(() => {
     if (user) {
       fetchAndSetProfile(user);
-    } else {
+      return;
+    }
+
+    profileRequestIdRef.current += 1;
+    queueMicrotask(() => {
       setProfile(null);
       setProfileLoading(false);
-    }
-  }, [user]);
+      if (typeof window !== 'undefined') clearCurrentViewerTestAccountFlag();
+    });
+  }, [user, fetchAndSetProfile]);
 
   return { 
     profile, 
     setProfile, 
     profileLoading, 
     needsByIdSetup,
-    reloadProfile: () => user ? fetchAndSetProfile(user) : Promise.resolve() 
+    reloadProfile: () => user ? fetchAndSetProfile(user) : Promise.resolve()
   };
 }
