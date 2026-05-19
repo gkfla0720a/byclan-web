@@ -1,6 +1,8 @@
+// 파일명: @/context/authContext.tsx
+
 /**
  * =====================================================================
- * 파일명: src/context/AuthContext.ts
+ * 파일명: src/context/AuthContext.tsx
  * 역할  : useAuth 훅의 결과값을 React Context로 앱 전체에 공유합니다.
  *         이 파일을 통해 어떤 컴포넌트에서든 로그인 상태와 프로필에 접근할 수 있습니다.
  *

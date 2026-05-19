@@ -1,5 +1,7 @@
+// 파일명: visitorWelcome.tsx
+
 /**
- * 파일명: VisitorWelcome.js
+ * 파일명: VisitorWelcome.tsx
  *
  * 역할: 방문자·로그인 사용자의 가입 안내 및 클랜 신청서 제출을 담당하는 컴포넌트입니다.
  * 주요 기능:
@@ -13,8 +15,8 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/supabase';
 import { extractAccountIdFromAuthUser } from '@/utils/accountId';
+import { submitApplication } from '@/services/applicationService';
 import { ErrorMessage } from './UIStates';
 import { useNavigate } from '@/hooks/useNavigate';
 
@@ -32,17 +34,6 @@ const ROLE_LABELS = {
 const STREAMER_PLATFORMS = ['SOOP', 'YouTube', '치지직', 'Twitch', 'AfreecaTV', '기타'];
 
 /**
- * URL을 정규화합니다. http(s):// 없으면 https://를 앞에 붙입니다.
- * @param {string} url
- * @returns {string}
- */
-function normalizeUrl(url) {
-  if (!url) return '';
-  if (/^https?:\/\//i.test(url)) return url;
-  return `https://${url}`;
-}
-
-/**
  * 전화번호 문자열을 "010-1234-5678" 형식으로 자동 포맷합니다.
  * @param {string} value - 사용자가 입력한 원시 문자열
  * @returns {string} 포맷된 전화번호
@@ -54,88 +45,6 @@ function formatPhone(value) {
     return digits.replace(/(\d{3})(\d{1,4})/, '$1-$2');
   }
   return digits.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
-}
-
-/**
- * 클랜 가입 신청서를 Supabase에 제출하고 프로필 역할을 applicant로 변경합니다.
- * streamer 컬럼 미존재 시 해당 필드를 제외하고 재시도합니다.
- * @param {string} userId - 현재 로그인 사용자의 UUID
- * @param {object} applicationData - 신청서 폼 데이터
- * @returns {Promise<{success: boolean, error?: string}>}
- */
-async function submitApplication(userId, applicationData) {
-  try {
-    const applicationPayload = {
-      user_id: userId,
-      btag: applicationData.btag,
-      race: applicationData.race,
-      tier: applicationData.tier,
-      intro: applicationData.intro,
-      motivation: applicationData.motivation,
-      playtime: applicationData.playtime,
-      phone: applicationData.phone,
-      status: 'pending',
-      is_streamer: applicationData.isStreamer,
-      streamer_platform: applicationData.isStreamer ? applicationData.streamerPlatform : null,
-      streamer_url: applicationData.isStreamer ? normalizeUrl(applicationData.streamerUrl) : null,
-    };
-
-    let { error: appError } = await supabase
-      .from('applications')
-      .insert(applicationPayload);
-
-    if (appError) {
-      const message = `${appError.message || ''} ${appError.details || ''}`;
-      if (appError.code === '42703' || message.includes('does not exist')) {
-        ({ error: appError } = await supabase
-          .from('applications')
-          .insert({
-            user_id: userId,
-            btag: applicationData.btag,
-            race: applicationData.race,
-            tier: applicationData.tier,
-            intro: applicationData.intro,
-            motivation: applicationData.motivation,
-            playtime: applicationData.playtime,
-            phone: applicationData.phone,
-            status: 'pending',
-          }));
-      }
-    }
-
-    if (appError) {
-      console.warn('applications 테이블 오류:', appError.message);
-    }
-
-    let { error: profileError } = await supabase
-      .from('profiles')
-      .update({ role: 'applicant' })
-      .eq('id', userId);
-
-    // 스트리머 정보는 profile_meta에 저장
-    await supabase.from('profile_meta').upsert({
-      user_id: userId,
-      is_streamer: applicationData.isStreamer,
-      streamer_platform: applicationData.isStreamer ? applicationData.streamerPlatform : null,
-      streamer_url: applicationData.isStreamer ? normalizeUrl(applicationData.streamerUrl) : null,
-    }, { onConflict: 'user_id' });
-
-    if (profileError) {
-      const message = `${profileError.message || ''} ${profileError.details || ''}`;
-      if (profileError.code === '42703' || message.includes('does not exist')) {
-        ({ error: profileError } = await supabase
-          .from('profiles')
-          .update({ role: 'applicant' })
-          .eq('id', userId));
-      }
-    }
-
-    if (profileError) throw profileError;
-
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
 }
 
 function StepItem({ number, title, description, done = false, active = false }) {
