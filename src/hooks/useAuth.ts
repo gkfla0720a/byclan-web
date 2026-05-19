@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import type { AuthProfile as UserProfile } from '@/types/domain';
 import { ROLE_PERMISSIONS, normalizeRole, PermissionChecker } from '@/utils/permissions';
-import { useSession } from './useSession';
+import { useAuthSession } from './useAuthSession';
 import { useProfileData } from './useProfileData';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type { UserProfile };
@@ -54,7 +55,7 @@ export interface UseAuthReturn {
 
 export function useAuth(): UseAuthReturn {
   // 1. 순수 인증 상태 담당 (로그인 정보)
-  const { user, sessionLoading } = useSession();
+  const { user, sessionLoading } = useAuthSession();
 
   // 2. 무거운 DB 데이터 담당 (프로필, 래더 점수 등)
   const { profile, setProfile, profileLoading, needsByIdSetup, reloadProfile } = useProfileData(user);
@@ -73,6 +74,15 @@ export function useAuth(): UseAuthReturn {
     const timer = setTimeout(() => setAuthError(null), 4000);
     return () => clearTimeout(timer);
   }, [authError]);
+
+  useEffect(() => {
+    useAuthStore.getState().setAuthSnapshot({
+      user,
+      profile,
+      authLoading,
+      authError,
+    });
+  }, [user, profile, authLoading, authError]);
 
   // 4. 권한 계산 (PermissionChecker 활용)
   const getPermissions = (): AuthPermissions => {
@@ -104,7 +114,7 @@ export function useAuth(): UseAuthReturn {
   };
 
   // 기존 컴포넌트들과의 호환성을 유지하기 위한 래퍼(Wrapper) 함수들
-  const handleAuthSuccess = () => {}; // useSession에서 자동 감지하므로 비워둡니다.
+  const handleAuthSuccess = () => {}; // useAuthSession에서 자동 감지하므로 비워둡니다.
   const handleSetupComplete = () => {
     setNeedsSetup(false);
     reloadProfile();

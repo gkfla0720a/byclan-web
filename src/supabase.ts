@@ -48,5 +48,12 @@ if (!isSupabaseConfigured) {
 // 제네릭 <Database>를 주입하여 프로젝트 전체에 강력한 타입 추론을 제공합니다.
 export const supabase = createClient<Database>(
   envUrl || 'https://placeholder.supabase.co',
-  envKey || 'placeholder-key'
+  envKey || 'placeholder-key',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    },
+  }
 );

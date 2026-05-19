@@ -18,8 +18,9 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/supabase';
-import { buildInternalAuthEmail, getLoginEmailFromInput, isLegacyEmailLogin, normalizeAccountId } from '@/utils/accountId';
+import { useForm, useWatch } from 'react-hook-form';
+import { isLegacyEmailLogin, normalizeAccountId } from '@/utils/accountId';
+import { useOAuthSignIn, usePasswordSignIn, usePasswordSignUp } from '@/features/auth/useAuthMutations';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
 // ── 유효성 검사 헬퍼 ─────────────────────────────────────────────────────────
@@ -89,24 +90,38 @@ const TERMS_OF_SERVICE = `ByClan 서비스 이용약관
  * @returns {JSX.Element} 아이디 인증 폼 UI (Discord 로그인 옵션 포함)
  */
 function EmailLoginForm({ onSuccess }) {
-  /** 로그인 아이디 입력값 (가입 시에는 클랜 아이디와 동일하게 사용) */
-  const [userId, setUserId] = useState('');
-  /** 비밀번호 입력값 */
-  const [password, setPassword] = useState('');
-  /** API 요청 처리 중 여부 (true: 버튼 비활성화) */
-  const [loading, setLoading] = useState(false);
-  /** 에러 메시지 (null: 에러 없음) */
-  const [error, setError] = useState(null);
   /** true면 회원가입 모드, false면 로그인 모드 */
   const [isSignUp, setIsSignUp] = useState(false);
-  /** 이용약관 동의 여부 (가입 시 필수) */
-  const [termsAccepted, setTermsAccepted] = useState(false);
   /** 이용약관 전문 표시 여부 (현재 UI에서 미사용, 확장용) */
-  const [showTerms, setShowTerms] = useState(false);
-  /** Discord OAuth 연동 처리 중 여부 */
-  const [discordLoading, setDiscordLoading] = useState(false);
-  /** Google OAuth 연동 처리 중 여부 */
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [, setShowTerms] = useState(false);
+  const signInMutation = usePasswordSignIn();
+  const signUpMutation = usePasswordSignUp();
+  const oauthMutation = useOAuthSignIn();
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      userId: '',
+      password: '',
+      termsAccepted: false,
+    },
+    mode: 'onSubmit',
+  });
+
+  const userId = useWatch({ control, name: 'userId' });
+  const password = useWatch({ control, name: 'password' });
+  const termsAccepted = useWatch({ control, name: 'termsAccepted' });
+  const loading = signInMutation.isPending || signUpMutation.isPending;
+  const discordLoading = oauthMutation.isPending && oauthMutation.variables === 'discord';
+  const googleLoading = oauthMutation.isPending && oauthMutation.variables === 'google';
+  const mutationError = signInMutation.error || signUpMutation.error || oauthMutation.error;
+  const fieldError = errors.userId?.message || errors.password?.message || errors.termsAccepted?.message;
+  const error = fieldError || mutationError?.message || null;
 
   /**
    * 폼 제출 핸들러입니다.
@@ -114,112 +129,26 @@ function EmailLoginForm({ onSuccess }) {
    * - isSignUp이 false면 아이디+비밀번호로 로그인합니다.
    * @param {React.FormEvent} e - 폼 submit 이벤트
    */
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  const handleAuth = async ({ userId: rawUserId, password: rawPassword }) => {
+    signInMutation.reset();
+    signUpMutation.reset();
+    oauthMutation.reset();
 
-    try {
-      const normalizedUserId = normalizeAccountId(userId);
+    const normalizedUserId = normalizeAccountId(rawUserId);
 
-      if (isSignUp) {
-        // 유효성 검사
-        const userIdErr = validateUserId(normalizedUserId);
-        if (userIdErr) { setError(userIdErr); setLoading(false); return; }
-
-        const pwErr = validatePassword(password);
-        if (pwErr) { setError(pwErr); setLoading(false); return; }
-
-        if (!termsAccepted) {
-          setError('이용약관에 동의해야 가입할 수 있습니다.');
-          setLoading(false);
-          return;
-        }
-
-        const byId = `By_${normalizedUserId}`;
-        const internalEmail = buildInternalAuthEmail(normalizedUserId);
-
-        // 아이디 중복 확인
-        const { data: existing } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('by_id', byId)
-          .maybeSingle();
-
-        if (existing) {
-          setError('이미 사용 중인 아이디입니다. 다른 아이디를 선택하세요.');
-          setLoading(false);
-          return;
-        }
-
-        // 회원가입
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: internalEmail,
-          password,
-          options: {
-            data: {
-              login_id: normalizedUserId,
-              by_id: byId,
-              role: 'applicant'
-            }
-          }
-        });
-
-        if (signUpError) throw signUpError;
-
-        // 프로필 생성
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              by_id: byId,
-              role: 'applicant',
-              clan_point: 0,
-              race: 'Terran',
-              intro: '새로운 클랜원입니다.'
-            });
-
-          if (profileError) {
-            console.error('프로필 생성 실패:', profileError);
-          }
-        }
-
-        alert('회원가입이 완료되었습니다. 입력한 아이디로 로그인하세요.');
-        setIsSignUp(false);
-        setUserId('');
-        setPassword('');
-        setTermsAccepted(false);
-      } else {
-        // 로그인
-        if (!userId) {
-          setError('아이디를 입력하세요.');
-          setLoading(false);
-          return;
-        }
-
-        if (!isLegacyEmailLogin(userId)) {
-          const userIdErr = validateUserId(normalizedUserId);
-          if (userIdErr) {
-            setError(userIdErr);
-            setLoading(false);
-            return;
-          }
-        }
-
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email: getLoginEmailFromInput(userId),
-          password
-        });
-
-        if (signInError) throw signInError;
-        onSuccess(data.user);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    if (isSignUp) {
+      await signUpMutation.mutateAsync({ normalizedUserId, password: rawPassword });
+      alert('회원가입이 완료되었습니다. 입력한 아이디로 로그인하세요.');
+      setIsSignUp(false);
+      reset();
+      return;
     }
+
+    const user = await signInMutation.mutateAsync({
+      userId: rawUserId,
+      password: rawPassword,
+    });
+    onSuccess(user);
   };
 
   /**
@@ -228,20 +157,10 @@ function EmailLoginForm({ onSuccess }) {
    * 인증 완료 후 /auth/callback으로 돌아옵니다.
    */
   const handleDiscordLogin = async () => {
-    setDiscordLoading(true);
-    setError(null);
-    try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'discord',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-      if (oauthError) throw oauthError;
-    } catch (err) {
-      setError(err.message);
-      setDiscordLoading(false);
-    }
+    signInMutation.reset();
+    signUpMutation.reset();
+    oauthMutation.reset();
+    oauthMutation.mutate('discord');
   };
 
   /**
@@ -249,20 +168,10 @@ function EmailLoginForm({ onSuccess }) {
    * Supabase Authentication > Providers > Google 설정 필요.
    */
   const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    setError(null);
-    try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-      if (oauthError) throw oauthError;
-    } catch (err) {
-      setError(err.message);
-      setGoogleLoading(false);
-    }
+    signInMutation.reset();
+    signUpMutation.reset();
+    oauthMutation.reset();
+    oauthMutation.mutate('google');
   };
 
   return (
@@ -273,7 +182,7 @@ function EmailLoginForm({ onSuccess }) {
 
       {error && <ErrorMessage message={error} />}
 
-      <form onSubmit={handleAuth} className="space-y-4">
+      <form onSubmit={handleSubmit(handleAuth)} className="space-y-4">
         <div>
           <label htmlFor="account-id" className="block text-gray-300 text-sm font-medium mb-1">
             로그인 아이디
@@ -286,8 +195,18 @@ function EmailLoginForm({ onSuccess }) {
             <input
               id="account-id"
               type="text"
-              value={userId}
-              onChange={(e) => setUserId(isSignUp ? normalizeAccountId(e.target.value) : e.target.value)}
+              {...register('userId', {
+                validate: (value) => {
+                  if (!value) return '아이디를 입력하세요.';
+                  if (!isSignUp && isLegacyEmailLogin(value)) return true;
+                  return validateUserId(normalizeAccountId(value)) || true;
+                },
+                onChange: (e) => {
+                  if (isSignUp) {
+                    setValue('userId', normalizeAccountId(e.target.value), { shouldValidate: false });
+                  }
+                },
+              })}
               placeholder={isSignUp ? 'yourid' : '아이디 또는 기존 이메일'}
               className={`w-full py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 ${isSignUp ? 'pl-10 pr-3' : 'px-3'}`}
               maxLength={isSignUp ? 20 : 80}
@@ -317,8 +236,13 @@ function EmailLoginForm({ onSuccess }) {
           </label>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            {...register('password', {
+              validate: (value) => {
+                if (!value) return '비밀번호를 입력하세요.';
+                if (!isSignUp) return true;
+                return validatePassword(value) || true;
+              },
+            })}
             placeholder="••••••••"
             className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30"
             required
@@ -343,8 +267,9 @@ function EmailLoginForm({ onSuccess }) {
               <input
                 id="tos-accept"
                 type="checkbox"
-                checked={termsAccepted}
-                onChange={(e) => setTermsAccepted(e.target.checked)}
+                {...register('termsAccepted', {
+                  validate: (value) => !isSignUp || value || '이용약관에 동의해야 가입할 수 있습니다.',
+                })}
                 className="mt-0.5 accent-cyan-500 w-4 h-4 shrink-0"
               />
               <span className="text-sm text-gray-300">
@@ -367,7 +292,14 @@ function EmailLoginForm({ onSuccess }) {
 
       <div className="mt-6 text-center">
         <button
-          onClick={() => { setIsSignUp(!isSignUp); setError(null); setTermsAccepted(false); }}
+          onClick={() => {
+            setIsSignUp(!isSignUp);
+            signInMutation.reset();
+            signUpMutation.reset();
+            oauthMutation.reset();
+            setShowTerms(false);
+            reset({ userId: '', password: '', termsAccepted: false });
+          }}
           className="text-cyan-500 hover:text-cyan-400 text-sm"
         >
           {isSignUp ? '이미 계정이 있으신가요? 로그인' : '아직 계정이 없으신가요? 가입하기'}

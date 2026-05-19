@@ -34,6 +34,8 @@ export default function JoinTransferPage() {
   const [submitting, setSubmitting] = useState(false);
   /** 처리 결과 메시지 */
   const [resultMsg, setResultMsg] = useState('');
+  /** 신청 가능 일수 계산 기준 시각 */
+  const [loadedAt, setLoadedAt] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -63,6 +65,7 @@ export default function JoinTransferPage() {
           setAlreadyApplied(Boolean(existing?.length));
         }
       } finally {
+        setLoadedAt(Date.now());
         setLoading(false);
       }
     };
@@ -112,7 +115,7 @@ export default function JoinTransferPage() {
   // 수습 기간 계산
   const rookieSince = profile.rookie_since ? new Date(profile.rookie_since) : null;
   const daysAsSinceRookie = rookieSince
-    ? Math.floor((Date.now() - rookieSince.getTime()) / (1000 * 60 * 60 * 24))
+    ? Math.floor(((loadedAt || rookieSince.getTime()) - rookieSince.getTime()) / (1000 * 60 * 60 * 24))
     : null;
   const daysRemaining = daysAsSinceRookie !== null ? Math.max(0, MIN_ROOKIE_DAYS - daysAsSinceRookie) : null;
   const canApply = daysAsSinceRookie !== null && daysAsSinceRookie >= MIN_ROOKIE_DAYS;

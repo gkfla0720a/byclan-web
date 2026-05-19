@@ -174,7 +174,7 @@ export function useProfileData(user: User | null) {
   // user 객체가 변경될 때마다(로그인/로그아웃) 프로필을 다시 불러옴
   useEffect(() => {
     if (user) {
-      fetchAndSetProfile(user);
+      queueMicrotask(() => fetchAndSetProfile(user));
       return;
     }
 
