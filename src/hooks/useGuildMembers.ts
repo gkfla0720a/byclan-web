@@ -79,7 +79,11 @@ export function useGuildMembers() {
   }, []);
 
   useEffect(() => {
-    Promise.all([loadCurrentManager(), loadMembers()]);
+    const initialize = async () => {
+      await Promise.all([loadCurrentManager(), loadMembers()]);
+    };
+
+    void initialize();
   }, [loadCurrentManager, loadMembers]);
 
   const handleRoleChange = useCallback(async (memberId, newRole, previousRole) => {
