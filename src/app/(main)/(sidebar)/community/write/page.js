@@ -54,7 +54,7 @@ export default function PostWritePage() {
       // 1. 권한 확인
       if (!user) throw new Error('로그인이 필요합니다.');
       const userRole = profile?.role || null;
-      if (!PermissionChecker.hasPermission(userRole, 'community.post')) {
+      if (!hasPermission(userRole, 'community.post')) {
         throw new Error('게시글 작성 권한이 없습니다.');
       }
 
