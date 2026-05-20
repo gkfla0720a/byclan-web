@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
 import { useAuthContext } from '@/context/AuthContext';
-import { PermissionChecker } from '@/utils/permissions/checker';
+import { hasPermission } from '@/utils/permissions';
 
 
 export default function PostDetailPage() {
