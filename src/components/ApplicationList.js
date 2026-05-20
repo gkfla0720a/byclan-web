@@ -16,7 +16,7 @@
 
 import { useState, useEffect, useCallback, startTransition } from 'react';
 import { supabase } from '@/supabase';
-import { PermissionChecker } from '@/utils/permissions/checker';
+import { hasPermission } from '@/utils/permissions';
 import { filterVisibleTestData } from '@/utils/testData';
 
 /**
