@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { supabase } from '@/supabase';
 import { useAuthContext } from '@/context/AuthContext';
-import { hasPermission } from '@/utils/permissions';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { hasPermission, normalizeRole } from '@/utils/permissions';
 
 
 export default function PostDetailPage() {
@@ -146,7 +147,7 @@ export default function PostDetailPage() {
   };
 
   const isAuthor = user?.id === post?.user_id;
-  const isManager = hasPermission(profile?.role, 'community.manage') || ['developer', 'master', 'admin'].includes(profile?.role);
+  const isManager = hasPermission(normalizeRole(profile?.role), 'community.manage') || ['developer', 'master', 'admin'].includes(profile?.role);
 
   if (loading) return <div className="p-10 text-center text-white">게시글을 불러오는 중입니다...</div>;
   if (!post) return <div className="p-10 text-center text-red-400">삭제되었거나 존재하지 않는 게시글입니다.</div>;
@@ -176,7 +177,7 @@ export default function PostDetailPage() {
               {post.attachment_urls.map((file, idx) => {
                 const isImage = file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
                 return isImage ? (
-                  <img key={idx} src={file.url} alt={file.name} className="max-w-full rounded border border-gray-700 shadow-md" />
+                  <Image key={idx} src={file.url} alt={file.name} width={1200} height={800} className="max-w-full h-auto rounded border border-gray-700 shadow-md" />
                 ) : (
                   <a key={idx} href={file.url} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline bg-gray-800 p-3 border border-gray-700 w-fit">
                     📎 {file.name} (다운로드)

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
 import { useAuthContext } from '@/context/AuthContext';
-import { hasPermission } from '@/utils/permissions';
+import { hasPermission, normalizeRole } from '@/utils/permissions';
 
 export default function PostWritePage() {
   const router = useRouter();
@@ -54,7 +54,7 @@ export default function PostWritePage() {
       // 1. 권한 확인
       if (!user) throw new Error('로그인이 필요합니다.');
       const userRole = profile?.role || null;
-      if (!hasPermission(userRole, 'community.post')) {
+      if (!hasPermission(normalizeRole(userRole), 'community.post')) {
         throw new Error('게시글 작성 권한이 없습니다.');
       }
 
