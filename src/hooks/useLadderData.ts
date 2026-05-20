@@ -72,7 +72,14 @@ export function useLadderData(user, authLoading) {
       const { data: ongoingRaw } = await supabase.from('ladder_match_sets').select('*, ladder_record!inner(*)').in('status', ['in_progress', 'proposed']).order('created_at', { ascending: false }).limit(10);
       setOngoingMatches(ongoingRaw || []);
 
-      const allTeamIds = [...new Set((ongoingRaw || []).flatMap(m => (m.ladder_record || []).map(r => r.user_id)))];
+      const allTeamIds = [...new Set((ongoingRaw || []).flatMap((m) => {
+        const records = Array.isArray(m.ladder_record)
+          ? m.ladder_record
+          : m.ladder_record
+            ? [m.ladder_record]
+            : [];
+        return records.map((r) => r.user_id);
+      }))];
       if (allTeamIds.length > 0) {
         const { data: teamProfs } = await supabase.from('ladder_rankings').select('user_id, total_mmr, profiles!inner(by_id)').in('user_id', allTeamIds);
         const profMap = Object.fromEntries((teamProfs || []).map(p => [
@@ -93,7 +100,9 @@ export function useLadderData(user, authLoading) {
       fetchData();
     });
     const channel = supabase.channel('ladder-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'ladder_queue' }, fetchData).subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [fetchData]);
 
   useEffect(() => {
@@ -161,7 +170,12 @@ export function useLadderData(user, authLoading) {
 
     try {
       const matchId = crypto.randomUUID();
-      await supabase.from('ladder_match_sets').insert({ match_id: matchId, set_number: 1, status: 'proposed', race_type: `${typeStr}v${typeStr}` });
+      await supabase.from('ladder_match_sets').insert({
+        match_id: matchId,
+        set_number: 1,
+        status: 'proposed',
+        race_type: `${typeStr}v${typeStr}`,
+      } as never);
       
       const records = [
         ...teamA.map(p => ({ match_id: matchId, user_id: p.id, team: 'A' })),

@@ -1,17 +1,15 @@
-// 파일명: clanOverView.ts
+// 파일명: ClanOverView.tsx
 
  /**
- * 파일명: clanOverview.ts
- *
  * 역할: 클랜 소개 views 컴포넌트입니다. 클랜의 메인 게임, 리더십, 활동 방식,
  *       운영 방향, 멤버 구성을 정적 콘텐츠로 설명합니다.
  * 주요 기능: 히어로 배너 + 3열 특징 카드 + 운영 방향/멤버 구성 2열 설명 블록
- * 사용 방법: <ClanOverview />
+ * 사용 방법: <ClanOverView />
  */
 'use client';
 
 /**
- * ClanOverview 컴포넌트
+ * ClanOverView 컴포넌트
  *
  * ByClan 클랜 소개 내용을 정적으로 렌더링합니다.
  * 별도의 상태나 API 호출 없이 순수 UI만 반환합니다.
@@ -19,7 +17,7 @@
  * @returns {JSX.Element} 클랜 소개 views UI
  */
 
-function ClanOverview() {
+function ClanOverView() {
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
       <div className="relative bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-2xl p-8 sm:p-12 text-center group">
@@ -68,4 +66,4 @@ function ClanOverview() {
   );
 }
 
-export default ClanOverview;
+export default ClanOverView;

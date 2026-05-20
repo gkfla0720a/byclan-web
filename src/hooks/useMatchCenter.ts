@@ -87,20 +87,24 @@ export function useMatchCenter(matchId) {
     setMyUserId(user.id);
 
     const { data: sets } = await supabase.from('ladder_match_sets').select('*').eq('match_id', matchId).order('set_number', { ascending: true });
-    const { data: records } = await supabase.from('ladder_record').select('*, profiles(*)').eq('match_id', matchId);
+    const { data: records } = await supabase
+    .from('ladder_record')
+    .select('*, profiles(*)')
+    .eq('match_id' as never, matchId);
 
     if (!sets || sets.length === 0 || !records) return;
+    const normalizedRecords = records as any[];
     
     const scoreA = sets.filter(s => s.winner_team === 'A').length;
     const scoreB = sets.filter(s => s.winner_team === 'B').length;
-    const matchType = records.filter(r => r.team === 'A').length;
+    const matchType = normalizedRecords.filter((r) => r.team === 'A').length;
     
     const m = {
       ...sets[0], 
       match_sets: sets,
-      team_a_ids: records.filter(r => r.team === 'A').map(r => r.user_id),
-      team_b_ids: records.filter(r => r.team === 'B').map(r => r.user_id),
-      profiles: records.map(r => r.profiles),
+      team_a_ids: normalizedRecords.filter((r) => r.team === 'A').map((r) => r.user_id),
+      team_b_ids: normalizedRecords.filter((r) => r.team === 'B').map((r) => r.user_id),
+      profiles: normalizedRecords.map((r) => r.profiles),
       score_a: scoreA,
       score_b: scoreB,
       match_type: matchType
@@ -111,7 +115,6 @@ export function useMatchCenter(matchId) {
       supabase.from('profiles').select('id, role, clan_point').eq('id', user.id).single(),
       supabase.from('profile_meta').select('is_test_account').eq('user_id', user.id).maybeSingle(),
     ]);
-    if (prof && profMeta) prof.is_test_account = profMeta.is_test_account;
     if (prof) {
       setMyClanPoint(prof.clan_point ?? 0);
       setMyRole(prof.role || null);
@@ -135,7 +138,19 @@ export function useMatchCenter(matchId) {
 
     try {
       const { data: oddsData } = await supabase.rpc('fn_get_match_bet_odds', { p_match_id: matchId });
-      if (oddsData) setBetOdds(oddsData);
+      if (oddsData) {
+        const normalizedOdds = Array.isArray(oddsData) ? oddsData[0] : oddsData;
+        if (normalizedOdds) {
+          setBetOdds({
+            total_a: normalizedOdds.total_a ?? 0,
+            total_b: normalizedOdds.total_b ?? 0,
+            count_a: normalizedOdds.count_a ?? 0,
+            count_b: normalizedOdds.count_b ?? 0,
+            odds_a: normalizedOdds.odds_a ?? 0,
+            odds_b: normalizedOdds.odds_b ?? 0,
+          });
+        }
+      }
     } catch {}
   }, [matchId]);
 
@@ -276,7 +291,7 @@ export function useMatchCenter(matchId) {
     
     const { error } = await supabase.from('ladder_match_sets').update({
       [column]: true, [entryCol]: selectedEntryByTeam[team], [reqCol]: false,
-    }).eq('id', currentSet.id);
+    } as never).eq('id', currentSet.id);
     
     if (error) { alert('엔트리 제출 실패: ' + error.message); return; }
     alert(managementMode && isManagementRole ? `${team}팀 엔트리를 관리모드로 제출했습니다.` : '엔트리 제출 완료! 상대방을 기다립니다.');
@@ -285,7 +300,7 @@ export function useMatchCenter(matchId) {
   const requestWithdraw = async (teamLetter) => {
     if (!currentSet || currentSet.winner_team) return;
     const col = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
-    await supabase.from('ladder_match_sets').update({ [col]: true }).eq('id', currentSet.id);
+    await supabase.from('ladder_match_sets').update({ [col]: true } as never).eq('id', currentSet.id);
   };
 
   const approveWithdraw = async (teamLetter) => {
