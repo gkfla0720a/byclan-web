@@ -1,8 +1,6 @@
-// 파일명: @/views/mediaGallery.tsx
+// 파일명: @/views/MediaGallery.tsx
 
  /**
- * 파일명: mediaGallery.tsx
- *
  * 역할:
  *   클랜 내부에 쌓인 공지·게시글·경기 기록을 이미지 카드 형태로 모아 보여주는
  *   미디어 갤러리 views 컴포넌트입니다.
@@ -24,7 +22,6 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
 
 /**
- * 파일명: MediaGallery.js (계속)
  * 콘텐츠 유형별 배경 이미지 URL 매핑
  */
 const MEDIA_BACKGROUNDS = {

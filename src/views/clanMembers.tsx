@@ -1,8 +1,6 @@
-// 파일명: @/views/clanMembers.ts
+// 파일명: @/views/ClanMembers.tsx
 
  /**
- * 파일명: clanMembers.ts
- *
  * 역할:
  *   클랜원 명단 views 컴포넌트입니다.
  *   운영진·정예 클랜원·일반 클랜원 세 섹션으로 멤버를 분류하여 테이블로 보여줍니다.
@@ -22,8 +20,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import { PermissionChecker } from '@/utils/permissions/checker';
-import { ROLE_PERMISSIONS } from '@/utils/permissions/role-permissions';
+import { ROLE_PERMISSIONS, hasPermission } from '@/utils/permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
 
@@ -258,7 +255,7 @@ export default function ClanMembers() {
   })).filter((section) => section.members.length > 0);
 
   const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role || '알 수 없음', color: '#C7CEEA', icon: '👤' };
-  const canManageMembers = PermissionChecker.hasPermission(currentRole, 'member.manage');
+  const canManageMembers = hasPermission(currentRole, 'member.manage');
 
   /**
    * 인라인 드롭다운에서 멤버 등급을 변경합니다.

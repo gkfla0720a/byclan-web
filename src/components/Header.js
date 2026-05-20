@@ -35,7 +35,7 @@ import Image from 'next/image';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '@/hooks/useNavigate';
 import { useAuthContext } from '@/context/AuthContext';
-import { PermissionChecker, canAccessMenu } from '@/utils/permissions';
+import { hasPermission, canAccessMenu } from '@/utils/permissions';
 import { useToast } from '@/context/ToastContext';
 
 /**
@@ -208,7 +208,7 @@ export default function Header() {
     return {
       ...category,
       // 하위 메뉴(items) 중 권한이 있는 것만 남깁니다.
-      items: category.items.filter(item => PermissionChecker.canAccessMenu(currentRole, item))
+      items: category.items.filter(item => canAccessMenu(currentRole, item))
     };
   }).filter(category => category.items.length > 0);
 

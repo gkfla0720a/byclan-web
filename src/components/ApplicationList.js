@@ -16,7 +16,7 @@
 
 import { useState, useEffect, useCallback, startTransition } from 'react';
 import { supabase } from '@/supabase';
-import { PermissionChecker } from '@/utils/permissions/checker';
+import { hasPermission } from '@/utils/permissions';
 import { filterVisibleTestData } from '@/utils/testData';
 
 /**
@@ -103,7 +103,7 @@ export default function ApplicationList() {
           setMyProfile({ ...profile, role: currentRole });
           
           // 새로운 권한 시스템으로 변경
-          if (PermissionChecker.hasPermission(currentRole, 'member.approve')) {
+          if (hasPermission(currentRole, 'member.approve')) {
             await fetchApplications();
           }
         }
@@ -226,7 +226,7 @@ export default function ApplicationList() {
 
   if (loading) return <div className="text-center py-24 text-gray-500 font-mono">[ FETCHING APPLICATIONS... ]</div>;
   
-  if (!myProfile || !PermissionChecker.hasPermission(myProfile.role, 'member.approve')) {
+  if (!myProfile || !hasPermission(myProfile.role, 'member.approve')) {
     return <div className="text-center py-24 text-red-400 font-bold">⚠️ 접근 권한이 없습니다. 가입 심사 권한이 필요합니다.</div>;
   }
 

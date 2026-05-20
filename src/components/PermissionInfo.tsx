@@ -7,6 +7,7 @@
  *   - hasPermission: 특정 역할이 각 권한을 가졌는지 허용/거부로 표시
  * @관련컴포넌트 GuildManagement.js, AdminBoard.js
  */
+
 'use client';
 
 import { hasPermission as PermissionUtilsChecker } from '@/utils/permissions';

@@ -20,7 +20,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
-import { PermissionChecker } from '@/utils/permissions/checker';
+import { hasPermission } from '@/utils/permissions';
 import { useAuthContext } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -44,7 +44,7 @@ export default function CommunityBoard() {
   const postsPerPage = 30; // 페이지당 게시글 수
 
   // 글쓰기 권한 여부 판별 (true / false)
-  const canWrite = PermissionChecker.hasPermission(profile?.role, 'community.post');
+  const canWrite = hasPermission(profile?.role, 'community.post');
 
   /**
    * posts 테이블에서 게시글을 최신순으로 불러옵니다.

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/supabase';
 import { useAuthContext } from '@/context/AuthContext';
-import { PermissionChecker } from '@/utils/permissions/checker';
+import { hasPermission } from '@/utils/permissions';
 
 
 export default function PostDetailPage() {
@@ -146,7 +146,7 @@ export default function PostDetailPage() {
   };
 
   const isAuthor = user?.id === post?.user_id;
-  const isManager = PermissionChecker.hasPermission(profile?.role, 'community.manage') || ['developer', 'master', 'admin'].includes(profile?.role);
+  const isManager = hasPermission(profile?.role, 'community.manage') || ['developer', 'master', 'admin'].includes(profile?.role);
 
   if (loading) return <div className="p-10 text-center text-white">게시글을 불러오는 중입니다...</div>;
   if (!post) return <div className="p-10 text-center text-red-400">삭제되었거나 존재하지 않는 게시글입니다.</div>;
