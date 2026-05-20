@@ -23,7 +23,7 @@ import { isSupabaseConfigured, supabase } from '@/supabase';
 import { EmptyState, SkeletonLoader } from './UIStates';
 import { filterVisibleTestData } from '@/utils/testData';
 import { isRelationshipError } from '@/utils/retry';
-import { hasPermission } from '@/utils/permissions';
+import { hasPermission, normalizeRole } from '@/utils/permissions';
 import { useAuthContext } from '@/context/AuthContext';
 
 /**
@@ -49,7 +49,7 @@ export default function NoticeBoard() {
   /** 현재 로그인 유저 프로필 (권한 확인용) */
   const { profile } = useAuthContext();
   /** 현재 유저가 공지사항 작성 권한을 가졌는지 (admin 이상) */
-  const canPost = profile ? hasPermission(profile.role, 'announcement.post') : false;
+  const canPost = profile ? hasPermission(normalizeRole(profile.role), 'announcement.post') : false;
 
   /** 컴포넌트 마운트 시 공지사항 데이터를 불러옵니다 */
   useEffect(() => {

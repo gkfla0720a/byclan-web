@@ -136,7 +136,12 @@ export function isRelationshipError(error) {
  * @returns {Promise<T>}
  */
 export async function withRetry(fn, options = {}) {
-  const { maxAttempts = 3, baseDelay = 1000, onRetry } = options;
+  // @ts-expect-error - JSDoc default object narrowing in strict mode
+  const maxAttempts = options?.maxAttempts ?? 3;
+  // @ts-expect-error - JSDoc default object narrowing in strict mode
+  const baseDelay = options?.baseDelay ?? 1000;
+  // @ts-expect-error - JSDoc default object narrowing in strict mode
+  const onRetry = options?.onRetry;
   let lastError;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {

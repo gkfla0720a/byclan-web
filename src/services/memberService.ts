@@ -49,9 +49,10 @@ export async function updateMemberRole(memberId, newRole, previousRole, isTestAc
     p_new_role: newRole,
     p_note: `등급 변경: ${previousRole} → ${newRole}`,
   });
+  const result = data as any;
 
   if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || '역할 변경 실패');
+  if (!result?.ok) throw new Error(result?.error || '역할 변경 실패');
 
   const promotionRoles = ['rookie', 'member', 'elite', 'admin'];
   if (promotionRoles.includes(newRole)) {
@@ -74,9 +75,10 @@ export async function expelMember(memberId) {
     p_new_role: 'expelled',
     p_note: '제명 처리',
   });
+  const result = data as any;
 
   if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || '제명 처리 실패');
+  if (!result?.ok) throw new Error(result?.error || '제명 처리 실패');
 }
 
 /**
@@ -90,9 +92,10 @@ export async function forcePromoteToMember(memberId, isTestAccount = false) {
     p_new_role: 'member',
     p_note: '마스터 즉시 승급 (수습 기간 면제)',
   });
+  const result = data as any;
 
   if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || '승급 실패');
+  if (!result?.ok) throw new Error(result?.error || '승급 실패');
 
   await grantRankPromotionBonus(supabase, memberId, 'member', isTestAccount);
 

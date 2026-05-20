@@ -307,14 +307,14 @@ export function useMatchCenter(matchId) {
     if (!currentSet || currentSet.winner_team) return;
     const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
     const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
-    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false }).eq('id', currentSet.id);
+    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false } as never).eq('id', currentSet.id);
   };
 
   const forceRetract = async (teamLetter) => {
     if (!currentSet || !isManagementRole || !managementMode) return;
     const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
     const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
-    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false }).eq('id', currentSet.id);
+    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false } as never).eq('id', currentSet.id);
   };
 
   const [vetoTimeLeft, setVetoTimeLeft] = useState(0);
@@ -450,7 +450,7 @@ const handleSetWin = async (winnerTeam) => {
         setSettlementStatus('success');
         throw new Error('이미 정산이 완료된 경기입니다.');
       }
-      const { error } = await supabase.rpc('fn_process_settlement', { p_match_id: matchId });
+      const { error } = await supabase.rpc('fn_process_settlement' as never, { p_match_id: matchId } as never);
       if (error) throw error;
       setSettlementStatus('success');
       alert('매치 정산이 완벽하게 처리되었습니다!');

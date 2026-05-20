@@ -20,7 +20,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import { ROLE_PERMISSIONS, hasPermission } from '@/utils/permissions';
+import { ROLE_PERMISSIONS, hasPermission, normalizeRole } from '@/utils/permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
 
@@ -255,7 +255,7 @@ export default function ClanMembers() {
   })).filter((section) => section.members.length > 0);
 
   const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role || '알 수 없음', color: '#C7CEEA', icon: '👤' };
-  const canManageMembers = hasPermission(currentRole, 'member.manage');
+  const canManageMembers = hasPermission(normalizeRole(currentRole), 'member.manage');
 
   /**
    * 인라인 드롭다운에서 멤버 등급을 변경합니다.
@@ -287,9 +287,10 @@ export default function ClanMembers() {
         p_new_role: nextRole,
         p_note: `클랜원 목록에서 등급 변경: ${member.role} → ${nextRole}`,
       });
+      const result = data as any;
 
       if (error) throw error;
-      if (!data?.ok) throw new Error(data?.error || '역할 변경 실패');
+      if (!result?.ok) throw new Error(result?.error || '역할 변경 실패');
 
       setMembers((prev) => {
         const updated = prev.map((item) => item.id === member.id ? { ...item, role: nextRole } : item);
