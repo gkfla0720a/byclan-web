@@ -56,7 +56,7 @@ export interface UseAuthReturn {
 
 export function useAuth(): UseAuthReturn {
   // 1. 순수 인증 상태 담당 (로그인 정보)
-  const { user, sessionLoading } = useAuthSession();
+  const { user, setUser, sessionLoading } = useAuthSession();
 
   // 2. 무거운 DB 데이터 담당 (프로필, 래더 점수 등)
   const { profile, setProfile, profileLoading, needsByIdSetup, reloadProfile } = useProfileData(user);
@@ -115,7 +115,9 @@ export function useAuth(): UseAuthReturn {
   };
 
   // 기존 컴포넌트들과의 호환성을 유지하기 위한 래퍼(Wrapper) 함수들
-  const handleAuthSuccess = () => {}; // useAuthSession에서 자동 감지하므로 비워둡니다.
+  const handleAuthSuccess = (authUser: User) => {
+    setUser(authUser);
+  };
   const handleSetupComplete = () => {
     setNeedsSetup(false);
     reloadProfile();
@@ -127,7 +129,7 @@ export function useAuth(): UseAuthReturn {
     activeMatchId,
     setActiveMatchId,
     user,
-    setUser: () => {}, // 강제로 덮어씌우는 로직 방지용 더미
+    setUser,
     needsSetup,
     setNeedsSetup,
     needsByIdSetup,
