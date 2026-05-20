@@ -20,7 +20,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
-import { hasPermission } from '@/utils/permissions';
+import { hasPermission, normalizeRole } from '@/utils/permissions';
 import { useAuthContext } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
