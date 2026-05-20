@@ -34,18 +34,20 @@ export function useGuildMembers() {
     id: null, role: null, email: '', authEmail: '', phone: '',
   });
 
-  const loadMembers = useCallback(async () => {
+  const loadMembers = useCallback(async (isMountedRef?: { current: boolean }) => {
     try {
       const data = await fetchMembers();
+      if (isMountedRef && !isMountedRef.current) return;
       setMembers(data);
     } catch (error) {
       console.error('클랜원 목록 로드 실패:', error);
     } finally {
+      if (isMountedRef && !isMountedRef.current) return;
       setLoading(false);
     }
   }, []);
 
-  const loadCurrentManager = useCallback(async () => {
+  const loadCurrentManager = useCallback(async (isMountedRef?: { current: boolean }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -62,6 +64,7 @@ export function useGuildMembers() {
       const authEmail = user.email || '';
       const hasPublicEmail = authEmail && !isInternalAuthEmail(authEmail);
 
+      if (isMountedRef && !isMountedRef.current) return;
       setCurrentManager({
         id: user.id,
         role,
@@ -79,11 +82,16 @@ export function useGuildMembers() {
   }, []);
 
   useEffect(() => {
+    const isMountedRef = { current: true };
     const initialize = async () => {
-      await Promise.all([loadCurrentManager(), loadMembers()]);
+      await Promise.all([loadCurrentManager(isMountedRef), loadMembers(isMountedRef)]);
     };
 
     void initialize();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [loadCurrentManager, loadMembers]);
 
   const handleRoleChange = useCallback(async (memberId, newRole, previousRole) => {

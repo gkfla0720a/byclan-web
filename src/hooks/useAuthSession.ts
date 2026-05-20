@@ -39,5 +39,5 @@ export function useAuthSession() {
     };
   }, []);
 
-  return { user, sessionLoading };
+  return { user, setUser, sessionLoading };
 }

@@ -51,7 +51,7 @@ function normalizeUrl(url) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
-};
+}
 
 /**
  * 멤버 목록에 is_streamer 필드가 하나도 없을 경우,
