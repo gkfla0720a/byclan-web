@@ -358,11 +358,11 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
 }
 
 /**
- * MatchRecords 컴포넌트
+ * matchRecords 컴포넌트
  *
  * @returns {JSX.Element} 경기 기록 목록 UI
  */
-export default function MatchRecords() {
+export default function matchRecords() {
   /** DB에서 불러온 경기 목록 */
   const [matches, setMatches] = useState([]);
   /** 경기 로딩 중 여부 */
@@ -373,7 +373,7 @@ export default function MatchRecords() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 /**
- * MatchRecords 프로필 캐시
+ * matchRecords 프로필 캐시
  * 키: user.id (Supabase UUID — 불변 식별자)
  * 값: 표시명 (by_id, 없으면 '알 수 없음')
  */
