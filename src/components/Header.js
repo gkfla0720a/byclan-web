@@ -35,7 +35,7 @@ import Image from 'next/image';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { useNavigate } from '@/hooks/useNavigate';
 import { useAuthContext } from '@/context/AuthContext';
-import { PermissionChecker, canAccessMenu } from '@/utils/permissions';
+import { hasPermission, canAccessMenu } from '@/utils/permissions';
 import { useToast } from '@/context/ToastContext';
 
 /**
