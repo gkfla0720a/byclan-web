@@ -15,8 +15,8 @@
  *   - 총 인원·정예·스트리머 수를 StatCard로 요약합니다.
  *
  * 사용 방법:
- *   import ClanMembers from './ClanMembers';
- *   <ClanMembers />
+ *   import clanMembers from './clanMembers';
+ *   <clanMembers />
  */
 'use client';
 
@@ -172,14 +172,14 @@ async function fetchMembersWithSchemaFallback() {
 }
 
 /**
- * ClanMembers 컴포넌트
+ * clanMembers 컴포넌트
  *
  * 클랜원 명단을 직책별로 분류하여 테이블로 렌더링합니다.
  * 관리 권한이 있으면 인라인 드롭다운으로 등급을 변경할 수 있습니다.
  *
  * @returns {JSX.Element} 클랜원 명단 UI
  */
-export default function ClanMembers() {
+export default function clanMembers() {
   /** DB에서 불러온 멤버 배열 */
   const [members, setMembers] = useState([]);
   /** 데이터 로딩 여부 */

@@ -7,9 +7,9 @@
  */
 'use client';
 
-import ClanTournament from '@/views/ClanTournament';
+import clanTournament from '@/views/clanTournament';
 
-/** TournamentPage - 토너먼트 페이지 컴포넌트. ClanTournament를 렌더링합니다. */
+/** TournamentPage - 토너먼트 페이지 컴포넌트. clanTournament를 렌더링합니다. */
 export default function TournamentPage() {
-  return <ClanTournament />;
+  return <clanTournament />;
 }

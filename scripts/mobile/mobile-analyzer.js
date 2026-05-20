@@ -28,11 +28,11 @@ export const FILE_STRUCTURE = {
     "MatchCenter.js": "매치 센터 (9KB)"
   },
   views: {
-    "HomeContent.js": "홈 컨텐츠 (분리됨)",
-    "ClanOverview.js": "클랜 소개 (분리됨)",
-    "ClanTournament.js": "토너먼트 (분리됨)",
-    "MediaGallery.js": "미디어 갤러리 (분리됨)",
-    "PagePlaceholder.js": "views 플레이스홀더 (분리됨)"
+    "homeContent.js": "홈 컨텐츠 (분리됨)",
+    "clanOverView.js": "클랜 소개 (분리됨)",
+    "clanTournament.js": "토너먼트 (분리됨)",
+    "mediaGallery.js": "미디어 갤러리 (분리됨)",
+    "pagePlaceHolder.js": "views 플레이스홀더 (분리됨)"
   },
   hooks: {
     "useAuth.js": "인증 관리 훅 (새로 추가)"

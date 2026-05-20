@@ -7,9 +7,9 @@
  */
 'use client';
 
-import ClanOverview from '@/views/ClanOverview';
+import clanOverView from '@/views/clanOverView';
 
-/** OverviewPage - 클랜 개요 페이지 컴포넌트. ClanOverview를 렌더링합니다. */
+/** OverviewPage - 클랜 개요 페이지 컴포넌트. clanOverView를 렌더링합니다. */
 export default function OverviewPage() {
-  return <ClanOverview />;
+  return <clanOverView />;
 }
