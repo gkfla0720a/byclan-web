@@ -1,7 +1,7 @@
-// 파일명: ClanOverView.ts
+// 파일명: ClanOverView.tsx
 
  /**
- * 파일명: ClanOverView.ts
+ * 파일명: ClanOverView.tsx
  *
  * 역할: 클랜 소개 views 컴포넌트입니다. 클랜의 메인 게임, 리더십, 활동 방식,
  *       운영 방향, 멤버 구성을 정적 콘텐츠로 설명합니다.
@@ -12,7 +12,7 @@
 
 /**
  * ClanOverView 컴포넌트
- *
+ * 
  * ByClan 클랜 소개 내용을 정적으로 렌더링합니다.
  * 별도의 상태나 API 호출 없이 순수 UI만 반환합니다.
  *
