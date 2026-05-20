@@ -1,8 +1,6 @@
-// 파일명: @/views/clanMembers.ts
+// 파일명: @/views/ClanMembers.tsx
 
  /**
- * 파일명: clanMembers.ts
- *
  * 역할:
  *   클랜원 명단 views 컴포넌트입니다.
  *   운영진·정예 클랜원·일반 클랜원 세 섹션으로 멤버를 분류하여 테이블로 보여줍니다.
@@ -15,15 +13,14 @@
  *   - 총 인원·정예·스트리머 수를 StatCard로 요약합니다.
  *
  * 사용 방법:
- *   import clanMembers from './clanMembers';
- *   <clanMembers />
+ *   import ClanMembers from './ClanMembers';
+ *   <ClanMembers />
  */
 'use client';
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import { hasPermission } from '@/utils/permissions/checker';
-import { ROLE_PERMISSIONS } from '@/utils/permissions';
+import { ROLE_PERMISSIONS, hasPermission } from '@/utils/permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
 
@@ -54,7 +51,7 @@ function normalizeUrl(url) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
-}
+};
 
 /**
  * 멤버 목록에 is_streamer 필드가 하나도 없을 경우,
@@ -172,14 +169,14 @@ async function fetchMembersWithSchemaFallback() {
 }
 
 /**
- * clanMembers 컴포넌트
+ * ClanMembers 컴포넌트
  *
  * 클랜원 명단을 직책별로 분류하여 테이블로 렌더링합니다.
  * 관리 권한이 있으면 인라인 드롭다운으로 등급을 변경할 수 있습니다.
  *
  * @returns {JSX.Element} 클랜원 명단 UI
  */
-export default function clanMembers() {
+export default function ClanMembers() {
   /** DB에서 불러온 멤버 배열 */
   const [members, setMembers] = useState([]);
   /** 데이터 로딩 여부 */

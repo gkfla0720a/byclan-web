@@ -16,7 +16,7 @@ import AdminBoard from '@/components/AdminBoard';
 import AdminPointManager from '@/components/AdminPointManager';
 import AdminMatchManager from '@/components/AdminMatchManager';
 import AdminActivityLogViewer from '@/components/AdminActivityLogViewer';
-import pagePlaceHolder from '@/views/pagePlaceHolder';
+import PagePlaceHolder from '@/views/PagePlaceHolder';
 import { useAuthContext } from '@/context/AuthContext';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -65,7 +65,7 @@ export default function AdminPage() {
             </SectionErrorBoundary>
           </>
         ) : (
-          <pagePlaceHolder title="로그인이 필요합니다." />
+          <PagePlaceHolder title="로그인이 필요합니다." />
         )}
       </div>
     </main>

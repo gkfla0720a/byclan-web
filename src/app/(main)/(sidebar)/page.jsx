@@ -3,7 +3,7 @@
  * 역할  : ByClan 웹사이트의 홈 페이지('/' 경로)를 담당합니다.
  */
 
-import homeContent from '@/views/homeContent';
+import HomeContent from '@/views/HomeContent';
 
 export const metadata = {
   title: "홈 | ByClan",
@@ -11,5 +11,5 @@ export const metadata = {
 };
 
 export default function Home() {
-  return <homeContent />;
+  return <HomeContent />;
 }

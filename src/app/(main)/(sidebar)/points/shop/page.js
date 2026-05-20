@@ -7,9 +7,9 @@
  */
 'use client';
 
-import pagePlaceHolder from '@/views/pagePlaceHolder';
+import PagePlaceHolder from '@/views/PagePlaceHolder';
 
 /** PointShopPage - 포인트 상점 페이지. 준비 중 플레이스홀더를 렌더링합니다. */
 export default function PointShopPage() {
-  return <pagePlaceHolder title="포인트 상점" />;
+  return <PagePlaceHolder title="포인트 상점" />;
 }

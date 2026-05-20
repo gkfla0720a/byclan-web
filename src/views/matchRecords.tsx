@@ -1,7 +1,7 @@
-// 파일명: @/view/matchRecords.ts
+// 파일명: @/view/MatchRecords.ts
 
  /**
- * 파일명: matchRecords.ts
+ * 파일명: MatchRecords.ts
  *
  * 역할:
  *   래더 경기 기록을 표로 표시하는 컴포넌트입니다.
@@ -358,11 +358,11 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
 }
 
 /**
- * matchRecords 컴포넌트
+ * MatchRecords 컴포넌트
  *
  * @returns {JSX.Element} 경기 기록 목록 UI
  */
-export default function matchRecords() {
+export default function MatchRecords() {
   /** DB에서 불러온 경기 목록 */
   const [matches, setMatches] = useState([]);
   /** 경기 로딩 중 여부 */
@@ -373,7 +373,7 @@ export default function matchRecords() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 /**
- * matchRecords 프로필 캐시
+ * MatchRecords 프로필 캐시
  * 키: user.id (Supabase UUID — 불변 식별자)
  * 값: 표시명 (by_id, 없으면 '알 수 없음')
  */

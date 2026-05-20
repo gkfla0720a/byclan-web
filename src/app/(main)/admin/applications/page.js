@@ -11,7 +11,7 @@
 
 
 import ApplicationList from '@/components/ApplicationList';
-import pagePlaceHolder from '@/views/pagePlaceHolder';
+import PagePlaceHolder from '@/views/PagePlaceHolder';
 import { useAuthContext } from '@/context/AuthContext';
 
 /**
@@ -27,7 +27,7 @@ export default function ApplicationsPage() {
       <div className="w-full mt-4">
         {user
           ? <ApplicationList />
-          : <pagePlaceHolder title="로그인이 필요합니다." />}
+          : <PagePlaceHolder title="로그인이 필요합니다." />}
       </div>
     </main>
   );
