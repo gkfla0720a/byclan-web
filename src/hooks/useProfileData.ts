@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/supabase';
 import type { Tables } from '@/types/supabase';
-import type { AuthProfile as UserProfile } from '@/types/domain';
+import type { AuthProfile as UserProfile } from '@/types';
 import { extractAccountIdFromAuthUser } from '@/utils/accountId';
 import { normalizeRole } from '@/utils/permissions';
 import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '@/utils/testData';

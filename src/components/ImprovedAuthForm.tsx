@@ -351,7 +351,7 @@ export default function ImprovedAuthForm({ onSuccess }) {
     <div className="w-full max-w-5xl relative z-10">
       <div className="absolute -inset-2 rounded-[28px] bg-[radial-gradient(circle_at_25%_20%,rgba(34,211,238,0.18)_0%,rgba(8,47,73,0.06)_40%,transparent_72%)] pointer-events-none" />
 
-      <div className="relative overflow-hidden rounded-[24px] border border-cyan-400/20 bg-(--bg-primary)/85 shadow-[0_30px_80px_rgba(5,10,18,0.55)]">
+      <div className="relative overflow-hidden rounded-3xl border border-cyan-400/20 bg-(--bg-primary)/85 shadow-[0_30px_80px_rgba(5,10,18,0.55)]">
         <div className="grid lg:grid-cols-[1.1fr_1fr]">
           <section className="hidden lg:flex flex-col justify-between p-8 border-r border-cyan-400/10 bg-[linear-gradient(145deg,rgba(8,47,73,0.32)_0%,rgba(2,6,23,0.92)_65%)]">
             <div>

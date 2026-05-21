@@ -2,7 +2,14 @@
 
 import { ActiveRole, PermissionAction, RoleDefinition, } from './types';
 
+const EXPELLED_PERMS: PermissionAction[] = [
+  'home.view',
+  'profile.view',
+];
+
 const PUBLIC_PERMS: PermissionAction[] = [
+  'home.view',
+  'dashboard.view',
   'match.view',
   'community.view',
   'profile.edit',
@@ -135,7 +142,7 @@ export const ROLE_PERMISSIONS = {
     name: '추방자',
     description: '클랜 규칙 위반 또는 운영진 결정으로 제명된 사용자',
     level: 0,
-    permissions: [], // 👈 아무 권한도 배열에 넣지 않음
+    permissions: EXPELLED_PERMS,
     color: '#9CA3AF',
     icon: '🚫',
   },

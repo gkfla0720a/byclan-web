@@ -50,7 +50,7 @@ export async function submitApplication(userId, applicationData) {
 
     let { error: appError } = await supabase
       .from('applications')
-      .insert(applicationPayload as never);
+      .insert(applicationPayload);
 
     if (appError) {
       const message = `${appError.message || ''} ${appError.details || ''}`;

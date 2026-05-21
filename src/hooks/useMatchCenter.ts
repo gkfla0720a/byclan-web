@@ -90,7 +90,7 @@ export function useMatchCenter(matchId) {
     const { data: records } = await supabase
     .from('ladder_record')
     .select('*, profiles(*)')
-    .eq('match_id' as never, matchId);
+    .eq('match_id', matchId);
 
     if (!sets || sets.length === 0 || !records) return;
     const normalizedRecords = records[];
@@ -291,7 +291,7 @@ export function useMatchCenter(matchId) {
     
     const { error } = await supabase.from('ladder_match_sets').update({
       [column]: true, [entryCol]: selectedEntryByTeam[team], [reqCol]: false,
-    } as never).eq('id', currentSet.id);
+    }).eq('id', currentSet.id);
     
     if (error) { alert('엔트리 제출 실패: ' + error.message); return; }
     alert(managementMode && isManagementRole ? `${team}팀 엔트리를 관리모드로 제출했습니다.` : '엔트리 제출 완료! 상대방을 기다립니다.');
@@ -300,21 +300,21 @@ export function useMatchCenter(matchId) {
   const requestWithdraw = async (teamLetter) => {
     if (!currentSet || currentSet.winner_team) return;
     const col = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
-    await supabase.from('ladder_match_sets').update({ [col]: true } as never).eq('id', currentSet.id);
+    await supabase.from('ladder_match_sets').update({ [col]: true }).eq('id', currentSet.id);
   };
 
   const approveWithdraw = async (teamLetter) => {
     if (!currentSet || currentSet.winner_team) return;
     const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
     const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
-    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false } as never).eq('id', currentSet.id);
+    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false }).eq('id', currentSet.id);
   };
 
   const forceRetract = async (teamLetter) => {
     if (!currentSet || !isManagementRole || !managementMode) return;
     const readyCol = teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready';
     const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
-    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false } as never).eq('id', currentSet.id);
+    await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false }).eq('id', currentSet.id);
   };
 
   const [vetoTimeLeft, setVetoTimeLeft] = useState(0);
@@ -450,7 +450,7 @@ const handleSetWin = async (winnerTeam) => {
         setSettlementStatus('success');
         throw new Error('이미 정산이 완료된 경기입니다.');
       }
-      const { error } = await supabase.rpc('fn_process_settlement' as never, { p_match_id: matchId } as never);
+      const { error } = await supabase.rpc('fn_process_settlement', { p_match_id: matchId });
       if (error) throw error;
       setSettlementStatus('success');
       alert('매치 정산이 완벽하게 처리되었습니다!');
