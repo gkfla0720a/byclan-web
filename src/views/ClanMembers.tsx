@@ -287,10 +287,9 @@ export default function ClanMembers() {
         p_new_role: nextRole,
         p_note: `클랜원 목록에서 등급 변경: ${member.role} → ${nextRole}`,
       });
-      const result = data as any;
 
       if (error) throw error;
-      if (!result?.ok) throw new Error(result?.error || '역할 변경 실패');
+      if (!data?.ok) throw new Error(data?.error || '역할 변경 실패');
 
       setMembers((prev) => {
         const updated = prev.map((item) => item.id === member.id ? { ...item, role: nextRole } : item);

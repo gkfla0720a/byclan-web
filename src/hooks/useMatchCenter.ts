@@ -93,7 +93,7 @@ export function useMatchCenter(matchId) {
     .eq('match_id' as never, matchId);
 
     if (!sets || sets.length === 0 || !records) return;
-    const normalizedRecords = records as any[];
+    const normalizedRecords = records[];
     
     const scoreA = sets.filter(s => s.winner_team === 'A').length;
     const scoreB = sets.filter(s => s.winner_team === 'B').length;
