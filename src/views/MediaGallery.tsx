@@ -11,7 +11,7 @@
  *   - 각 카드 배경 이미지는 콘텐츠 유형(공지·게시글·매치)에 따라 다른 Unsplash 이미지를 사용합니다.
  *   - 로딩 중에는 animate-pulse 스켈레톤 카드를 표시합니다.
  *
- * 사용 방법:
+ * 사용 방법: 
  *   import MediaGallery from './MediaGallery';
  *   <MediaGallery />
  */
