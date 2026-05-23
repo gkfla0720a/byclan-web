@@ -17,7 +17,6 @@
  */
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
@@ -149,7 +148,7 @@ function MediaGallery() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {mediaItems.map((item) => (
             <div key={item.id} className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-xl">
-              <Image src={item.img} width={600} height={338} className="w-full aspect-video object-cover opacity-70" alt={item.title} />
+              <img src={item.img} className="w-full aspect-video object-cover opacity-70" alt={item.title} />
               <div className="p-4">
                 <div className="text-[11px] text-cyan-400 font-bold mb-1">{item.type}</div>
                 <h3 className="text-white font-bold line-clamp-2 min-h-12">{item.title}</h3>

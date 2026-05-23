@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';
-import type { AuthProfile } from '@/types';
+import type { AuthProfile } from '@/types/domain';
 
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 

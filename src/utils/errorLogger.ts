@@ -131,11 +131,8 @@ const logger = {
    * @param {unknown} error
    * @param {{ severity?: string; [key: string]: unknown }} [context]
    */
-  captureException(error, context = /** @type {{ severity?: string; [key: string]: unknown }} */ ({})) {
-    // @ts-expect-error - JSDoc default context narrowing issue in strict check
-    const severity = typeof context?.severity === 'string' ? context.severity : Severity.ERROR;
-    // @ts-expect-error - JSDoc default context narrowing issue in strict check
-    const { severity: _ignoredSeverity, ...extra } = context || {};
+  captureException(error, context = {}) {
+    const { severity = Severity.ERROR, ...extra } = context;
     const msg = error instanceof Error ? error.message : String(error);
     console.error(prefix(severity, msg), error, Object.keys(extra).length ? extra : '');
     reportToSentry(error, severity, extra);

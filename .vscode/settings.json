@@ -6,27 +6,10 @@
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,
     "**/node_modules/*/**": true,
-    "**/.next/**": true,
-    "**/dist/**": true
+    "**/.next/**": true
   },
   "search.exclude": {
     "**/node_modules": true,
-    "**/.next": true,
-    "**/dist": true
-  },
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
-  "editor.fontSize": 14,
-  "editor.lineHeight": 22,
-  "editor.wordWrap": "on",
-  "editor.minimap.enabled": false,
-  "editor.guides.bracketPairs": true,
-  "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 1000,
-  "editor.formatOnSave": true,
-  "terminal.integrated.windowsUseConptyDll": true,
-  "editor.smoothScrolling": false,
-  "editor.cursorBlinking": "solid",
-  "editor.codeLens": false,
-  "git.autofetch": false
+    "**/.next": true
+  }
 }

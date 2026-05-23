@@ -407,7 +407,7 @@ export default function MatchRecords() {
       setCurrentPage(1);
 
       // 2. 프로필(닉네임) 캐시 불러오기 (기존 로직과 동일)
-      const allIds = new Set<string>();
+      const allIds = new Set();
       matchData.forEach((m) => {
         (m.team_a_ids || []).forEach((id) => allIds.add(id));
         (m.team_b_ids || []).forEach((id) => allIds.add(id));

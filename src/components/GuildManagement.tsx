@@ -1,4 +1,4 @@
-// 파일명: src/components/GuildManagement.tsx
+// 파일명: @/components.tsx
 
 'use client';
 

@@ -21,8 +21,6 @@ export function isActiveRole(value: string): value is ActiveRole {
 export type PermissionAction = typeof PERMISSIONS[number]; // PermissionAction은 PERMISSIONS 배열의 요소 중 하나로 제한, 타입 안전성 확보
 
 export const PERMISSIONS = [
-  'home.view',
-  'dashboard.view',
   'application.submit',
   'transfer.submit',
   'tournament.create',
