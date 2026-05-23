@@ -81,6 +81,7 @@ export default function MyProfile() {
    * 연동 성공: ?linked=discord|google
    * 연동 실패(충돌): ?error=discord_conflict|google_conflict|link_failed
    */
+  
   const readLinkResultFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
     const linked = params.get('linked');
