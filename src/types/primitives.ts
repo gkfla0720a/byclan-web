@@ -8,7 +8,7 @@ export type UserRole =
   | 'developer'
   | 'master'
   | 'admin'
-  | 'elite'
+  | 'veteran'
   | 'member'
   | 'rookie'
   | 'applicant'

@@ -14,7 +14,7 @@
  * @직급별보상
  *   rookie (신규 클랜원): 1,000 CP
  *   member (정회원 승급): 3,000 CP  (2,000 + 1,000)
- *   elite  (정예 승급):   6,000 CP  (5,000 + 1,000)
+ *   veteran  (정예 승급):   6,000 CP  (5,000 + 1,000)
  *   admin  (운영진 승급): 11,000 CP (10,000 + 1,000)
  *
  * @포인트변동유형
@@ -37,7 +37,7 @@
 export const RANK_BONUS = {
   rookie: 1000,   // 신규 클랜원: 1,000 CP
   member: 3000,   // 정회원: 2,000 + 1,000 = 3,000 CP
-  elite:  6000,   // 정예: 5,000 + 1,000 = 6,000 CP
+  veteran:  6000,   // 정예: 5,000 + 1,000 = 6,000 CP
   admin:  11000,  // 운영진: 10,000 + 1,000 = 11,000 CP
 };
 
@@ -261,7 +261,7 @@ export async function grantMatchParticipationBonus(sb, userId, matchId, isTestDa
  *
  * @param {import('@supabase/supabase-js').SupabaseClient} sb
  * @param {string} userId - 승급 대상 사용자 UUID
- * @param {string} newRole - 승급된 직급 (rookie|member|elite|admin)
+ * @param {string} newRole - 승급된 직급 (rookie|member|veteran|admin)
  * @param {boolean} [isTestData=false]
  * @returns {Promise<{ok: boolean, amount: number}>}
  */

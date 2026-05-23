@@ -25,7 +25,7 @@ const ROLE_LABELS = {
   applicant: '신규 가입자',
   rookie: '신입 클랜원',
   member: '일반 클랜원',
-  elite: '정예 멤버',
+  veteran: '정예 멤버',
   admin: '운영진',
   master: '마스터',
   developer: '개발자',
@@ -297,7 +297,7 @@ export default function GuestWelcome({ user, profile, mode = 'guide', onApplicat
   /** 이미 가입 신청 완료 여부 */
   const isApplied = currentRole === 'applicant';
   /** 신입 이상(정식 멤버) 여부 */
-  const isRookieOrHigher = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(currentRole);
+  const isRookieOrHigher = ['rookie', 'member', 'veteran', 'admin', 'master', 'developer'].includes(currentRole);
   /** 가입 신청 가능 여부 (로그인 + guest 역할) */
   const canApply = Boolean(user && currentRole === 'guest');
   /** 역할 표시 레이블 */
@@ -422,10 +422,10 @@ export default function GuestWelcome({ user, profile, mode = 'guide', onApplicat
                   done={isRookieOrHigher}
                   active={isApplied} />
                 <StepItem number="3" title="신입 클랜원" description="Discord 연동 및 2주 활동"
-                  done={['member','elite','admin','master','developer'].includes(currentRole)}
+                  done={['member','veteran','admin','master','developer'].includes(currentRole)}
                   active={currentRole === 'rookie'} />
                 <StepItem number="4" title="정식 클랜원" description="모든 클랜 활동 참여 가능"
-                  done={['member','elite','admin','master','developer'].includes(currentRole)}
+                  done={['member','veteran','admin','master','developer'].includes(currentRole)}
                   active={false} />
               </div>
             </div>

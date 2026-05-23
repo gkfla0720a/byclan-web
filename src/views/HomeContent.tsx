@@ -80,7 +80,7 @@ function getWinRate(wins, losses) {
  */
 function MobileProfileCard({ profile, user, navigateTo }) {
   const isActiveMember =
-    profile && ['member', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
+    profile && ['member', 'veteran', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 
   if (!user || !isActiveMember) return null;
 
@@ -152,7 +152,7 @@ function HomeContent() {
   const isVisitor = userRole === 'visitor';
   
   // 클랜원(정식 멤버 이상) 여부
-  // const isClanMember = ['member', 'rookie', 'elite', 'admin', 'master', 'developer'].includes(userRole);
+  // const isClanMember = ['member', 'rookie', 'veteran', 'admin', 'master', 'developer'].includes(userRole);
 
   /** 페이지 이동 훅 */
   const navigateTo = useNavigate();

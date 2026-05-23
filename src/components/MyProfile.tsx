@@ -69,7 +69,7 @@ export default function MyProfile() {
     developer: "👨‍💻 시스템 개발자",
     master: "👑 클랜 마스터",
     admin: "🛠️ 운영진",
-    elite: "⚔️ 정예 클랜원",
+    veteran: "⚔️ 정예 클랜원",
     member: "🛡️ 일반 클랜원",
     rookie: "🌱 신입 클랜원",
     applicant: "📝 신규 가입자",

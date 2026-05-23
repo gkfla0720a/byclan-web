@@ -83,7 +83,7 @@ export default function JoinTransferPage() {
 
   if (!profile || profile.role !== 'rookie') {
     const role = profile?.role;
-    const isMemberOrHigher = ['member', 'elite', 'admin', 'master', 'developer'].includes(role);
+    const isMemberOrHigher = ['member', 'veteran', 'admin', 'master', 'developer'].includes(role);
 
     return (
       <div className="max-w-lg mx-auto mt-16 bg-gray-900 border border-slate-600/40 rounded-2xl p-10 text-center shadow-xl">

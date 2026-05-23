@@ -43,9 +43,9 @@ export function isInGroup (userRole: ActiveRole, group: RoleGroup): boolean {
     case 'management':
       return ['developer', 'master', 'admin'].includes(userRole);
     case 'senior':
-      return ['developer', 'master', 'admin', 'elite'].includes(userRole);
+      return ['developer', 'master', 'admin', 'veteran'].includes(userRole);
     case 'members':
-      return ['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(userRole);
+      return ['rookie', 'member', 'veteran', 'admin', 'master', 'developer'].includes(userRole);
     case 'others':
       return ['guest', 'banned', 'applicant'].includes(userRole);
     default: {

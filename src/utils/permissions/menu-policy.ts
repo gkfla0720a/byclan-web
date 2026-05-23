@@ -26,7 +26,7 @@ export const MENU_PERMISSIONS: Record<MenuName, ActiveRole[]> = {
   '알림': ALL_ROLES,
   '내 프로필': ALL_ROLES,
   '운영진게시판': ['developer', 'master', 'admin'],
-  '가입 심사 관리': ['developer', 'master', 'admin', 'elite'],
+  '가입 심사 관리': ['developer', 'master', 'admin', 'veteran'],
   '클랜원 관리': ['developer', 'master', 'admin'],
   '경기 관리': ['developer', 'master', 'admin'],
   '래더/경기 운영': ['developer', 'master', 'admin'],

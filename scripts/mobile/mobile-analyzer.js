@@ -62,11 +62,11 @@ export const DATABASE_TABLES = {
 
 // === 현재 권한 시스템 ===
 export const PERMISSION_SYSTEM = {
-  roles: ["developer", "master", "admin", "elite", "member"],
+  roles: ["developer", "master", "admin", "veteran", "member"],
   developer: "모든 권한 (개발자=클랜 관리자)",
   master: "최고 관리자",
   admin: "일반 관리자",
-  elite: "정예 클랜원",
+  veteran: "정예 클랜원",
   member: "일반 클랜원"
 };
 

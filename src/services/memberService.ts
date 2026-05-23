@@ -54,7 +54,7 @@ export async function updateMemberRole(memberId, newRole, previousRole, isTestAc
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.error || '역할 변경 실패');
 
-  const promotionRoles = ['rookie', 'member', 'elite', 'admin'];
+  const promotionRoles = ['rookie', 'member', 'veteran', 'admin'];
   if (promotionRoles.includes(newRole)) {
     const { data: targetMeta } = await supabase
       .from('profile_meta')

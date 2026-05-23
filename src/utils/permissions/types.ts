@@ -6,7 +6,7 @@ export const ROLES = [
   'applicant',
   'rookie',
   'member',
-  'elite',
+  'veteran',
   'admin',
   'master',
   'developer',
@@ -69,7 +69,7 @@ export type RoleGroup = typeof ROLE_GROUPS[number];
 export const LADDER_MEMBER_ROLES: ActiveRole[] = [
   'rookie',
   'member',
-  'elite',
+  'veteran',
   'admin',
   'master',
   'developer',

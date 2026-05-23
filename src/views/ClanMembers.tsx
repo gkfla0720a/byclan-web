@@ -28,14 +28,14 @@ const CACHE_KEY = 'members_list';
 
 const ROLE_SECTIONS = [
   { key: 'leadership', title: '운영진', roles: ['developer', 'master', 'admin'] },
-  { key: 'elite', title: '정예 클랜원', roles: ['elite'] },
+  { key: 'veteran', title: '정예 클랜원', roles: ['veteran'] },
   { key: 'members', title: '클랜원', roles: ['member', 'rookie'] },
 ];
 
-const VISIBLE_LADDER_MEMBER_ROLES = ['developer', 'master', 'admin', 'elite', 'member', 'rookie'];
+const VISIBLE_LADDER_MEMBER_ROLES = ['developer', 'master', 'admin', 'veteran', 'member', 'rookie'];
 const INLINE_ROLE_OPTIONS = [
   { value: 'admin', label: '관리자' },
-  { value: 'elite', label: '정예 클랜원' },
+  { value: 'veteran', label: '정예 클랜원' },
   { value: 'member', label: '일반 클랜원' },
   { value: 'rookie', label: '신입 클랜원' },
   { value: 'applicant', label: '신규 가입자' },
@@ -244,8 +244,8 @@ export default function ClanMembers() {
 
   /** 멤버 총 인원 수 */
   const totalMembers = members.length;
-  /** 정예 클랜원(elite) 수 */
-  const eliteCount = members.filter((member) => member.role === 'elite').length;
+  /** 정예 클랜원(veteran) 수 */
+  const veteranCount = members.filter((member) => member.role === 'veteran').length;
   /** BJ/스트리머로 등록된 멤버 수 */
   const streamerCount = members.filter((member) => Boolean(member.is_streamer)).length;
   /** ROLE_SECTIONS 정의에 따라 멤버를 직책별로 묶은 배열 (멤버 없는 섹션은 제거) */
@@ -328,7 +328,7 @@ export default function ClanMembers() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="총 인원" value={`${totalMembers}명`} accent="text-white" />
-        <StatCard label="정예 클랜원" value={`${eliteCount}명`} accent="text-cyan-400" />
+        <StatCard label="정예 클랜원" value={`${veteranCount}명`} accent="text-cyan-400" />
         <StatCard label="BJ / 스트리머" value={`${streamerCount}명`} accent="text-pink-400" />
       </div>
 

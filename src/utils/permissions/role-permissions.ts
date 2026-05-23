@@ -41,7 +41,7 @@ const MEMBER_PERMS: PermissionAction[] = [
   'match.host',
 ];
 
-const ELITE_PERMS: PermissionAction[] = [
+const VETERAN_PERMS: PermissionAction[] = [
   ...MEMBER_PERMS,
   'member.approve',
   'member.test',
@@ -52,7 +52,7 @@ const ELITE_PERMS: PermissionAction[] = [
 ];
 
 const ADMIN_PERMS: PermissionAction[] = [
-  ...ELITE_PERMS,
+  ...VETERAN_PERMS,
   'user.manage_all',
   'clan.admin_all',
   'clan.admin',
@@ -98,11 +98,11 @@ export const ROLE_PERMISSIONS = {
     color: '#6BCF7F',
     icon: '🛡️',
   },
-  elite: {
+  veteran: {
     name: '정예',
     description: '클랜 정예 멤버',
     level: 60,
-    permissions: ELITE_PERMS,
+    permissions: VETERAN_PERMS,
     color: '#4ECDC4',
     icon: '⭐',
   },

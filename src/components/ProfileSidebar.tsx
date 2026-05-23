@@ -93,7 +93,7 @@ export default function ProfileSidebar({ profile, user }) {
   const navigateTo = useNavigate();
 
   const isActiveMember =
-    profile && ['member', 'elite', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
+    profile && ['member', 'veteran', 'admin', 'master', 'developer', 'rookie'].includes(profile.role);
 
   const hasProfileData = Boolean(
     profile?.by_id ||

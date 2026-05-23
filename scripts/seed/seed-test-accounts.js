@@ -49,10 +49,10 @@ const REAL = {
 // - developer/master 제외
 // - 모든 직급 2명 이상
 // - 일반 클랜원(member) 다수
-// - 래더 가능 직급(admin/elite/member/rookie) 최소 14명 이상
+// - 래더 가능 직급(admin/veteran/member/rookie) 최소 14명 이상
 const ROLE_BLUEPRINT = [
   { role: 'admin', count: 2, mmr: 1450, point: 2600, intro: '테스트 관리자 계정입니다.' },
-  { role: 'elite', count: 4, mmr: 1350, point: 2200, intro: '테스트 정예 계정입니다.' },
+  { role: 'veteran', count: 4, mmr: 1350, point: 2200, intro: '테스트 정예 계정입니다.' },
   { role: 'member', count: 16, mmr: 1250, point: 2000, intro: '테스트 일반 클랜원 계정입니다.' },
   { role: 'rookie', count: 4, mmr: 1120, point: 1500, intro: '테스트 루키 계정입니다.' },
   { role: 'applicant', count: 2, mmr: 1000, point: 1000, intro: '테스트 가입 신청자 계정입니다.' },
@@ -106,14 +106,14 @@ function validateTesterComposition(testers) {
     return acc;
   }, {});
 
-  const requiredRoles = ['admin', 'elite', 'member', 'rookie', 'applicant', 'guest'];
+  const requiredRoles = ['admin', 'veteran', 'member', 'rookie', 'applicant', 'guest'];
   for (const role of requiredRoles) {
     if ((roleCounts[role] || 0) < 2) {
       throw new Error(`${role} 직급이 2명 미만입니다.`);
     }
   }
 
-  const ladderEligibleRoles = new Set(['admin', 'elite', 'member', 'rookie']);
+  const ladderEligibleRoles = new Set(['admin', 'veteran', 'member', 'rookie']);
   const eligibleCount = testers.filter(t => ladderEligibleRoles.has(t.role)).length;
   if (eligibleCount < 14) {
     throw new Error(`래더 매칭 가능 인원이 14명 미만입니다. 현재: ${eligibleCount}`);

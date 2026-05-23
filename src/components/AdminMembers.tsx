@@ -153,14 +153,14 @@ export default function AdminBoard() {
     developer: "bg-cyan-500 text-black border border-cyan-300", // ✨ 개발자 스타일 추가
     master: "bg-yellow-500 text-black border border-yellow-300",
     admin: "bg-orange-600 text-white border border-orange-400",
-    elite: "bg-purple-600 text-white border border-purple-400",
+    veteran: "bg-purple-600 text-white border border-purple-400",
     member: "bg-blue-600 text-white border border-blue-400",
     rookie: "bg-emerald-600 text-white border border-emerald-400"
   };
 
   /** 역할 코드를 한국어 표시 이름으로 변환하는 매핑 테이블 */
   const roleLabels = { 
-    developer: "개발자", master: "클랜 마스터", admin: "운영진", elite: "정예", 
+    developer: "개발자", master: "클랜 마스터", admin: "운영진", veteran: "정예", 
     member: "일반", rookie: "신입"
   };
 

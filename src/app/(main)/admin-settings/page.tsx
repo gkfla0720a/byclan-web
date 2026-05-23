@@ -29,11 +29,11 @@ export default function AdminSettingsPage() {
   const currentRole = profile?.role || 'guest'; // 기본값은 'guest'로 설정  
   
   const isDeveloper = currentRole === 'developer';
-  const isEliteOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);
+  const isVeteranOrHigher = ['developer', 'master', 'admin', 'veteran'].includes(currentRole);
   const isAdminOrHigher = ['developer', 'master', 'admin'].includes(currentRole);
 
   // 일반 유저가 비정상적인 방법으로 접근했을 때의 방어 로직 (보안)
-  if (!user || !isEliteOrHigher) {
+  if (!user || !isVeteranOrHigher) {
     return (
       <div className="w-full flex flex-col items-center justify-center py-32 text-center">
         <span className="text-6xl mb-6">🚫</span>
@@ -66,7 +66,7 @@ export default function AdminSettingsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         {/* 🛡️ 가입 심사 메뉴 (엘리트 이상) */}
-        {isEliteOrHigher && (
+        {isVeteranOrHigher && (
           <button 
             onClick={() => navigateTo('가입 심사 관리')}
             className="flex flex-col text-left p-6 rounded-2xl bg-slate-900/50 border border-emerald-400/20 hover:border-emerald-400/60 hover:bg-emerald-950/20 hover:-translate-y-1 transition-all duration-300 shadow-lg group"

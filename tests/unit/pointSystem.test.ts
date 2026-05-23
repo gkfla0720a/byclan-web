@@ -29,7 +29,7 @@ describe('pointSystem utilities', () => {
       it('모든 직급별 보상이 정의되어야 한다', () => {
         expect(RANK_BONUS.rookie).toBe(1000);
         expect(RANK_BONUS.member).toBe(3000);
-        expect(RANK_BONUS.elite).toBe(6000);
+        expect(RANK_BONUS.veteran).toBe(6000);
         expect(RANK_BONUS.admin).toBe(11000);
       });
 
@@ -41,8 +41,8 @@ describe('pointSystem utilities', () => {
 
       it('직급이 올라갈수록 보상이 증가해야 한다', () => {
         expect(RANK_BONUS.rookie).toBeLessThan(RANK_BONUS.member);
-        expect(RANK_BONUS.member).toBeLessThan(RANK_BONUS.elite);
-        expect(RANK_BONUS.elite).toBeLessThan(RANK_BONUS.admin);
+        expect(RANK_BONUS.member).toBeLessThan(RANK_BONUS.veteran);
+        expect(RANK_BONUS.veteran).toBeLessThan(RANK_BONUS.admin);
       });
     });
 
