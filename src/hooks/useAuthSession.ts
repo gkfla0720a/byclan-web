@@ -1,4 +1,5 @@
 // 파일명: src/hooks/useAuthSession.ts
+
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/supabase';
