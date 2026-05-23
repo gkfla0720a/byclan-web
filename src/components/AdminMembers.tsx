@@ -160,7 +160,7 @@ export default function AdminBoard() {
 
   /** 역할 코드를 한국어 표시 이름으로 변환하는 매핑 테이블 */
   const roleLabels = { 
-    developer: "개발자", master: "클랜 마스터", admin: "운영진", veteran: "정예", 
+    developer: "개발자", master: "클랜 마스터", admin: "운영진", veteran: "베테랑", 
     member: "일반", rookie: "신입"
   };
 

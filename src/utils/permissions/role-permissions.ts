@@ -99,8 +99,8 @@ export const ROLE_PERMISSIONS = {
     icon: '🛡️',
   },
   veteran: {
-    name: '정예',
-    description: '클랜 정예 멤버',
+    name: '베테랑',
+    description: '클랜 베테랑 멤버',
     level: 60,
     permissions: VETERAN_PERMS,
     color: '#4ECDC4',

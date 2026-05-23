@@ -25,7 +25,7 @@ const ROLE_LABELS = {
   applicant: '신규 가입자',
   rookie: '신입 클랜원',
   member: '일반 클랜원',
-  veteran: '정예 멤버',
+  veteran: '베테랑 멤버',
   admin: '운영진',
   master: '마스터',
   developer: '개발자',

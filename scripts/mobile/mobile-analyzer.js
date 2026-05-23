@@ -66,7 +66,7 @@ export const PERMISSION_SYSTEM = {
   developer: "모든 권한 (개발자=클랜 관리자)",
   master: "최고 관리자",
   admin: "일반 관리자",
-  veteran: "정예 클랜원",
+  veteran: "베테랑 클랜원",
   member: "일반 클랜원"
 };
 

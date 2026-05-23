@@ -51,13 +51,13 @@ function ClanOverView() {
           <ul className="space-y-2 text-sm text-gray-300 leading-relaxed">
             <li>• ByClan은 빠른무한을 오래 즐기는 유저들이 꾸준히 모여 래더와 내전을 함께 운영하는 클랜입니다.</li>
             <li>• 활동의 중심은 레더 경쟁, 디스코드 소통, 팀 단위 플레이 적응에 있습니다.</li>
-            <li>• 운영진과 정예 멤버가 신규 인원 적응을 돕고, 활동 흐름은 공지와 알림을 통해 관리됩니다.</li>
+            <li>• 운영진과 베테랑 멤버가 신규 인원 적응을 돕고, 활동 흐름은 공지와 알림을 통해 관리됩니다.</li>
           </ul>
         </div>
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
           <h3 className="text-lg font-bold text-cyan-400 mb-3">멤버 구성 안내</h3>
           <ul className="space-y-2 text-sm text-gray-300 leading-relaxed">
-            <li>• 운영진, 정예 클랜원, 일반 클랜원 구성을 기준으로 역할이 나뉘며 리스트도 같은 기준으로 정리됩니다.</li>
+            <li>• 운영진, 베테랑 클랜원, 일반 클랜원 구성을 기준으로 역할이 나뉘며 리스트도 같은 기준으로 정리됩니다.</li>
             <li>• BJ 또는 스트리머 멤버는 별도 컬럼으로 관리하며, 플랫폼과 채널 링크를 함께 표시할 수 있습니다.</li>
             <li>• 상세한 멤버 명단은 별도 `클랜원` 메뉴에서 직책별 리스트로 확인할 수 있습니다.</li>
           </ul>

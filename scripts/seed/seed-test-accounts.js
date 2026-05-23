@@ -52,7 +52,7 @@ const REAL = {
 // - 래더 가능 직급(admin/veteran/member/rookie) 최소 14명 이상
 const ROLE_BLUEPRINT = [
   { role: 'admin', count: 2, mmr: 1450, point: 2600, intro: '테스트 관리자 계정입니다.' },
-  { role: 'veteran', count: 4, mmr: 1350, point: 2200, intro: '테스트 정예 계정입니다.' },
+  { role: 'veteran', count: 4, mmr: 1350, point: 2200, intro: '테스트 베테랑 계정입니다.' },
   { role: 'member', count: 16, mmr: 1250, point: 2000, intro: '테스트 일반 클랜원 계정입니다.' },
   { role: 'rookie', count: 4, mmr: 1120, point: 1500, intro: '테스트 루키 계정입니다.' },
   { role: 'applicant', count: 2, mmr: 1000, point: 1000, intro: '테스트 가입 신청자 계정입니다.' },

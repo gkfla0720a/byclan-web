@@ -34,7 +34,7 @@ export default function ActionModal({
               <option value="applicant">신규 가입자</option>
               <option value="rookie">신입 클랜원</option>
               <option value="member">일반 클랜원</option>
-              <option value="veteran">정예 클랜원</option>
+              <option value="veteran">베테랑 클랜원</option>
               <option value="admin">관리자</option>
             </select>
             <p className="text-xs text-yellow-300/80">

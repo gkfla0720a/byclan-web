@@ -9,7 +9,7 @@
  *   - ByClan 로고 및 클릭 시 홈으로 이동
  *   - 데스크톱: 드롭다운 메뉴 (클랜 소개, 클랜원, 래더, BSL 등)
  *   - 모바일: 햄버거 메뉴(☰)를 열면 아코디언 방식으로 펼쳐짐
- *   - 역할별 메뉴 표시 (가입 심사: 정예 이상, 관리자: admin 이상, 개발자: developer만)
+ *   - 역할별 메뉴 표시 (가입 심사: 베테랑 이상, 관리자: admin 이상, 개발자: developer만)
  *   - Discord OAuth 로그인 버튼
  *   - 읽지 않은 알림 개수 표시 (빨간 뱃지)
  *   - 로그아웃 버튼
@@ -107,9 +107,9 @@ export default function Header() {
   const currentRole = role?.toString();
   
   // isDeveloper: 개발자 역할 여부 (개발자 전용 메뉴 표시에 사용)
-  // 최고 개발자(developer)는 모든 관리자/정예 권한을 상속받습니다.
+  // 최고 개발자(developer)는 모든 관리자/베테랑 권한을 상속받습니다.
   const isDeveloper = currentRole === 'developer';
-  // isVeteranOrHigher: 정예 이상 여부 (가입 심사 버튼 표시에 사용)
+  // isVeteranOrHigher: 베테랑 이상 여부 (가입 심사 버튼 표시에 사용)
   const isVeteranOrHigher = ['developer', 'master', 'admin', 'veteran'].includes(currentRole);
   // isAdminOrHigher: admin 이상 여부 (관리자 버튼 표시에 사용)
   const isAdminOrHigher = ['developer', 'master', 'admin'].includes(currentRole);
@@ -292,7 +292,7 @@ const handleNav = (viewName) => {
         <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
           {user ? (
             <>
-              {/* 🛠️ 추가: 관리 권한(정예 이상)이 있는 경우에만 톱니바퀴 버튼 표시 */}
+              {/* 🛠️ 추가: 관리 권한(베테랑 이상)이 있는 경우에만 톱니바퀴 버튼 표시 */}
               {isVeteranOrHigher && (
                 <button 
                   onClick={() => handleNav('관리설정')} // 👈 관리자 페이지 라우팅 이름 지정
