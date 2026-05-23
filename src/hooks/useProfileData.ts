@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/supabase';
 import type { Tables } from '@/types/supabase';
-import type { AuthProfile as UserProfile } from '@/types/domain';
+import type { AuthProfile as UserProfile } from '@/types';
 import { extractAccountIdFromAuthUser } from '@/utils/accountId';
 import { normalizeRole } from '@/utils/permissions';
 import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '@/utils/testData';
@@ -87,7 +87,7 @@ async function syncSocialProfileData(authUser: User, currentProfile: UserProfile
   if (authProvider && currentProfile.auth_provider !== authProvider) oauthUpdates.auth_provider = authProvider;
 
   if (!currentProfile.by_id) {
-    const loginId = extractAccountIdFromAuthUser(authUser as any, currentProfile);
+    const loginId = extractAccountIdFromAuthUser(authUser, currentProfile);
     const seed = googleName || discordName || loginId || authUser.email?.split('@')[0] || 'User';
     profileUpdates.by_id = await resolveUniqueById(seed, authUser.id);
   }

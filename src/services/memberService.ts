@@ -9,6 +9,7 @@ import { grantRankPromotionBonus } from '@/utils/pointSystem';
  * 테스트 계정 여부에 따라 클라이언트 측 필터링을 적용합니다.
  * @returns {Promise<Array>}
  */
+
 export async function fetchMembers() {
   const { data, error } = await supabase
     .from('profiles')

@@ -1,4 +1,4 @@
-// 파일명: visitorWelcome.tsx
+// 파일명: VisitorWelcome.tsx
 
 /**
  * 파일명: VisitorWelcome.tsx

@@ -1,3 +1,5 @@
+// 파일명: src/components/PermissionInfo.tsx
+
 /**
  * @file PermissionInfo.tsx
  * @역할 역할(role)별 권한 정보를 시각적으로 표시하는 UI 컴포넌트 모음

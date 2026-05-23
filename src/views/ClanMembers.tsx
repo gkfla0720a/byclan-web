@@ -20,7 +20,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import { ROLE_PERMISSIONS, hasPermission } from '@/utils/permissions';
+import { ROLE_PERMISSIONS, hasPermission, normalizeRole } from '@/utils/permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
 
@@ -255,7 +255,7 @@ export default function ClanMembers() {
   })).filter((section) => section.members.length > 0);
 
   const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role || '알 수 없음', color: '#C7CEEA', icon: '👤' };
-  const canManageMembers = hasPermission(currentRole, 'member.manage');
+  const canManageMembers = hasPermission(normalizeRole(currentRole), 'member.manage');
 
   /**
    * 인라인 드롭다운에서 멤버 등급을 변경합니다.

@@ -11,12 +11,13 @@
  *   - 각 카드 배경 이미지는 콘텐츠 유형(공지·게시글·매치)에 따라 다른 Unsplash 이미지를 사용합니다.
  *   - 로딩 중에는 animate-pulse 스켈레톤 카드를 표시합니다.
  *
- * 사용 방법: 
+ * 사용 방법:
  *   import MediaGallery from './MediaGallery';
  *   <MediaGallery />
  */
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
@@ -148,7 +149,7 @@ function MediaGallery() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {mediaItems.map((item) => (
             <div key={item.id} className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-xl">
-              <img src={item.img} className="w-full aspect-video object-cover opacity-70" alt={item.title} />
+              <Image src={item.img} width={600} height={338} className="w-full aspect-video object-cover opacity-70" alt={item.title} />
               <div className="p-4">
                 <div className="text-[11px] text-cyan-400 font-bold mb-1">{item.type}</div>
                 <h3 className="text-white font-bold line-clamp-2 min-h-12">{item.title}</h3>
