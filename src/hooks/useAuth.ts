@@ -1,7 +1,7 @@
 // 파일명: src/hooks/useAuth.ts
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import type { AuthProfile as UserProfile } from '@/types/domain';
+import type { AuthProfile as UserProfile } from '@/types';
 import { ROLE_PERMISSIONS, normalizeRole, hasPermission, hasLevel, isInGroup, canAccessMenu } from '@/utils/permissions';
 import { useAuthSession } from './useAuthSession';
 import { useProfileData } from './useProfileData';
