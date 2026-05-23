@@ -1,5 +1,11 @@
 # ByClan Web
 
+## 이 문서는 README.md입니다.
+
+이 프로젝트에 관한 내용은 docs에 1차적으로 설명되어있지만, 실제 코드와 100% 일치하지 않을수도 있습니다. docs 문서를 참고하되 확실한 것은 코드를 통해 다시 확인하세요.
+
+## ByClan Web Project 소개
+
 ByClan 클랜 공식 홈페이지 — Next.js + React + Supabase
 
 ### 🗄️ Supabase 데이터베이스 연동 및 타입스크립트 지원
