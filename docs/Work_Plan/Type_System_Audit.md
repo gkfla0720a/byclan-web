@@ -1,4 +1,4 @@
-# Architecture Audit: `src/types` vs `src/utils/permissions`, and God Object Risk
+# Type System Audit: `src/types` vs `src/utils/permissions`, and God Object Risk
 
 ## 1) `src/types`의 역할
 
