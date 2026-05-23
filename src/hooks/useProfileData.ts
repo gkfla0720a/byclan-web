@@ -132,7 +132,7 @@ export function useProfileData(user: User | null) {
         const { error: insertError } = await supabase.from('profiles').insert({
           id: authUser.id,
           by_id: uniqueById,
-          role: 'visitor',
+          role: 'guest',
         });
 
         if (insertError) throw insertError;

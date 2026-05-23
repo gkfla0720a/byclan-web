@@ -179,17 +179,17 @@ export default function AdminBoard() {
   };
 
   /**
-   * ROLE_PERMISSIONS에 없는 역할(guest, expelled)에 대한 폴백 메타데이터
+   * ROLE_PERMISSIONS에 없는 역할(guest, banned)에 대한 폴백 메타데이터
    * color: CSS 색상 코드, name: 한국어 역할 이름
    */
   const fallbackRoleMeta = {
     guest: { name: '방문자', color: '#9CA3AF' },
-    expelled: { name: '제명', color: '#F87171' },
+    banned: { name: '제명', color: '#F87171' },
   };
 
   /**
    * 역할 문자열을 받아 해당 역할의 메타데이터(이름, 색상)를 반환합니다.
-   * ROLE_PERMISSIONS에 없는 역할(guest, expelled 등)은 fallbackRoleMeta를 사용합니다.
+   * ROLE_PERMISSIONS에 없는 역할(guest, banned 등)은 fallbackRoleMeta를 사용합니다.
    * @param {string} role - 역할 문자열 (예: 'admin', 'master')
    * @returns {{ name: string, color: string }} 역할 표시 이름과 색상
    */

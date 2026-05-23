@@ -79,7 +79,7 @@ export default function AdminPointManager() {
 
       const flatProf = prof ? { ...prof, is_test_account: prof.profile_meta?.is_test_account ?? false, profile_meta: undefined } : null;
       setMyProfile(flatProf);
-      const role = flatProf?.role || 'visitor';
+      const role = flatProf?.role || 'guest';
       if (!['developer', 'master', 'admin'].includes(role)) return;
 
       setIsAdmin(true);
@@ -88,7 +88,7 @@ export default function AdminPointManager() {
       const { data: mems } = await supabase
         .from('profiles')
         .select('id, by_id, role, clan_point, profile_meta(is_test_account)')
-        .not('role', 'eq', 'visitor')
+        .not('role', 'eq', 'guest')
         .order('by_id');
       setMembers((mems || []).map(m => ({ ...m, is_test_account: m.profile_meta?.is_test_account ?? false, profile_meta: undefined })));
     } catch (err) {

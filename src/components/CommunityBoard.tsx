@@ -70,7 +70,7 @@ export default function CommunityBoard() {
 
     // 버튼 클릭 핸들러 (권한별 알림)
   const handleWriteClick = () => {
-    // 1. 로그인을 아예 안 한 경우 (Visitor 등)
+    // 1. 로그인을 아예 안 한 경우 (Guest 등)
     if (!user) {
       alert('로그인한 클랜원 만 작성 가능합니다. 먼저 로그인을 해주세요!');
       return;

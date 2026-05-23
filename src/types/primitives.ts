@@ -12,12 +12,11 @@ export type UserRole =
   | 'member'
   | 'rookie'
   | 'applicant'
-  | 'visitor'
   | 'guest'
-  | 'expelled'
+  | 'banned'
   | string;
 
-export type RaceCode = 'Terran' | 'Zerg' | 'Protoss' | 'Random' | '미지정' | string;
+export type RaceCode = 'Terran' | 'Zerg' | 'Protoss' | 'Random' | string;
 export type ApplicationStatus = '대기중' | '합격' | '불합격' | string;
 export type LadderMatchStatus = '모집중' | '제안중' | '진행중' | '완료' | '거절됨' | string;
 export type MatchSetStatus = '엔트리제출중' | '진행중' | '완료' | string;

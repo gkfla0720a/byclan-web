@@ -6,12 +6,12 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthContext } from "@/context/AuthContext";
 
-export default function ProtectedRoute({ children, allowVisitor = false, fallback = null }) {
+export default function ProtectedRoute({ children, allowGuest = false, fallback = null }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, profile, authLoading } = useAuthContext();
-  const isVisitor = profile?.role === "visitor";
-  const isAllowed = Boolean(user) && (allowVisitor || !isVisitor);
+  const isGuest = profile?.role === "guest";
+  const isAllowed = Boolean(user) && (allowGuest || !isGuest);
 
   useEffect(() => {
     if (authLoading || isAllowed || user) return;

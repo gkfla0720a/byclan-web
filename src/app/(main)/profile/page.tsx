@@ -55,7 +55,7 @@ function ProfileAccessFallback() {
 /**
  * ProfilePage - 내 프로필 페이지 컴포넌트
  * 로그인 여부에 따라 프로필 또는 로그인 안내를 렌더링합니다.
- * visitor를 제외한 모든 로그인 사용자가 자신의 프로필을 볼 수 있습니다.
+ * guest를 제외한 모든 로그인 사용자가 자신의 프로필을 볼 수 있습니다.
  */
 export default function ProfilePage() {
   return (

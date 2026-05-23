@@ -87,7 +87,7 @@ export function useAuth(): UseAuthReturn {
 
   // 4. 권한 계산 (hasPermission 활용)
   const getPermissions = (): AuthPermissions => {
-    const userRole = profile?.role || (user ? 'visitor' : undefined);
+    const userRole = profile?.role || (user ? 'guest' : undefined);
     const effectiveRole = normalizeRole(userRole);
     const roleInfo = ROLE_PERMISSIONS[effectiveRole];
   

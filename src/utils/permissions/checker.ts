@@ -6,7 +6,7 @@ import { loadDevSettings } from './dev-settings';
 
 
 export function normalizeRole(role: string | null | undefined): ActiveRole {
-  if (!role) return 'visitor';
+  if (!role) return 'guest';
   const lowered = role.toLowerCase();
   if (!isActiveRole(lowered)) {
     throw new Error(`[Security Error] 정의되지 않은 불법 역할 데이터가 감지되었습니다: "${role}"`);
@@ -47,7 +47,7 @@ export function isInGroup (userRole: ActiveRole, group: RoleGroup): boolean {
     case 'members':
       return ['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(userRole);
     case 'others':
-      return ['visitor', 'expelled', 'applicant'].includes(userRole);
+      return ['guest', 'banned', 'applicant'].includes(userRole);
     default: {
       const _exhaustiveCheck: never = group;
       throw new Error(`[Type Error] 처리되지 않은 새로운 롤 그룹이 존재합니다: ${_exhaustiveCheck}`);

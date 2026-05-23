@@ -5,7 +5,7 @@ import { isCurrentViewerTestAccount } from '@/utils/testData';
 import { grantRankPromotionBonus } from '@/utils/pointSystem';
 
 /**
- * visitor, expelled를 제외한 클랜원 목록을 조회합니다.
+ * guest, banned를 제외한 클랜원 목록을 조회합니다.
  * 테스트 계정 여부에 따라 클라이언트 측 필터링을 적용합니다.
  * @returns {Promise<Array>}
  */
@@ -14,8 +14,8 @@ export async function fetchMembers() {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, by_id, role, created_at, profile_oauth(discord_id), profile_meta(is_test_account, is_test_account_active)')
-    .neq('role', 'visitor')
-    .neq('role', 'expelled')
+    .neq('role', 'guest')
+    .neq('role', 'banned')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -66,13 +66,13 @@ export async function updateMemberRole(memberId, newRole, previousRole, isTestAc
 }
 
 /**
- * 클랜원을 제명 처리합니다 (role → 'expelled').
+ * 클랜원을 제명 처리합니다 (role → 'banned').
  * @param {string} memberId
  */
 export async function expelMember(memberId) {
   const { data, error } = await supabase.rpc('rpc_update_profile_role', {
     p_target_id: memberId,
-    p_new_role: 'expelled',
+    p_new_role: 'banned',
     p_note: '제명 처리',
   });
 

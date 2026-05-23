@@ -170,9 +170,9 @@ export default function RankingBoard() {
             )
           `)
           .eq('profiles.is_active', true)
-          .neq('profiles.role', 'visitor')
+          .neq('profiles.role', 'guest')
           .neq('profiles.role', 'applicant')
-          .neq('profiles.role', 'expelled')
+          .neq('profiles.role', 'banned')
           .order('total_mmr', { ascending: false });
 
         const { data: rawData, error: fetchError } = await query;

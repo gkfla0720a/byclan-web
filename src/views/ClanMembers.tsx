@@ -6,7 +6,7 @@
  *   운영진·정예 클랜원·일반 클랜원 세 섹션으로 멤버를 분류하여 테이블로 보여줍니다.
  *
  * 주요 기능:
- *   - profiles 테이블에서 visitor·applicant·expelled를 제외한 멤버를 불러옵니다.
+ *   - profiles 테이블에서 guest·applicant·banned를 제외한 멤버를 불러옵니다.
  *   - streamer 관련 컬럼이 없는 경우 자동으로 폴백(fallback) 쿼리를 실행합니다.
  *   - 관리 권한(member.manage)이 있는 사용자에게만 인라인 등급 변경 드롭다운을 표시합니다.
  *   - 스트리머 멤버는 방송 플랫폼 링크 버튼을 표시하며, 실제 스트리머가 없으면 데모 데이터를 적용합니다.
@@ -106,9 +106,9 @@ async function fetchMembersWithSchemaFallback() {
       ladder_rankings(ladder_mmr, total_mmr),
       profile_meta(is_streamer, streamer_platform, streamer_url, is_test_account, is_test_account_active)
     `)
-    .neq('role', 'visitor')
+    .neq('role', 'guest')
     .neq('role', 'applicant')
-    .neq('role', 'expelled')
+    .neq('role', 'banned')
     .order('clan_point', { ascending: false });
 
   if (!joinedResult.error) {
@@ -144,9 +144,9 @@ async function fetchMembersWithSchemaFallback() {
     const result = await supabase
       .from('profiles')
       .select(columns)
-      .neq('role', 'visitor')
+      .neq('role', 'guest')
       .neq('role', 'applicant')
-      .neq('role', 'expelled')
+      .neq('role', 'banned')
       .order('clan_point', { ascending: false });
 
     if (!result.error) {

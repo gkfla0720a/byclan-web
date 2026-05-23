@@ -26,7 +26,7 @@ export default function AdminSettingsPage() {
   if (authLoading) return <div className="p-8 text-center text-cyan-400">데이터를 불러오는 중...</div>;
 
   // 권한 체크 로직 (Header.js와 동일하게 적용)
-  const currentRole = profile?.role || 'visitor'; // 기본값은 'visitor'로 설정  
+  const currentRole = profile?.role || 'guest'; // 기본값은 'guest'로 설정  
   
   const isDeveloper = currentRole === 'developer';
   const isEliteOrHigher = ['developer', 'master', 'admin', 'elite'].includes(currentRole);

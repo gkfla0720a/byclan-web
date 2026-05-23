@@ -49,7 +49,7 @@
 
 - `src/components/MyProfile.tsx` (약 820 lines): 프로필 조회/수정, 계정 보안, 소셜 연동, 유효성 검증, 메시지 처리까지 한 파일에 집중.
 - `src/components/MatchCenter.tsx` (약 576 lines): 매치 상태 관리 + 다중 UI 상태 + 액션 처리 결합.
-- `src/components/VisitorWelcome.tsx` (약 493 lines): 안내/신청 폼/상태 전환 로직 동시 보유.
+- `src/components/GuestWelcome.tsx` (약 493 lines): 안내/신청 폼/상태 전환 로직 동시 보유.
 - `src/components/AdminPointManager.tsx` (약 457 lines): 권한 확인, 로그 조회/필터, 포인트 지급/차감까지 결합.
 - `src/components/ApplicationList.tsx` (약 443 lines): 목록, 탭, 모달 상태, 승인/반려 액션 혼합.
 - `src/components/Header.tsx` (약 418 lines): 네비게이션 렌더링, 모바일 메뉴, 알림 카운트, 접근 정책 처리 결합.

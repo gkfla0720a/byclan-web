@@ -2,7 +2,7 @@
 
 import { ActiveRole, PermissionAction, RoleDefinition, } from './types';
 
-const EXPELLED_PERMS: PermissionAction[] = [
+const banned_PERMS: PermissionAction[] = [
   'home.view',
   'profile.view',
 ];
@@ -130,7 +130,7 @@ export const ROLE_PERMISSIONS = {
     color: '#F0E68C',
     icon: '📝',
   },
-  visitor: {
+  guest: {
     name: '방문자',
     description: '클랜 방문자 (비로그인 상태)',
     level: 10,
@@ -138,11 +138,11 @@ export const ROLE_PERMISSIONS = {
     color: '#C7CEEA',
     icon: '👤',
   },
-  expelled: {
+  banned: {
     name: '추방자',
     description: '클랜 규칙 위반 또는 운영진 결정으로 제명된 사용자',
     level: 0,
-    permissions: EXPELLED_PERMS,
+    permissions: banned_PERMS,
     color: '#9CA3AF',
     icon: '🚫',
   },

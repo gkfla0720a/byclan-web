@@ -48,7 +48,7 @@ export function useMasterDelegation(currentManager, members, onDelegateSuccess) 
   const [masterDelegation, setMasterDelegation] = useState({ isOpen: false, member: null });
   const [delegationVerification, setDelegationVerification] = useState(createVerificationState());
 
-  const canDelegateMaster = hasPermission(currentManager.role || 'visitor', 'master.delegate');
+  const canDelegateMaster = hasPermission(currentManager.role || 'guest', 'master.delegate');
 
   const isDelegationVerified = Boolean(
     delegationVerification.verifiedAt &&

@@ -1,7 +1,7 @@
-// 파일명: VisitorWelcome.tsx
+// 파일명: GuestWelcome.tsx
 
 /**
- * 파일명: VisitorWelcome.tsx
+ * 파일명: GuestWelcome.tsx
  *
  * 역할: 방문자·로그인 사용자의 가입 안내 및 클랜 신청서 제출을 담당하는 컴포넌트입니다.
  * 주요 기능:
@@ -10,7 +10,7 @@
  *   - submitApplication: applications 테이블에 신청서 저장 + profiles 역할을 applicant로 업데이트
  *   - streamer 컬럼 미존재 시 자동 폴백 쿼리를 실행합니다.
  * 사용 방법:
- *   <VisitorWelcome user={user} profile={profile} mode="guide" onApplicationSubmit={fn} />
+ *   <GuestWelcome user={user} profile={profile} mode="guide" onApplicationSubmit={fn} />
  */
 'use client';
 
@@ -21,7 +21,7 @@ import { ErrorMessage } from './UIStates';
 import { useNavigate } from '@/hooks/useNavigate';
 
 const ROLE_LABELS = {
-  visitor: '방문자',
+  guest: '방문자',
   applicant: '신규 가입자',
   rookie: '신입 클랜원',
   member: '일반 클랜원',
@@ -265,7 +265,7 @@ function ApplicationForm({ onSubmit, onCancel, loading, error }) {
 }
 
 /**
- * VisitorWelcome 컴포넌트 (기본 내보내기)
+ * GuestWelcome 컴포넌트 (기본 내보내기)
  *
  * 사용자 상태(비로그인·방문자·신청자·정식 멤버)에 따라 다른 UI를 렌더링합니다.
  *
@@ -275,7 +275,7 @@ function ApplicationForm({ onSubmit, onCancel, loading, error }) {
  * @param {function} onApplicationSubmit - 신청서 제출 성공 후 호출되는 콜백
  * @returns {JSX.Element} 가입 안내 또는 환영 UI
  */
-export default function VisitorWelcome({ user, profile, mode = 'guide', onApplicationSubmit }) {
+export default function GuestWelcome({ user, profile, mode = 'guide', onApplicationSubmit }) {
   /** 페이지 이동 훅 */
   const navigateTo = useNavigate();
   /** 신청서 폼 모달 표시 여부 */
@@ -290,7 +290,7 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
   /** 화면에 표시할 사용자 이름 (by_id > 로그인 아이디 기반 > 기본값) */
   const displayName = profile?.by_id || (() => {
     const accountId = extractAccountIdFromAuthUser(user, profile);
-    return accountId ? `By_${accountId}` : 'By_Visitor';
+    return accountId ? `By_${accountId}` : 'By_Guest';
   })();
   /** 현재 사용자 역할 (소문자 정규화) */
   const currentRole = profile?.role || 'guest';
@@ -298,8 +298,8 @@ export default function VisitorWelcome({ user, profile, mode = 'guide', onApplic
   const isApplied = currentRole === 'applicant';
   /** 신입 이상(정식 멤버) 여부 */
   const isRookieOrHigher = ['rookie', 'member', 'elite', 'admin', 'master', 'developer'].includes(currentRole);
-  /** 가입 신청 가능 여부 (로그인 + visitor 역할) */
-  const canApply = Boolean(user && currentRole === 'visitor');
+  /** 가입 신청 가능 여부 (로그인 + guest 역할) */
+  const canApply = Boolean(user && currentRole === 'guest');
   /** 역할 표시 레이블 */
   const roleLabel = ROLE_LABELS[currentRole] || '클랜 유저';
   /** 프로필 자기소개 텍스트 */

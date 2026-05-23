@@ -1,8 +1,8 @@
 // 파일명: @/utils/permissions/types.ts
 
 export const ROLES = [
-  'expelled',
-  'visitor',
+  'banned',
+  'guest',
   'applicant',
   'rookie',
   'member',

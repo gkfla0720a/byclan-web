@@ -26,7 +26,7 @@ export default function GuildManagement() {
   const [actionModal, setActionModal] = useState({ isOpen: false, action: '', member: null });
   const [pendingRole, setPendingRole] = useState('member');
 
-  const canManageMembers = hasPermission(currentManager.role || 'visitor', 'member.manage');
+  const canManageMembers = hasPermission(currentManager.role || 'guest', 'member.manage');
 
   if (loading) {
     return <div className="text-center py-24 text-cyan-400 font-mono">[ LOADING GUILD DATA... ]</div>;

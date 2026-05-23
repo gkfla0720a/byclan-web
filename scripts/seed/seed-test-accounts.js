@@ -56,7 +56,7 @@ const ROLE_BLUEPRINT = [
   { role: 'member', count: 16, mmr: 1250, point: 2000, intro: '테스트 일반 클랜원 계정입니다.' },
   { role: 'rookie', count: 4, mmr: 1120, point: 1500, intro: '테스트 루키 계정입니다.' },
   { role: 'applicant', count: 2, mmr: 1000, point: 1000, intro: '테스트 가입 신청자 계정입니다.' },
-  { role: 'visitor', count: 2, mmr: 1000, point: 1000, intro: '테스트 방문자 계정입니다.' },
+  { role: 'guest', count: 2, mmr: 1000, point: 1000, intro: '테스트 방문자 계정입니다.' },
 ];
 
 const RACES = ['Terran', 'Zerg', 'Protoss'];
@@ -106,7 +106,7 @@ function validateTesterComposition(testers) {
     return acc;
   }, {});
 
-  const requiredRoles = ['admin', 'elite', 'member', 'rookie', 'applicant', 'visitor'];
+  const requiredRoles = ['admin', 'elite', 'member', 'rookie', 'applicant', 'guest'];
   for (const role of requiredRoles) {
     if ((roleCounts[role] || 0) < 2) {
       throw new Error(`${role} 직급이 2명 미만입니다.`);

@@ -102,9 +102,9 @@ export default function LadderPreview({ isGuest }) {
             .from('ladder_rankings')
             // 💡 수정됨: user_id 옆에 있던 by_id 삭제, profiles!inner 안에 by_id 추가
             .select('user_id, total_mmr, ladder_mmr, team_mmr, profiles!inner(by_id, role, race)')
-            .neq('profiles.role', 'visitor')
+            .neq('profiles.role', 'guest')
             .neq('profiles.role', 'applicant')
-            .neq('profiles.role', 'expelled')
+            .neq('profiles.role', 'banned')
             .order('total_mmr', { ascending: false })
             .limit(5);
 

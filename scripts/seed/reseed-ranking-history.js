@@ -447,7 +447,7 @@ async function main() {
     const visibleRows = await client.query(`
       select id
       from public.profiles
-      where role not in ('visitor', 'applicant', 'expelled')
+      where role not in ('guest', 'applicant', 'banned')
       order by created_at asc
     `);
 
@@ -497,7 +497,7 @@ async function main() {
         coalesce(is_test_account, false),
         coalesce(is_test_account_active, true)
       from public.profiles
-      where role not in ('visitor', 'applicant', 'expelled')
+      where role not in ('guest', 'applicant', 'banned')
     `);
 
     await client.query('commit');
@@ -514,7 +514,7 @@ async function main() {
     const dist = await client.query(`
       select max(total_mmr) as max_total_mmr, min(total_mmr) as min_total_mmr
       from public.profiles
-      where role not in ('visitor', 'applicant', 'expelled')
+      where role not in ('guest', 'applicant', 'banned')
     `);
     console.log('MMR curve:', dist.rows[0]);
 

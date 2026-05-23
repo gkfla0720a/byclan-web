@@ -44,14 +44,14 @@ export default function LadderPage() {
   const canPlayLadder = permissions.can?.playLadder;
   // 비로그인 사용자 여부
   const isGuest = !user;
-  // 방문자(visitor) 역할인지 여부
-  const isVisitor = user && profile && profile.role === 'visitor';
+  // 방문자(guest) 역할인지 여부
+  const isGuest = user && profile && profile.role === 'guest';
 
   if (!canPlayLadder) {
     return (
       <SectionErrorBoundary name="래더 프리뷰">
         <LadderPreview
-          isGuest={isGuest || isVisitor}
+          isGuest={isGuest || isGuest}
         />
         <div className="mt-8 px-4"><ExternalMatchList /></div>
       </SectionErrorBoundary>

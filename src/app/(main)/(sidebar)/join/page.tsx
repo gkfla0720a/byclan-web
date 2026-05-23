@@ -12,7 +12,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation'; // useRouter 추가
-import VisitorWelcome from '@/components/VisitorWelcome';
+import GuestWelcome from '@/components/GuestWelcome';
 import { useAuthContext } from '@/context/AuthContext';
 
 export default function JoinPage() {
@@ -52,9 +52,9 @@ export default function JoinPage() {
     );
   }
 
-  // 비로그인, visitor 등 가입 신청을 하지 않은 사람에게 보여주는 화면
+  // 비로그인, guest 등 가입 신청을 하지 않은 사람에게 보여주는 화면
   return (
-    <VisitorWelcome
+    <GuestWelcome
       user={user}
       profile={profile}
       mode="guide"
