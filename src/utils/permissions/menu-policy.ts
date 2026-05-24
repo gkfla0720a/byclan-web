@@ -1,5 +1,5 @@
 // 파일명: src/utils/permissions/menu-policy.ts
-import { ActiveRole, ROLES, LADDER_MEMBER_ROLES } from './types';
+import { ActiveRole, ROLES, LADDER_MEMBER_ROLES } from '@/types/permissions';
 import type { MenuName } from '@/hooks/useNavigate';
 
 const ALL_ROLES: ActiveRole[] = [...ROLES];
