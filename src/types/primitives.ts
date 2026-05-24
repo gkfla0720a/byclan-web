@@ -27,10 +27,10 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 export const LADDER_MATCH_STATUSES = ['모집중', '제안중', '진행중', '완료', '거절됨'] as const;
 export type LadderMatchStatus = (typeof LADDER_MATCH_STATUSES)[number];
 
-export const MATCH_SET_STATUSES = ['pending_entry', 'in_progress', 'pending_review', 'completed', '엔트리제출중', '진행중', '완료'] as const;
+export const MATCH_SET_STATUSES = ['엔트리제출중', '진행중', '완료'] as const;
 export type MatchSetStatus = (typeof MATCH_SET_STATUSES)[number];
 
-export const WINNING_SIDES = ['A', 'B', 'DRAW', 'team_a', 'team_b', '무승부'] as const;
+export const WINNING_SIDES = ['team_a', 'team_b', '무승부'] as const;
 export type WinningSide = (typeof WINNING_SIDES)[number];
 
 export interface TestDataFlags {
