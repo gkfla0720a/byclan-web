@@ -21,6 +21,7 @@ import { useEffect, useState, useCallback, Fragment } from 'react';
 import { isSupabaseConfigured, supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
 import { MATCH_STATUS_LABEL } from '@/utils/statusConstants';
+import { isCompletedMatchStatus, isInProgressMatchStatus, normalizeWinningTeam } from '@/utils/matchCenter';
 
 const PAGE_SIZE = 30;
 
@@ -155,8 +156,8 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
 
   if (!m) return null;
 
-  const isFinished = m.status === 'completed';
-  const isOngoing = m.status === 'in_progress';
+  const isFinished = isCompletedMatchStatus(m.status);
+  const isOngoing = isInProgressMatchStatus(m.status);
   const teamA = m.team_a_ids || [];
   const teamB = m.team_b_ids || [];
   const teamARaces = m.team_a_races || [];
@@ -288,8 +289,9 @@ function MatchDetailPanel({ matches, index, profileCache, onClose, onPrev, onNex
             <div className="space-y-1.5">
               {sets.map((s) => {
                 const isActive = !s.winner_team;
-                const isA = s.winner_team === 'A';
-                const isB = s.winner_team === 'B';
+                const normalizedWinnerTeam = normalizeWinningTeam(s.winner_team);
+                const isA = normalizedWinnerTeam === 'A';
+                const isB = normalizedWinnerTeam === 'B';
                 const combo = s.combo_code || raceComboCode(s.race_cards);
                 const expanded = expandedSetNo === s.set_number;
                 const teamAEntry = normalizeSetEntry(s.team_a_entry);
@@ -518,7 +520,7 @@ export default function MatchRecords() {
                       </td>
                       <td className="py-3 px-4">{renderTeam(m.team_a_ids)}</td>
                       <td className="py-3 px-3 text-center">
-                        {m.status === 'completed' ? (
+                        {isCompletedMatchStatus(m.status) ? (
                           <span className="text-white font-black text-sm">
                             {m.score_a ?? '-'} : {m.score_b ?? '-'}
                           </span>
@@ -567,7 +569,7 @@ export default function MatchRecords() {
                         <div className="text-[11px] text-gray-400 mb-0.5">A팀</div>
                         <div className="flex flex-wrap gap-1">{renderTeam(m.team_a_ids)}</div>
                       </div>
-                      {m.status === 'completed' && (
+                      {isCompletedMatchStatus(m.status) && (
                         <span className="text-white font-black text-sm mx-1">
                           {m.score_a ?? '-'} : {m.score_b ?? '-'}
                         </span>

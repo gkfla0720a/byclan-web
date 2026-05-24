@@ -1,6 +1,6 @@
 // 파일명: @/utils/permissions/checker.ts
 
-import { ActiveRole, PermissionAction, isActiveRole, RoleGroup } from './types';
+import { ActiveRole, PermissionAction, isActiveRole, RoleGroup } from '@/types/permissions';
 import { ROLE_PERMISSIONS } from './role-permissions';
 import { loadDevSettings } from './dev-settings';
 

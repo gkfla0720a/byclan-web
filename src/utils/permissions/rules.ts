@@ -1,6 +1,6 @@
 // 파일명: @/utils/permissions/rules.ts
 
-import { PermissionAction } from './types';
+import { PermissionAction } from '@/types/permissions';
 
 export const DELEGATION_RULES = {
   master_to_admin: ['member.approve', 'match.manage', 'ladder.moderate'] as PermissionAction[],

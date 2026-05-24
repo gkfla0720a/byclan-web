@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
+import { isCompletedMatchStatus, normalizeWinningTeam } from '@/utils/matchCenter';
 
 /** 포인트 거래 유형 레이블 */
 const TYPE_LABEL = {
@@ -186,11 +187,14 @@ export default function PointHistoryPage() {
             <div className="text-center py-16 text-gray-600 text-sm">베팅 이력이 없습니다.</div>
           )}
           {bets.map(bet => {
-            const matchEnded = bet.ladder_matches?.status === 'completed';
-            const won = matchEnded && bet.ladder_matches?.winner_team === bet.team_choice;
-            const lost = matchEnded && bet.ladder_matches?.winner_team !== bet.team_choice;
-            const statusColor = bet.status === 'won' ? 'text-emerald-400' : bet.status === 'lost' ? 'text-red-400' : 'text-yellow-400';
-            const statusLabel = { won: '🏆 승리 정산', lost: '❌ 패배 정산', pending: '⏳ 정산 대기' }[bet.status] || '?';
+            const matchEnded = isCompletedMatchStatus(bet.ladder_matches?.status);
+            const winnerTeam = normalizeWinningTeam(bet.ladder_matches?.winner_team);
+            const teamChoice = normalizeWinningTeam(bet.team_choice);
+            const won = matchEnded && winnerTeam !== null && teamChoice !== null && winnerTeam === teamChoice;
+            const lost = matchEnded && winnerTeam !== null && teamChoice !== null && winnerTeam !== teamChoice;
+            const normalizedBetStatus = won ? 'won' : lost ? 'lost' : bet.status;
+            const statusColor = normalizedBetStatus === 'won' ? 'text-emerald-400' : normalizedBetStatus === 'lost' ? 'text-red-400' : 'text-yellow-400';
+            const statusLabel = { won: '🏆 승리 정산', lost: '❌ 패배 정산', pending: '⏳ 정산 대기' }[normalizedBetStatus] || '?';
 
             return (
               <div key={bet.id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-700/50 bg-gray-900/40">
@@ -218,4 +222,3 @@ export default function PointHistoryPage() {
     </div>
   );
 }
-

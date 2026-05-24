@@ -3,54 +3,34 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 
-// ─── 상수 (Constants) ───
-export const BET_AMOUNTS = [500, 1000, 5000, 10000];
-export const BET_WINDOW_SECONDS = 300;
-export const RACE_COMBOS = [
-  { id: 'PPP', label: '프프프', races: ['Protoss', 'Protoss', 'Protoss'] },
-  { id: 'PPT', label: '프프테', races: ['Protoss', 'Protoss', 'Terran'] },
-  { id: 'PPZ', label: '프프저', races: ['Protoss', 'Protoss', 'Zerg'] },
-  { id: 'PZT', label: '프저테', races: ['Protoss', 'Zerg', 'Terran'] },
-  { id: 'RANDOM', label: '대포 (랜덤)', races: null },
-];
-export const REQUIRED_RACE_COMBOS = ['PPP', 'PPT', 'PPZ', 'PZT', 'RANDOM'];
-export const RACE_ICONS = { Protoss: '프', Terran: '테', Zerg: '저' };
+// ─── 상수/순수 헬퍼는 utils로 분리 ───
+export {
+  BET_AMOUNTS,
+  BET_WINDOW_SECONDS,
+  RACE_COMBOS,
+  REQUIRED_RACE_COMBOS,
+  RACE_ICONS,
+  formatTime,
+  getComboIdFromRaceCards,
+  getRemainingRequiredCombos,
+  getRaceCards,
+  inferTeamLetter,
+  isCompletedSetStatus,
+  isActiveSetStatus,
+  normalizeWinningTeam,
+  isPendingReviewSetStatus,
+} from '@/utils/matchCenter';
 
-// ─── 헬퍼 함수 (Helper Functions) ───
-export function formatTime(secs) {
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-export function getComboIdFromRaceCards(cards) {
-  if (!Array.isArray(cards) || cards.length !== 3) return null;
-  const map = { Protoss: 'P', Terran: 'T', Zerg: 'Z' };
-  const code = cards.map((race) => map[race] || 'X').sort().join('');
-  if (code === 'PTZ') return 'PZT';
-  if (REQUIRED_RACE_COMBOS.includes(code)) return code;
-  return null;
-}
-
-export function getRemainingRequiredCombos(matchSets) {
-  const used = new Set();
-  (matchSets || []).forEach((setRow) => {
-    const comboFromCode = typeof setRow?.combo_code === 'string' ? setRow.combo_code : null;
-    const normalized = comboFromCode === 'PTZ' ? 'PZT' : comboFromCode;
-    const combo = REQUIRED_RACE_COMBOS.includes(normalized) ? normalized : getComboIdFromRaceCards(setRow?.race_cards);
-    if (combo) used.add(combo);
-  });
-  return REQUIRED_RACE_COMBOS.filter((combo) => !used.has(combo));
-}
-
-export function getRaceCards(comboId) {
-  const combo = RACE_COMBOS.find(c => c.id === comboId);
-  if (!combo || !combo.races) {
-    const pool = ['Protoss', 'Terran', 'Zerg'];
-    return [0, 1, 2].map(() => pool[Math.floor(Math.random() * pool.length)]);
-  }
-  return combo.races;
-}
+import {
+  BET_WINDOW_SECONDS,
+  getRaceCards,
+  getRemainingRequiredCombos,
+  inferTeamLetter,
+  isCompletedSetStatus,
+  isActiveSetStatus,
+  normalizeWinningTeam,
+  isPendingReviewSetStatus,
+} from '@/utils/matchCenter';
 
 // ─── 메인 훅 (Main Hook) ───
 export function useMatchCenter(matchId) {
@@ -93,10 +73,10 @@ export function useMatchCenter(matchId) {
     .eq('match_id', matchId);
 
     if (!sets || sets.length === 0 || !records) return;
-    const normalizedRecords = records[];
+    const normalizedRecords = records;
     
-    const scoreA = sets.filter(s => s.winner_team === 'A').length;
-    const scoreB = sets.filter(s => s.winner_team === 'B').length;
+    const scoreA = sets.filter((s) => normalizeWinningTeam(s.winner_team) === 'A').length;
+    const scoreB = sets.filter((s) => normalizeWinningTeam(s.winner_team) === 'B').length;
     const matchType = normalizedRecords.filter((r) => r.team === 'A').length;
     
     const m = {
@@ -111,21 +91,20 @@ export function useMatchCenter(matchId) {
     };
     setMatch(m);
 
-    const [{ data: prof }, { data: profMeta }] = await Promise.all([
-      supabase.from('profiles').select('id, role, clan_point').eq('id', user.id).single(),
-      supabase.from('profile_meta').select('is_test_account').eq('user_id', user.id).maybeSingle(),
-    ]);
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('id, role, clan_point')
+      .eq('id', user.id)
+      .single();
     if (prof) {
       setMyClanPoint(prof.clan_point ?? 0);
       setMyRole(prof.role || null);
     }
 
-    const inTeamA = (m.team_a_ids || []).includes(user.id);
-    const inTeamB = (m.team_b_ids || []).includes(user.id);
-    const teamLetter = inTeamA ? 'A' : inTeamB ? 'B' : null;
+    const teamLetter = inferTeamLetter(user.id, m.team_a_ids || [], m.team_b_ids || []);
     setMyTeam(teamLetter);
 
-    const activeSet = m.match_sets?.find(s => s.status !== 'completed') || m.match_sets?.[m.match_sets.length - 1];
+    const activeSet = m.match_sets?.find((s) => isActiveSetStatus(s.status)) || m.match_sets?.[m.match_sets.length - 1];
     setCurrentSet(activeSet);
     setIsRevealed(Boolean(activeSet?.team_a_ready && activeSet?.team_b_ready));
 
@@ -247,7 +226,7 @@ export function useMatchCenter(matchId) {
 
   const getRestStatus = (playerId, teamLetter) => {
     if (!match?.match_sets || !teamLetter) return { count: 0, canRest: true };
-    const completedSets = match.match_sets.filter(s => s.status === 'completed');
+    const completedSets = match.match_sets.filter((s) => isCompletedSetStatus(s.status));
     const restCount = completedSets.filter(s => {
       const entry = teamLetter === 'A' ? s.team_a_entry : s.team_b_entry;
       return !entry?.some(e => e.id === playerId);
@@ -376,7 +355,7 @@ const handleSetWin = async (winnerTeam) => {
   useEffect(() => {
     let intervalId;
 
-    if (currentSet?.status === 'pending_review' && currentSet?.claim_time) {
+    if (isPendingReviewSetStatus(currentSet?.status) && currentSet?.claim_time) {
       // 1. Pending 시작 알람 소리 (public 폴더에 짧은 mp3 파일 필요)
       try { new Audio('/sounds/pending-start.mp3').play().catch(() => {}); } catch(e){}
 
