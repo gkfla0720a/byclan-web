@@ -1,3 +1,5 @@
+// 파일명: src/types/primitives.ts
+
 export type UUID = string;
 export type ISODateString = string;
 

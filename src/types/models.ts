@@ -1,8 +1,9 @@
+// 파일명: src/types/models.ts
+
 import type {
   AdminPostRow,
   ApplicationRow,
   LadderMatchRow,
-  LadderRow,
   MatchBetRow,
   MatchSetRow,
   NoticePostRow,
@@ -17,6 +18,7 @@ import type {
 } from './rows';
 import type { RaceCode, UserRole, UUID } from './primitives';
 
+// Omit을 활용하여 중복되는 user_id를 제거하고 깔끔하게 병합
 export interface AuthProfile extends ProfileRow,
   Omit<ProfileOAuthRow, 'user_id'>,
   Partial<Omit<LadderRankingsRow, 'user_id' | 'by_id'>>,
@@ -25,11 +27,13 @@ export interface AuthProfile extends ProfileRow,
   [key: string]: unknown;
 }
 
+// Supabase는 문자열을 기본적으로 string | null로 추론하므로, 
+// UI에서 쓸 때는 우리가 만든 리터럴 타입(UserRole, RaceCode)으로 강제 변환/보장하기 위한 요약 모델
 export interface ProfileSummary {
   id: UUID;
   by_id: string | null;
-  role: UserRole | null;
-  race?: RaceCode | null;
+  role: UserRole | string | null;
+  race?: RaceCode | string | null;
   ladder_mmr?: number | null;
   clan_point?: number | null;
   is_streamer?: boolean | null;
@@ -45,7 +49,15 @@ export interface MemberListItem extends ProfileRow {
   active_match_id?: UUID | null;
 }
 
-export interface LadderBoardItem extends LadderRow {
+// 래더 랭킹 UI에 그릴 데이터 모델 (기존 LadderRow 역할 대체)
+export interface LadderBoardItem {
+  id: string; // 랭킹 row id
+  user_id: UUID;
+  rank: number | null;
+  ladder_mmr: number | null;
+  wins: number | null;
+  losses: number | null;
+  win_rate: number | null;
   profile?: ProfileSummary | null;
 }
 
@@ -99,7 +111,6 @@ export type AdminSectionKey =
   | 'notifications'
   | 'settings';
 
-// 실무에서 자주 쓰는 표준 응답 타입
 export type ApiResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string; code?: string };

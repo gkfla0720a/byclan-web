@@ -1,3 +1,5 @@
+// 파일명: src/types/permissions.ts
+
 import { USER_ROLES } from './primitives';
 
 export const ROLES = USER_ROLES;

@@ -1,3 +1,5 @@
+// 파일명: src/types/matchCenter.ts
+
 import type { RaceCode, UserRole } from '@/types';
 
 export type TeamLetter = 'A' | 'B';

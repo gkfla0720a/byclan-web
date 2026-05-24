@@ -1,3 +1,5 @@
+// 파일명: src/types/json.ts
+
 import type { JsonValue } from './primitives';
 
 export interface ActivityLogMeta {
