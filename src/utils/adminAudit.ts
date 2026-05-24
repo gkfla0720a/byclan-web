@@ -1,4 +1,5 @@
 // 파일명: src/utils/adminAudit.ts
+
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Json } from '@/types/database.types';
 import type { AdminActionType, AuditCategory } from '@/types/domain';

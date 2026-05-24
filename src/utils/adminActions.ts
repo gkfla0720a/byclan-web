@@ -1,4 +1,5 @@
 // 파일명: src/utils/adminActions.ts
+
 import { supabase } from '@/supabase';
 import { recordAdminAudit } from './adminAudit';
 import type { AdminActionType, AuditCategory } from '@/types/domain';

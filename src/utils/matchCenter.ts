@@ -1,3 +1,5 @@
+// 파일명: src/types/matchCenter.ts
+
 import type { TeamLetter } from '@/types/matchCenter';
 
 export const BET_AMOUNTS = [500, 1000, 5000, 10000] as const;

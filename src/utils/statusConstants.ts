@@ -1,28 +1,19 @@
-// 파일명: @/utils/statusConstants.ts
+// 파일명: src/utils/statusConstants.ts
 
- /**
- * @file statusConstants.js
- * @역할 ByClan 도메인 상태값 영문 상수 정의
- *
- * DB의 status 컬럼 값은 모두 영문으로 통일합니다.
- * UI 표시용 한글 레이블은 이 파일의 *_LABEL 객체를 사용하세요.
- *
- * 사용 예:
- *   import { MATCH_STATUS, MATCH_STATUS_LABEL } from '@/utils/statusConstants';
- *   .eq('status', MATCH_STATUS.IN_PROGRESS)
- *   label = MATCH_STATUS_LABEL[match.status] ?? match.status
- */
+import type { LadderMatchStatus, MatchSetStatus, ApplicationStatus } from '@/types';
 
-// ── 매치 상태 ──────────────────────────────────────────────
-export const MATCH_STATUS = {
-  OPEN:        'open',
-  PROPOSED:    'proposed',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED:   'completed',
-  REJECTED:    'rejected',
+// Record를 사용하여 키와 값을 타입스크립트가 강력하게 통제합니다.
+export const MATCH_STATUS: Record<string, LadderMatchStatus> = {
+  OPEN:        '모집중', // DB 스키마 기준 실제 들어가는 값으로 매칭하는 것을 권장
+  PROPOSED:    '제안중',
+  IN_PROGRESS: '진행중',
+  COMPLETED:   '완료',
+  REJECTED:    '거절됨',
 };
 
-export const MATCH_STATUS_LABEL = {
+// 만약 DB에는 영어(in_progress)로 들어가고 UI는 한글(진행중)이라면 
+// 아래와 같이 매핑 딕셔너리로 사용하는 현재 방식이 아주 좋습니다.
+export const MATCH_STATUS_LABEL: Record<string, string> = {
   open:        '모집중',
   proposed:    '제안중',
   in_progress: '진행중',
@@ -30,27 +21,13 @@ export const MATCH_STATUS_LABEL = {
   rejected:    '거절됨',
 };
 
-// ── 세트 상태 ──────────────────────────────────────────────
-export const SET_STATUS = {
-  ENTRY_PENDING: 'entry_pending',
-  IN_PROGRESS:   'in_progress',
-  COMPLETED:     'completed',
-};
-
-export const SET_STATUS_LABEL = {
+export const SET_STATUS_LABEL: Record<string, string> = {
   entry_pending: '엔트리제출중',
   in_progress:   '진행중',
   completed:     '완료',
 };
 
-// ── 가입 신청 상태 ─────────────────────────────────────────
-export const APPLICATION_STATUS = {
-  PENDING: 'pending',
-  PASSED:  'passed',
-  FAILED:  'failed',
-};
-
-export const APPLICATION_STATUS_LABEL = {
+export const APPLICATION_STATUS_LABEL: Record<string, string> = {
   pending: '대기중',
   passed:  '합격',
   failed:  '불합격',

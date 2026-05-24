@@ -1,3 +1,5 @@
+// 파일명: src/types/jsonGuards.ts
+
 import type { JsonValue, MatchSetEntry } from '@/types';
 
 export function isObjectJson(value: JsonValue): value is Record<string, JsonValue> {
@@ -8,3 +10,4 @@ export function isMatchSetEntry(value: JsonValue | null | undefined): value is M
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return 'playerId' in value || 'playerName' in value || 'race' in value || 'ready' in value;
 }
+
