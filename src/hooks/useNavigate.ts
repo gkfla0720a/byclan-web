@@ -1,4 +1,5 @@
 // 파일명: src/hooks/useNavigate.ts
+
 'use client';
 
 import { useCallback } from 'react';

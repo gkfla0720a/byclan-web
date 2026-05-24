@@ -1,25 +1,23 @@
 // 파일명: src/hooks/useProfileData.ts
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/supabase';
-import type { Tables } from '@/types/supabase';
-import type { AuthProfile as UserProfile } from '@/types';
+import type { Database, AuthProfile as UserProfile } from '@/types';
 import { extractAccountIdFromAuthUser } from '@/utils/accountId';
 import { normalizeRole } from '@/utils/permissions';
 import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '@/utils/testData';
 import logger from '@/utils/errorLogger';
 
-type ProfileRow = Tables<'profiles'>;
-
-// ─── 데이터 세탁 및 병합 도우미 함수들 ──────────────────────────────────────────
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
 function normalizeProfileRow(profile: ProfileRow | null): UserProfile | null {
   if (!profile) return null;
   return {
     ...profile,
-    role: normalizeRole(profile.role), // DB의 문자열을 안전한 ActiveRole로 변환
+    role: normalizeRole(profile.role),
     clan_point: typeof profile.clan_point === 'number' ? profile.clan_point : 0,
-  } as unknown as UserProfile; 
+  } as unknown as UserProfile;
 }
 
 function getSocialIdentity(authUser: User) {
@@ -69,13 +67,15 @@ async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Prom
     supabase.from('ladder_rankings').select('ladder_mmr, wins, losses, total_mmr').eq('user_id', userId).maybeSingle(),
   ]);
 
-  return { ...oauthData, ...metaData, ...rankData, ...profile };
+  return { ...oauthData, ...metaData, ...rankData, ...profile } as UserProfile;
 }
 
 async function syncSocialProfileData(authUser: User, currentProfile: UserProfile): Promise<UserProfile> {
   const { isDiscordProvider, isGoogleProvider, discordId, discordName, googleSub, googleEmail, googleName, googleAvatarUrl, authProvider } = getSocialIdentity(authUser);
-  const profileUpdates: any = {};
-  const oauthUpdates: any = {};
+
+  // 타입을 강제하여 오염된 데이터가 들어가지 않도록 보호합니다.
+  const profileUpdates: Partial<ProfileRow> = {};
+  const oauthUpdates: Record<string, string | null> = {};
 
   if (isDiscordProvider && discordId && !currentProfile.discord_id) oauthUpdates.discord_id = discordId;
   if (isGoogleProvider) {
@@ -87,7 +87,7 @@ async function syncSocialProfileData(authUser: User, currentProfile: UserProfile
   if (authProvider && currentProfile.auth_provider !== authProvider) oauthUpdates.auth_provider = authProvider;
 
   if (!currentProfile.by_id) {
-    const loginId = extractAccountIdFromAuthUser(authUser, currentProfile);
+    const loginId = extractAccountIdFromAuthUser(authUser, currentProfile as any);
     const seed = googleName || discordName || loginId || authUser.email?.split('@')[0] || 'User';
     profileUpdates.by_id = await resolveUniqueById(seed, authUser.id);
   }
@@ -106,14 +106,11 @@ async function syncSocialProfileData(authUser: User, currentProfile: UserProfile
   return updatedProfile;
 }
 
-// ─── 메인 훅 (Main Hook) ───────────────────────────────────────────────────────
-
 export function useProfileData(user: User | null) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const profileRequestIdRef = useRef(0);
 
-  // by_id가 비어있는지 확인하여 닉네임 설정 페이지로 유도하는 플래그
   const needsByIdSetup = profile !== null && (!profile.by_id || profile.by_id.trim() === '');
 
   const fetchAndSetProfile = useCallback(async (authUser: User, requestId = profileRequestIdRef.current + 1) => {
@@ -121,10 +118,8 @@ export function useProfileData(user: User | null) {
     setProfileLoading(true);
 
     try {
-      // 1. 프로필 기본 정보 로드
       let { data: p, error: profileError } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
 
-      // 2. 신규 가입자(프로필 없음) 처리
       if (profileError && profileError.code === 'PGRST116') {
         const seed = authUser.email?.split('@')[0] || 'User';
         const uniqueById = await resolveUniqueById(seed, authUser.id);
@@ -144,7 +139,6 @@ export function useProfileData(user: User | null) {
 
       if (profileError) throw profileError;
 
-      // 3. 기존 유저 데이터 병합 및 세탁
       let nextProfile = normalizeProfileRow(p);
       if (nextProfile) {
         nextProfile = await mergeOAuthIntoProfile(nextProfile, authUser.id);
@@ -154,7 +148,6 @@ export function useProfileData(user: User | null) {
 
         setProfile(nextProfile);
 
-        // 테스트 계정 플래그 동기화 (전역 상태)
         if (typeof window !== 'undefined') {
           if (nextProfile.is_test_account) setCurrentViewerTestAccountFlag(true);
           else clearCurrentViewerTestAccountFlag();
@@ -162,8 +155,7 @@ export function useProfileData(user: User | null) {
       }
     } catch (error) {
       if (profileRequestIdRef.current !== requestId) return;
-
-      logger.error('프로필 데이터를 불러오지 못했습니다.', error, { userId: authUser.id });
+      logger.captureException(error, { userId: authUser.id, severity: 'ERROR' }); // logger 타입에 맞게 수정
       setProfile(null);
       if (typeof window !== 'undefined') clearCurrentViewerTestAccountFlag();
     } finally {
@@ -171,13 +163,11 @@ export function useProfileData(user: User | null) {
     }
   }, []);
 
-  // user 객체가 변경될 때마다(로그인/로그아웃) 프로필을 다시 불러옴
   useEffect(() => {
     if (user) {
       queueMicrotask(() => fetchAndSetProfile(user));
       return;
     }
-
     profileRequestIdRef.current += 1;
     queueMicrotask(() => {
       setProfile(null);
@@ -186,10 +176,10 @@ export function useProfileData(user: User | null) {
     });
   }, [user, fetchAndSetProfile]);
 
-  return { 
-    profile, 
-    setProfile, 
-    profileLoading, 
+  return {
+    profile,
+    setProfile,
+    profileLoading,
     needsByIdSetup,
     reloadProfile: () => user ? fetchAndSetProfile(user) : Promise.resolve()
   };

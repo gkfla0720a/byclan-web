@@ -21,9 +21,9 @@ import type { RaceCode, UserRole, UUID } from './primitives';
 // Omit을 활용하여 중복되는 user_id를 제거하고 깔끔하게 병합
 export interface AuthProfile extends ProfileRow,
   Omit<ProfileOAuthRow, 'user_id'>,
-  Partial<Omit<LadderRankingsRow, 'user_id' | 'by_id'>>,
-  Partial<Omit<LadderQueueRow, 'user_id'>>,
-  Partial<Omit<ProfileMetaRow, 'user_id'>> {
+  Partial<Omit<LadderRankingsRow, 'user_id' | 'by_id' | 'id'>>,
+  Partial<Omit<LadderQueueRow, 'user_id' | 'id'>>,
+  Partial<Omit<ProfileMetaRow, 'user_id' | 'id'>> {
   [key: string]: unknown;
 }
 

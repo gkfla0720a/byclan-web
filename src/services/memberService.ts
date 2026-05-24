@@ -37,9 +37,9 @@ export async function fetchMembers() {
 }
 
 export async function updateMemberRole(
-  memberId: string, 
-  newRole: string, 
-  previousRole: string, 
+  memberId: string,
+  newRole: string,
+  previousRole: string,
   isTestAccount: boolean = false
 ) {
   if (newRole === 'master') throw new Error('마스터 지정은 위임 절차로만 처리할 수 있습니다.');
@@ -51,7 +51,7 @@ export async function updateMemberRole(
   });
 
   if (error) throw error;
-  
+
   const result = data as { ok: boolean; error?: string };
   if (!result.ok) throw new Error(result.error || '역할 변경 실패');
 
@@ -131,7 +131,7 @@ export async function checkAndSendRookieNotifications(currentUserId: string) {
 
   for (const rookie of rookies) {
     const notifTitle = `🔔 수습기간완료:${rookie.id}`;
-    
+
     // 중복 발송 방지
     const { data: existing } = await supabase
       .from('notifications')

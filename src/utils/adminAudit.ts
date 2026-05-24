@@ -1,7 +1,7 @@
 // 파일명: src/utils/adminAudit.ts
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, Json } from '@/types/database.types';
+import type { Database, Json } from '@/types/supabase';
 import type { AdminActionType, AuditCategory } from '@/types/domain';
 
 // UI와 로직에서 사용할 위험도 타입 정의

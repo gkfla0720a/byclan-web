@@ -30,6 +30,11 @@ export type Database = {
           note: string | null
           target_id: string | null
           target_table: string
+          category: string | null
+          severity: string | null
+          ip_address: string | null
+          target_user_id: string | null
+          summary: string | null
         }
         Insert: {
           action_type: string
@@ -44,6 +49,11 @@ export type Database = {
           note?: string | null
           target_id?: string | null
           target_table: string
+          category?: string | null
+          severity?: string | null
+          ip_address?: string | null
+          target_user_id?: string | null
+          summary?: string | null
         }
         Update: {
           action_type?: string
@@ -58,6 +68,11 @@ export type Database = {
           note?: string | null
           target_id?: string | null
           target_table?: string
+          category?: string | null
+          severity?: string | null
+          ip_address?: string | null
+          target_user_id?: string | null
+          summary?: string | null
         }
         Relationships: [
           {
@@ -73,7 +88,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       admin_posts: {
@@ -146,7 +161,6 @@ export type Database = {
           playtime: string | null
         }
         Insert: {
-          btag?: string | null
           created_at?: string
           discord_name?: string | null
           id?: number
@@ -166,9 +180,10 @@ export type Database = {
           tester_id?: string | null
           tier?: string | null
           user_id?: string | null
+          motivation?: string | null
+          playtime?: string | null
         }
         Update: {
-          btag?: string | null
           created_at?: string
           discord_name?: string | null
           id?: number
@@ -188,6 +203,8 @@ export type Database = {
           tester_id?: string | null
           tier?: string | null
           user_id?: string | null
+          motivation?: string | null
+          playtime?: string | null
         }
         Relationships: [
           {

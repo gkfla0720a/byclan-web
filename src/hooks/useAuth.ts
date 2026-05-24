@@ -1,4 +1,5 @@
 // 파일명: src/hooks/useAuth.ts
+
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import type { AuthProfile as UserProfile } from '@/types';
@@ -90,7 +91,7 @@ export function useAuth(): UseAuthReturn {
     const userRole = profile?.role || (user ? 'guest' : undefined);
     const effectiveRole = normalizeRole(userRole);
     const roleInfo = ROLE_PERMISSIONS[effectiveRole];
-  
+
     return {
       isDeveloper: effectiveRole === 'developer',
       isManagement: isInGroup(effectiveRole, 'management'),

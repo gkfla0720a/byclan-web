@@ -20,7 +20,7 @@
     "seed:test-accounts": "node scripts/seed/seed-test-accounts.js",
     "seed:test-accounts:reset": "node scripts/seed/seed-test-accounts.js --reset",
     "verify:mmr-workflow": "node scripts/verification/simulate-workflow-and-mmr.js",
-    "gen:types": "supabase gen types typescript --project-id mmsmedvdwmisewngmuka --schema public > src/types/database.types.ts"
+    "gen:types": "supabase gen types typescript --project-id mmsmedvdwmisewngmuka --schema public > src/types/supabase.ts"
   },
   "dependencies": {
     "@sentry/browser": "^10.47.0",
