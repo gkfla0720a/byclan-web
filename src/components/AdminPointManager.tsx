@@ -1,24 +1,26 @@
 // 파일명: src/components/AdminPointManager.tsx
 
-/**
- * @역할 관리자 전용 클랜 포인트 관리 패널
- * @주요기능
- *   - 전체 포인트 거래 내역 조회 (point_logs)
- *   - 특정 유저에게 포인트 지급 / 회수
- *   - 유저별 잔액 및 누적 포인트 조회
- *   - 배팅 정산 내역 필터링
- * @접근권한 developer, master, admin 전용
- */
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { grantPoints, deductPoints } from '@/utils/pointSystem';
 import { recordAdminAudit } from '@/utils/adminAudit';
+import type { Database } from '@/types';
 
-/** 포인트 거래 유형 한국어 레이블 */
-const TYPE_LABEL = {
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type ClanPointLogRow = Database['public']['Tables']['clanpoint_logs']['Row'];
+
+// JOIN 결과를 담기 위한 확장 타입
+interface MemberWithMeta extends ProfileRow {
+  is_test_account: boolean;
+}
+
+interface LogWithProfile extends ClanPointLogRow {
+  profiles?: { by_id: string | null; role: string | null } | null;
+}
+
+const TYPE_LABEL: Record<string, string> = {
   manual: '수동 지급',
   admin_grant: '관리자 지급',
   admin_deduct: '관리자 회수',
@@ -31,7 +33,7 @@ const TYPE_LABEL = {
   bet_settle_loss: '베팅 정산(패)',
 };
 
-const TYPE_COLOR = {
+const TYPE_COLOR: Record<string, string> = {
   daily_bonus: 'text-yellow-400',
   match_reward: 'text-blue-400',
   rank_promotion: 'text-purple-400',
@@ -44,27 +46,24 @@ const TYPE_COLOR = {
 };
 
 export default function AdminPointManager() {
-  const [myProfile, setMyProfile] = useState(null);
+  const [myProfile, setMyProfile] = useState<MemberWithMeta | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // 포인트 내역
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<LogWithProfile[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [filterType, setFilterType] = useState('all');
   const [searchById, setSearchById] = useState('');
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 30;
 
-  // 유저 목록 (지급/회수 대상 선택용)
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState<MemberWithMeta[]>([]);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [grantAmount, setGrantAmount] = useState('');
   const [grantReason, setGrantReason] = useState('');
   const [isDeduct, setIsDeduct] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  /** 권한 확인 및 초기 데이터 로드 */
   const checkAndLoad = useCallback(async () => {
     try {
       setLoading(true);
@@ -73,24 +72,29 @@ export default function AdminPointManager() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('id, by_id, role, profile_meta(is_test_account)')
+        .select('*, profile_meta(is_test_account)')
         .eq('id', user.id)
         .single();
 
-      const flatProf = prof ? { ...prof, is_test_account: prof.profile_meta?.is_test_account ?? false, profile_meta: undefined } : null;
+      const meta = Array.isArray(prof?.profile_meta) ? prof?.profile_meta[0] : prof?.profile_meta;
+      const flatProf = prof ? { ...prof, is_test_account: meta?.is_test_account ?? false } as MemberWithMeta : null;
+      
       setMyProfile(flatProf);
       const role = flatProf?.role || 'guest';
       if (!['developer', 'master', 'admin'].includes(role)) return;
 
       setIsAdmin(true);
 
-      // 클랜원 목록 로드
       const { data: mems } = await supabase
         .from('profiles')
-        .select('id, by_id, role, clan_point, profile_meta(is_test_account)')
+        .select('*, profile_meta(is_test_account)')
         .not('role', 'eq', 'guest')
         .order('by_id');
-      setMembers((mems || []).map(m => ({ ...m, is_test_account: m.profile_meta?.is_test_account ?? false, profile_meta: undefined })));
+
+      setMembers((mems || []).map(m => {
+        const mMeta = Array.isArray(m.profile_meta) ? m.profile_meta[0] : m.profile_meta;
+        return { ...m, is_test_account: mMeta?.is_test_account ?? false } as MemberWithMeta;
+      }));
     } catch (err) {
       console.error('[AdminPointManager] 초기화 오류:', err);
     } finally {
@@ -99,21 +103,16 @@ export default function AdminPointManager() {
   }, []);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      checkAndLoad();
-    });
+    queueMicrotask(() => { checkAndLoad(); });
   }, [checkAndLoad]);
 
-  /** 포인트 로그 조회 */
   const fetchLogs = useCallback(async () => {
     setLogsLoading(true);
     try {
+      // 🚨 치명적 버그 수정: point_logs -> clanpoint_logs 로 변경
       let query = supabase
-        .from('point_logs')
-        .select(`
-          id, user_id, amount, reason, type, balance_after, related_id, created_at,
-          profiles:user_id (by_id, role)
-        `)
+        .from('clanpoint_logs')
+        .select(`*, profiles:user_id (by_id, role)`)
         .order('created_at', { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
@@ -124,13 +123,10 @@ export default function AdminPointManager() {
       const { data, error } = await query;
       if (error) throw error;
 
-      let filtered = data || [];
+      let filtered = (data as unknown as LogWithProfile[]) || [];
       if (searchById) {
-        filtered = filtered.filter(log =>
-          log.profiles?.by_id?.includes(searchById)
-        );
+        filtered = filtered.filter(log => log.profiles?.by_id?.includes(searchById));
       }
-
       setLogs(filtered);
     } catch (err) {
       console.error('[AdminPointManager] 로그 조회 오류:', err);
@@ -141,13 +137,10 @@ export default function AdminPointManager() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    queueMicrotask(() => {
-      fetchLogs();
-    });
+    queueMicrotask(() => { fetchLogs(); });
   }, [isAdmin, fetchLogs]);
 
-  /** 포인트 지급 또는 회수 처리 */
-  const handleSubmitPoints = async (e) => {
+  const handleSubmitPoints = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseInt(grantAmount, 10);
     if (!selectedUserId || !amount || amount <= 0 || !grantReason) {
@@ -157,73 +150,45 @@ export default function AdminPointManager() {
 
     const targetMember = members.find(m => m.id === selectedUserId);
     const actionLabel = isDeduct ? '회수' : '지급';
-    const guideText = [
-      '[관리자 데이터 변경 안내]',
-      `${targetMember?.by_id || '대상유저'}에게 ${amount.toLocaleString()} CP를 ${actionLabel}합니다.`,
-      '변경 내역은 로그 및 알림으로 기록됩니다.',
-      '계속하려면 아래 입력창에 정확히 확인 을 입력하세요.',
-    ].join('\n');
-    const typed = window.prompt(guideText, '');
-    if ((typed || '') !== '확인') {
-      alert('취소되었습니다. 확인 문자열이 일치하지 않습니다.');
-      return;
-    }
+    const guideText = `[관리자 데이터 변경 안내]\n${targetMember?.by_id || '대상유저'}에게 ${amount.toLocaleString()} CP를 ${actionLabel}합니다.\n계속하려면 아래 입력창에 정확히 확인 을 입력하세요.`;
+    
+    if (window.prompt(guideText, '') !== '확인') return alert('취소되었습니다.');
 
     setSubmitting(true);
     try {
-      const { data: targetBefore } = await supabase
-        .from('profiles')
-        .select('id, by_id, role, clan_point')
-        .eq('id', selectedUserId)
-        .single();
-
+      const { data: targetBefore } = await supabase.from('profiles').select('*').eq('id', selectedUserId).single();
       const isTest = Boolean(targetMember?.is_test_account);
       const fn = isDeduct ? deductPoints : grantPoints;
       const type = isDeduct ? 'admin_deduct' : 'admin_grant';
+      
       const result = await fn(supabase, selectedUserId, amount, grantReason, type, null, isTest);
 
       if (result.ok) {
-        const { data: targetAfter } = await supabase
-          .from('profiles')
-          .select('id, by_id, role, clan_point')
-          .eq('id', selectedUserId)
-          .single();
+        const { data: targetAfter } = await supabase.from('profiles').select('*').eq('id', selectedUserId).single();
 
         await recordAdminAudit(supabase, {
           actorId: myProfile?.id,
           actorById: myProfile?.by_id,
           actorRole: myProfile?.role,
-          category: 'admin',
+          category: 'POINT_MANAGEMENT',
           actionType: isDeduct ? 'point_deduct' : 'point_grant',
           targetTable: 'profiles',
           targetId: selectedUserId,
           targetUserId: selectedUserId,
-          beforeData: {
-            clan_point: targetBefore?.clan_point,
-            by_id: targetBefore?.by_id,
-            role: targetBefore?.role,
-          },
-          afterData: {
-            clan_point: targetAfter?.clan_point,
-            by_id: targetAfter?.by_id,
-            role: targetAfter?.role,
-          },
+          beforeData: targetBefore,
+          afterData: targetAfter,
           summary: `${targetMember?.by_id || '대상유저'} 포인트 ${isDeduct ? '회수' : '지급'} ${amount}CP`,
-          note: `${isDeduct ? '포인트 회수' : '포인트 지급'} ${amount}CP / 사유: ${grantReason}`,
+          note: `사유: ${grantReason}`,
           isTestData: isTest,
         });
 
         alert(`✅ ${isDeduct ? '차감' : '지급'} 완료. 변경 후 잔액: ${result.newBalance.toLocaleString()} CP`);
-        setGrantAmount('');
-        setGrantReason('');
-        setSelectedUserId('');
-        // 목록 갱신
-        checkAndLoad();
-        fetchLogs();
+        setGrantAmount(''); setGrantReason(''); setSelectedUserId('');
+        checkAndLoad(); fetchLogs();
       } else {
         alert('실패: ' + result.error);
       }
-    } catch (err) {
+    } catch (err: any) {
       alert('오류: ' + err.message);
     } finally {
       setSubmitting(false);

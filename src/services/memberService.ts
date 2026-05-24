@@ -3,10 +3,15 @@ import { supabase } from '@/supabase';
 import { grantRankPromotionBonus } from '@/utils/pointSystem';
 import type { Database } from '@/types';
 
+interface ProfileMeta {
+  is_test_account: boolean | null;
+  is_test_account_active: boolean | null;
+}
+
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 type JoinedMember = ProfileRow & {
   profile_oauth: { discord_id: string | null } | { discord_id: string | null }[] | null;
-  profile_meta: { is_test_account: boolean | null; is_test_account_active: boolean | null } | { is_test_account: boolean | null; is_test_account_active: boolean | null }[] | null;
+  profile_meta: ProfileMeta | ProfileMeta[] | null;
 };
 
 export async function fetchMembers() {

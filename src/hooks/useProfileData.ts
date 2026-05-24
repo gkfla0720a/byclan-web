@@ -87,7 +87,8 @@ async function syncSocialProfileData(authUser: User, currentProfile: UserProfile
   if (authProvider && currentProfile.auth_provider !== authProvider) oauthUpdates.auth_provider = authProvider;
 
   if (!currentProfile.by_id) {
-    const loginId = extractAccountIdFromAuthUser(authUser, currentProfile as any);
+    const safeAuthUser = { ...authUser, email: authUser.email ?? null } as unknown as User;
+    const loginId = extractAccountIdFromAuthUser(safeAuthUser, currentProfile as unknown as UserProfile);
     const seed = googleName || discordName || loginId || authUser.email?.split('@')[0] || 'User';
     profileUpdates.by_id = await resolveUniqueById(seed, authUser.id);
   }
