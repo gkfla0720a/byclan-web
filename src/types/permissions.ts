@@ -1,24 +1,14 @@
-// 파일명: @/utils/permissions/types.ts
+import { USER_ROLES } from './primitives';
 
-export const ROLES = [
-  'banned',
-  'guest',
-  'applicant',
-  'rookie',
-  'member',
-  'veteran',
-  'admin',
-  'master',
-  'developer',
-] as const; // 역할은 고정된 문자열 집합으로 정의, 타입 안전성 확보
+export const ROLES = USER_ROLES;
 
-export type ActiveRole = typeof ROLES[number]; // ActiveRole은 ROLES 배열의 요소 중 하나로 제한, 타입 안전성 확보
+export type ActiveRole = (typeof ROLES)[number];
 
 export function isActiveRole(value: string): value is ActiveRole {
   return (ROLES as readonly string[]).includes(value);
 }
 
-export type PermissionAction = typeof PERMISSIONS[number]; // PermissionAction은 PERMISSIONS 배열의 요소 중 하나로 제한, 타입 안전성 확보
+export type PermissionAction = (typeof PERMISSIONS)[number];
 
 export const PERMISSIONS = [
   'home.view',
