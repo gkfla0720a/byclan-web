@@ -1,3 +1,5 @@
+// 파일명: src/stores/useAuthStore.ts
+
 import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';
 import type { AuthProfile } from '@/types';
@@ -6,7 +8,7 @@ type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
 interface AuthStoreState {
   user: User | null;
-  profile: AuthProfile | null;
+  profile: AuthProfile | null; // models.ts에서 정의한 AuthProfile 사용
   status: AuthStatus;
   authError: string | null;
   setAuthSnapshot: (snapshot: {
@@ -32,11 +34,6 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
     });
   },
   clearAuth: () => {
-    set({
-      user: null,
-      profile: null,
-      status: 'anonymous',
-      authError: null,
-    });
+    set({ user: null, profile: null, status: 'anonymous', authError: null });
   },
 }));

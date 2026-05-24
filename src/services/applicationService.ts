@@ -1,104 +1,62 @@
-// 파일명: @/services/applicationService.ts
+// 파일명: src/services/applicationService.ts
 
 import { supabase } from '@/supabase';
+import type { Database } from '@/types';
 
-/**
- * URL을 정규화합니다. http(s):// 없으면 https://를 앞에 붙입니다.
- * @param {string} url
- * @returns {string}
- */
-function normalizeUrl(url) {
+type ApplicationInsert = Database['public']['Tables']['applications']['Insert'];
+
+export interface JoinApplicationForm {
+  race: string;
+  tier: string;
+  intro: string;
+  motivation: string;
+  playtime: string;
+  phone: string;
+  isStreamer: boolean;
+  streamerPlatform?: string;
+  streamerUrl?: string;
+}
+
+function normalizeUrl(url: string | null | undefined): string {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
 }
 
-/**
- * 클랜 가입 신청서를 Supabase에 제출하고 프로필 역할을 applicant로 변경합니다.
- * streamer 컬럼 미존재 시 해당 필드를 제외하고 재시도합니다.
- *
- * @param {string} userId - 현재 로그인 사용자의 UUID
- * @param {object} applicationData - 신청서 폼 데이터
- * @param {string} applicationData.btag - 배틀태그
- * @param {string} applicationData.race - 주력 종족
- * @param {string} applicationData.tier - 현재 티어
- * @param {string} applicationData.intro - 자기소개
- * @param {string} applicationData.motivation - 가입 동기
- * @param {string} applicationData.playtime - 주 활동 시간대
- * @param {string} applicationData.phone - 연락처
- * @param {boolean} applicationData.isStreamer - 스트리머 여부
- * @param {string} [applicationData.streamerPlatform] - 방송 플랫폼
- * @param {string} [applicationData.streamerUrl] - 방송 URL
- * @returns {Promise<{success: boolean, error?: string}>}
- */
-export async function submitApplication(userId, applicationData) {
+// 최대 글자 수를 매개변수로 받도록 유틸 함수를 개선했습니다.
+function validateLength(text: string, fieldName: string, max: number) {
+  if (text && text.length > max) {
+    throw new Error(`${fieldName}은(는) ${max}자 이하로 작성해주세요.`);
+  }
+}
+
+export async function submitApplication(userId: string, data: JoinApplicationForm) {
   try {
-    const applicationPayload = {
+    // 🚨 요청하신 대로 글자 수 제한을 차등 적용합니다.
+    validateLength(data.intro, '자기소개', 200);
+    validateLength(data.motivation, '가입 동기', 50);
+    validateLength(data.playtime, '활동 시간대', 50);
+
+    const payload: ApplicationInsert = {
       user_id: userId,
-      btag: applicationData.btag,
-      race: applicationData.race,
-      tier: applicationData.tier,
-      intro: applicationData.intro,
-      motivation: applicationData.motivation,
-      playtime: applicationData.playtime,
-      phone: applicationData.phone,
+      race: data.race,
+      tier: data.tier,
+      intro: data.intro,
+      motivation: data.motivation,
+      playtime: data.playtime,
+      phone: data.phone,
       status: 'pending',
-      is_streamer: applicationData.isStreamer,
-      streamer_platform: applicationData.isStreamer ? applicationData.streamerPlatform : null,
-      streamer_url: applicationData.isStreamer ? normalizeUrl(applicationData.streamerUrl) : null,
+      is_streamer: data.isStreamer,
+      streamer_platform: data.isStreamer ? (data.streamerPlatform || null) : null,
+      streamer_url: data.isStreamer ? (data.streamerUrl || null) : null,
     };
 
-    let { error: appError } = await supabase
-      .from('applications')
-      .insert(applicationPayload);
+    const { error } = await supabase.from('applications').insert([payload]);
+    if (error) throw error;
 
-    if (appError) {
-      const message = `${appError.message || ''} ${appError.details || ''}`;
-      if (appError.code === '42703' || message.includes('does not exist')) {
-        ({ error: appError } = await supabase
-          .from('applications')
-          .insert({
-            user_id: userId,
-            btag: applicationData.btag,
-            race: applicationData.race,
-            tier: applicationData.tier,
-            intro: applicationData.intro,
-            phone: applicationData.phone,
-            status: 'pending',
-          }));
-      }
-    }
-
-    if (appError) {
-      console.warn('applications 테이블 오류:', appError.message);
-    }
-
-    let { error: profileError } = await supabase
-      .from('profiles')
-      .update({ role: 'applicant' })
-      .eq('id', userId);
-
-    await supabase.from('profile_meta').upsert({
-      user_id: userId,
-      is_streamer: applicationData.isStreamer,
-      streamer_platform: applicationData.isStreamer ? applicationData.streamerPlatform : null,
-      streamer_url: applicationData.isStreamer ? normalizeUrl(applicationData.streamerUrl) : null,
-    }, { onConflict: 'user_id' });
-
-    if (profileError) {
-      const message = `${profileError.message || ''} ${profileError.details || ''}`;
-      if (profileError.code === '42703' || message.includes('does not exist')) {
-        ({ error: profileError } = await supabase
-          .from('profiles')
-          .update({ role: 'applicant' })
-          .eq('id', userId));
-      }
-    }
-
-    if (profileError) throw profileError;
-
+    await supabase.from('profiles').update({ role: 'applicant' }).eq('id', userId);
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     return { success: false, error: error.message };
   }
 }

@@ -1,48 +1,47 @@
-// 파일명: @/services/memberService.ts
-
+// 파일명: src/services/memberService.ts
 import { supabase } from '@/supabase';
-import { isCurrentViewerTestAccount } from '@/utils/testData';
 import { grantRankPromotionBonus } from '@/utils/pointSystem';
+import type { Database } from '@/types';
 
-/**
- * guest, banned를 제외한 클랜원 목록을 조회합니다.
- * 테스트 계정 여부에 따라 클라이언트 측 필터링을 적용합니다.
- * @returns {Promise<Array>}
- */
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type JoinedMember = ProfileRow & {
+  profile_oauth: { discord_id: string | null } | { discord_id: string | null }[] | null;
+  profile_meta: { is_test_account: boolean | null; is_test_account_active: boolean | null } | { is_test_account: boolean | null; is_test_account_active: boolean | null }[] | null;
+};
 
 export async function fetchMembers() {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, by_id, role, created_at, profile_oauth(discord_id), profile_meta(is_test_account, is_test_account_active)')
+    .select('*, profile_oauth(discord_id), profile_meta(is_test_account, is_test_account_active)')
     .neq('role', 'guest')
     .neq('role', 'banned')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
 
-  const isTestViewer = isCurrentViewerTestAccount();
-  return (data || []).map(m => ({
-    ...m,
-    discord_id: m.profile_oauth?.discord_id ?? null,
-    is_test_account: m.profile_meta?.is_test_account ?? null,
-    is_test_account_active: m.profile_meta?.is_test_account_active ?? null,
-  })).filter(m =>
-    isTestViewer
-      ? (m.is_test_account === true && m.is_test_account_active === true)
-      : !m.is_test_account
-  );
+  // 2. data를 우리가 만든 JoinedMember 배열로 안전하게 단언합니다.
+  const members = data as unknown as JoinedMember[];
+
+  return members.map(m => {
+    // Supabase 1:1 조인은 가끔 배열로 넘어올 수도 있으므로 안전하게 추출합니다.
+    const oauth = Array.isArray(m.profile_oauth) ? m.profile_oauth[0] : m.profile_oauth;
+    const meta = Array.isArray(m.profile_meta) ? m.profile_meta[0] : m.profile_meta;
+
+    return {
+      ...m,
+      discord_id: oauth?.discord_id ?? null,
+      is_test_account: meta?.is_test_account ?? null,
+      is_test_account_active: meta?.is_test_account_active ?? null,
+    };
+  });
 }
 
-/**
- * RPC를 통해 클랜원 역할을 변경합니다.
- * 역할이 'master'인 경우 호출을 차단합니다 (위임 절차 전용).
- * 승급 역할이면 포인트 보상도 지급합니다.
- * @param {string} memberId
- * @param {string} newRole
- * @param {string} previousRole
- * @param {boolean} isTestAccount
- */
-export async function updateMemberRole(memberId, newRole, previousRole, isTestAccount = false) {
+export async function updateMemberRole(
+  memberId: string, 
+  newRole: string, 
+  previousRole: string, 
+  isTestAccount: boolean = false
+) {
   if (newRole === 'master') throw new Error('마스터 지정은 위임 절차로만 처리할 수 있습니다.');
 
   const { data, error } = await supabase.rpc('rpc_update_profile_role', {
@@ -52,24 +51,17 @@ export async function updateMemberRole(memberId, newRole, previousRole, isTestAc
   });
 
   if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || '역할 변경 실패');
+  
+  const result = data as { ok: boolean; error?: string };
+  if (!result.ok) throw new Error(result.error || '역할 변경 실패');
 
   const promotionRoles = ['rookie', 'member', 'veteran', 'admin'];
   if (promotionRoles.includes(newRole)) {
-    const { data: targetMeta } = await supabase
-      .from('profile_meta')
-      .select('is_test_account')
-      .eq('user_id', memberId)
-      .maybeSingle();
-    await grantRankPromotionBonus(supabase, memberId, newRole, Boolean(targetMeta?.is_test_account));
+    await grantRankPromotionBonus(supabase, memberId, newRole, isTestAccount);
   }
 }
 
-/**
- * 클랜원을 제명 처리합니다 (role → 'banned').
- * @param {string} memberId
- */
-export async function expelMember(memberId) {
+export async function expelMember(memberId: string) {
   const { data, error } = await supabase.rpc('rpc_update_profile_role', {
     p_target_id: memberId,
     p_new_role: 'banned',
@@ -77,15 +69,11 @@ export async function expelMember(memberId) {
   });
 
   if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || '제명 처리 실패');
+  const result = data as { ok: boolean; error?: string };
+  if (!result.ok) throw new Error(result.error || '제명 처리 실패');
 }
 
-/**
- * 마스터 전용: 수습 기간 무관하게 rookie를 즉시 정회원으로 승급합니다.
- * @param {string} memberId
- * @param {boolean} isTestAccount
- */
-export async function forcePromoteToMember(memberId, isTestAccount = false) {
+export async function forcePromoteToMember(memberId: string, isTestAccount: boolean = false) {
   const { data, error } = await supabase.rpc('rpc_update_profile_role', {
     p_target_id: memberId,
     p_new_role: 'member',
@@ -93,7 +81,8 @@ export async function forcePromoteToMember(memberId, isTestAccount = false) {
   });
 
   if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || '승급 실패');
+  const result = data as { ok: boolean; error?: string };
+  if (!result.ok) throw new Error(result.error || '승급 실패');
 
   await grantRankPromotionBonus(supabase, memberId, 'member', isTestAccount);
 
@@ -104,12 +93,7 @@ export async function forcePromoteToMember(memberId, isTestAccount = false) {
   });
 }
 
-/**
- * 마스터 위임: 현 마스터 → admin 강등, 대상 → master 승격.
- * @param {string|null} currentMasterId - 현재 마스터 ID (없으면 강등 생략)
- * @param {string} targetId - 새 마스터가 될 클랜원 ID
- */
-export async function delegateMaster(currentMasterId, targetId) {
+export async function delegateMaster(currentMasterId: string | null, targetId: string) {
   if (currentMasterId) {
     await supabase.rpc('rpc_update_profile_role', {
       p_target_id: currentMasterId,
@@ -126,12 +110,7 @@ export async function delegateMaster(currentMasterId, targetId) {
   if (error) throw error;
 }
 
-/**
- * 2주 수습 기간이 지난 rookie에 대해 운영진 전원에게 알림을 발송합니다.
- * 이미 알림이 발송된 경우 중복 발송하지 않습니다.
- * @param {string} currentUserId - 현재 로그인한 관리자 ID
- */
-export async function checkAndSendRookieNotifications(currentUserId) {
+export async function checkAndSendRookieNotifications(currentUserId: string) {
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: rookies } = await supabase
@@ -152,6 +131,8 @@ export async function checkAndSendRookieNotifications(currentUserId) {
 
   for (const rookie of rookies) {
     const notifTitle = `🔔 수습기간완료:${rookie.id}`;
+    
+    // 중복 발송 방지
     const { data: existing } = await supabase
       .from('notifications')
       .select('id')
