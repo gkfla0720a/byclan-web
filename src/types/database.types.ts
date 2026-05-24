@@ -66,6 +66,7 @@ export interface Database {
           note: string | null
           created_at: string
           is_test_data: boolean | null
+          category: string | null
         }
         Insert: Omit<Database['public']['Tables']['admin_audit_logs']['Row'], 'id' | 'created_at'> & { created_at?: string }
         Update: Partial<Database['public']['Tables']['admin_audit_logs']['Row']>
