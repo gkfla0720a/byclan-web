@@ -11,6 +11,7 @@ import {
   formatTime, 
   getRaceCards 
 } from '@/hooks/useMatchCenter'; 
+import { isCompletedSetStatus, isPendingReviewSetStatus } from '@/utils/matchCenter';
 
 export default function MatchCenter({ matchId, onExit }) {
   const {
@@ -472,7 +473,7 @@ export default function MatchCenter({ matchId, onExit }) {
               </p>
 
               {/* 우측 상단 30초 대기열 및 수정요청 버튼 */}
-              {currentSet?.status === 'pending_review' && (
+              {isPendingReviewSetStatus(currentSet?.status) && (
                 <div className="flex items-center gap-2 animate-fade-in">
                   <span className="text-yellow-400 text-xs font-mono font-bold tracking-widest">
                     결산 전 {String(vetoTimeLeft).padStart(2, '0')}초
@@ -488,7 +489,7 @@ export default function MatchCenter({ matchId, onExit }) {
             </div>
 
             {/* 💡 [수정됨] 세트가 완전히 종료되지 않았을 때(in_progress 등)만 승리 버튼 표시 */}
-            {currentSet?.status !== 'pending_review' && currentSet?.status !== 'completed' && canReportSetResult && (
+            {!isPendingReviewSetStatus(currentSet?.status) && !isCompletedSetStatus(currentSet?.status) && canReportSetResult && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                 <button
                   onClick={() => handleSetWin('A')}
@@ -506,7 +507,7 @@ export default function MatchCenter({ matchId, onExit }) {
             )}
 
             {/* 결재 대기 중일 때 표시되는 안내 문구 */}
-            {currentSet?.status === 'pending_review' && (
+            {isPendingReviewSetStatus(currentSet?.status) && (
               <div className="text-center py-3 bg-gray-900/40 rounded-xl border border-gray-800 mt-2">
                 <p className="text-gray-400 text-xs">
                   <span className="font-black text-white">{currentSet.claimed_winner}팀</span>의 승리로 세트 결산이 진행 중입니다.
@@ -515,7 +516,7 @@ export default function MatchCenter({ matchId, onExit }) {
             )}
             
             {/* 완전히 끝난 세트(completed)일 때 보여줄 깔끔한 문구 (선택 사항) */}
-            {currentSet?.status === 'completed' && !matchEnded && (
+            {isCompletedSetStatus(currentSet?.status) && !matchEnded && (
               <div className="text-center py-3 bg-gray-900/40 rounded-xl border border-gray-800 mt-2">
                 <p className="text-gray-500 text-xs font-bold">
                   세트가 종료되었습니다. 다음 세트를 준비하세요.

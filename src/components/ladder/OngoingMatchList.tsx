@@ -1,7 +1,9 @@
 // 파일명: src/components/ladder/OngoingMatchList.tsx
 
+import { isInProgressMatchStatus, normalizeWinningTeam } from '@/utils/matchCenter';
+
 export default function OngoingMatchList({ matches, matchProfiles, currentUserId, onMatchEnter }) {
-  const inProgressMatches = matches.filter(m => m.status === 'in_progress');
+  const inProgressMatches = matches.filter((m) => isInProgressMatchStatus(m.status));
   if (inProgressMatches.length === 0) return null;
 
   return (
@@ -18,8 +20,8 @@ export default function OngoingMatchList({ matches, matchProfiles, currentUserId
           const teamANames = (match.ladder_record || []).filter(r => r.team === 'A').map(r => getProfileName(r.user_id));
           const teamBNames = (match.ladder_record || []).filter(r => r.team === 'B').map(r => getProfileName(r.user_id));
           
-          const dynamicScoreA = matches.filter(om => om.match_id === match.match_id && om.winner_team === 'A').length;
-          const dynamicScoreB = matches.filter(om => om.match_id === match.match_id && om.winner_team === 'B').length;
+          const dynamicScoreA = matches.filter((om) => om.match_id === match.match_id && normalizeWinningTeam(om.winner_team) === 'A').length;
+          const dynamicScoreB = matches.filter((om) => om.match_id === match.match_id && normalizeWinningTeam(om.winner_team) === 'B').length;
 
           return (
             <div key={match.match_id} className="px-5 py-4 flex items-center justify-between flex-wrap gap-3">
