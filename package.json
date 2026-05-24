@@ -19,7 +19,8 @@
     "seed:test-data": "node scripts/seed/seed-test-data.cjs",
     "seed:test-accounts": "node scripts/seed/seed-test-accounts.js",
     "seed:test-accounts:reset": "node scripts/seed/seed-test-accounts.js --reset",
-    "verify:mmr-workflow": "node scripts/verification/simulate-workflow-and-mmr.js"
+    "verify:mmr-workflow": "node scripts/verification/simulate-workflow-and-mmr.js",
+    "gen:types": "supabase gen types typescript --project-id mmsmedvdwmisewngmuka --schema public > src/types/database.types.ts"
   },
   "dependencies": {
     "@sentry/browser": "^10.47.0",
@@ -46,6 +47,7 @@
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "pg": "^8.20.0",
+    "supabase": "^2.101.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.10",
     "typescript": "^6.0.3"

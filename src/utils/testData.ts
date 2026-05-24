@@ -1,22 +1,23 @@
 // 파일명: @/utils/testData.ts
 
- /**
- * =====================================================================
- * 파일명: src/utils/testData.ts
- * 역할  : 개발/테스트 환경에서 테스트 계정과 테스트 데이터를 관리하는
- *         유틸리티 상수 및 함수들을 제공합니다.
- *
- * ■ 배경
- *   실제 서비스와 테스트 데이터가 섞이지 않도록, 테스트 계정/데이터를
- *   별도로 표시하고 필터링하는 기능을 제공합니다.
- *
- * ■ 동작 원칙
- *   - 테스트 계정 사용자는 테스트 계정/테스트 데이터만 조회합니다.
- *   - 실제 계정 사용자는 테스트 데이터가 켜져 있어도 실제 데이터만 조회합니다.
- *   - 테스트 계정 토글은 is_test_account_active / is_test_data_active 플래그로
- *     테스트 샌드박스 노출 여부를 제어합니다.
- * =====================================================================
- */
+/**
+* =====================================================================
+* 역할  : 개발/테스트 환경에서 테스트 계정과 테스트 데이터를 관리하는
+*         유틸리티 상수 및 함수들을 제공합니다.
+*
+* ■ 배경
+*   실제 서비스와 테스트 데이터가 섞이지 않도록, 테스트 계정/데이터를
+*   별도로 표시하고 필터링하는 기능을 제공합니다.
+*
+* ■ 동작 원칙
+*   - 테스트 계정 사용자는 테스트 계정/테스트 데이터만 조회합니다.
+*   - 실제 계정 사용자는 테스트 데이터가 켜져 있어도 실제 데이터만 조회합니다.
+*   - 테스트 계정 토글은 is_test_account_active / is_test_data_active 플래그로
+*     테스트 샌드박스 노출 여부를 제어합니다.
+* =====================================================================
+*/
+
+import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
 export const CURRENT_VIEWER_TEST_ACCOUNT_KEY = 'byclan_current_is_test_account';
 
@@ -80,19 +81,36 @@ function isBrowser() {
   return typeof window !== 'undefined';
 }
 
-export function setCurrentViewerTestAccountFlag(isTestAccount) {
+export function setCurrentViewerTestAccountFlag(isTestAccount: boolean): void {
   if (!isBrowser()) return;
   window.localStorage.setItem(CURRENT_VIEWER_TEST_ACCOUNT_KEY, isTestAccount ? 'true' : 'false');
 }
 
-export function clearCurrentViewerTestAccountFlag() {
+export function clearCurrentViewerTestAccountFlag(): void {
   if (!isBrowser()) return;
   window.localStorage.removeItem(CURRENT_VIEWER_TEST_ACCOUNT_KEY);
 }
 
-export function isCurrentViewerTestAccount() {
+export function isCurrentViewerTestAccount(): boolean {
   if (!isBrowser()) return false;
   return window.localStorage.getItem(CURRENT_VIEWER_TEST_ACCOUNT_KEY) === 'true';
+}
+
+// Supabase 쿼리 빌더의 최소 인터페이스 정의 (eq, or 메소드 체이닝을 위해)
+// PostgrestFilterBuilder를 직접 임포트하여 사용합니다.
+// T는 레코드의 타입, R은 반환 타입 (보통 any로 두어 유연성을 확보)
+type SupabaseQueryBuilderInstance = PostgrestFilterBuilder<any, any, any, any, any, any, any>;
+
+
+interface TestRecord {
+  is_test_account?: boolean;
+  is_test_data?: boolean;
+  [key: string]: any; // 다른 속성도 허용
+}
+
+interface UserProfile {
+  is_test_account?: boolean;
+  [key: string]: any; // 다른 속성도 허용
 }
 
 /**
@@ -101,12 +119,11 @@ export function isCurrentViewerTestAccount() {
  * - ⚠️ 현재는 아무 동작도 하지 않습니다 (no-op 상태).
  *   DB에 is_test_account, is_test_account_active 컬럼이 추가된 후 활성화 예정.
  *
- * 매개변수:
- *   query: Supabase 쿼리 빌더 객체
- *
  * 반환값: 필터가 적용된 쿼리 (현재는 입력 그대로 반환)
  */
-export function filterVisibleTestAccounts(query) {
+export function filterVisibleTestAccounts(
+  query: SupabaseQueryBuilderInstance
+): SupabaseQueryBuilderInstance {
   if (isCurrentViewerTestAccount()) {
     return query.eq('is_test_account', true).eq('is_test_account_active', true);
   }
@@ -124,7 +141,9 @@ export function filterVisibleTestAccounts(query) {
  *
  * 반환값: 필터가 적용된 쿼리 (현재는 입력 그대로 반환)
  */
-export function filterVisibleTestData(query) {
+export function filterVisibleTestData(
+  query: SupabaseQueryBuilderInstance
+): SupabaseQueryBuilderInstance {
   if (isCurrentViewerTestAccount()) {
     return query.eq('is_test_data', true).eq('is_test_data_active', true);
   }
@@ -140,7 +159,7 @@ export function filterVisibleTestData(query) {
  *
  * 반환값: is_test_account 필드가 truthy이면 true, 아니면 false
  */
-export function isMarkedTestAccount(record) {
+export function isMarkedTestAccount(record: TestRecord): boolean {
   return Boolean(record?.is_test_account);
 }
 
@@ -154,7 +173,7 @@ export function isMarkedTestAccount(record) {
  *
  * 반환값: 테스트 데이터이면 true, 아니면 false
  */
-export function isMarkedTestData(record) {
+export function isMarkedTestData(record: TestRecord): boolean {
   return Boolean(record?.is_test_data || record?.is_test_account);
 }
 
@@ -170,6 +189,9 @@ export function isMarkedTestData(record) {
  *
  * 반환값: Discord 연동 없이도 플레이 가능하면 true, 아니면 false
  */
-export function shouldBypassDiscordForTestAccount(profile, testAccountsEnabled) {
+export function shouldBypassDiscordForTestAccount(
+  profile: UserProfile,
+  testAccountsEnabled: boolean
+): boolean {
   return Boolean(testAccountsEnabled && profile?.is_test_account);
 }

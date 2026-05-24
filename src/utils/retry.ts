@@ -1,30 +1,29 @@
 // 파일명: @/utils/retry.ts
 
- /**
- * =====================================================================
- * 파일명: src/utils/retry.js
- * 역할  : 네트워크 오류나 서버 일시적 오류 발생 시 자동으로 요청을 재시도하는
- *         유틸리티 함수들을 제공합니다.
- *
- * ■ 주요 함수
- *   - isRetryableError(error) : 재시도 가능한 오류인지 판별
- *   - isRelationshipError(error): DB 관계(JOIN) 오류인지 판별
- *   - withRetry(fn, options)   : 함수를 최대 N번 재시도하는 래퍼
- *
- * ■ 사용 방법 (다른 파일에서 import)
- *   import { withRetry, isRetryableError } from '@/utils/retry';
- *
- *   // 예: Supabase 쿼리를 최대 3번 재시도
- *   const result = await withRetry(() =>
- *     supabase.from('profiles').select('*')
- *   );
- *
- * ■ 재시도 지연 시간 (지수 백오프 방식)
- *   1차 실패 → 1초 대기 → 2차 시도
- *   2차 실패 → 2초 대기 → 3차 시도
- *   3차 실패 → 오류 던지기(throw)
- * =====================================================================
- */
+/**
+* =====================================================================
+* 역할  : 네트워크 오류나 서버 일시적 오류 발생 시 자동으로 요청을 재시도하는
+*         유틸리티 함수들을 제공합니다.
+*
+* ■ 주요 함수
+*   - isRetryableError(error) : 재시도 가능한 오류인지 판별
+*   - isRelationshipError(error): DB 관계(JOIN) 오류인지 판별
+*   - withRetry(fn, options)   : 함수를 최대 N번 재시도하는 래퍼
+*
+* ■ 사용 방법 (다른 파일에서 import)
+*   import { withRetry, isRetryableError } from '@/utils/retry';
+*
+*   // 예: Supabase 쿼리를 최대 3번 재시도
+*   const result = await withRetry(() =>
+*     supabase.from('profiles').select('*')
+*   );
+*
+* ■ 재시도 지연 시간 (지수 백오프 방식)
+*   1차 실패 → 1초 대기 → 2차 시도
+*   2차 실패 → 2초 대기 → 3차 시도
+*   3차 실패 → 오류 던지기(throw)
+* =====================================================================
+*/
 
 /**
  * isRetryableError(error)
@@ -47,28 +46,38 @@
  * @param {unknown} error
  * @returns {boolean}
  */
-export function isRetryableError(error) {
+interface ServiceError {
+  status?: number;
+  statusCode?: number;
+  code?: string;
+  message?: string;
+  details?: string;
+}
+
+// 타입 가드 함수: error가 ServiceError 인터페이스를 따르는지 확인합니다.
+function isServiceError(error: unknown): error is ServiceError {
+  return typeof error === 'object' && error !== null;
+}
+
+export function isRetryableError(error: unknown): boolean {
   if (!error) return false;
 
+  if (!isServiceError(error)) return false; // ServiceError 타입이 아니면 재시도 불가
+
   // 401 Unauthorized, 403 Forbidden – do not retry (auth/permission issues)
-  const status = error?.status ?? error?.statusCode;
+  const status = error.status ?? error.statusCode;
   if (status === 401 || status === 403) return false;
 
   // Supabase JWT-expired code – client must refresh token, not retry
-  if (error?.code === 'PGRST301') return false;
+  if (error.code === 'PGRST301') return false;
 
   // 5xx server-side errors are transient – retry
   if (typeof status === 'number' && status >= 500) return true;
 
   // Network / fetch failures
-  const msg = (error?.message ?? '');
-  if (
-    msg.includes('failed to fetch') ||
-    msg.includes('network') ||
-    msg.includes('timeout') ||
-    msg.includes('econnreset') ||
-    msg.includes('econnrefused')
-  ) {
+  const msg = error.message ?? '';
+  // 네트워크 오류 메시지를 포함하는지 확인
+  if (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('timeout') || msg.includes('econnreset') || msg.includes('econnrefused')) {
     return true;
   }
 
@@ -96,10 +105,13 @@ export function isRetryableError(error) {
  * @param {unknown} error
  * @returns {boolean}
  */
-export function isRelationshipError(error) {
+export function isRelationshipError(error: unknown): boolean {
   if (!error) return false;
-  if (error?.code === 'PGRST200' || error?.code === '42703') return true;
-  const msg = ((error?.message ?? '') + ' ' + (error?.details ?? ''));
+
+  if (!isServiceError(error)) return false; // ServiceError 타입이 아니면 관계 오류가 아님
+
+  if (error.code === 'PGRST200' || error.code === '42703') return true;
+  const msg = `${error.message ?? ''} ${error.details ?? ''}`;
   return msg.includes('relationship') || msg.includes('does not exist');
 }
 
@@ -135,13 +147,16 @@ export function isRelationshipError(error) {
  * @param {{ maxAttempts?: number; baseDelay?: number; onRetry?: (attempt: number, delay: number, error: unknown) => void }} [options]
  * @returns {Promise<T>}
  */
-export async function withRetry(fn, options = {}) {
-  // @ts-expect-error - JSDoc default object narrowing in strict mode
-  const maxAttempts = options?.maxAttempts ?? 3;
-  // @ts-expect-error - JSDoc default object narrowing in strict mode
-  const baseDelay = options?.baseDelay ?? 1000;
-  // @ts-expect-error - JSDoc default object narrowing in strict mode
-  const onRetry = options?.onRetry;
+interface WithRetryOptions {
+  maxAttempts?: number;
+  baseDelay?: number;
+  onRetry?: (attempt: number, delay: number, error: unknown) => void;
+}
+
+export async function withRetry<T>(fn: () => Promise<T>, options: WithRetryOptions = {}): Promise<T> {
+  const { maxAttempts = 3, baseDelay = 1000, onRetry } = options;
+
+
   let lastError;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
