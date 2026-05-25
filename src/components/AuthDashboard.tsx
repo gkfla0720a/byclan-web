@@ -27,7 +27,7 @@ function ProfileSetup({ user, onComplete }: StepProps) {
   useEffect(() => {
     queueMicrotask(() => {
       // email 타입 불일치를 해결하기 위한 안전한 매핑
-      const safeAuthUser = { ...user, email: user.email ?? null } as unknown as User;
+      const safeAuthUser = { ...user, email: user.email ?? null } as Omit<User, 'email'> & { email: string | null };
       const accountId = extractAccountIdFromAuthUser(safeAuthUser, null);
       setFormData(prev => ({
         ...prev,
@@ -64,7 +64,7 @@ function ProfileSetup({ user, onComplete }: StepProps) {
     <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
       <h3 className="text-xl font-bold text-white mb-4">⚙️ 프로필 설정</h3>
       {error && <div className="text-red-400 text-sm mb-4 bg-red-900/30 p-3 rounded">{error}</div>}
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-gray-300 text-sm font-medium mb-2">클랜 ID</label>
@@ -159,7 +159,7 @@ function DiscordLinkPanel({ user, onLinked }: StepProps) {
     <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
       <h3 className="text-xl font-bold text-white mb-4 flex items-center"><span className="mr-2">🎮</span> Discord 연동</h3>
       {error && <div className="text-red-400 text-sm mb-4 bg-red-900/30 p-3 rounded">{error}</div>}
-      
+
       <div className="space-y-4">
         {isLinked ? (
           <div className="bg-green-900/20 border border-green-700/50 rounded-lg p-4 flex justify-between">

@@ -31,10 +31,10 @@ export interface AuthProfile extends ProfileRow,
 // UI에서 쓸 때는 우리가 만든 리터럴 타입(UserRole, RaceCode)으로 강제 변환/보장하기 위한 요약 모델
 export interface ProfileSummary {
   id: UUID;
-  by_id: string | null;
+  by_id: string;
   role: UserRole | string | null;
   race?: RaceCode | string | null;
-  total_mmr: number;
+  total_mmr?: number | null;
   personal_mmr?: number | null;
   team_mmr?: number | null;
   clan_point?: number | null;

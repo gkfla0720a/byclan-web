@@ -1,25 +1,29 @@
 // 파일명: src/hooks/useLadderData.ts
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
-import { getPlayerMmr } from '@/utils/profiles';
 import { buildTeams, MATCH_TYPES } from '@/utils/matchMaking';
-import type { User } from '@supabase/supabase-js';
+import { useAuthContext } from '@/context/authContext'; // 💡 1. 전역 상태 임포트!
+import type { UserRole, RaceCode } from '@/types/primitives';
 
 const MAX_QUEUE_MINUTES = 20;
 const COOLDOWN_STEPS = [0, 10, 30, 180];
 const BALANCE_THRESHOLD = 200;
 
-// 타입 정의
 interface QueuePlayer {
   id: string;
-  by_id: string | null;
-  role: string | null;
-  race: string | null;
+  by_id: string; // 🚨 2. 필수값으로 강제! (null 허용 안 함)
+  role: UserRole | string | null;
+  race: RaceCode | string | null;
   total_mmr: number;
   queue_joined_at: string | null;
 }
 
-export function useLadderData(user: User | null, authLoading: boolean) {
+// 💡 3. 매개변수(user, authLoading)를 모두 제거합니다!
+export function useLadderData() {
+  // 💡 4. 필요한 정보는 전역 Context에서 다이렉트로 꺼내 씁니다.
+  const { user, authLoading } = useAuthContext();
+
   const [queueMatchType, setQueueMatchType] = useState<'1v1' | '2v2' | '3v3' | '4v4' | '5v5'>('4v4');
   const [sortOption, setSortOption] = useState<'balance' | 'top' | 'bottom'>('balance');
 
@@ -35,12 +39,8 @@ export function useLadderData(user: User | null, authLoading: boolean) {
 
   const cooldownTimerRef = useRef<number | null>(null);
   const queueTimerRef = useRef<number | null>(null);
-  const currentUserRef = useRef<User | null>(null);
-  const lastQueueKeyRef = useRef<string>('');
 
-  useEffect(() => {
-    currentUserRef.current = user;
-  }, [user]);
+  // (currentUserRef 로직은 이제 전역 user를 바로 쓰므로 의존성 배열로 관리합니다)
 
   const fetchData = useCallback(async () => {
     if (authLoading || !user?.id) {
@@ -59,17 +59,30 @@ export function useLadderData(user: User | null, authLoading: boolean) {
         .eq('is_in_queue', true)
         .order('queue_joined_at', { ascending: true });
 
-      const qPlayers: QueuePlayer[] = (queueRaw || []).filter(r => {
-        const meta = Array.isArray(r.profiles?.profile_meta) ? r.profiles.profile_meta[0] : r.profiles?.profile_meta;
-        return isTestViewer ? (meta?.is_test_account && meta?.is_test_account_active) : !meta?.is_test_account;
-      }).map(r => ({
-        id: r.user_id,
-        by_id: r.profiles?.by_id ?? null,
-        role: r.profiles?.role ?? null,
-        race: r.profiles?.race ?? null,
-        total_mmr: (Array.isArray(r.profiles?.ladder_rankings) ? r.profiles.ladder_rankings[0] : r.profiles?.ladder_rankings)?.total_mmr ?? 1000,
-        queue_joined_at: r.queue_joined_at,
-      }));
+      const qPlayers: QueuePlayer[] = (queueRaw || [])
+        .filter(r => {
+          const meta = Array.isArray(r.profiles?.profile_meta) ? r.profiles.profile_meta[0] : r.profiles?.profile_meta;
+          const isTest = isTestViewer ? (meta?.is_test_account && meta?.is_test_account_active) : !meta?.is_test_account;
+
+          // 🚨 5. by_id가 없으면 가입 설정이 완료되지 않은 유령 데이터이므로 큐에서 아예 걸러버립니다!
+          if (!r.profiles?.by_id) return false;
+
+          return isTest;
+        })
+        .map(r => {
+          const rankData = Array.isArray(r.profiles?.ladder_rankings)
+            ? r.profiles.ladder_rankings[0]
+            : r.profiles?.ladder_rankings;
+
+          return {
+            id: r.user_id,
+            by_id: r.profiles!.by_id, // 🚨 위에서 필터링했으므로 무조건 string입니다. (타입스크립트 안심)
+            role: r.profiles?.role ?? 'guest',
+            race: r.profiles?.race ?? null,
+            total_mmr: typeof rankData?.total_mmr === 'number' ? rankData.total_mmr : 0, // 0으로 비정상 상태 마킹
+            queue_joined_at: r.queue_joined_at,
+          };
+        });
 
       setQueuePlayers(qPlayers);
 
@@ -121,7 +134,7 @@ export function useLadderData(user: User | null, authLoading: boolean) {
   }, [proposalCooldown]);
 
   const joinQueue = async () => {
-    if (!currentUserRef.current?.id) {
+    if (!user?.id) {
       alert('로그인 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
@@ -129,7 +142,7 @@ export function useLadderData(user: User | null, authLoading: boolean) {
     try {
       setJoiningQueue(true);
       const { error } = await supabase.from('ladder_queue').upsert({
-        user_id: currentUserRef.current.id,
+        user_id: user.id,
         is_in_queue: true,
         queue_joined_at: new Date().toISOString()
       });
@@ -154,7 +167,7 @@ export function useLadderData(user: User | null, authLoading: boolean) {
   };
 
   const leaveQueue = async () => {
-    const uid = currentUserRef.current?.id;
+    const uid = user?.id;
     if (!uid) return;
     if (queueTimerRef.current) window.clearTimeout(queueTimerRef.current);
     await supabase.from('ladder_queue').update({ is_in_queue: false }).eq('user_id', uid);
@@ -163,9 +176,20 @@ export function useLadderData(user: User | null, authLoading: boolean) {
   };
 
   const proposeMatch = async (typeStr: string, teamA: QueuePlayer[], teamB: QueuePlayer[]) => {
-    if (!currentUserRef.current || proposalCooldown > 0) return;
-    const avgA = teamA.reduce((s, p) => s + getPlayerMmr(p), 0) / teamA.length;
-    const avgB = teamB.reduce((s, p) => s + getPlayerMmr(p), 0) / teamB.length;
+    if (!user || proposalCooldown > 0) return;
+
+    // 🚨 6. MMR 0점(비정상/신입) 유저 감지 및 매칭 즉시 차단
+    const allPlayers = [...teamA, ...teamB];
+    const missingMmrPlayers = allPlayers.filter(p => p.total_mmr === 0);
+
+    if (missingMmrPlayers.length > 0) {
+      const names = missingMmrPlayers.map(p => p.by_id).join(', ');
+      alert(`⚠️ 매칭 불가\n다음 유저의 MMR 데이터가 설정되지 않았습니다:\n[ ${names} ]\nMMR 설정 후 다시 시도해주세요.`);
+      return;
+    }
+
+    const avgA = teamA.reduce((s, p) => s + p.total_mmr, 0) / teamA.length;
+    const avgB = teamB.reduce((s, p) => s + p.total_mmr, 0) / teamB.length;
 
     if (Math.abs(avgA - avgB) > BALANCE_THRESHOLD) {
       if (!window.confirm('⚠️ 팀 점수 차이가 200점을 초과합니다. 진행하시겠습니까?')) return;
@@ -174,23 +198,20 @@ export function useLadderData(user: User | null, authLoading: boolean) {
     try {
       const matchId = crypto.randomUUID();
 
-      // 1: 부모 테이블인 ladder_record에 먼저 한 줄(배열 형태)로 넣습니다!
       const { error: recordError } = await supabase.from('ladder_record').insert({
         id: matchId,
         match_type: `${typeStr}v${typeStr}`,
         status: 'proposed',
         team_a_ids: teamA.map(p => p.id),
         team_b_ids: teamB.map(p => p.id),
-        // 필요하다면 team_a_races 등 추가
       });
       if (recordError) throw recordError;
 
-      // 2: 이후 자식 테이블인 ladder_match_sets에 넣으며 컬럼/상태값 정상화!
       const { error: setError } = await supabase.from('ladder_match_sets').insert({
         match_id: matchId,
         set_number: 1,
-        status: 'entry_pending', // proposed 아님 (DB CHECK 제약)
-        match_type: `${typeStr}v${typeStr}`, // race_type 아님
+        status: 'entry_pending',
+        match_type: `${typeStr}v${typeStr}`,
       });
       if (setError) throw setError;
 
@@ -198,7 +219,7 @@ export function useLadderData(user: User | null, authLoading: boolean) {
       setProposalAttempts(newAttempts);
       setProposalCooldown(COOLDOWN_STEPS[Math.min(newAttempts, COOLDOWN_STEPS.length - 1)]);
 
-      setActiveProposal({ matchId, matchType: `${typeStr}v${typeStr}`, teamA, teamB, avgA, avgB, diff: Math.abs(avgA - avgB), proposedBy: currentUserRef.current.id });
+      setActiveProposal({ matchId, matchType: `${typeStr}v${typeStr}`, teamA, teamB, avgA, avgB, diff: Math.abs(avgA - avgB), proposedBy: user.id });
     } catch (err: any) {
       console.error(err);
       alert('제안 실패: ' + err.message);
