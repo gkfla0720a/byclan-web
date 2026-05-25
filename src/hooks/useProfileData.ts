@@ -64,7 +64,7 @@ async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Prom
   const [{ data: oauthData }, { data: metaData }, { data: rankData }] = await Promise.all([
     supabase.from('profile_oauth').select('discord_id, google_email, google_name').eq('user_id', userId).maybeSingle(),
     supabase.from('profile_meta').select('is_test_account_active').eq('user_id', userId).maybeSingle(),
-    supabase.from('ladder_rankings').select('ladder_mmr, wins, losses, total_mmr').eq('user_id', userId).maybeSingle(),
+    supabase.from('ladder_rankings').select('personal_mmr, wins, losses, total_mmr').eq('user_id', userId).maybeSingle(),
   ]);
 
   return { ...oauthData, ...metaData, ...rankData, ...profile } as UserProfile;

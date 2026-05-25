@@ -75,7 +75,7 @@ function getWinRate(wins, losses) {
 }
 
 function getProfileMmr(profile) {
-  return profile?.total_mmr ?? profile?.ladder_mmr ?? 1000;
+  return profile?.total_mmr ?? profile?.personal_mmr ?? 1000;
 }
 
 /**
@@ -106,50 +106,50 @@ export default function ProfileSidebar({ profile, user }) {
   // 로그인했지만 프로필이 아직 로딩 중인 경우 → 스켈레톤 표시 (샘플 데이터 없음)
   if (user && !profile) {
     return (
-        <div className="w-full cyber-card rounded-xl p-4 flex flex-col gap-3 animate-pulse">
-          <div className="flex flex-col items-center gap-2 pb-2 border-b border-gray-800">
-            <div className="w-12 h-12 rounded-full bg-gray-800" />
-            <div className="h-3 w-24 bg-gray-800 rounded" />
-          </div>
-          <div className="space-y-2.5">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex justify-between">
-                <div className="h-2.5 w-10 bg-gray-800 rounded" />
-                <div className="h-2.5 w-14 bg-gray-800 rounded" />
-              </div>
-            ))}
-          </div>
+      <div className="w-full cyber-card rounded-xl p-4 flex flex-col gap-3 animate-pulse">
+        <div className="flex flex-col items-center gap-2 pb-2 border-b border-gray-800">
+          <div className="w-12 h-12 rounded-full bg-gray-800" />
+          <div className="h-3 w-24 bg-gray-800 rounded" />
         </div>
+        <div className="space-y-2.5">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex justify-between">
+              <div className="h-2.5 w-10 bg-gray-800 rounded" />
+              <div className="h-2.5 w-14 bg-gray-800 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (!user || !profile || !isActiveMember || !hasProfileData) {
     // 방문자 / 비로그인 / 프로필 미완성 상태
     return (
-        <div className="w-full cyber-card rounded-xl p-4 flex flex-col gap-3">
-          <div className="flex flex-col items-center gap-1.5 pb-2 border-b border-gray-800">
-            <div className="w-12 h-12 rounded-full bg-gray-900/70 border border-gray-700 flex items-center justify-center text-xl">👤</div>
-            <span className="font-black text-sm text-gray-500 truncate max-w-full">비로그인</span>
-          </div>
-
-          {!user ? (
-            <button
-              onClick={() => navigateTo('로그인')}
-              className="mt-1 w-full py-2 rounded-lg text-xs font-bold btn-neon"
-            >
-              로그인
-            </button>
-          ) : (
-            <button
-              onClick={() => navigateTo('가입안내')}
-              className="mt-2 w-full py-2 rounded-lg text-xs font-bold btn-neon"
-            >
-              가입 안내
-            </button>
-          )}
-
-          <p className="pt-1 text-center text-[10px] text-gray-600">로그인 후 프로필 정보가 표시됩니다</p>
+      <div className="w-full cyber-card rounded-xl p-4 flex flex-col gap-3">
+        <div className="flex flex-col items-center gap-1.5 pb-2 border-b border-gray-800">
+          <div className="w-12 h-12 rounded-full bg-gray-900/70 border border-gray-700 flex items-center justify-center text-xl">👤</div>
+          <span className="font-black text-sm text-gray-500 truncate max-w-full">비로그인</span>
         </div>
+
+        {!user ? (
+          <button
+            onClick={() => navigateTo('로그인')}
+            className="mt-1 w-full py-2 rounded-lg text-xs font-bold btn-neon"
+          >
+            로그인
+          </button>
+        ) : (
+          <button
+            onClick={() => navigateTo('가입안내')}
+            className="mt-2 w-full py-2 rounded-lg text-xs font-bold btn-neon"
+          >
+            가입 안내
+          </button>
+        )}
+
+        <p className="pt-1 text-center text-[10px] text-gray-600">로그인 후 프로필 정보가 표시됩니다</p>
+      </div>
     );
   }
 
@@ -169,8 +169,8 @@ export default function ProfileSidebar({ profile, user }) {
         {/* 아바타 / 유저 */}
         <div className="flex flex-col items-center gap-1.5 pb-2 border-b border-gray-800">
           <div className="w-12 h-12 rounded-full bg-cyan-900/30 border border-cyan-700/30 flex items-center justify-center text-xl"
-          aria-label={`종족: ${profile.race || '알 수 없음'}`}
-        >
+            aria-label={`종족: ${profile.race || '알 수 없음'}`}
+          >
             {profile.race === 'Terran' ? '🔧' : profile.race === 'Protoss' ? '✨' : profile.race === 'Zerg' ? '🦠' : '🎮'}
           </div>
           <span className="font-black text-sm text-cyan-400 truncate max-w-full" style={{ textShadow: '0 0 8px rgba(0,212,255,0.4)' }}>

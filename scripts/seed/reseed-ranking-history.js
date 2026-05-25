@@ -256,7 +256,7 @@ function emptyComboStats() {
 function ensurePlayer(state, id) {
   if (!state[id]) {
     state[id] = {
-      ladder_mmr: 1500,
+      personal_mmr: 1500,
       team_mmr: 0,
       wins: 0,
       losses: 0,
@@ -296,7 +296,7 @@ async function main() {
 
     await client.query(`
       update public.profiles
-      set ladder_mmr = 1500,
+      set personal_mmr = 1500,
           team_mmr = 0,
           total_mmr = 1500,
           wins = 0,
@@ -380,10 +380,10 @@ async function main() {
         const setLosers = s.winner === 'A' ? m.tb : m.ta;
 
         setWinners.forEach((pid) => {
-          ensurePlayer(statsByPlayer, pid).ladder_mmr += 10;
+          ensurePlayer(statsByPlayer, pid).personal_mmr += 10;
         });
         setLosers.forEach((pid) => {
-          ensurePlayer(statsByPlayer, pid).ladder_mmr -= 10;
+          ensurePlayer(statsByPlayer, pid).personal_mmr -= 10;
         });
 
         const entryWinners = s.winner === 'A' ? teamAEntry : teamBEntry;
@@ -420,10 +420,10 @@ async function main() {
 
     for (const playerId of participants) {
       const row = ensurePlayer(statsByPlayer, playerId);
-      const total = row.ladder_mmr + row.team_mmr;
+      const total = row.personal_mmr + row.team_mmr;
       await client.query(`
         update public.profiles
-        set ladder_mmr = $2,
+        set personal_mmr = $2,
             team_mmr = $3,
             total_mmr = $4,
             wins = $5,
@@ -433,7 +433,7 @@ async function main() {
         where id = $1::uuid
       `, [
         playerId,
-        row.ladder_mmr,
+        row.personal_mmr,
         row.team_mmr,
         total,
         row.wins,
@@ -455,8 +455,8 @@ async function main() {
     const ranked = [...visibleIds].sort((a, b) => {
       const pa = ensurePlayer(statsByPlayer, a);
       const pb = ensurePlayer(statsByPlayer, b);
-      const scoreA = (pa.wins * 3 - pa.losses) + pa.ladder_mmr + pa.team_mmr;
-      const scoreB = (pb.wins * 3 - pb.losses) + pb.ladder_mmr + pb.team_mmr;
+      const scoreA = (pa.wins * 3 - pa.losses) + pa.personal_mmr + pa.team_mmr;
+      const scoreB = (pb.wins * 3 - pb.losses) + pb.personal_mmr + pb.team_mmr;
       return scoreB - scoreA;
     });
 
@@ -472,7 +472,7 @@ async function main() {
       await client.query(`
         update public.profiles
         set total_mmr = $2,
-            ladder_mmr = $3
+            personal_mmr = $3
         where id = $1::uuid
       `, [id, targetTotal, adjustedLadder]);
     }
@@ -480,7 +480,7 @@ async function main() {
     await client.query(`truncate table public.ladders restart identity`);
     await client.query(`
       insert into public.ladders (
-        rank, user_id, nickname, ladder_mmr, race, win, lose, win_rate, is_test_data, is_test_data_active
+        rank, user_id, nickname, personal_mmr, race, win, lose, win_rate, is_test_data, is_test_data_active
       )
       select
         row_number() over (order by coalesce(total_mmr, 1500) desc, created_at asc) as rank,
@@ -503,7 +503,7 @@ async function main() {
     await client.query('commit');
 
     const sample = await client.query(`
-      select by_id, ladder_mmr, team_mmr, total_mmr, wins, losses, recent_total_delta, race_combo_stats
+      select by_id, personal_mmr, team_mmr, total_mmr, wins, losses, recent_total_delta, race_combo_stats
       from public.profiles
       where by_id like 'By_Tester%'
       order by by_id

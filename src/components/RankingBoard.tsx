@@ -162,7 +162,7 @@ export default function RankingBoard() {
         const query = supabase
           .from('ladder_rankings')
           .select(`
-            user_id, ladder_mmr, team_mmr, total_mmr,
+            user_id, personal_mmr, team_mmr, total_mmr,
             wins, losses, recent_total_delta, race_combo_stats, favorite_race,
             profiles!inner (
               by_id, role, is_active, 
@@ -179,10 +179,10 @@ export default function RankingBoard() {
         if (fetchError) throw fetchError;
 
         const filteredData = (rawData || []).filter(r => {
-          const meta = Array.isArray(r.profiles?.profile_meta) 
-            ? r.profiles.profile_meta[0] 
+          const meta = Array.isArray(r.profiles?.profile_meta)
+            ? r.profiles.profile_meta[0]
             : r.profiles?.profile_meta;
-            
+
           const isTest = meta?.is_test_account === true;
           const isActive = meta?.is_test_account_active === true;
 
@@ -190,15 +190,15 @@ export default function RankingBoard() {
         });
 
         const data = filteredData.map(r => {
-          const meta = Array.isArray(r.profiles?.profile_meta) 
-            ? r.profiles.profile_meta[0] 
+          const meta = Array.isArray(r.profiles?.profile_meta)
+            ? r.profiles.profile_meta[0]
             : r.profiles?.profile_meta;
 
           return {
             id: r.user_id,
             by_id: r.profiles?.by_id,
             race: r.favorite_race,
-            ladder_mmr: r.ladder_mmr,
+            personal_mmr: r.personal_mmr,
             team_mmr: r.team_mmr,
             total_mmr: r.total_mmr,
             wins: r.wins,
@@ -280,7 +280,7 @@ export default function RankingBoard() {
               </tr>
             ) : (
               filteredRankings.map((player, index) => {
-                const ladderScore = Number(player.ladder_mmr ?? 1500);
+                const ladderScore = Number(player.personal_mmr ?? 1500);
                 const teamScore = Number(player.team_mmr ?? 0);
                 const totalScore = Number(player.total_mmr ?? (ladderScore + teamScore));
                 const wins = Number(player.wins ?? 0);

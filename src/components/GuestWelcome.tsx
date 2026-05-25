@@ -79,7 +79,7 @@ function StepItem({ number, title, description, done = false, active = false }) 
 function ApplicationForm({ onSubmit, onCancel, loading, error }) {
   /** 신청서 입력 필드 상태 객체 */
   const [formData, setFormData] = useState({
-    btag: '',
+    id: '',
     race: 'Terran',
     tier: 'Bronze',
     intro: '',
@@ -106,11 +106,11 @@ function ApplicationForm({ onSubmit, onCancel, loading, error }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-gray-300 text-sm font-medium mb-2">배틀태그 *</label>
+              <label className="block text-gray-300 text-sm font-medium mb-2">아이디</label>
               <input
                 type="text"
-                value={formData.btag}
-                onChange={(e) => setFormData((prev) => ({ ...prev, btag: e.target.value }))}
+                value={formData.id}
+                onChange={(e) => setFormData((prev) => ({ ...prev, id: e.target.value }))}
                 placeholder="예: ByName#1234"
                 className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
                 required
@@ -412,7 +412,7 @@ export default function GuestWelcome({ user, profile, mode = 'guide', onApplicat
 
         {!isRookieOrHigher && (
           <>
-              <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
               <h3 className="text-xl font-bold text-white mb-4">📋 가입 절차</h3>
               <div className="space-y-3">
                 <StepItem number="1" title="가입 신청" description="기본 정보 제출"
@@ -422,10 +422,10 @@ export default function GuestWelcome({ user, profile, mode = 'guide', onApplicat
                   done={isRookieOrHigher}
                   active={isApplied} />
                 <StepItem number="3" title="신입 클랜원" description="Discord 연동 및 2주 활동"
-                  done={['member','veteran','admin','master','developer'].includes(currentRole)}
+                  done={['member', 'veteran', 'admin', 'master', 'developer'].includes(currentRole)}
                   active={currentRole === 'rookie'} />
                 <StepItem number="4" title="정식 클랜원" description="모든 클랜 활동 참여 가능"
-                  done={['member','veteran','admin','master','developer'].includes(currentRole)}
+                  done={['member', 'veteran', 'admin', 'master', 'developer'].includes(currentRole)}
                   active={false} />
               </div>
             </div>

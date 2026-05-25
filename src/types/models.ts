@@ -34,7 +34,9 @@ export interface ProfileSummary {
   by_id: string | null;
   role: UserRole | string | null;
   race?: RaceCode | string | null;
-  ladder_mmr?: number | null;
+  total_mmr: number;
+  personal_mmr?: number | null;
+  team_mmr?: number | null;
   clan_point?: number | null;
   is_streamer?: boolean | null;
 }
@@ -54,7 +56,7 @@ export interface LadderBoardItem {
   id: string; // 랭킹 row id
   user_id: UUID;
   rank: number | null;
-  ladder_mmr: number | null;
+  personal_mmr: number | null;
   wins: number | null;
   losses: number | null;
   win_rate: number | null;

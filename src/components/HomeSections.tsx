@@ -198,14 +198,14 @@ function ActivityLog() {
             .limit(2)),
           filterVisibleTestData(supabase
             .from('applications')
-            .select('id, btag, status, created_at')
+            .select('id, status, created_at')
             .order('created_at', { ascending: false })
             .limit(2)),
           supabase
-          .from('ladder_match_sets')
-          .select('id, match_id, status, created_at, ladder_record!inner(match_type)')
-          .order('created_at', { ascending: false })
-          .limit(10)
+            .from('ladder_match_sets')
+            .select('id, match_id, status, created_at, ladder_record!inner(match_type)')
+            .order('created_at', { ascending: false })
+            .limit(10)
         ]);
 
         // race_type을 match_type으로 매핑합니다.
@@ -233,7 +233,7 @@ function ActivityLog() {
           ...(applicationsResult.data || []).map(app => ({
             id: `application-${app.id}`,
             type: '가입',
-            message: `${app.btag || '신규 유저'}님이 가입 신청서를 제출했습니다.`,
+            message: `${app.id || '신규 유저'}님이 가입 신청서를 제출했습니다.`,
             time: formatRelativeTime(app.created_at),
             createdAt: app.created_at,
             icon: '👋'

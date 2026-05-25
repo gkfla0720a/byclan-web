@@ -9,8 +9,8 @@ import type { AdminActionType, AuditCategory } from '@/types/domain';
  * - 프로필의 직급을 'expelled'로 변경하고 활동을 정지시킵니다.
  */
 export async function expelUser(
-  targetUserId: string, 
-  adminId: string, 
+  targetUserId: string,
+  adminId: string,
   reason: string
 ) {
   // 1. 실제 DB 업데이트 로직
@@ -41,17 +41,17 @@ export async function expelUser(
  * - 신청서 상태를 '승인'으로 바꾸고, 유저 직급을 'rookie(신입)'로 올립니다.
  */
 export async function approveApplicant(
-  applicationId: number, 
-  targetUserId: string, 
+  applicationId: number,
+  targetUserId: string,
   adminId: string
 ) {
   // 1. 가입 신청서 상태 업데이트
   const { error: appError } = await supabase
     .from('applications')
-    .update({ 
-      status: 'passed', 
-      reviewed_by: adminId, 
-      reviewed_at: new Date().toISOString() 
+    .update({
+      status: 'passed',
+      reviewed_by: adminId,
+      reviewed_at: new Date().toISOString()
     })
     .eq('id', applicationId);
 
@@ -84,21 +84,21 @@ export async function approveApplicant(
  * - 래더 랭킹 테이블의 MMR을 운영진이 강제로 수정합니다. (어뷰징 복구 등)
  */
 export async function manualMMRUpdate(
-  targetUserId: string, 
-  newMMR: number, 
-  adminId: string, 
+  targetUserId: string,
+  newMMR: number,
+  adminId: string,
   reason: string
 ) {
   // 먼저 이전 MMR이 몇이었는지 조회합니다 (로그 기록용)
   const { data: beforeData } = await supabase
     .from('ladder_rankings')
-    .select('ladder_mmr')
+    .select('personal_mmr')
     .eq('user_id', targetUserId)
     .single();
 
   const { error } = await supabase
     .from('ladder_rankings')
-    .update({ ladder_mmr: newMMR })
+    .update({ personal_mmr: newMMR })
     .eq('user_id', targetUserId);
 
   if (error) throw new Error('MMR 수정에 실패했습니다.');
@@ -113,7 +113,7 @@ export async function manualMMRUpdate(
     targetUserId: targetUserId,
     note: `[MMR 강제 수정] 사유: ${reason}`,
     beforeData: beforeData,
-    afterData: { ladder_mmr: newMMR },
+    afterData: { personal_mmr: newMMR },
   });
 
   return true;

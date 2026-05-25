@@ -10,4 +10,3 @@ export function isMatchSetEntry(value: JsonValue | null | undefined): value is M
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return 'playerId' in value || 'playerName' in value || 'race' in value || 'ready' in value;
 }
-

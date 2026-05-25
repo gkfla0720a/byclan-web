@@ -365,7 +365,6 @@ function buildApplicationsFull() {
       user_id: TEST_USERS[8].id,
       tester_id: TEST_USERS[1].id,
       discord_name: TEST_USERS[8].key,
-      btag: 'test9#9009',
       race: 'Protoss',
       tier: 'Gold',
       intro: '안정적인 운영형 플레이를 선호합니다.',
@@ -382,7 +381,6 @@ function buildApplicationsFull() {
       user_id: TEST_USERS[9].id,
       tester_id: TEST_USERS[1].id,
       discord_name: TEST_USERS[9].key,
-      btag: 'test10#9010',
       race: 'Terran',
       tier: 'Silver',
       intro: '내전 위주로 활동하고 싶습니다.',
@@ -400,7 +398,6 @@ function buildApplicationsFull() {
       user_id: TEST_USERS[7].id,
       tester_id: TEST_USERS[1].id,
       discord_name: TEST_USERS[7].key,
-      btag: 'test8#9008',
       race: 'Terran',
       tier: 'Silver',
       intro: '커뮤니티 활동 위주로 먼저 적응하고 싶습니다.',
@@ -421,7 +418,6 @@ function buildApplicationsCompact() {
     {
       id: 'e1111111-1111-4111-8111-111111111111',
       user_id: TEST_USERS[8].id,
-      btag: 'test9#9009',
       race: 'Protoss',
       tier: 'Gold',
       intro: '안정적인 운영형 플레이를 선호합니다.',
@@ -436,7 +432,6 @@ function buildApplicationsCompact() {
     {
       id: 'e2222222-2222-4222-8222-222222222222',
       user_id: TEST_USERS[9].id,
-      btag: 'test10#9010',
       race: 'Terran',
       tier: 'Silver',
       intro: '내전 위주로 활동하고 싶습니다.',
@@ -451,7 +446,6 @@ function buildApplicationsCompact() {
     {
       id: 'e3333333-3333-4333-8333-333333333333',
       user_id: TEST_USERS[7].id,
-      btag: 'test8#9008',
       race: 'Terran',
       tier: 'Silver',
       intro: '커뮤니티 활동 위주로 먼저 적응하고 싶습니다.',

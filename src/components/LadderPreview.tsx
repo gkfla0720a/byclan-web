@@ -101,7 +101,7 @@ export default function LadderPreview({ isGuest }) {
           const { data: rankRows } = await supabase
             .from('ladder_rankings')
             // 💡 수정됨: user_id 옆에 있던 by_id 삭제, profiles!inner 안에 by_id 추가
-            .select('user_id, total_mmr, ladder_mmr, team_mmr, profiles!inner(by_id, role, race)')
+            .select('user_id, total_mmr, personal_mmr, team_mmr, profiles!inner(by_id, role, race)')
             .neq('profiles.role', 'guest')
             .neq('profiles.role', 'applicant')
             .neq('profiles.role', 'banned')
@@ -111,9 +111,9 @@ export default function LadderPreview({ isGuest }) {
           rows = (rankRows || []).map((row, index) => ({
             id: row.user_id || `ladder-${index}`,
             // 💡 수정됨: row.by_id 가 아니라 row.profiles?.by_id 로 변경
-            by_id: row.profiles?.by_id, 
+            by_id: row.profiles?.by_id,
             race: row.profiles?.race,
-            clan_point: row.total_mmr ?? ((row.ladder_mmr ?? 1500) + (row.team_mmr ?? 0)),
+            clan_point: row.total_mmr ?? ((row.personal_mmr ?? 1500) + (row.team_mmr ?? 0)),
             is_in_queue: false,
           }));
         }
@@ -160,12 +160,12 @@ export default function LadderPreview({ isGuest }) {
         <p className="text-gray-300 mb-1 text-sm">
           스타크래프트 빠른무한 3v3 · 4v4 · 5v5 내전 래더 — 실시간 대기열 & 포인트 베팅
         </p>
-          <p className="text-gray-500 text-xs mb-4">{accessMessage}</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            {isGuest ? (
-              <>
-                <button
-                  onClick={() => navigateTo('로그인')}
+        <p className="text-gray-500 text-xs mb-4">{accessMessage}</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {isGuest ? (
+            <>
+              <button
+                onClick={() => navigateTo('로그인')}
                 className="px-6 py-2.5 rounded-lg font-bold text-sm btn-neon"
               >
                 로그인하기

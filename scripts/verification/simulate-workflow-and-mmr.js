@@ -35,7 +35,7 @@ async function main() {
     console.log('\n1) 초기화: 모든 참가자 MMR 1500/0/1500 세팅');
     await client.query(`
       update public.profiles
-      set ladder_mmr = 1500, team_mmr = 0, total_mmr = 1500, wins = 0, losses = 0, is_in_queue = false
+      set personal_mmr = 1500, team_mmr = 0, total_mmr = 1500, wins = 0, losses = 0, is_in_queue = false
       where id = any($1::uuid[])
     `, [participants]);
 
@@ -107,7 +107,7 @@ async function main() {
     console.log('6) 래더 랭킹 재정렬 (합산 MMR 기준)');
     await client.query(`delete from public.ladders where user_id = any($1::uuid[])`, [participants]);
     await client.query(`
-      insert into public.ladders (rank, user_id, nickname, ladder_mmr, race, win, lose, win_rate, is_test_data, is_test_data_active)
+      insert into public.ladders (rank, user_id, nickname, personal_mmr, race, win, lose, win_rate, is_test_data, is_test_data_active)
       select
         row_number() over (order by p.total_mmr desc, p.created_at asc),
         p.id,
@@ -133,7 +133,7 @@ async function main() {
     console.log(matchFinal.rows[0]);
 
     const mmrRows = await client.query(`
-      select by_id, ladder_mmr as personal_mmr, team_mmr, total_mmr, wins, losses
+      select by_id, personal_mmr as personal_mmr, team_mmr, total_mmr, wins, losses
       from public.profiles
       where id = any($1::uuid[])
       order by total_mmr desc, by_id asc
@@ -179,14 +179,14 @@ async function snapshot(client, label) {
   console.log(`\n   [${label}] match=${m.rows[0].status} ${m.rows[0].score_a}:${m.rows[0].score_b}`);
 
   const r = await client.query(`
-    select by_id, ladder_mmr, team_mmr, total_mmr
+    select by_id, personal_mmr, team_mmr, total_mmr
     from public.profiles
     where by_id in ('By_Developer', 'By_Master', 'By_gkfla', 'By_Tester01')
     order by by_id asc
   `);
 
   r.rows.forEach(x => {
-    console.log(`   - ${x.by_id}: 개인 ${x.ladder_mmr}, 팀 ${x.team_mmr}, 합산 ${x.total_mmr}`);
+    console.log(`   - ${x.by_id}: 개인 ${x.personal_mmr}, 팀 ${x.team_mmr}, 합산 ${x.total_mmr}`);
   });
 }
 

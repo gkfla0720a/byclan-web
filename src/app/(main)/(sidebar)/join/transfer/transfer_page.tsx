@@ -61,7 +61,6 @@ export default function JoinTransferPage() {
             .select('id')
             .eq('user_id', p.id)
             .eq('status', 'pending')
-            .ilike('btag', 'TRANSFER_%')   // 전환 신청 전용 마커 prefix
             .limit(1);
           setAlreadyApplied(Boolean(existing?.length));
         }
@@ -127,10 +126,8 @@ export default function JoinTransferPage() {
     setSubmitting(true);
     try {
       // 1) applications 테이블에 전환 신청 레코드 저장 (중복 방지의 단일 출처)
-      //    btag 필드에 'TRANSFER_{userId}' 마커를 사용해 일반 가입 신청과 구분합니다.
       const { error: appError } = await supabase.from('applications').insert({
         user_id: profile.id,
-        btag: `TRANSFER_${profile.id}`,
         status: 'pending',
         intro: `정회원 전환 신청 — 수습 시작일: ${rookieSince?.toLocaleDateString('ko-KR')}`,
       });

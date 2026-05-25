@@ -657,11 +657,11 @@ handleDiscordUnlink() 함수 (라인 194)
 │                                                              │
 │    쿼리 3️⃣:                                                 │
 │      supabase.from('ladder_rankings')                       │
-│                .select('ladder_mmr, wins, losses, ...')     │
+│                .select('personal_mmr, wins, losses, ...')     │
 │                .eq('user_id', userId)                       │
 │                                                              │
 │      반환 데이터: {                                         │
-│        ladder_mmr: 1500,  ← MMR 점수                       │
+│        personal_mmr: 1500,  ← MMR 점수                       │
 │        wins: 10,          ← 승리 수                         │
 │        losses: 5          ← 패배 수                         │
 │      }                                                      │
@@ -729,7 +729,7 @@ handleDiscordUnlink() 함수 (라인 194)
 │      is_test_account_active: false,                         │
 │                                                              │
 │      // 래더 정보                                           │
-│      ladder_mmr: 1500,                                      │
+│      personal_mmr: 1500,                                      │
 │      wins: 10,                                              │
 │      losses: 5,                                             │
 │      total_mmr: 1500                                        │
@@ -1093,7 +1093,7 @@ PostgreSQL Database (Supabase)
 │ 3️⃣ ladder_rankings 테이블                       │
 │  저장 데이터:                                    │
 │  • user_id (profiles.id 참조)                   │
-│  • ladder_mmr (래더 점수)                       │
+│  • personal_mmr (래더 점수)                       │
 │  • wins (승수)                                   │
 │  • losses (패수)                                │
 │  • total_mmr (총 MMR)                           │

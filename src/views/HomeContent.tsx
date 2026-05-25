@@ -1,24 +1,24 @@
 // 파일명: @/views/HomeContents.ts
- 
-  /**
- * 파일명: HomeContent.ts
- *
- * 역할:
- *   사이트 메인 홈 화면의 전체 콘텐츠를 구성하는 views 컴포넌트입니다.
- *
- * 주요 기능:
- *   - 히어로 배너: 배경 이미지와 사이버 그리드 오버레이로 꾸민 환영 섹션
- *   - 모바일 전용 프로필 카드: 로그인한 활성 클랜원에게만 히어로 배너 아래 표시
- *   - 클랜 소개 카드: 클랜 성향·관전 재미·가입 동선을 3열로 소개
- *   - 랭킹 미리보기: clan_point 기준 상위 3인 표시 (클릭 시 랭킹 페이지 이동)
- *   - 최신 소식: 최근 공지사항 3건 미리보기 (클릭 시 공지 페이지 이동)
- *   - 매치 현황·활동 로그: HomeSections의 MatchStatus, ActivityLog 컴포넌트 사용
- *   - 빠른 접근 버튼: 가입안내·매치·커뮤니티·랭킹 4가지 바로가기
- *
- * 사용 방법:
- *   import HomeContent from './HomeContent';
- *   <HomeContent profile={profile} user={user} />
- */
+
+/**
+* 파일명: HomeContent.ts
+*
+* 역할:
+*   사이트 메인 홈 화면의 전체 콘텐츠를 구성하는 views 컴포넌트입니다.
+*
+* 주요 기능:
+*   - 히어로 배너: 배경 이미지와 사이버 그리드 오버레이로 꾸민 환영 섹션
+*   - 모바일 전용 프로필 카드: 로그인한 활성 클랜원에게만 히어로 배너 아래 표시
+*   - 클랜 소개 카드: 클랜 성향·관전 재미·가입 동선을 3열로 소개
+*   - 랭킹 미리보기: clan_point 기준 상위 3인 표시 (클릭 시 랭킹 페이지 이동)
+*   - 최신 소식: 최근 공지사항 3건 미리보기 (클릭 시 공지 페이지 이동)
+*   - 매치 현황·활동 로그: HomeSections의 MatchStatus, ActivityLog 컴포넌트 사용
+*   - 빠른 접근 버튼: 가입안내·매치·커뮤니티·랭킹 4가지 바로가기
+*
+* 사용 방법:
+*   import HomeContent from './HomeContent';
+*   <HomeContent profile={profile} user={user} />
+*/
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -84,7 +84,7 @@ function MobileProfileCard({ profile, user, navigateTo }) {
 
   if (!user || !isActiveMember) return null;
 
-  const totalMmr = profile.total_mmr ?? ((profile.ladder_mmr ?? 1500) + (profile.team_mmr ?? 0));
+  const totalMmr = profile.total_mmr ?? ((profile.personal_mmr ?? 1500) + (profile.team_mmr ?? 0));
   const tier = getTier(totalMmr || 1000);
   const tierColor = TIER_COLORS[tier] || 'text-gray-400';
   const winRate = getWinRate(profile.wins, profile.losses);
@@ -144,13 +144,13 @@ function HomeContent() {
   // 홈게이트 로직: 역할별 기능 접근 제어
   // ═══════════════════════════════════════════════════════════════
   const userRole = profile?.role || 'visitor';
-  
+
   // 신규 가입자(applicant) 여부 - 테스트 대기 중
   const isApplicant = userRole === 'applicant';
-  
+
   // 방문자(visitor) 여부 - 로그인 없이 방문
   const isVisitor = userRole === 'visitor';
-  
+
   // 클랜원(정식 멤버 이상) 여부
   // const isClanMember = ['member', 'rookie', 'veteran', 'admin', 'master', 'developer'].includes(userRole);
 
@@ -183,17 +183,17 @@ function HomeContent() {
 
       const { data: rawRankData } = await supabase
         .from('ladder_rankings')
-        .select('user_id, total_mmr, ladder_mmr, team_mmr, profiles!inner(by_id, role)')
+        .select('user_id, total_mmr, personal_mmr, team_mmr, profiles!inner(by_id, role)')
         .neq('profiles.role', 'visitor')
         .neq('profiles.role', 'applicant')
         .neq('profiles.role', 'expelled')
         .order('total_mmr', { ascending: false })
         .limit(3);
-        
-      const rankData = (rawRankData || []).map(r => ({ 
-        ...r, 
-        id: r.user_id, 
-        by_id: r.profiles?.by_id 
+
+      const rankData = (rawRankData || []).map(r => ({
+        ...r,
+        id: r.user_id,
+        by_id: r.profiles?.by_id
       }));
 
       const { data: noticeData } = await filterVisibleTestData(supabase
@@ -263,11 +263,10 @@ function HomeContent() {
             <button
               onClick={() => navigateTo('BY래더')}
               disabled={isVisitor || isApplicant}
-              className={`px-5 py-2 rounded-lg font-bold text-sm relative transition-all ${
-                isVisitor || isApplicant
+              className={`px-5 py-2 rounded-lg font-bold text-sm relative transition-all ${isVisitor || isApplicant
                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
                   : 'bg-cyan-400/10 border border-cyan-300/30 text-cyan-200 hover:bg-cyan-400/18 shadow-[0_0_18px_rgba(34,211,238,0.08)]'
-              }`}
+                }`}
               title={isVisitor ? '클랜원 전용 기능입니다' : isApplicant ? '테스트 대기 중에는 이용할 수 없습니다' : '래더 시스템'}
             >
               ⚔️ 래더 시스템
@@ -302,16 +301,16 @@ function HomeContent() {
           </h3>
           <div className={`space-y-2 ${(isVisitor || isApplicant) ? 'blur-sm' : ''}`}>
             {loading ? <SkeletonLoader count={3} /> :
-             topRankers.length === 0 ? <EmptyState message="아직 랭킹 데이터가 없습니다" icon="🏆" /> :
-             topRankers.map((p, index) => (
-               <div key={`${p.id ?? index}`} className="flex items-center justify-between bg-slate-950/55 px-3 py-2 rounded-lg border border-cyan-400/10">
-                 <span className="text-slate-100 font-semibold text-sm">
-                   <span className="text-yellow-500 mr-1">{index + 1}위</span> {p.by_id || '[by_id 없음]'}
-                   {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
-                 </span>
-                 <span className="font-bold text-cyan-400 text-sm">MMR {p.total_mmr ?? ((p.ladder_mmr ?? 1500) + (p.team_mmr ?? 0))}점</span>
-               </div>
-             ))
+              topRankers.length === 0 ? <EmptyState message="아직 랭킹 데이터가 없습니다" icon="🏆" /> :
+                topRankers.map((p, index) => (
+                  <div key={`${p.id ?? index}`} className="flex items-center justify-between bg-slate-950/55 px-3 py-2 rounded-lg border border-cyan-400/10">
+                    <span className="text-slate-100 font-semibold text-sm">
+                      <span className="text-yellow-500 mr-1">{index + 1}위</span> {p.by_id || '[by_id 없음]'}
+                      {isMarkedTestData(p) && <span className="ml-2 text-[10px] text-amber-300">TEST</span>}
+                    </span>
+                    <span className="font-bold text-cyan-400 text-sm">MMR {p.total_mmr ?? ((p.personal_mmr ?? 1500) + (p.team_mmr ?? 0))}점</span>
+                  </div>
+                ))
             }
           </div>
         </section>
@@ -325,13 +324,13 @@ function HomeContent() {
           </h3>
           <div className="space-y-2">
             {loading ? <SkeletonLoader count={3} /> :
-             recentNotices.length === 0 ? <EmptyState message="새로운 소식이 없습니다" icon="📢" /> :
-             recentNotices.map((n, index) => (
-               <div key={`${n.id ?? 'notice'}-${n.type ?? 'type'}-${n.title ?? 'title'}-${index}`} className="flex items-center justify-between text-sm py-1 border-b border-cyan-400/8 last:border-none">
-                 <span className="text-slate-200 truncate">{n.title}</span>
-                 <span className="text-slate-400 text-xs ml-2 shrink-0">{n.date}</span>
-               </div>
-             ))
+              recentNotices.length === 0 ? <EmptyState message="새로운 소식이 없습니다" icon="📢" /> :
+                recentNotices.map((n, index) => (
+                  <div key={`${n.id ?? 'notice'}-${n.type ?? 'type'}-${n.title ?? 'title'}-${index}`} className="flex items-center justify-between text-sm py-1 border-b border-cyan-400/8 last:border-none">
+                    <span className="text-slate-200 truncate">{n.title}</span>
+                    <span className="text-slate-400 text-xs ml-2 shrink-0">{n.date}</span>
+                  </div>
+                ))
             }
           </div>
         </section>

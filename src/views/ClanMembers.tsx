@@ -1,21 +1,22 @@
 // 파일명: @/views/ClanMembers.tsx
 
- /**
- * 역할:
- *   클랜원 명단 views 컴포넌트입니다.
- *   운영진·베테랑 클랜원·일반 클랜원 세 섹션으로 멤버를 분류하여 테이블로 보여줍니다.
- *
- * 주요 기능:
- *   - profiles 테이블에서 guest·applicant·banned를 제외한 멤버를 불러옵니다.
- *   - streamer 관련 컬럼이 없는 경우 자동으로 폴백(fallback) 쿼리를 실행합니다.
- *   - 관리 권한(member.manage)이 있는 사용자에게만 인라인 등급 변경 드롭다운을 표시합니다.
- *   - 스트리머 멤버는 방송 플랫폼 링크 버튼을 표시하며, 실제 스트리머가 없으면 데모 데이터를 적용합니다.
- *   - 총 인원·베테랑·스트리머 수를 StatCard로 요약합니다.
- *
- * 사용 방법:
- *   import ClanMembers from './ClanMembers';
- *   <ClanMembers />
- */
+/**
+* 역할:
+*   클랜원 명단 views 컴포넌트입니다.
+*   운영진·베테랑 클랜원·일반 클랜원 세 섹션으로 멤버를 분류하여 테이블로 보여줍니다.
+*
+* 주요 기능:
+*   - profiles 테이블에서 guest·applicant·banned를 제외한 멤버를 불러옵니다.
+*   - streamer 관련 컬럼이 없는 경우 자동으로 폴백(fallback) 쿼리를 실행합니다.
+*   - 관리 권한(member.manage)이 있는 사용자에게만 인라인 등급 변경 드롭다운을 표시합니다.
+*   - 스트리머 멤버는 방송 플랫폼 링크 버튼을 표시하며, 실제 스트리머가 없으면 데모 데이터를 적용합니다.
+*   - 총 인원·베테랑·스트리머 수를 StatCard로 요약합니다.
+*
+* 사용 방법:
+*   import ClanMembers from './ClanMembers';
+*   <ClanMembers />
+*/
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -32,7 +33,8 @@ const ROLE_SECTIONS = [
   { key: 'members', title: '클랜원', roles: ['member', 'rookie'] },
 ];
 
-const VISIBLE_LADDER_MEMBER_ROLES = ['developer', 'master', 'admin', 'veteran', 'member', 'rookie'];
+const PLAYABLE_LADDER_MEMBER_ROLES = ['developer', 'master', 'admin', 'veteran', 'member', 'rookie'];
+
 const INLINE_ROLE_OPTIONS = [
   { value: 'admin', label: '관리자' },
   { value: 'veteran', label: '베테랑 클랜원' },
@@ -41,24 +43,12 @@ const INLINE_ROLE_OPTIONS = [
   { value: 'applicant', label: '신규 가입자' },
 ];
 
-/**
- * URL 문자열을 정규화합니다.
- * http:// 또는 https://로 시작하지 않으면 https://를 앞에 붙입니다.
- * @param {string} url - 원본 URL 문자열
- * @returns {string} 정규화된 URL
- */
 function normalizeUrl(url) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
 }
 
-/**
- * 멤버 목록에 is_streamer 필드가 하나도 없을 경우,
- * 앞의 3명에게 임시(데모) 스트리머 정보를 부여합니다.
- * @param {Array} memberList - profiles 배열
- * @returns {Array} 데모 스트리머 정보가 추가된 배열
- */
 function applyDemoStreamers(memberList) {
   if (memberList.some((member) => member.is_streamer)) {
     return memberList;
@@ -103,7 +93,7 @@ async function fetchMembersWithSchemaFallback() {
     .from('profiles')
     .select(`
       id, by_id, role, race, intro, clan_point,
-      ladder_rankings(ladder_mmr, total_mmr),
+      ladder_rankings(personal_mmr, total_mmr),
       profile_meta(is_streamer, streamer_platform, streamer_url, is_test_account, is_test_account_active)
     `)
     .neq('role', 'guest')
@@ -118,7 +108,7 @@ async function fetchMembersWithSchemaFallback() {
       data: (joinedResult.data || [])
         .map(m => ({
           ...m,
-          ladder_mmr: m.ladder_rankings?.ladder_mmr ?? 0,
+          personal_mmr: m.ladder_rankings?.personal_mmr ?? 0,
           total_mmr: m.ladder_rankings?.total_mmr ?? 0,
           is_streamer: m.profile_meta?.is_streamer ?? false,
           streamer_platform: m.profile_meta?.streamer_platform ?? null,
@@ -225,7 +215,7 @@ export default function ClanMembers() {
         const processed = applyDemoStreamers(
           (data || [])
             .map(normalizeMemberRole)
-            .filter((member) => member && member.id && VISIBLE_LADDER_MEMBER_ROLES.includes(member.role))
+            .filter((member) => member && member.id && member.role && PLAYABLE_LADDER_MEMBER_ROLES.includes(member.role))
         );
         setCached(CACHE_KEY, processed);
         setMembers(processed);
@@ -257,12 +247,6 @@ export default function ClanMembers() {
   const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role || '알 수 없음', color: '#C7CEEA', icon: '👤' };
   const canManageMembers = hasPermission(normalizeRole(currentRole), 'member.manage');
 
-  /**
-   * 인라인 드롭다운에서 멤버 등급을 변경합니다.
-   * developer·master 등급 변경은 이 화면에서 차단됩니다.
-   * @param {object} member - 등급을 변경할 멤버 객체
-   * @param {string} nextRole - 변경할 새 역할값
-   */
   const handleInlineRoleChange = async (member, nextRole) => {
     if (!canManageMembers || !nextRole || nextRole === member.role) return;
 
@@ -392,11 +376,11 @@ export default function ClanMembers() {
                             {roleMeta.name}
                           </span>
                         </td>
-                          <td className="px-4 py-3 text-slate-300 align-middle whitespace-nowrap">{member.race || 'Terran'}</td>
+                        <td className="px-4 py-3 text-slate-300 align-middle whitespace-nowrap">{member.race || 'Terran'}</td>
                         <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">
-                          {(member.total_mmr ?? member.ladder_mmr ?? 0)}점
+                          {(member.total_mmr ?? member.personal_mmr ?? 0)}점
                         </td>
-                          <td className="px-4 py-3 text-slate-200 align-middle whitespace-nowrap">
+                        <td className="px-4 py-3 text-slate-200 align-middle whitespace-nowrap">
                           {member.is_streamer ? (
                             <div className="flex items-center gap-2">
                               <span className="text-pink-300 font-semibold">BJ</span>

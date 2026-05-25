@@ -13,8 +13,8 @@ export interface AdminAuditPayload {
   actorRole?: string | null;
   actionType: AdminActionType;
   category: AuditCategory;
-  severity?: AuditSeverity; // 👈 추가됨 (기본값: INFO)
-  ipAddress?: string | null; // 👈 추가됨
+  severity?: AuditSeverity;
+  ipAddress?: string | null;
   targetTable: string;
   targetId?: string | number | null;
   targetUserId?: string | null;

@@ -1,4 +1,5 @@
 // 파일명: src/utils/pointSystem.ts
+
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types';
 

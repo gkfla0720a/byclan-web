@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.ladder_rankings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.profiles(id) UNIQUE,
     by_id TEXT,
-    ladder_mmr INTEGER DEFAULT 1000,
+    personal_mmr INTEGER DEFAULT 1000,
     wins INTEGER DEFAULT 0,
     losses INTEGER DEFAULT 0,
     win_rate DOUBLE PRECISION DEFAULT 0.0,
@@ -38,9 +38,9 @@ CREATE TABLE IF NOT EXISTS public.mmr_logs (
 CREATE OR REPLACE FUNCTION public.log_mmr_change()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF OLD.ladder_mmr IS DISTINCT FROM NEW.ladder_mmr THEN
+    IF OLD.personal_mmr IS DISTINCT FROM NEW.personal_mmr THEN
         INSERT INTO public.mmr_logs (user_id, previous_mmr, new_mmr, change_amount, reason)
-        VALUES (NEW.id, OLD.ladder_mmr, NEW.ladder_mmr, NEW.ladder_mmr - OLD.ladder_mmr, 'Profile MMR Update');
+        VALUES (NEW.id, OLD.personal_mmr, NEW.personal_mmr, NEW.personal_mmr - OLD.personal_mmr, 'Profile MMR Update');
     END IF;
     RETURN NEW;
 END;
@@ -48,7 +48,7 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_mmr_change ON public.profiles;
 CREATE TRIGGER trigger_mmr_change
-    AFTER UPDATE OF ladder_mmr ON public.profiles
+    AFTER UPDATE OF personal_mmr ON public.profiles
     FOR EACH ROW
     EXECUTE FUNCTION public.log_mmr_change();
 

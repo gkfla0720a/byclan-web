@@ -16,8 +16,8 @@
 
 'use strict';
 const { Client } = require('pg');
-const bcrypt     = require('bcryptjs');
-const crypto     = require('crypto');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const DB_URL = process.env.DB_URL ||
   'postgresql://postgres.mmsmedvdwmisewngmuka:byclanblacktiger01!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres';
@@ -140,94 +140,94 @@ const T5 = TESTERS[4].id;  // By_Tester05
 // winner: 'A' or 'B'  → winning_team
 // sa/sb: score_a, score_b (best-of 세트 수)
 const MAPS = ['블리자드 밸리', '알트지 스테이션', '데스티네이션', '카트리나의 눈물',
-              '피아식물원', '블루 스톰', '임피리얼 베이', '폴링 스카이',
-              '협곡', '나나스', '에코', '네오 문글로우'];
+  '피아식물원', '블루 스톰', '임피리얼 베이', '폴링 스카이',
+  '협곡', '나나스', '에코', '네오 문글로우'];
 
 const MATCHES = [
   // ── 3v3 ─────────────────────────────────────────────────────────────────────
   {
     id: 'dd000001-0000-4000-8000-000000000001',
     type: '3v3', host: A,
-    ta: [A, B, C],        tb: [T1, T2, T3],
-    ta_races: ['Protoss','Protoss','Protoss'], tb_races: ['Terran','Zerg','Protoss'],
+    ta: [A, B, C], tb: [T1, T2, T3],
+    ta_races: ['Protoss', 'Protoss', 'Protoss'], tb_races: ['Terran', 'Zerg', 'Protoss'],
     winner: 'A', sa: 3, sb: 1, days: 55, map: MAPS[0],
   },
   {
     id: 'dd000002-0000-4000-8000-000000000002',
     type: '3v3', host: T1,
-    ta: [T1, T2, T3],     tb: [A, B, C],
-    ta_races: ['Terran','Zerg','Protoss'], tb_races: ['Protoss','Protoss','Protoss'],
+    ta: [T1, T2, T3], tb: [A, B, C],
+    ta_races: ['Terran', 'Zerg', 'Protoss'], tb_races: ['Protoss', 'Protoss', 'Protoss'],
     winner: 'B', sa: 1, sb: 3, days: 50, map: MAPS[1],
   },
   {
     id: 'dd000003-0000-4000-8000-000000000003',
     type: '3v3', host: A,
-    ta: [A, T1, T4],      tb: [B, C, T2],
-    ta_races: ['Protoss','Terran','Terran'], tb_races: ['Protoss','Protoss','Zerg'],
+    ta: [A, T1, T4], tb: [B, C, T2],
+    ta_races: ['Protoss', 'Terran', 'Terran'], tb_races: ['Protoss', 'Protoss', 'Zerg'],
     winner: 'A', sa: 3, sb: 2, days: 45, map: MAPS[2],
   },
   {
     id: 'dd000004-0000-4000-8000-000000000004',
     type: '3v3', host: C,
-    ta: [C, T2, T5],      tb: [A, T3, T4],
-    ta_races: ['Protoss','Zerg','Zerg'], tb_races: ['Protoss','Protoss','Terran'],
+    ta: [C, T2, T5], tb: [A, T3, T4],
+    ta_races: ['Protoss', 'Zerg', 'Zerg'], tb_races: ['Protoss', 'Protoss', 'Terran'],
     winner: 'B', sa: 0, sb: 3, days: 40, map: MAPS[3],
   },
   {
     id: 'dd000005-0000-4000-8000-000000000005',
     type: '3v3', host: B,
-    ta: [B, T1, T3],      tb: [C, T2, T5],
-    ta_races: ['Protoss','Terran','Protoss'], tb_races: ['Protoss','Zerg','Zerg'],
+    ta: [B, T1, T3], tb: [C, T2, T5],
+    ta_races: ['Protoss', 'Terran', 'Protoss'], tb_races: ['Protoss', 'Zerg', 'Zerg'],
     winner: 'A', sa: 3, sb: 2, days: 35, map: MAPS[4],
   },
   {
     id: 'dd000006-0000-4000-8000-000000000006',
     type: '3v3', host: T2,
-    ta: [T2, T4, T5],     tb: [A, B, T3],
-    ta_races: ['Zerg','Terran','Zerg'], tb_races: ['Protoss','Protoss','Protoss'],
+    ta: [T2, T4, T5], tb: [A, B, T3],
+    ta_races: ['Zerg', 'Terran', 'Zerg'], tb_races: ['Protoss', 'Protoss', 'Protoss'],
     winner: 'B', sa: 1, sb: 3, days: 30, map: MAPS[5],
   },
   {
     id: 'dd000007-0000-4000-8000-000000000007',
     type: '3v3', host: A,
-    ta: [A, C, T5],       tb: [B, T1, T4],
-    ta_races: ['Protoss','Protoss','Zerg'], tb_races: ['Protoss','Terran','Terran'],
+    ta: [A, C, T5], tb: [B, T1, T4],
+    ta_races: ['Protoss', 'Protoss', 'Zerg'], tb_races: ['Protoss', 'Terran', 'Terran'],
     winner: 'A', sa: 3, sb: 1, days: 25, map: MAPS[6],
   },
   {
     id: 'dd000008-0000-4000-8000-000000000008',
     type: '3v3', host: C,
-    ta: [C, T1, T2],      tb: [A, B, T3],
-    ta_races: ['Protoss','Terran','Zerg'], tb_races: ['Protoss','Protoss','Protoss'],
+    ta: [C, T1, T2], tb: [A, B, T3],
+    ta_races: ['Protoss', 'Terran', 'Zerg'], tb_races: ['Protoss', 'Protoss', 'Protoss'],
     winner: 'B', sa: 2, sb: 3, days: 20, map: MAPS[7],
   },
   // ── 4v4 ─────────────────────────────────────────────────────────────────────
   {
     id: 'dd000009-0000-4000-8000-000000000009',
     type: '4v4', host: A,
-    ta: [A, B, C, T1],    tb: [T2, T3, T4, T5],
-    ta_races: ['Protoss','Protoss','Protoss','Terran'], tb_races: ['Zerg','Protoss','Terran','Zerg'],
+    ta: [A, B, C, T1], tb: [T2, T3, T4, T5],
+    ta_races: ['Protoss', 'Protoss', 'Protoss', 'Terran'], tb_races: ['Zerg', 'Protoss', 'Terran', 'Zerg'],
     winner: 'A', sa: 3, sb: 0, days: 52, map: MAPS[8],
   },
   {
     id: 'dd000010-0000-4000-8000-000000000010',
     type: '4v4', host: T1,
     ta: [T1, T2, T3, T4], tb: [A, B, C, T5],
-    ta_races: ['Terran','Zerg','Protoss','Terran'], tb_races: ['Protoss','Protoss','Protoss','Zerg'],
+    ta_races: ['Terran', 'Zerg', 'Protoss', 'Terran'], tb_races: ['Protoss', 'Protoss', 'Protoss', 'Zerg'],
     winner: 'B', sa: 1, sb: 3, days: 43, map: MAPS[9],
   },
   {
     id: 'dd000011-0000-4000-8000-000000000011',
     type: '4v4', host: A,
-    ta: [A, C, T2, T4],   tb: [B, T1, T3, T5],
-    ta_races: ['Protoss','Protoss','Zerg','Terran'], tb_races: ['Protoss','Terran','Protoss','Zerg'],
+    ta: [A, C, T2, T4], tb: [B, T1, T3, T5],
+    ta_races: ['Protoss', 'Protoss', 'Zerg', 'Terran'], tb_races: ['Protoss', 'Terran', 'Protoss', 'Zerg'],
     winner: 'A', sa: 3, sb: 2, days: 33, map: MAPS[10],
   },
   {
     id: 'dd000012-0000-4000-8000-000000000012',
     type: '4v4', host: B,
-    ta: [B, T1, T3, T5],  tb: [A, C, T2, T4],
-    ta_races: ['Protoss','Terran','Protoss','Zerg'], tb_races: ['Protoss','Protoss','Zerg','Terran'],
+    ta: [B, T1, T3, T5], tb: [A, C, T2, T4],
+    ta_races: ['Protoss', 'Terran', 'Protoss', 'Zerg'], tb_races: ['Protoss', 'Protoss', 'Zerg', 'Terran'],
     winner: 'B', sa: 2, sb: 3, days: 15, map: MAPS[11],
   },
 ];
@@ -266,7 +266,7 @@ function buildSets(matchId, sa, sb) {
     }
     if (winner === 'A') curA++; else curB++;
 
-    const setId = `${matchId.slice(0, 8)}-${String(i).padStart(4,'0')}-4000-8000-${matchId.slice(-12)}`;
+    const setId = `${matchId.slice(0, 8)}-${String(i).padStart(4, '0')}-4000-8000-${matchId.slice(-12)}`;
     sets.push({ id: setId, num: i, winner });
   }
   return sets;
@@ -325,7 +325,7 @@ async function run() {
 
     for (const t of TESTERS) {
       const hash = await bcrypt.hash(t.password, 10);
-      const now  = new Date().toISOString();
+      const now = new Date().toISOString();
       const authEmail = buildAuthEmail(t.login_id);
       const metaJson = JSON.stringify({
         discord_name: t.discord,
@@ -415,7 +415,7 @@ async function run() {
       await client.query(`
         INSERT INTO public.profiles (
           id, discord_id, by_id, role, race,
-          wins, losses, ladder_mmr, clan_point,
+          wins, losses, personal_mmr, clan_point,
           intro, is_test_account, is_test_account_active,
           created_at
         ) VALUES (
@@ -430,13 +430,13 @@ async function run() {
               race  = EXCLUDED.race,
               wins  = EXCLUDED.wins,
               losses= EXCLUDED.losses,
-              ladder_mmr = EXCLUDED.ladder_mmr,
+              personal_mmr = EXCLUDED.personal_mmr,
               clan_point = EXCLUDED.clan_point,
               intro = EXCLUDED.intro,
               is_test_account = true,
               is_test_account_active = true
       `, [t.id, t.discord, t.by_id, t.role, t.race,
-          t.wins, t.losses, t.mmr, t.clan_point, t.intro]);
+      t.wins, t.losses, t.mmr, t.clan_point, t.intro]);
     }
     console.log(`  ✓ ${TESTERS.length}개 프로필 생성`);
 
@@ -513,12 +513,12 @@ async function run() {
       const profile = await client.query('SELECT wins, losses FROM public.profiles WHERE id=$1', [userId]);
       if (profile.rows.length === 0) continue;
       const prev = profile.rows[0];
-      const newWins   = (prev.wins   || 0) + s.win;
+      const newWins = (prev.wins || 0) + s.win;
       const newLosses = (prev.losses || 0) + s.loss;
-      const newMmr    = await computeMmr(client, userId, s.win, s.loss);
+      const newMmr = await computeMmr(client, userId, s.win, s.loss);
       await client.query(`
         UPDATE public.profiles
-        SET wins = $1, losses = $2, ladder_mmr = $3
+        SET wins = $1, losses = $2, personal_mmr = $3
         WHERE id = $4
       `, [newWins, newLosses, newMmr, userId]);
     }
@@ -533,10 +533,10 @@ async function run() {
     await client.query(`DELETE FROM public.ladders WHERE user_id = ANY($1::uuid[])`, [TESTER_IDS]);
 
     const allProfiles = await client.query(`
-      SELECT id, by_id, ladder_mmr, race, wins, losses
+      SELECT id, by_id, personal_mmr, race, wins, losses
       FROM public.profiles
       WHERE id = ANY($1::uuid[])
-      ORDER BY ladder_mmr DESC
+      ORDER BY personal_mmr DESC
     `, [[A, B, C, ...TESTER_IDS]]);
 
     for (let i = 0; i < allProfiles.rows.length; i++) {
@@ -546,9 +546,9 @@ async function run() {
       const wr = w + l > 0 ? Math.round((w / (w + l)) * 100) + '%' : '0%';
       await client.query(`
         INSERT INTO public.ladders
-          (user_id, nickname, ladder_mmr, race, win, lose, win_rate, rank, is_test_data)
+          (user_id, nickname, personal_mmr, race, win, lose, win_rate, rank, is_test_data)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true)
-      `, [p.id, p.by_id, p.ladder_mmr, p.race, w, l, wr, i + 1]);
+      `, [p.id, p.by_id, p.personal_mmr, p.race, w, l, wr, i + 1]);
     }
     console.log(`  ✓ ${allProfiles.rows.length}명 래더 랭킹 등록`);
 
@@ -562,7 +562,7 @@ async function run() {
     for (const t of TESTERS) {
       await client.query(`
         INSERT INTO public.applications
-          (user_id, discord_name, btag, race, tier, intro, status, created_at, is_test_data)
+          (user_id, discord_name, race, tier, intro, status, created_at, is_test_data)
         VALUES ($1,$2,$3,$4,$5,$6,'합격',$7,true)
         ON CONFLICT DO NOTHING
       `, [
@@ -610,8 +610,8 @@ async function run() {
     for (const t of TESTERS) {
       const s = stat.get(t.id) || { win: 0, loss: 0 };
       pointItems.push({ user_id: t.id, amount: 1000, reason: '신규 가입 보너스', days: 80 });
-      for (let w = 0; w < s.win;  w++) pointItems.push({ user_id: t.id, amount:  150, reason: `경기 승리 보상 (#${w+1})`, days: 50 - w * 3 });
-      for (let l = 0; l < s.loss; l++) pointItems.push({ user_id: t.id, amount:  -50, reason: `경기 패배 차감 (#${l+1})`, days: 45 - l * 3 });
+      for (let w = 0; w < s.win; w++) pointItems.push({ user_id: t.id, amount: 150, reason: `경기 승리 보상 (#${w + 1})`, days: 50 - w * 3 });
+      for (let l = 0; l < s.loss; l++) pointItems.push({ user_id: t.id, amount: -50, reason: `경기 패배 차감 (#${l + 1})`, days: 45 - l * 3 });
     }
     for (const pl of pointItems) {
       await client.query(`
@@ -626,15 +626,15 @@ async function run() {
     // ══════════════════════════════════════════════════════════════════════════
     console.log('\n📝 PHASE 9 — 게시글 등록');
     const testPosts = [
-      { user_id: T1, author: 'By_Tester01', category: '자유',  title: '테스트 계정으로 가입했습니다!', content: '클랜 활동을 테스트해보고 있습니다. 잘 부탁드려요!', days: 78, views: 12 },
-      { user_id: T1, author: 'By_Tester01', category: '전략',  title: '테란 멀티 컨트롤 팁', content: '테란으로 멀티를 효율적으로 가져가는 팁을 공유합니다.', days: 60, views: 34 },
-      { user_id: T2, author: 'By_Tester02', category: 'Q&A',   title: '저그 히드라 타이밍 질문', content: '히드라 러쉬 타이밍이 항상 너무 늦거나 이른 것 같습니다. 조언 부탁드립니다.', days: 72, views: 21 },
+      { user_id: T1, author: 'By_Tester01', category: '자유', title: '테스트 계정으로 가입했습니다!', content: '클랜 활동을 테스트해보고 있습니다. 잘 부탁드려요!', days: 78, views: 12 },
+      { user_id: T1, author: 'By_Tester01', category: '전략', title: '테란 멀티 컨트롤 팁', content: '테란으로 멀티를 효율적으로 가져가는 팁을 공유합니다.', days: 60, views: 34 },
+      { user_id: T2, author: 'By_Tester02', category: 'Q&A', title: '저그 히드라 타이밍 질문', content: '히드라 러쉬 타이밍이 항상 너무 늦거나 이른 것 같습니다. 조언 부탁드립니다.', days: 72, views: 21 },
       { user_id: T2, author: 'By_Tester02', category: '경기리뷰', title: '첫 3v3 경기 후기', content: '실제 유저들과 처음으로 3v3 경기를 해봤습니다. 팀플레이가 생각보다 어렵네요.', days: 54, views: 45 },
-      { user_id: T3, author: 'By_Tester03', category: '전략',  title: '프로토스 4v4 후반 전략', content: '4v4에서 프로토스가 후반에 캐리어 테크로 가는 전략을 써봤는데 효과가 좋았습니다.', days: 65, views: 67 },
-      { user_id: T3, author: 'By_Tester03', category: '자유',  title: '클랜 내전 재미있습니다!', content: '여러 명이 함께 팀플레이를 하는 경험이 정말 즐겁습니다.', days: 44, views: 18 },
-      { user_id: T4, author: 'By_Tester04', category: '자유',  title: '오늘 4v4 패배 아쉬웠습니다', content: '오늘 4v4 경기에서 초반 러쉬에 무너졌습니다. 다음엔 꼭!', days: 42, views: 9 },
-      { user_id: T4, author: 'By_Tester04', category: 'Q&A',   title: '팀플에서 포지션 어떻게 나누나요?', content: '3v3, 4v4에서 각 종족 포지션을 어떻게 나누는 게 효율적인지 궁금합니다.', days: 30, views: 53 },
-      { user_id: T5, author: 'By_Tester05', category: '자유',  title: '루키지만 열심히 하겠습니다!', content: '아직 실력이 부족하지만 클랜원들에게 배우면서 성장하겠습니다.', days: 75, views: 7 },
+      { user_id: T3, author: 'By_Tester03', category: '전략', title: '프로토스 4v4 후반 전략', content: '4v4에서 프로토스가 후반에 캐리어 테크로 가는 전략을 써봤는데 효과가 좋았습니다.', days: 65, views: 67 },
+      { user_id: T3, author: 'By_Tester03', category: '자유', title: '클랜 내전 재미있습니다!', content: '여러 명이 함께 팀플레이를 하는 경험이 정말 즐겁습니다.', days: 44, views: 18 },
+      { user_id: T4, author: 'By_Tester04', category: '자유', title: '오늘 4v4 패배 아쉬웠습니다', content: '오늘 4v4 경기에서 초반 러쉬에 무너졌습니다. 다음엔 꼭!', days: 42, views: 9 },
+      { user_id: T4, author: 'By_Tester04', category: 'Q&A', title: '팀플에서 포지션 어떻게 나누나요?', content: '3v3, 4v4에서 각 종족 포지션을 어떻게 나누는 게 효율적인지 궁금합니다.', days: 30, views: 53 },
+      { user_id: T5, author: 'By_Tester05', category: '자유', title: '루키지만 열심히 하겠습니다!', content: '아직 실력이 부족하지만 클랜원들에게 배우면서 성장하겠습니다.', days: 75, views: 7 },
       { user_id: T5, author: 'By_Tester05', category: '경기리뷰', title: '3v3 참전 후기 - 저그 스포어 올리기 깜빡', content: '어이없는 실수로 게임을 졌습니다. 기초가 더 중요하다는 것을 깨달았습니다.', days: 48, views: 31 },
     ];
     for (const p of testPosts) {
@@ -664,15 +664,15 @@ async function run() {
     console.log('카운트:', JSON.stringify(cnt.rows[0], null, 2));
 
     const final = await client.query(`
-      SELECT p.by_id, p.role, p.race, p.wins, p.losses, p.ladder_mmr, p.clan_point,
+      SELECT p.by_id, p.role, p.race, p.wins, p.losses, p.personal_mmr, p.clan_point,
              l.rank AS ladder_rank
       FROM public.profiles p
       LEFT JOIN public.ladders l ON l.user_id = p.id
-      ORDER BY p.ladder_mmr DESC
+      ORDER BY p.personal_mmr DESC
     `);
     console.log('\n전체 멤버 현황:');
     final.rows.forEach(r =>
-      console.log(`  ${String(r.ladder_rank||'-').padStart(2)}위  ${(r.by_id||'').padEnd(14)} | ${r.role.padEnd(10)} | ${r.race.padEnd(7)} | ${r.wins}승${r.losses}패 | MMR:${r.ladder_mmr} | 포인트:${r.clan_point}`)
+      console.log(`  ${String(r.ladder_rank || '-').padStart(2)}위  ${(r.by_id || '').padEnd(14)} | ${r.role.padEnd(10)} | ${r.race.padEnd(7)} | ${r.wins}승${r.losses}패 | MMR:${r.personal_mmr} | 포인트:${r.clan_point}`)
     );
 
     console.log('\n🔑 테스트 계정 로그인 정보:');
@@ -688,9 +688,9 @@ async function run() {
 
 /** MMR 계산: 기존 MMR + 승리당 +50, 패배당 -30 */
 async function computeMmr(client, userId, wins, losses) {
-  const r = await client.query('SELECT ladder_mmr FROM public.profiles WHERE id=$1', [userId]);
+  const r = await client.query('SELECT personal_mmr FROM public.profiles WHERE id=$1', [userId]);
   if (r.rows.length === 0) return 1000;
-  const base = r.rows[0].ladder_mmr || 1000;
+  const base = r.rows[0].personal_mmr || 1000;
   return Math.max(800, base + wins * 50 - losses * 30);
 }
 

@@ -60,21 +60,21 @@ const MATCH_IDS = Array.from({ length: 15 }, (_, i) =>
  */
 const MATCHES = [
   // A vs B
-  { id: MATCH_IDS[0],  host: A_ID, ta: [A_ID], tb: [B_ID], winner: 'A', sa: 2, sb: 1, days: 60, map: MAPS[0]  },
-  { id: MATCH_IDS[3],  host: B_ID, ta: [A_ID], tb: [B_ID], winner: 'B', sa: 0, sb: 2, days: 50, map: MAPS[3]  },
-  { id: MATCH_IDS[6],  host: A_ID, ta: [A_ID], tb: [B_ID], winner: 'A', sa: 2, sb: 1, days: 40, map: MAPS[6]  },
-  { id: MATCH_IDS[9],  host: A_ID, ta: [A_ID], tb: [B_ID], winner: 'A', sa: 2, sb: 1, days: 30, map: MAPS[9]  },
+  { id: MATCH_IDS[0], host: A_ID, ta: [A_ID], tb: [B_ID], winner: 'A', sa: 2, sb: 1, days: 60, map: MAPS[0] },
+  { id: MATCH_IDS[3], host: B_ID, ta: [A_ID], tb: [B_ID], winner: 'B', sa: 0, sb: 2, days: 50, map: MAPS[3] },
+  { id: MATCH_IDS[6], host: A_ID, ta: [A_ID], tb: [B_ID], winner: 'A', sa: 2, sb: 1, days: 40, map: MAPS[6] },
+  { id: MATCH_IDS[9], host: A_ID, ta: [A_ID], tb: [B_ID], winner: 'A', sa: 2, sb: 1, days: 30, map: MAPS[9] },
   { id: MATCH_IDS[12], host: A_ID, ta: [A_ID], tb: [B_ID], winner: 'A', sa: 2, sb: 0, days: 20, map: MAPS[12] },
   // A vs C
-  { id: MATCH_IDS[1],  host: A_ID, ta: [A_ID], tb: [C_ID], winner: 'B', sa: 1, sb: 2, days: 57, map: MAPS[1]  },
-  { id: MATCH_IDS[4],  host: C_ID, ta: [A_ID], tb: [C_ID], winner: 'A', sa: 2, sb: 0, days: 47, map: MAPS[4]  },
-  { id: MATCH_IDS[7],  host: A_ID, ta: [A_ID], tb: [C_ID], winner: 'B', sa: 0, sb: 2, days: 37, map: MAPS[7]  },
+  { id: MATCH_IDS[1], host: A_ID, ta: [A_ID], tb: [C_ID], winner: 'B', sa: 1, sb: 2, days: 57, map: MAPS[1] },
+  { id: MATCH_IDS[4], host: C_ID, ta: [A_ID], tb: [C_ID], winner: 'A', sa: 2, sb: 0, days: 47, map: MAPS[4] },
+  { id: MATCH_IDS[7], host: A_ID, ta: [A_ID], tb: [C_ID], winner: 'B', sa: 0, sb: 2, days: 37, map: MAPS[7] },
   { id: MATCH_IDS[10], host: A_ID, ta: [A_ID], tb: [C_ID], winner: 'A', sa: 2, sb: 1, days: 27, map: MAPS[10] },
   { id: MATCH_IDS[14], host: C_ID, ta: [A_ID], tb: [C_ID], winner: 'B', sa: 1, sb: 2, days: 14, map: MAPS[14] },
   // B vs C
-  { id: MATCH_IDS[2],  host: B_ID, ta: [B_ID], tb: [C_ID], winner: 'A', sa: 2, sb: 1, days: 54, map: MAPS[2]  },
-  { id: MATCH_IDS[5],  host: C_ID, ta: [B_ID], tb: [C_ID], winner: 'B', sa: 1, sb: 2, days: 44, map: MAPS[5]  },
-  { id: MATCH_IDS[8],  host: B_ID, ta: [B_ID], tb: [C_ID], winner: 'A', sa: 2, sb: 0, days: 34, map: MAPS[8]  },
+  { id: MATCH_IDS[2], host: B_ID, ta: [B_ID], tb: [C_ID], winner: 'A', sa: 2, sb: 1, days: 54, map: MAPS[2] },
+  { id: MATCH_IDS[5], host: C_ID, ta: [B_ID], tb: [C_ID], winner: 'B', sa: 1, sb: 2, days: 44, map: MAPS[5] },
+  { id: MATCH_IDS[8], host: B_ID, ta: [B_ID], tb: [C_ID], winner: 'A', sa: 2, sb: 0, days: 34, map: MAPS[8] },
   { id: MATCH_IDS[11], host: C_ID, ta: [B_ID], tb: [C_ID], winner: 'B', sa: 1, sb: 2, days: 24, map: MAPS[11] },
   { id: MATCH_IDS[13], host: B_ID, ta: [B_ID], tb: [C_ID], winner: 'A', sa: 2, sb: 1, days: 17, map: MAPS[13] },
 ];
@@ -179,7 +179,7 @@ async function run() {
       UPDATE public.profiles SET
         wins       = 6,
         losses     = 4,
-        ladder_mmr = 1350,
+        personal_mmr = 1350,
         clan_point = 3200,
         intro      = '개발자 계정입니다. 저그전 연습 중입니다.',
         race       = 'Protoss'
@@ -191,7 +191,7 @@ async function run() {
         by_id      = 'By_gkfla',
         wins       = 4,
         losses     = 6,
-        ladder_mmr = 1050,
+        personal_mmr = 1050,
         clan_point = 1800,
         intro      = '클랜 초보입니다. 잘 부탁드립니다!',
         race       = 'Protoss'
@@ -202,7 +202,7 @@ async function run() {
       UPDATE public.profiles SET
         wins       = 5,
         losses     = 5,
-        ladder_mmr = 1200,
+        personal_mmr = 1200,
         clan_point = 2500,
         intro      = '마스터 계정. 프로토스 유저입니다.',
         race       = 'Protoss'
@@ -252,9 +252,9 @@ async function run() {
                   $6,'완료',$7,true,true)
           ON CONFLICT (id) DO NOTHING
         `, [s.id, m.id, s.num,
-            JSON.stringify({ race: 'Protoss', user_id: m.ta[0] }),
-            JSON.stringify({ race: 'Protoss', user_id: m.tb[0] }),
-            s.winner, createdAt]);
+        JSON.stringify({ race: 'Protoss', user_id: m.ta[0] }),
+        JSON.stringify({ race: 'Protoss', user_id: m.tb[0] }),
+        s.winner, createdAt]);
       }
     }
     console.log('  ✓ 15경기 + 세트 기록 등록 완료');
@@ -265,9 +265,9 @@ async function run() {
     console.log('\n🏆 PHASE 4 — 래더 랭킹 등록');
 
     const ladderEntries = [
-      { user_id: A_ID, nickname: 'By_Developer', ladder_mmr: 1350, race: 'Protoss', win: 6, lose: 4, rank: 1 },
-      { user_id: C_ID, nickname: 'By_Master',    ladder_mmr: 1200, race: 'Protoss', win: 5, lose: 5, rank: 2 },
-      { user_id: B_ID, nickname: 'By_gkfla',     ladder_mmr: 1050, race: 'Protoss', win: 4, lose: 6, rank: 3 },
+      { user_id: A_ID, nickname: 'By_Developer', personal_mmr: 1350, race: 'Protoss', win: 6, lose: 4, rank: 1 },
+      { user_id: C_ID, nickname: 'By_Master', personal_mmr: 1200, race: 'Protoss', win: 5, lose: 5, rank: 2 },
+      { user_id: B_ID, nickname: 'By_gkfla', personal_mmr: 1050, race: 'Protoss', win: 4, lose: 6, rank: 3 },
     ];
 
     for (const le of ladderEntries) {
@@ -276,9 +276,9 @@ async function run() {
         : '0%';
       await client.query(`
         INSERT INTO public.ladder_rankings
-          (user_id, nickname, ladder_mmr, race, win, lose, win_rate, rank, is_test_data)
+          (user_id, nickname, personal_mmr, race, win, lose, win_rate, rank, is_test_data)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,false)
-      `, [le.user_id, le.nickname, le.ladder_mmr, le.race, le.win, le.lose, wr, le.rank]);
+      `, [le.user_id, le.nickname, le.personal_mmr, le.race, le.win, le.lose, wr, le.rank]);
     }
     console.log('  ✓ 래더 랭킹 3명 등록');
 
@@ -334,17 +334,17 @@ async function run() {
 
     const apps = [
       {
-        user_id: A_ID, discord_name: 'halim0720', btag: 'halim0720#1234',
+        user_id: A_ID, discord_name: 'halim0720',
         race: 'Protoss', tier: '다이아', intro: '열정적으로 활동하겠습니다!',
         status: '합격', days: 90,
       },
       {
-        user_id: B_ID, discord_name: 'gkfla0720', btag: 'gkfla0720#5678',
+        user_id: B_ID, discord_name: 'gkfla0720',
         race: 'Protoss', tier: '골드', intro: '클랜에서 열심히 배우고 싶습니다.',
         status: '합격', days: 85,
       },
       {
-        user_id: C_ID, discord_name: 'halim0720a', btag: 'halim0720a#9999',
+        user_id: C_ID, discord_name: 'halim0720a',
         race: 'Protoss', tier: '마스터', intro: '클랜 운영에 기여하고 싶습니다.',
         status: '합격', days: 95,
       },
@@ -352,9 +352,9 @@ async function run() {
     for (const app of apps) {
       await client.query(`
         INSERT INTO public.applications
-          (user_id, discord_name, btag, race, tier, intro, status, created_at, is_test_data)
+          (user_id, discord_name, race, tier, intro, status, created_at, is_test_data)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,false)
-      `, [app.user_id, app.discord_name, app.btag, app.race, app.tier, app.intro, app.status, daysAgo(app.days)]);
+      `, [app.user_id, app.discord_name, app.race, app.tier, app.intro, app.status, daysAgo(app.days)]);
     }
     console.log('  ✓ 가입 신청 내역 3건 등록');
 
@@ -378,9 +378,9 @@ async function run() {
     console.log('최종 카운트:', JSON.stringify(verify.rows[0], null, 2));
 
     const realProfiles = await client.query(`
-      SELECT id, by_id, role, wins, losses, ladder_mmr, clan_point
+      SELECT id, by_id, role, wins, losses, personal_mmr, clan_point
       FROM public.profiles WHERE id = ANY($1::uuid[])
-      ORDER BY ladder_mmr DESC
+      ORDER BY personal_mmr DESC
     `, [[A_ID, B_ID, C_ID]]);
     console.log('실제 유저 프로필:', JSON.stringify(realProfiles.rows, null, 2));
 
@@ -509,46 +509,46 @@ function buildPointLogs() {
   const items = [
     // User A (총 3200p)
     { user_id: A_ID, amount: 1000, reason: '신규 가입 보너스', days: 88 },
-    { user_id: A_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Master 2:1)', days: 60 },
+    { user_id: A_ID, amount: 200, reason: '경기 승리 보상 (vs By_Master 2:1)', days: 60 },
     { user_id: A_ID, amount: -100, reason: '경기 패배 차감 (vs By_Master 1:2)', days: 57 },
     { user_id: A_ID, amount: -100, reason: '경기 패배 차감 (vs By_gkfla 0:2)', days: 50 },
-    { user_id: A_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Master 2:0)', days: 47 },
-    { user_id: A_ID, amount: 200,  reason: '경기 승리 보상 (vs By_gkfla 2:1)', days: 40 },
+    { user_id: A_ID, amount: 200, reason: '경기 승리 보상 (vs By_Master 2:0)', days: 47 },
+    { user_id: A_ID, amount: 200, reason: '경기 승리 보상 (vs By_gkfla 2:1)', days: 40 },
     { user_id: A_ID, amount: -100, reason: '경기 패배 차감 (vs By_Master 0:2)', days: 37 },
-    { user_id: A_ID, amount: 200,  reason: '경기 승리 보상 (vs By_gkfla 2:1)', days: 30 },
-    { user_id: A_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Master 2:1)', days: 27 },
-    { user_id: A_ID, amount: 200,  reason: '경기 승리 보상 (vs By_gkfla 2:0)', days: 20 },
+    { user_id: A_ID, amount: 200, reason: '경기 승리 보상 (vs By_gkfla 2:1)', days: 30 },
+    { user_id: A_ID, amount: 200, reason: '경기 승리 보상 (vs By_Master 2:1)', days: 27 },
+    { user_id: A_ID, amount: 200, reason: '경기 승리 보상 (vs By_gkfla 2:0)', days: 20 },
     { user_id: A_ID, amount: -100, reason: '경기 패배 차감 (vs By_Master 1:2)', days: 14 },
-    { user_id: A_ID, amount: 500,  reason: '관리자 지급 (클랜 기여 보상)', days: 7 },
+    { user_id: A_ID, amount: 500, reason: '관리자 지급 (클랜 기여 보상)', days: 7 },
 
     // User B (총 1800p)
     { user_id: B_ID, amount: 1000, reason: '신규 가입 보너스', days: 83 },
     { user_id: B_ID, amount: -100, reason: '경기 패배 차감 (vs By_Developer 0:2) — 첫 경기', days: 60 },
-    { user_id: B_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Developer 2:0)', days: 50 },
-    { user_id: B_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Master 2:1)', days: 54 },
+    { user_id: B_ID, amount: 200, reason: '경기 승리 보상 (vs By_Developer 2:0)', days: 50 },
+    { user_id: B_ID, amount: 200, reason: '경기 승리 보상 (vs By_Master 2:1)', days: 54 },
     { user_id: B_ID, amount: -100, reason: '경기 패배 차감 (vs By_Master 1:2)', days: 44 },
     { user_id: B_ID, amount: -100, reason: '경기 패배 차감 (vs By_Developer 1:2)', days: 40 },
-    { user_id: B_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Master 2:0)', days: 34 },
+    { user_id: B_ID, amount: 200, reason: '경기 승리 보상 (vs By_Master 2:0)', days: 34 },
     { user_id: B_ID, amount: -100, reason: '경기 패배 차감 (vs By_Developer 1:2)', days: 30 },
     { user_id: B_ID, amount: -100, reason: '경기 패배 차감 (vs By_Master 1:2)', days: 24 },
     { user_id: B_ID, amount: -100, reason: '경기 패배 차감 (vs By_Developer 0:2)', days: 20 },
-    { user_id: B_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Master 2:1)', days: 17 },
-    { user_id: B_ID, amount: 500,  reason: '관리자 지급 (커뮤니티 활동 보상)', days: 5 },
+    { user_id: B_ID, amount: 200, reason: '경기 승리 보상 (vs By_Master 2:1)', days: 17 },
+    { user_id: B_ID, amount: 500, reason: '관리자 지급 (커뮤니티 활동 보상)', days: 5 },
 
     // User C (총 2500p)
     { user_id: C_ID, amount: 1000, reason: '신규 가입 보너스', days: 93 },
-    { user_id: C_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Developer 2:1)', days: 57 },
+    { user_id: C_ID, amount: 200, reason: '경기 승리 보상 (vs By_Developer 2:1)', days: 57 },
     { user_id: C_ID, amount: -100, reason: '경기 패배 차감 (vs By_Developer 0:2)', days: 47 },
     { user_id: C_ID, amount: -100, reason: '경기 패배 차감 (vs By_gkfla 1:2)', days: 54 },
-    { user_id: C_ID, amount: 200,  reason: '경기 승리 보상 (vs By_gkfla 2:1)', days: 44 },
-    { user_id: C_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Developer 2:0)', days: 37 },
+    { user_id: C_ID, amount: 200, reason: '경기 승리 보상 (vs By_gkfla 2:1)', days: 44 },
+    { user_id: C_ID, amount: 200, reason: '경기 승리 보상 (vs By_Developer 2:0)', days: 37 },
     { user_id: C_ID, amount: -100, reason: '경기 패배 차감 (vs By_gkfla 0:2)', days: 34 },
-    { user_id: C_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Developer 1:2... wait 2:1)', days: 27 },
-    { user_id: C_ID, amount: 200,  reason: '경기 승리 보상 (vs By_gkfla 2:1)', days: 24 },
+    { user_id: C_ID, amount: 200, reason: '경기 승리 보상 (vs By_Developer 1:2... wait 2:1)', days: 27 },
+    { user_id: C_ID, amount: 200, reason: '경기 승리 보상 (vs By_gkfla 2:1)', days: 24 },
     { user_id: C_ID, amount: -100, reason: '경기 패배 차감 (vs By_Developer 1:2)', days: 27 },
-    { user_id: C_ID, amount: 200,  reason: '경기 승리 보상 (vs By_Developer 2:1)', days: 14 },
+    { user_id: C_ID, amount: 200, reason: '경기 승리 보상 (vs By_Developer 2:1)', days: 14 },
     { user_id: C_ID, amount: -100, reason: '경기 패배 차감 (vs By_gkfla 1:2)', days: 17 },
-    { user_id: C_ID, amount: 500,  reason: '관리자 지급 (클랜원 관리 기여)', days: 10 },
+    { user_id: C_ID, amount: 500, reason: '관리자 지급 (클랜원 관리 기여)', days: 10 },
   ];
 
   return items;

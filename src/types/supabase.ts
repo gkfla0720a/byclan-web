@@ -484,7 +484,7 @@ export type Database = {
         Row: {
           favorite_race: string | null
           id: string
-          ladder_mmr: number | null
+          personal_mmr: number | null
           losses: number | null
           race_combo_stats: Json | null
           recent_total_delta: number
@@ -498,7 +498,7 @@ export type Database = {
         Insert: {
           favorite_race?: string | null
           id?: string
-          ladder_mmr?: number | null
+          personal_mmr?: number | null
           losses?: number | null
           race_combo_stats?: Json | null
           recent_total_delta?: number
@@ -512,7 +512,7 @@ export type Database = {
         Update: {
           favorite_race?: string | null
           id?: string
-          ladder_mmr?: number | null
+          personal_mmr?: number | null
           losses?: number | null
           race_combo_stats?: Json | null
           recent_total_delta?: number
@@ -1205,7 +1205,7 @@ export type Database = {
           is_streamer: boolean | null
           is_test_account: boolean | null
           is_test_account_active: boolean | null
-          ladder_mmr: number | null
+          personal_mmr: number | null
           last_daily_bonus_at: string | null
           last_discord_checkin_at: string | null
           last_login_at: string | null
