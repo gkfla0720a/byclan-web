@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 import { buildTeams, MATCH_TYPES } from '@/utils/matchMaking';
-import { useAuthContext } from '@/context/authContext'; // 💡 1. 전역 상태 임포트!
+import { useAuthContext } from '@/context/AuthContext'; // 💡 1. 전역 상태 임포트!
 import type { UserRole, RaceCode } from '@/types/primitives';
 
 const MAX_QUEUE_MINUTES = 20;
@@ -76,7 +76,7 @@ export function useLadderData() {
 
           return {
             id: r.user_id,
-            by_id: r.profiles!.by_id, // 🚨 위에서 필터링했으므로 무조건 string입니다. (타입스크립트 안심)
+            by_id: r.profiles!.by_id,
             role: r.profiles?.role ?? 'guest',
             race: r.profiles?.race ?? null,
             total_mmr: typeof rankData?.total_mmr === 'number' ? rankData.total_mmr : 0, // 0으로 비정상 상태 마킹
