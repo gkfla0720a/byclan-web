@@ -7,8 +7,9 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/context/ToastContext";
 import ToastContainer from "@/components/ToastContainer";
 import QueryProvider from "@/app/QueryProvider";
+import { type ReactNode } from 'react';
 
-export default function Providers({ children }) {
+export default function Providers({ children: ReactNode }) {
   return (
     <ErrorBoundary>
       <QueryProvider>
