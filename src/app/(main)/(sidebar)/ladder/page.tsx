@@ -42,16 +42,15 @@ export default function LadderPage() {
   // 권한 객체에서 래더 플레이 가능 여부 추출
   const permissions = getPermissions();
   const canPlayLadder = permissions.can?.playLadder;
-  // 비로그인 사용자 여부
-  const isGuest = !user;
-  // 방문자(guest) 역할인지 여부
-  const isGuest = user && profile && profile.role === 'guest';
+  // 비회원 또는 방문자 여부
+  const isGuest = !user && profile?.role === 'guest';
+
 
   if (!canPlayLadder) {
     return (
       <SectionErrorBoundary name="래더 프리뷰">
         <LadderPreview
-          isGuest={isGuest || isGuest}
+          isGuest={isGuest}
         />
         <div className="mt-8 px-4"><ExternalMatchList /></div>
       </SectionErrorBoundary>
@@ -60,7 +59,7 @@ export default function LadderPage() {
 
   return (
     <SectionErrorBoundary name="래더">
-      <LadderDashboard onMatchEnter={(id) => setActiveMatchId(id)} />
+      <LadderDashboard onMatchEnter={(id: string) => setActiveMatchId(id)} />
     </SectionErrorBoundary>
   );
 }

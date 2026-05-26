@@ -31,8 +31,24 @@
 
 'use client';
 
-import { Component } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import logger, { Severity } from '@/utils/errorLogger';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface SectionErrorBoundaryProps {
+  children: ReactNode;
+  name?: string;
+  fallback?: ReactNode | ((args: { error: Error | null; reset: () => void }) => ReactNode);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Full-page error boundary (wraps the whole app)
@@ -47,8 +63,8 @@ import logger, { Severity } from '@/utils/errorLogger';
  * @prop {React.ReactNode} [fallback] - 오류 시 표시할 커스텀 UI (없으면 기본 오류 화면 사용)
  */
 
-export class ErrorBoundary extends Component {
-  constructor(props) {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     /** 오류 상태 객체: hasError(오류 발생 여부)와 error(오류 객체) */
     this.state = { hasError: false, error: null };
@@ -61,7 +77,7 @@ export class ErrorBoundary extends Component {
    * @returns {{ hasError: boolean, error: Error }}
    */
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
@@ -72,7 +88,7 @@ export class ErrorBoundary extends Component {
    * @param {React.ErrorInfo} errorInfo - 컴포넌트 스택 정보
    */
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.captureException(error, {
       severity: Severity.CRITICAL,
       componentStack: errorInfo?.componentStack,
@@ -143,8 +159,8 @@ export class ErrorBoundary extends Component {
  * @prop {React.ReactNode | ((args: { error: Error, reset: () => void }) => React.ReactNode)} [fallback]
  *   - 오류 시 표시할 커스텀 UI. 함수로 전달하면 error와 reset을 인자로 받습니다.
  */
-export class SectionErrorBoundary extends Component {
-  constructor(props) {
+export class SectionErrorBoundary extends Component<SectionErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: SectionErrorBoundaryProps) {
     super(props);
     /** 오류 상태: hasError(오류 발생 여부)와 error(오류 객체) */
     this.state = { hasError: false, error: null };
@@ -155,7 +171,7 @@ export class SectionErrorBoundary extends Component {
    * @param {Error} error - 발생한 오류 객체
    * @returns {{ hasError: boolean, error: Error }}
    */
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
@@ -163,7 +179,7 @@ export class SectionErrorBoundary extends Component {
    * 오류 발생 후 ERROR 수준으로 로그를 기록합니다.
    * name prop이 있으면 섹션 이름도 함께 기록합니다.
    */
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.captureException(error, {
       severity: Severity.ERROR,
       section: this.props.name ?? 'unknown',
@@ -178,8 +194,8 @@ export class SectionErrorBoundary extends Component {
    */
   handleReset = () => {
     this.setState({
-        hasError: false,
-        error: null
+      hasError: false,
+      error: null
     });
   }
 
