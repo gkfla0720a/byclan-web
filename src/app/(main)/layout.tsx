@@ -2,9 +2,9 @@
 
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-export default function MainLayout({ children: ReactNode }) {
+export default function MainLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <Header />
