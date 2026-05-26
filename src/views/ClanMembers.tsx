@@ -21,9 +21,13 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
+import type { Database } from '@/types';
+import { useAuthContext } from '@/context/AuthContext';
 import { ROLE_PERMISSIONS, hasPermission, normalizeRole } from '@/utils/permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
+
+const { user, profile } = useAuthContext();
 
 const CACHE_KEY = 'members_list';
 
@@ -73,7 +77,7 @@ function applyDemoStreamers(memberList) {
  * @param {object} member - profiles 레코드
  * @returns {object|null}
  */
-function normalizeMemberRole(member) {
+function normalizeMemberRole(member: typeof user) {
   if (!member) return null;
   const normalizedRole = member?.role;
   return {
