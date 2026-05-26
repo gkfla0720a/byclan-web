@@ -1,4 +1,4 @@
-// 파일명: src/app/providers.jsx
+// 파일명: src/app/providers.tsx
 
 "use client";
 

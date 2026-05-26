@@ -1,4 +1,4 @@
-// 파일명: src/app/layout.jsx
+// 파일명: src/app/layout.tsx
 
 import "./globals.css";
 import Providers from "@/app/providers";

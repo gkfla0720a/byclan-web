@@ -1,4 +1,4 @@
-// 파일명: (main)/layout.jsx
+// 파일명: (main)/layout.tsx
 
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
