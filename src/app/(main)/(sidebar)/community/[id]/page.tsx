@@ -12,25 +12,25 @@ import { hasPermission, normalizeRole } from '@/utils/permissions';
 export default function PostDetailPage() {
   const params = useParams(); // URL에서 :id 값을 가져옵니다. 예: /community/123 -> params.id === '123'
   const router = useRouter(); // 페이지 이동을 위한 라우터
-  const postId = params.id; // 게시글 ID (문자열 형태)
+  const postId = params.id as string; // 게시글 ID (문자열 형태)
   const { user, profile } = useAuthContext(); // 현재 로그인 유저 프로필 (권한 확인용)
 
-  const [post, setPost] = useState(null); // 게시글 데이터 (제목, 내용, 작성자 등)
+  const [post, setPost] = useState<any>(null); // 게시글 데이터 (제목, 내용, 작성자 등)
   const [loading, setLoading] = useState(true); // 데이터 로딩 중 여부
-  const [commentsList, setCommentsList] = useState([]); // 댓글 목록 배열
+  const [commentsList, setCommentsList] = useState<any[]>([]); // 댓글 목록 배열
   const [comment, setComment] = useState(''); // 댓글 입력란의 현재 값
-  const [editingCommentId, setEditingCommentId] = useState(null); // 현재 수정 중인 댓글 ID (null이면 수정 모드 아님)
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null); // 현재 수정 중인 댓글 ID (null이면 수정 모드 아님)
   const [editContent, setEditContent] = useState(''); // 수정 중인 댓글의 내용
   
-  const [adjacentPosts, setAdjacentPosts] = useState({ prev: null, next: null }); // 이전/다음 글 ID 저장
-  const [userVote, setUserVote] = useState(null); // 'like', 'dislike', null
+  const [adjacentPosts, setAdjacentPosts] = useState<any>({ prev: null, next: null }); // 이전/다음 글 ID 저장
+  const [userVote, setUserVote] = useState<string | null>(null); // 'like', 'dislike', null
 
   // 1. 댓글 목록 불러오기
   const fetchComments = useCallback(async () => {
     const { data, error } = await supabase
       .from('comments')
       .select('*, profiles!user_id(by_id)')
-      .eq('post_id', postId)
+      .eq('post_id', Number(postId))
       .order('created_at', { ascending: true });
     if (!error && data) setCommentsList(data);
   }, [postId]);
@@ -41,7 +41,7 @@ export default function PostDetailPage() {
     const { data } = await supabase
       .from('post_votes')
       .select('vote_type')
-      .eq('post_id', postId)
+      .eq('post_id', Number(postId))
       .eq('user_id', user?.id)
       .maybeSingle();
     if (data) setUserVote(data.vote_type);
@@ -54,12 +54,12 @@ export default function PostDetailPage() {
       const { data: postData } = await supabase
         .from('posts')
         .select('*, profiles!user_id(by_id)')
-        .eq('id', postId)
+        .eq('id', Number(postId))
         .single();
       
       if (postData) {
         setPost(postData);
-        await supabase.rpc('increment_views', { row_id: postId });
+        await supabase.rpc('increment_views', { row_id: Number(postId) });
         
         // 이전/다음글 찾기
         const { data: nextD } = await supabase.from('posts').select('id').lt('created_at', postData.created_at).order('created_at', { ascending: false }).limit(1).maybeSingle();
@@ -78,7 +78,7 @@ export default function PostDetailPage() {
     if (!comment) return;
     if (!user) return alert('로그인한 클랜원만 작성 가능합니다!');
     
-    const { error } = await supabase.from('comments').insert([{ post_id: postId, user_id: user.id, content: comment }]);
+    const { error } = await supabase.from('comments').insert([{ post_id: Number(postId), user_id: user.id, content: comment }]);
     if (!error) {
       setComment('');
       fetchComments(); // 즉시 새로고침
@@ -88,20 +88,20 @@ export default function PostDetailPage() {
   };
 
   // 댓글 삭제
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = async (commentId: number) => {
     if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
     const { error } = await supabase.from('comments').delete().eq('id', commentId);
     if (!error) fetchComments(); // 삭제 후 새로고침
   };
 
   // 댓글 수정 모드 켜기
-  const startEditComment = (cmt) => {
+  const startEditComment = (cmt: any) => {
     setEditingCommentId(cmt.id);
     setEditContent(cmt.content);
   };
 
   // 댓글 수정 완료 (DB 저장)
-  const handleUpdateComment = async (commentId) => {
+  const handleUpdateComment = async (commentId: number) => {
     if (!editContent) return;
     const { error } = await supabase.from('comments').update({ content: editContent }).eq('id', commentId);
     if (!error) {
@@ -110,7 +110,7 @@ export default function PostDetailPage() {
     }
   };
 
-  const handleVote = async (type) => {
+  const handleVote = async (type: 'like' | 'dislike') => {
     if (!user) return alert('로그인한 클랜원만 투표가 가능합니다!');
 
     try {
@@ -122,13 +122,13 @@ export default function PostDetailPage() {
         // [취소]
         if (type === 'like') updatedLikes--; else updatedDislikes--;
         setUserVote(null);
-        await supabase.from('post_votes').delete().eq('post_id', postId).eq('user_id', user.id);
+        await supabase.from('post_votes').delete().eq('post_id', Number(postId)).eq('user_id', user.id);
       } else {
         // [등록/변경]
         if (type === 'like') { updatedLikes++; if (userVote === 'dislike') updatedDislikes--; } 
         else { updatedDislikes++; if (userVote === 'like') updatedLikes--; }
         setUserVote(type);
-        await supabase.from('post_votes').upsert({ post_id: postId, user_id: user.id, vote_type: type }, { onConflict: 'post_id, user_id' });
+        await supabase.from('post_votes').upsert({ post_id: Number(postId), user_id: user.id, vote_type: type }, { onConflict: 'post_id, user_id' });
       }
 
       // 2. 화면 즉시 반영 (로딩 없이 빠르게 변하게 함)
@@ -143,7 +143,7 @@ export default function PostDetailPage() {
 
   const handleDelete = async () => {
     if (!window.confirm('정말로 삭제하시겠습니까?')) return;
-    await supabase.from('posts').delete().eq('id', postId);
+    await supabase.from('posts').delete().eq('id', Number(postId));
     router.push('/community');
   };
 

@@ -43,15 +43,16 @@ export default function LadderPage() {
   const permissions = getPermissions();
   const canPlayLadder = permissions.can?.playLadder;
   // 비로그인 사용자 여부
-  const isGuest = !user;
+  const isNotLoggedIn = !user;
   // 방문자(guest) 역할인지 여부
-  const isGuest = user && profile && profile.role === 'guest';
+  const isGuestRole = user && profile && profile.role === 'guest';
+  const isGuest = isNotLoggedIn || isGuestRole;
 
   if (!canPlayLadder) {
     return (
       <SectionErrorBoundary name="래더 프리뷰">
         <LadderPreview
-          isGuest={isGuest || isGuest}
+          isGuest={isGuest}
         />
         <div className="mt-8 px-4"><ExternalMatchList /></div>
       </SectionErrorBoundary>
