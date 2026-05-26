@@ -3,15 +3,8 @@
 'use client';
 
 
-import { 
-  useMatchCenter, 
-  BET_AMOUNTS, 
-  RACE_COMBOS, 
-  RACE_ICONS, 
-  formatTime, 
-  getRaceCards 
-} from '@/hooks/useMatchCenter'; 
-import { isCompletedSetStatus, isPendingReviewSetStatus } from '@/utils/matchCenter';
+import { useMatchCenter } from '@/hooks/useMatchCenter'; 
+import { isCompletedSetStatus, isPendingReviewSetStatus, BET_AMOUNTS, RACE_COMBOS, RACE_ICONS, formatTime, getRaceCards } from '@/utils/matchCenter';
 
 export default function MatchCenter({ matchId, onExit }) {
   const {
