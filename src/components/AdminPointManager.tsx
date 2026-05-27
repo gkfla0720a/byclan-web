@@ -17,7 +17,7 @@ interface MemberWithMeta extends ProfileRow {
 }
 
 interface LogWithProfile extends ClanPointLogRow {
-  profiles?: { by_id: string | null; role: string | null } | null;
+  profiles?: { by_id: string; role: string | null } | null;
 }
 
 const TYPE_LABEL: Record<string, string> = {

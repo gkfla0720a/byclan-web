@@ -1,25 +1,26 @@
 // 파일명: src/types/models.ts
 
 import type {
-  AdminPostRow,
-  ApplicationRow,
-  LadderMatchRow,
-  MatchBetRow,
-  MatchSetRow,
-  NoticePostRow,
-  NotificationRow,
-  PointLogRow,
-  ProfileMetaRow,
+  ProfilesRow,
   ProfileOAuthRow,
-  ProfileRow,
-  LadderQueueRow,
+  ProfileMetaRow,
   LadderRankingsRow,
-  PostRow,
+  LadderQueueRow,
+  LadderRecordRow,
+  LadderMatchSetRow,
+  ApplicationRow,
+  ClanPointLogRow,
+  MatchBetRow,
+  PostsRow,
+  CommentsRow,
+  NoticePostsRow,
+  AdminPostsRow,
+  NotificationsRow,
 } from './rows';
 import type { RaceCode, UserRole, UUID } from './primitives';
 
 // Omit을 활용하여 중복되는 user_id를 제거하고 깔끔하게 병합
-export interface AuthProfile extends ProfileRow,
+export interface AuthProfile extends ProfilesRow,
   Omit<ProfileOAuthRow, 'user_id'>,
   Partial<Omit<LadderRankingsRow, 'user_id' | 'by_id' | 'id'>>,
   Partial<Omit<LadderQueueRow, 'user_id' | 'id'>>,
@@ -27,16 +28,18 @@ export interface AuthProfile extends ProfileRow,
   [key: string]: unknown;
 }
 
-// Supabase는 문자열을 기본적으로 string | null로 추론하므로, 
-// UI에서 쓸 때는 우리가 만든 리터럴 타입(UserRole, RaceCode)으로 강제 변환/보장하기 위한 요약 모델
+// 🚨 ProfileSummary: 런타임 계산의 안전성을 위한 핵심 모델
 export interface ProfileSummary {
   id: UUID;
   by_id: string;
   role: UserRole | string | null;
   race?: RaceCode | string | null;
-  total_mmr?: number | null;
+
+  // 🚨 합의안 반영: total_mmr은 무조건 존재해야 하는 number 타입! (옵셔널 ? 및 null 제거)
+  total_mmr: number;
   personal_mmr?: number | null;
   team_mmr?: number | null;
+
   clan_point?: number | null;
   is_streamer?: boolean | null;
 }
@@ -46,12 +49,11 @@ export interface ApplicationListItem extends ApplicationRow {
   tester?: ProfileSummary | null;
 }
 
-export interface MemberListItem extends ProfileRow {
+export interface MemberListItem extends ProfilesRow {
   pending_notifications?: number;
   active_match_id?: UUID | null;
 }
 
-// 래더 랭킹 UI에 그릴 데이터 모델 (기존 LadderRow 역할 대체)
 export interface LadderBoardItem {
   id: string; // 랭킹 row id
   user_id: UUID;
@@ -63,7 +65,7 @@ export interface LadderBoardItem {
   profile?: ProfileSummary | null;
 }
 
-export interface LadderMatchCard extends LadderMatchRow {
+export interface LadderMatchCard extends LadderMatchSetRow {
   host?: ProfileSummary | null;
   team_a_profiles?: ProfileSummary[];
   team_b_profiles?: ProfileSummary[];
@@ -72,27 +74,28 @@ export interface LadderMatchCard extends LadderMatchRow {
 }
 
 export interface LadderMatchDetail extends LadderMatchCard {
-  sets: MatchSetRow[];
+  sets: LadderRecordRow[];
   bets: MatchBetRow[];
 }
 
-export interface CommunityPostListItem extends PostRow {
+export interface CommunityPostListItem extends PostsRow {
   author?: ProfileSummary | null;
 }
 
-export interface NoticeListItem extends NoticePostRow {
+export interface NoticeListItem extends NoticePostsRow {
   author?: ProfileSummary | null;
 }
 
-export interface AdminPostListItem extends AdminPostRow {
+export interface AdminPostListItem extends AdminPostsRow {
   author?: ProfileSummary | null;
 }
 
-export interface NotificationListItem extends NotificationRow {
+export interface NotificationListItem extends NotificationsRow {
   user?: ProfileSummary | null;
 }
 
-export interface PointLogListItem extends PointLogRow {
+// 중복되던 PointLogListItem을 통합
+export interface PointLogListItem extends ClanPointLogRow {
   user?: ProfileSummary | null;
 }
 
@@ -116,3 +119,13 @@ export type AdminSectionKey =
 export type ApiResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string; code?: string };
+
+// 🚨 중복된 CommentRow 대신 CommentsRow 사용
+export interface JoinedComment extends CommentsRow {
+  profiles: { by_id: string | null; role: string | null } | null;
+}
+
+// 🚨 중복된 PointLogRow 대신 ClanPointLogRow 사용
+export interface JoinedPointLog extends ClanPointLogRow {
+  profiles: { by_id: string | null; role: string | null } | null;
+}

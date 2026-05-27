@@ -4,8 +4,9 @@
 
 import ProfileSidebar from '@/components/ProfileSidebar';
 import { useAuthContext } from '@/context/AuthContext';
+import type { ReactNode } from 'react';
 
-export default function SidebarLayout({ children }) {
+export default function SidebarLayout({ children }: { children: ReactNode }) {
   const { user, profile, needsSetup, authLoading } = useAuthContext();
 
   // 💡 1. 로딩 중: 레이아웃이 널뛰기하는 것을 방지하기 위해 뼈대만 유지하거나 빈 화면 반환

@@ -91,7 +91,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.captureException(error, {
       severity: Severity.CRITICAL,
-      componentStack: errorInfo?.componentStack,
+      componentStack: errorInfo.componentStack,
       boundary: 'root',
     });
   }
@@ -183,7 +183,7 @@ export class SectionErrorBoundary extends Component<SectionErrorBoundaryProps, E
     logger.captureException(error, {
       severity: Severity.ERROR,
       section: this.props.name ?? 'unknown',
-      componentStack: errorInfo?.componentStack,
+      componentStack: errorInfo.componentStack,
       boundary: 'section',
     });
   }
