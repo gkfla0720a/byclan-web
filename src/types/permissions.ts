@@ -1,13 +1,9 @@
 // 파일명: src/types/permissions.ts
 
-import { USER_ROLES } from './primitives';
+import { USER_ROLES, USER_ROLE_LIST, type UserRole } from './primitives';
 
-export const ROLES = USER_ROLES;
-
-export type ActiveRole = (typeof ROLES)[number];
-
-export function isActiveRole(value: string): value is ActiveRole {
-  return (ROLES as readonly string[]).includes(value);
+export function isActiveRole(value: string): value is UserRole {
+  return USER_ROLE_LIST.includes(value as any);
 }
 
 export type PermissionAction = (typeof PERMISSIONS)[number];
@@ -58,11 +54,11 @@ export const ROLE_GROUPS = ['developer', 'management', 'senior', 'members', 'oth
 
 export type RoleGroup = typeof ROLE_GROUPS[number];
 
-export const LADDER_MEMBER_ROLES: ActiveRole[] = [
-  'rookie',
-  'member',
-  'veteran',
-  'admin',
-  'master',
-  'developer',
-] as const;
+export const LADDER_MEMBER_ROLES: UserRole[] = [
+  USER_ROLES.ROOKIE,
+  USER_ROLES.MEMBER,
+  USER_ROLES.VETERAN,
+  USER_ROLES.ADMIN,
+  USER_ROLES.MASTER,
+  USER_ROLES.DEVELOPER,
+];

@@ -6,19 +6,21 @@ export type ISODateString = string;
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
-export const USER_ROLES = [
-  'banned',
-  'guest',
-  'applicant',
-  'rookie',
-  'member',
-  'veteran',
-  'admin',
-  'master',
-  'developer',
-] as const;
+export const USER_ROLES = {
+  BANNED: 'banned',
+  GUEST: 'guest',
+  APPLICANT: 'applicant',
+  GHOST: 'ghost',
+  ROOKIE: 'rookie',
+  MEMBER: 'member',
+  VETERAN: 'veteran',
+  ADMIN: 'admin',
+  MASTER: 'master',
+  DEVELOPER: 'developer',
+} as const;
 
-export type UserRole = (typeof USER_ROLES)[number];
+export const USER_ROLE_LIST = Object.values(USER_ROLES);
+export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
 
 export const RACE_CODES = ['Terran', 'Zerg', 'Protoss', 'Random'] as const;
 export type RaceCode = (typeof RACE_CODES)[number];

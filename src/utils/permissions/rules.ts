@@ -1,6 +1,6 @@
 // 파일명: @/utils/permissions/rules.ts
 
-import { PermissionAction } from '@/types/permissions';
+import { PermissionAction } from '@/types';
 
 export const DELEGATION_RULES = {
   master_to_admin: ['member.approve', 'match.manage', 'ladder.moderate'] as PermissionAction[],
@@ -11,6 +11,7 @@ export const DELEGATION_RULES = {
 export const ROLE_CHANGE_RULES = {
   promotion_paths: {
     applicant: ['rookie'],
+    ghost: ['member'],
     rookie: ['member'],
     member: ['veteran'],
     veteran: ['admin'],
@@ -19,9 +20,9 @@ export const ROLE_CHANGE_RULES = {
   },
   demotion_paths: {
     master: ['admin'],
-    admin: ['veteran'],
-    veteran: ['member'],
-    member: ['rookie'],
+    admin: ['veteran', 'member', 'ghost'],
+    veteran: ['member', 'ghost'],
+    member: ['rookie', 'ghost'],
     rookie: ['applicant'],
     applicant: [],
     developer: [],

@@ -1,15 +1,13 @@
 // 파일명: src/utils/permissions/menu-policy.ts
-import { ActiveRole, ROLES, LADDER_MEMBER_ROLES } from '@/types/permissions';
+import { type UserRole, USER_ROLE_LIST, LADDER_MEMBER_ROLES } from '@/types';
 import type { MenuName } from '@/hooks/useNavigate';
 
-const ALL_ROLES: ActiveRole[] = [...ROLES];
+const ALL_ROLES: UserRole[] = [...USER_ROLE_LIST];
 
-// 🌟 여기서 Record<MenuName, ActiveRole[]> 를 사용하면,
-// MenuName 사전에 있는 모든 메뉴가 100% 빠짐없이 적혀 있어야만 에러가 안 납니다!
-export const MENU_PERMISSIONS: Record<MenuName, ActiveRole[]> = {
+export const MENU_PERMISSIONS: Record<MenuName, UserRole[]> = {
   'Home': ALL_ROLES,
   '가입안내': ALL_ROLES,
-  '정회원 전환신청': ['rookie'],
+  '정회원 전환신청': ['rookie', 'ghost'],
   '개요': ALL_ROLES,
   '클랜원': ALL_ROLES,
   'BY래더': LADDER_MEMBER_ROLES,
@@ -37,7 +35,7 @@ export const MENU_PERMISSIONS: Record<MenuName, ActiveRole[]> = {
 };
 
 // 여기도 MenuName으로 타입을 깐깐하게 지정합니다.
-export function canAccessMenu(role: ActiveRole, menuPath: MenuName): boolean {
+export function canAccessMenu(role: UserRole, menuPath: MenuName): boolean {
   const allowedRoles = MENU_PERMISSIONS[menuPath] || [];
   return allowedRoles.includes(role);
 }
