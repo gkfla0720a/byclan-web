@@ -26,7 +26,7 @@
  *   // 특정 섹션 보호 (name prop으로 섹션 이름 지정):
  *   <SectionErrorBoundary name="랭킹 섹션" fallback={<MyCustomFallback />}>
  *     <RankingSection />
- *   </SectionErrorBoundary>
+ *   </SectionErrorBoundary> 
  */
 
 'use client';

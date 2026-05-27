@@ -42,7 +42,7 @@ export default function LadderPage() {
   // 권한 객체에서 래더 플레이 가능 여부 추출
   const permissions = getPermissions();
   const canPlayLadder = permissions.can?.playLadder;
-  // 비회원 또는 방문자 여부
+  // 비회원 또는 방문자 여부 
   const isGuest = !user && profile?.role === 'guest';
 
 
