@@ -1,6 +1,5 @@
 // 파일명: @/types/permissions/checker.ts
 
-// 🟢 ActiveRole 대신 본명인 UserRole을 가져오고, isActiveRole도 함께 수입합니다.
 import { type UserRole, PermissionAction, isActiveRole, RoleGroup } from '@/types';
 import { ROLE_PERMISSIONS } from './role-permissions';
 import { loadDevSettings } from './dev-settings';
