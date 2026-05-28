@@ -2,7 +2,7 @@
 
 import { USER_ROLES, USER_ROLE_LIST, type UserRole } from './primitives';
 
-export function isActiveRole(value: string): value is UserRole {
+export const isActiveRole = (value: string): value is UserRole => {
   return USER_ROLE_LIST.includes(value as any);
 }
 
