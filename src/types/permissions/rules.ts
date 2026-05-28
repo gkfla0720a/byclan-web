@@ -1,4 +1,4 @@
-// 파일명: @/utils/permissions/rules.ts
+// 파일명: @/types/permissions/rules.ts
 
 import { PermissionAction } from '@/types';
 

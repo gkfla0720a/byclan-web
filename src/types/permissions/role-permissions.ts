@@ -1,4 +1,4 @@
-// 파일명: @/utils/permissions/role-permissions.ts
+// 파일명: @/types/permissions/role-permissions.ts
 
 import { UserRole, PermissionAction, RoleDefinition, } from '@/types';
 

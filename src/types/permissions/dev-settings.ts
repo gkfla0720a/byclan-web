@@ -1,4 +1,4 @@
-// 파일명: @/utils/permissions/dev-settings.ts
+// 파일명: @/types/permissions/dev-settings.ts
 
 export interface DevSettings {
   homeGateEnabled: boolean;
@@ -14,7 +14,7 @@ export const DEV_SETTINGS: DevSettings = {
   canDelegateMaster: true,
 };
 
-export function loadDevSettings(): DevSettings {
+export const loadDevSettings = (): DevSettings => {
   // SSR/테스트 환경 보호
   if (typeof window === 'undefined') return DEV_SETTINGS;
 
@@ -26,7 +26,7 @@ export function loadDevSettings(): DevSettings {
   }
 }
 
-export function saveDevSettings(settings: DevSettings): void {
+export const saveDevSettings = (settings: DevSettings): void => {
   if (typeof window === 'undefined') return;
 
   try {

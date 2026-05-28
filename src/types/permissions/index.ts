@@ -1,4 +1,4 @@
-// 파일명: @/utils/permissions/index.ts
+// 파일명: @/types/permissions/index.ts
 
 export * from '@/types/permissions';
 export * from './dev-settings';

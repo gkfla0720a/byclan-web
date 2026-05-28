@@ -1,20 +1,23 @@
-// 파일명: @/utils/permissions/checker.ts
+// 파일명: @/types/permissions/checker.ts
 
-import { ActiveRole, PermissionAction, isActiveRole, RoleGroup } from '@/types/permissions';
+// 🟢 ActiveRole 대신 본명인 UserRole을 가져오고, isActiveRole도 함께 수입합니다.
+import { type UserRole, PermissionAction, isActiveRole, RoleGroup } from '@/types';
 import { ROLE_PERMISSIONS } from './role-permissions';
 import { loadDevSettings } from './dev-settings';
 
-
-export function normalizeRole(role: string | null | undefined): ActiveRole {
+// 1. 역할 데이터 정상화 및 검증 함수
+export const normalizeRole = (role: string | null | undefined): UserRole => {
   if (!role) return 'guest';
   const lowered = role.toLowerCase();
+
   if (!isActiveRole(lowered)) {
     throw new Error(`[Security Error] 정의되지 않은 불법 역할 데이터가 감지되었습니다: "${role}"`);
   }
-  return lowered;
-}
+  return lowered as UserRole;
+};
 
-export function hasPermission(userRole: ActiveRole,permission: PermissionAction): boolean {
+// 2. 특정 권한을 가지고 있는지 체크하는 함수
+export const hasPermission = (userRole: UserRole, permission: PermissionAction): boolean => {
   const roleDef = ROLE_PERMISSIONS[userRole];
   if (!roleDef) return false;
 
@@ -29,14 +32,16 @@ export function hasPermission(userRole: ActiveRole,permission: PermissionAction)
   return roleDef.permissions.includes(permission);
 };
 
-// ✅ 수정 후 — 안전장치 추가 + 스타일 통일
-export function hasLevel(userRole: ActiveRole, requiredLevel: number): boolean {
+
+// 3. 최소 권한 레벨을 만족하는지 체크하는 함수
+export const hasLevel = (userRole: UserRole, requiredLevel: number): boolean => {
   const roleDef = ROLE_PERMISSIONS[userRole];
   if (!roleDef) return false;
   return roleDef.level >= requiredLevel;
 };
 
-export function isInGroup (userRole: ActiveRole, group: RoleGroup): boolean {
+// 4. 유저가 특정 그룹(운영진, 정식멤버 등)에 속하는지 체크하는 함수
+export const isInGroup = (userRole: UserRole, group: RoleGroup): boolean => {
   switch (group) {
     case 'developer':
       return userRole === 'developer';
@@ -47,7 +52,7 @@ export function isInGroup (userRole: ActiveRole, group: RoleGroup): boolean {
     case 'members':
       return ['rookie', 'member', 'veteran', 'admin', 'master', 'developer'].includes(userRole);
     case 'others':
-      return ['guest', 'banned', 'applicant'].includes(userRole);
+      return ['guest', 'banned', 'applicant', 'ghost'].includes(userRole);
     default: {
       const _exhaustiveCheck: never = group;
       throw new Error(`[Type Error] 처리되지 않은 새로운 롤 그룹이 존재합니다: ${_exhaustiveCheck}`);

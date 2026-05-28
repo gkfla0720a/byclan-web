@@ -36,7 +36,7 @@ export const recordAdminAudit = async (
       action_type: payload.action_type,
       category: payload.category,
       target_table: payload.target_table,
-
+      
       // 물품 주입
       actor_id: payload.actor_id ?? null,
       actor_by_id: payload.actor_by_id ?? null,

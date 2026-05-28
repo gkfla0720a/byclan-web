@@ -1,4 +1,5 @@
-// 파일명: src/utils/permissions/menu-policy.ts
+// 파일명: src/types/permissions/menu-policy.ts
+
 import { type UserRole, USER_ROLE_LIST, LADDER_MEMBER_ROLES } from '@/types';
 import type { MenuName } from '@/hooks/useNavigate';
 
