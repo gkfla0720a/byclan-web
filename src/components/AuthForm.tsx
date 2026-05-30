@@ -103,7 +103,18 @@ export default function AuthForm() {
                 <span className="px-4 text-yellow-500 font-black text-sm bg-gray-800/50 h-full flex items-center border-r border-gray-700">By_</span>
                 <input
                   type="text" value={nickname}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setNickname(e.target.value.replace(/\s/g, '')); setIsNicknameChecked(false); }}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    // 1. 유저가 입력한 값에서 영문 대소문자와 숫자가 아닌 것(특수문자, 공백, 한글 등)을 실시간으로 지웁니다.
+                    let cleanValue = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+
+                    // 2. 만약 첫 글자가 숫자로 시작한다면, 첫 글자를 강제로 지워버립니다.
+                    if (/^[0-9]/.test(cleanValue)) {
+                      cleanValue = cleanValue.slice(1);
+                    }
+
+                    setNickname(cleanValue);
+                    setIsNicknameChecked(false);
+                  }}
                   required className="w-full p-3.5 bg-transparent text-white focus:outline-none font-bold" placeholder="닉네임"
                 />
               </div>
