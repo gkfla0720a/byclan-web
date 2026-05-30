@@ -23,7 +23,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
 import type { Database } from '@/types';
 import { useAuthContext } from '@/context/AuthContext';
-import { ROLE_PERMISSIONS, hasPermission, normalizeRole } from '@/utils/permissions';
+import { ROLE_PERMISSIONS, hasPermission, normalizeRole } from '@/types/permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
 

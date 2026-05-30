@@ -15,7 +15,7 @@ interface QueuePlayer {
   by_id: string;
   role: UserRole | string | null;
   race: RaceCode | string | null;
-  total_mmr: number;
+  total_mmr: number | null;
   queue_joined_at: string | null;
 }
 

@@ -5,7 +5,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/supabase';
 import type { Database, AuthProfile as UserProfile } from '@/types';
 import { extractAccountIdFromAuthUser } from '@/utils/accountId';
-import { normalizeRole } from '@/utils/permissions';
+import { normalizeRole } from '@/types/permissions';
 import { clearCurrentViewerTestAccountFlag, setCurrentViewerTestAccountFlag } from '@/utils/testData';
 import logger from '@/utils/errorLogger';
 

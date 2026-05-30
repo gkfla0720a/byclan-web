@@ -3,9 +3,9 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/supabase';
-import { hasPermission } from '@/utils/permissions';
+import { hasPermission } from '@/types/permissions';
 import { delegateMaster } from '@/services/memberService';
-import type { UserRole } from '@/types'; // 정의하신 직급 타입 가져오기
+import type { UserRole } from '@/types';
 
 interface Manager {
   id: string;

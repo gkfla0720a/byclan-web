@@ -4,8 +4,8 @@ import { supabase } from '@/supabase';
 import { recordAdminAudit } from './adminAudit';
 import type { AdminActionType, AuditCategory } from '@/types/domain';
 
-// 1. 유저 강제 추방 (Banned User)
-export const bannedUser = async (
+// 1. 유저 강제 추방 (Ban User)
+export const banUser = async ( // ClanMembers.tsx에서 적용되어야 할 것 같은데 이 함수는 어디에서도 쓰이지 않는 것으로 보임.(확인 필요)
   targetUserId: string,
   adminId: string,
   reason: string
@@ -21,7 +21,7 @@ export const bannedUser = async (
   // 2. 감사 로그 기록
   await recordAdminAudit(supabase, {
     actor_id: adminId,
-    action_type: 'BANNED_USER' as AdminActionType,
+    action_type: 'BAN_USER',
     category: 'MEMBER_MANAGEMENT' as AuditCategory,
     target_table: 'profiles',
     target_id: targetUserId,
