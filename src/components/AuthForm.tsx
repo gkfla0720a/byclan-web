@@ -12,9 +12,9 @@ export default function AuthForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
-  const [agreed, setAgreed] = useState(false); 
+  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showTerms, setShowTerms] = useState(false); 
+  const [showTerms, setShowTerms] = useState(false);
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
@@ -25,7 +25,7 @@ export default function AuthForm() {
   const checkNicknameDuplicate = async () => {
     if (!nickname) return alert("닉네임을 입력해주세요.");
     if (nickname.length < 2) return alert("닉네임은 최소 2글자 이상이어야 합니다.");
-    
+
     const fullID = `By_${nickname}`;
     const { count, error } = await supabase
       .from('profiles')
@@ -43,10 +43,10 @@ export default function AuthForm() {
     }
   };
 
-  // 🚨 타입스크립트 HTML 폼 이벤트 타입 지정
+  // 타입스크립트 HTML 폼 이벤트 타입 지정
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (isSignUp) {
       if (!isNicknameChecked) return alert("닉네임 중복 확인을 먼저 해주세요.");
       if (password !== confirmPassword) return alert("비밀번호가 서로 일치하지 않습니다.");
@@ -54,7 +54,7 @@ export default function AuthForm() {
       if (!/[a-zA-Z]/.test(password)) return alert("비밀번호에 영문자가 포함되어야 합니다.");
       if (!/[0-9]/.test(password)) return alert("비밀번호에 숫자가 포함되어야 합니다.");
       if (!agreed) return alert("이용약관 및 개인정보 처리방침에 동의해주세요.");
-      
+
       setLoading(true);
       const normalizedNickname = normalizeAccountId(nickname);
       const { data, error } = await supabase.auth.signUp({
@@ -79,9 +79,9 @@ export default function AuthForm() {
       }
     } else {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ 
-        email: getLoginEmailFromInput(accountId), 
-        password 
+      const { error } = await supabase.auth.signInWithPassword({
+        email: getLoginEmailFromInput(accountId),
+        password
       });
       if (error) alert("로그인 정보가 정확하지 않습니다.");
     }
@@ -93,7 +93,7 @@ export default function AuthForm() {
       <h2 className="text-3xl font-black text-white mb-8 text-center italic tracking-tighter">
         {isSignUp ? 'JOIN BYCLAN' : 'BATTLE-NET LOGIN'}
       </h2>
-      
+
       <form onSubmit={handleSubmit} className="space-y-5">
         {isSignUp && (
           <div>
@@ -101,13 +101,13 @@ export default function AuthForm() {
             <div className="flex gap-2 mt-1">
               <div className="flex-1 flex items-center bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden focus-within:border-yellow-500">
                 <span className="px-4 text-yellow-500 font-black text-sm bg-gray-800/50 h-full flex items-center border-r border-gray-700">By_</span>
-                <input 
-                  type="text" value={nickname} 
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setNickname(e.target.value.replace(/\s/g, '')); setIsNicknameChecked(false); }} 
-                  required className="w-full p-3.5 bg-transparent text-white focus:outline-none font-bold" placeholder="닉네임" 
+                <input
+                  type="text" value={nickname}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setNickname(e.target.value.replace(/\s/g, '')); setIsNicknameChecked(false); }}
+                  required className="w-full p-3.5 bg-transparent text-white focus:outline-none font-bold" placeholder="닉네임"
                 />
               </div>
-              <button 
+              <button
                 type="button" onClick={checkNicknameDuplicate}
                 className={`px-5 rounded-2xl text-[10px] font-black transition-all ${isNicknameChecked ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300'}`}
               >
@@ -119,19 +119,19 @@ export default function AuthForm() {
 
         <div>
           <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Login ID</label>
-          <input 
-            type="text" value={accountId} 
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAccountId(isSignUp ? normalizeAccountId(e.target.value) : e.target.value)} 
-            required className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:outline-none focus:border-yellow-500" 
-            placeholder={isSignUp ? 'yourid' : '아이디 또는 기존 이메일'} 
+          <input
+            type="text" value={accountId}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAccountId(isSignUp ? normalizeAccountId(e.target.value) : e.target.value)}
+            required className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:outline-none focus:border-yellow-500"
+            placeholder={isSignUp ? 'yourid' : '아이디 또는 기존 이메일'}
           />
         </div>
 
         <div>
           <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Password</label>
-          <input 
-            type="password" value={password} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} 
-            required minLength={8} className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:outline-none focus:border-yellow-500" placeholder="8자 이상, 영문+숫자" 
+          <input
+            type="password" value={password} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+            required minLength={8} className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:outline-none focus:border-yellow-500" placeholder="8자 이상, 영문+숫자"
           />
         </div>
 
@@ -139,14 +139,14 @@ export default function AuthForm() {
           <>
             <div>
               <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Confirm Password</label>
-              <input 
-                type="password" value={confirmPassword} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)} 
-                required className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:outline-none focus:border-yellow-500" placeholder="비밀번호 확인" 
+              <input
+                type="password" value={confirmPassword} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
+                required className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:outline-none focus:border-yellow-500" placeholder="비밀번호 확인"
               />
             </div>
             <div className="bg-gray-900/50 p-4 rounded-2xl border border-gray-700 space-y-3">
               <div className="flex items-start gap-3">
-                <input 
+                <input
                   type="checkbox" id="agreed" checked={agreed} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgreed(e.target.checked)}
                   className="mt-1 w-4 h-4 accent-yellow-500 rounded cursor-pointer"
                 />
@@ -158,8 +158,8 @@ export default function AuthForm() {
           </>
         )}
 
-        <button 
-          type="submit" disabled={loading} 
+        <button
+          type="submit" disabled={loading}
           className={`w-full py-4 mt-4 font-black rounded-2xl transition-all shadow-xl text-sm tracking-widest ${loading ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-400 text-gray-900'}`}
         >
           {loading ? 'PROCESSING...' : (isSignUp ? 'REGISTER ACCOUNT' : 'LOGIN SYSTEM')}
