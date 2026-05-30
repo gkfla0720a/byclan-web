@@ -12,7 +12,6 @@ export type AuditCategory =
 export type AdminActionType =
   // 회원 관리
   | 'UPDATE_ROLE'        // 직급 변경 (예: rookie -> member)
-  | 'EXPEL_USER'         // 클랜원 강제 추방
   | 'BAN_USER'           // 블랙리스트(영구 정지) 처리
   
   // 가입 신청

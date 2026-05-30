@@ -1,6 +1,6 @@
-// 파일명: @/utils/permissions/index.ts
+// 파일명: @/types/permissions/index.ts
 
-export * from '@/types/permissions';
+export * from '@/types/viewpermissions';
 export * from './dev-settings';
 export * from './role-permissions';
 export * from './menu-policy';

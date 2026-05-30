@@ -29,13 +29,10 @@
     "target": "ES2017"
   },
   "include": [
-    "next-env.d.ts",
+    "**/*.js",
+    "**/*.jsx",
     "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    ".next/types/**/*.tsx",
-    ".next/dev/types/**/*.tsx"
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules"

@@ -1,6 +1,6 @@
-// 파일명: @/utils/permissions/role-permissions.ts
+// 파일명: @/types/permissions/role-permissions.ts
 
-import { ActiveRole, PermissionAction, RoleDefinition, } from '@/types/permissions';
+import { UserRole, PermissionAction, RoleDefinition, } from '@/types';
 
 const banned_PERMS: PermissionAction[] = [
   'home.view',
@@ -122,6 +122,14 @@ export const ROLE_PERMISSIONS = {
     color: '#DDA0DD',
     icon: '🆕',
   },
+  ghost: {
+    name: '고스트',
+    description: '휴면 상태의 사용자',
+    level: 30,
+    permissions: APPLICANT_PERMS,
+    color: '#B0B0B0',
+    icon: '📝',
+  },
   applicant: {
     name: '신규 가입자',
     description: '클랜 가입 신청자 (테스트 신청 및 대기)',
@@ -146,4 +154,4 @@ export const ROLE_PERMISSIONS = {
     color: '#9CA3AF',
     icon: '🚫',
   },
-} satisfies Record<ActiveRole, RoleDefinition>;
+} satisfies Record<UserRole, RoleDefinition>;

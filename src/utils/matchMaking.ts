@@ -1,7 +1,7 @@
 // 파일명: src/utils/matchMaking.ts
 
 import { getPlayerMmr } from './profiles'; // (해당 파일에 맞게 유지)
-import type { ProfileSummary } from '@/types'; 
+import type { ProfileSummary } from '@/types';
 
 export const MATCH_TYPES = {
   '3v3': { label: '3대3', minPlayers: 6, perTeam: 3, isLadder: true, format: 'BO5 (3선승)' },
@@ -13,17 +13,19 @@ export const MATCH_TYPES = {
 
 // players에 any 대신 명확한 타입을 부여합니다.
 export function buildTeams(
-  players: ProfileSummary[], 
-  perTeam: number, 
+  players: ProfileSummary[],
+  perTeam: number,
   sortOption: 'balance' | 'top' | 'bottom'
 ) {
   if (players.length < perTeam * 2) return null;
   const pool = [...players].slice(0, perTeam * 2);
 
   if (sortOption === 'balance') {
+    // 이 부분 아무것도 없음(실행되는 내용이 없어 문제!!)
+
     // ... 기존 알고리즘 동일 ... (에러 없이 안전하게 계산됩니다)
   }
-  
+
   if (sortOption === 'top') {
     const sorted = [...pool].sort((a, b) => getPlayerMmr(b) - getPlayerMmr(a));
     return { teamA: sorted.slice(0, perTeam), teamB: sorted.slice(perTeam) };

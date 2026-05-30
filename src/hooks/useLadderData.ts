@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 import { buildTeams, MATCH_TYPES } from '@/utils/matchMaking';
-import { useAuthContext } from '@/context/AuthContext'; // 💡 1. 전역 상태 임포트!
+import { useAuthContext } from '@/context/AuthContext';
 import type { UserRole, RaceCode } from '@/types/primitives';
 
 const MAX_QUEUE_MINUTES = 20;
@@ -12,21 +12,17 @@ const BALANCE_THRESHOLD = 200;
 
 interface QueuePlayer {
   id: string;
-  by_id: string; // 🚨 2. 필수값으로 강제! (null 허용 안 함)
+  by_id: string;
   role: UserRole | string | null;
   race: RaceCode | string | null;
-  total_mmr: number;
+  total_mmr: number | null;
   queue_joined_at: string | null;
 }
 
-// 💡 3. 매개변수(user, authLoading)를 모두 제거합니다!
 export function useLadderData() {
-  // 💡 4. 필요한 정보는 전역 Context에서 다이렉트로 꺼내 씁니다.
   const { user, authLoading } = useAuthContext();
-
   const [queueMatchType, setQueueMatchType] = useState<'1v1' | '2v2' | '3v3' | '4v4' | '5v5'>('4v4');
   const [sortOption, setSortOption] = useState<'balance' | 'top' | 'bottom'>('balance');
-
   const [queuePlayers, setQueuePlayers] = useState<QueuePlayer[]>([]);
   const [ongoingMatches, setOngoingMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +35,7 @@ export function useLadderData() {
 
   const cooldownTimerRef = useRef<number | null>(null);
   const queueTimerRef = useRef<number | null>(null);
+  const lastQueueKeyRef = useRef<string>('');
 
   // (currentUserRef 로직은 이제 전역 user를 바로 쓰므로 의존성 배열로 관리합니다)
 
@@ -65,7 +62,7 @@ export function useLadderData() {
           const isTest = isTestViewer ? (meta?.is_test_account && meta?.is_test_account_active) : !meta?.is_test_account;
 
           // 🚨 5. by_id가 없으면 가입 설정이 완료되지 않은 유령 데이터이므로 큐에서 아예 걸러버립니다!
-          if (!r.profiles?.by_id) return false;
+          if (!r.profiles.by_id) return false;
 
           return isTest;
         })
@@ -76,7 +73,7 @@ export function useLadderData() {
 
           return {
             id: r.user_id,
-            by_id: r.profiles!.by_id,
+            by_id: r.profiles?.by_id?? 'undefined',
             role: r.profiles?.role ?? 'guest',
             race: r.profiles?.race ?? null,
             total_mmr: typeof rankData?.total_mmr === 'number' ? rankData.total_mmr : 0, // 0으로 비정상 상태 마킹
@@ -105,7 +102,7 @@ export function useLadderData() {
       if (allTeamIds.length > 0) {
         const { data: teamProfs } = await supabase.from('ladder_rankings').select('user_id, total_mmr, profiles!inner(by_id)').in('user_id', allTeamIds);
         const profMap = Object.fromEntries((teamProfs || []).map((p: any) => [
-          p.user_id, { id: p.user_id, by_id: p.profiles?.by_id, total_mmr: p.total_mmr }
+          p.user_id, { id: p.user_id, by_id: p.profiles.by_id, total_mmr: p.total_mmr }
         ]));
         setMatchProfiles(profMap);
       }

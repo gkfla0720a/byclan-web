@@ -35,7 +35,7 @@ export function getRaceIcon(race: Race): RaceIcon {
 }
 
 interface Player { // `total_mmr`은 필수이며 number 타입입니다.
-  total_mmr: number;
+  total_mmr: number | null;
 }
 
 export function getPlayerMmr(player: Player): number {

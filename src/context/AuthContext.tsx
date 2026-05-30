@@ -35,7 +35,7 @@
  */
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { useAuth, UseAuthReturn } from '@/hooks/useAuth';
 
 /**
@@ -59,7 +59,7 @@ const AuthContext = createContext<UseAuthReturn | null>(null);
  *     <App />
  *   </AuthProvider>
  */
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
   return (
     <AuthContext.Provider value={auth}>

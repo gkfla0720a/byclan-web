@@ -18,7 +18,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { filterVisibleTestData } from '@/utils/testData';
-import { ROLE_PERMISSIONS } from '@/utils/permissions/role-permissions';
+import { ROLE_PERMISSIONS } from '@/types/permissions';
 import { useNavigate } from '@/hooks/useNavigate';
 import { isRelationshipError } from '@/utils/retry';
 
@@ -64,7 +64,7 @@ export default function AdminBoard() {
         created_at,
         profiles:user_id ( by_id, role ) 
       `)
-      .order('created_at', { ascending: false })); 
+      .order('created_at', { ascending: false }));
 
     if (error) {
       console.error("목록 불러오기 에러:", error);
@@ -157,8 +157,8 @@ export default function AdminBoard() {
       setIsSubmitting(true);
       const { error } = await supabase
         .from('admin_posts')
-        .insert({ 
-          title: newPost.title, 
+        .insert({
+          title: newPost.title,
           content: newPost.content,
           user_id: myProfile.id,
           is_test_data: Boolean(myProfile?.is_test_account),
@@ -166,11 +166,11 @@ export default function AdminBoard() {
         });
 
       if (error) throw error;
-      
+
       alert('기밀 문서가 정상적으로 기록되었습니다.');
-      setNewPost({ title: '', content: '' }); 
-      setIsWriting(false); 
-      await fetchPosts(); 
+      setNewPost({ title: '', content: '' });
+      setIsWriting(false);
+      await fetchPosts();
     } catch (error) {
       alert('기록 실패: ' + error.message);
     } finally {
@@ -200,12 +200,12 @@ export default function AdminBoard() {
       [ SYSTEM: SECURE CONNECTION ESTABLISHING... ]
     </div>
   );
-  
+
   if (!isAdmin) return (
     <div className="w-full my-20 bg-gray-900 rounded-3xl p-16 text-center border-4 border-red-950/70 shadow-[0_0_60px_rgba(185,28,28,0.2)] animate-pulse">
       <div className="text-7xl mb-6">⚠️</div>
       <h2 className="text-4xl font-black text-red-400 mb-6 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">
-        CLASSIFIED INFORMATION <br/> (접근 불가)
+        CLASSIFIED INFORMATION <br /> (접근 불가)
       </h2>
       <p className="text-red-100/70 text-lg leading-relaxed max-w-xl mx-auto">
         이곳은 클랜 마스터 및 운영진 전용 기밀 구역입니다. 인가되지 않은 요원의 접근은 기록되며 즉시 차단됩니다.
@@ -215,7 +215,7 @@ export default function AdminBoard() {
 
   return (
     <div className="w-full py-8 px-4 animate-fade-in-down font-sans mb-10">
-      
+
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10 border-b-2 border-yellow-700/50 pb-6 shadow-[0_4px_10px_-4px_rgba(234,179,8,0.2)]">
         <div>
           <h2 className="text-3xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-300 via-yellow-100 to-yellow-600 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
@@ -233,8 +233,8 @@ export default function AdminBoard() {
             </button>
           )}
           {!isWriting && (
-            <button 
-              onClick={() => setIsWriting(true)} 
+            <button
+              onClick={() => setIsWriting(true)}
               className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-gray-950 text-base font-bold rounded-full shadow-[0_0_15px_rgba(234,179,8,0.4)] transition-transform hover:scale-105"
             >
               <span>✍️</span> 기밀 기록하기
@@ -247,25 +247,25 @@ export default function AdminBoard() {
         <div className="bg-gray-800 rounded-2xl p-8 border-2 border-yellow-700 shadow-2xl mb-10 animate-fade-in-down">
           <h3 className="text-xl font-bold text-yellow-300 mb-6 flex items-center gap-2"><span>#</span> 새로운 기밀 문서 작성</h3>
           <form onSubmit={handleCreatePost} className="space-y-5">
-            <input 
-              type="text" name="title" value={newPost.title} onChange={handleInputChange} 
-              placeholder="문서 제목을 입력하세요" required 
+            <input
+              type="text" name="title" value={newPost.title} onChange={handleInputChange}
+              placeholder="문서 제목을 입력하세요" required
               className="w-full p-4 rounded-xl bg-gray-900 border border-gray-700 focus:border-yellow-500 focus:outline-none text-white font-semibold text-lg"
             />
-            <textarea 
-              name="content" value={newPost.content} onChange={handleInputChange} 
-              placeholder="내용을 기록하세요 (클랜 규칙 위반자, 매너 체크, 운영 회의 안건 등)" required rows="10" 
+            <textarea
+              name="content" value={newPost.content} onChange={handleInputChange}
+              placeholder="내용을 기록하세요 (클랜 규칙 위반자, 매너 체크, 운영 회의 안건 등)" required rows="10"
               className="w-full p-4 rounded-xl bg-gray-900 border border-gray-700 focus:border-yellow-500 focus:outline-none text-white text-base leading-relaxed"
             />
             <div className="flex gap-3 justify-end pt-3">
-              <button 
+              <button
                 type="submit" disabled={isSubmitting}
                 className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-base font-bold rounded-xl disabled:opacity-50"
               >
                 {isSubmitting ? '저장중..' : '문서 기록 완료'}
               </button>
-              <button 
-                type="button" onClick={() => setIsWriting(false)} 
+              <button
+                type="button" onClick={() => setIsWriting(false)}
                 className="px-6 py-2.5 bg-gray-600 hover:bg-gray-500 text-white text-base font-bold rounded-xl"
               >
                 취소
@@ -278,7 +278,7 @@ export default function AdminBoard() {
       <div className="space-y-6">
         {posts.map((post) => (
           <div key={post.id} className="bg-gray-800 p-7 rounded-2xl border border-gray-700/70 shadow-xl relative group hover:border-gray-600/50 transition-colors">
-            
+
             <div className="absolute top-5 right-6 text-gray-500 text-xs font-mono">
               {new Date(post.created_at).toLocaleString()}
             </div>
