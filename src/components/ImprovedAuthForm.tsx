@@ -1,47 +1,16 @@
+// 파일명: src/components/ImprovedAuthForm.tsx
+
 'use client';
 
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { isLegacyEmailLogin } from '@/utils/accountId';
+import { TERMS_OF_SERVICE } from '@/utils/docsData';
+import { formId, formNick } from '@/utils/joinProcess';
 import { useOAuthSignIn, usePasswordSignIn, usePasswordSignUp } from '@/features/auth/useAuthMutations';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
-// ── 1. 유효성 검사 전담 구역 (정밀한 정규식 융합) ──────────────────────────────
-/**
- * 계정 ID의 규칙을 검사합니다 (영문 시작, 영문+숫자, 2~20자)
- */
-const checkAccountIdValidity = (id: string): boolean => {
-  return /^[^0-9]/.test(id) && /^[a-zA-Z0-9]{2,20}$/.test(id);
-};
 
-/**
- * By_닉네임의 규칙을 검사합니다 (영문+숫자, 2~20자)
- */
-const checkNicknameValidity = (nickname: string): boolean => {
-  return /^[a-zA-Z0-9]{2,20}$/.test(nickname);
-};
-
-// ── 2. 이용약관 데이터 ──────────────────────────────────────────────────────
-const TERMS_OF_SERVICE = `ByClan 서비스 이용약관
-
-제1조 (목적)
-본 약관은 ByClan(이하 "클랜") 홈페이지 서비스 이용과 관련하여 클랜과 이용자 간의 권리·의무 및 책임사항을 규정하는 것을 목적으로 합니다.
-
-제2조 (개인정보 수집 및 이용)
-클랜은 서비스 제공을 위하여 다음 정보를 수집합니다.
-- 로그인 아이디: 계정 식별용 아이디
-- 클랜 아이디(by_id): 서비스 내 식별자
-- 디스코드 계정: 래더 시스템 참여 시 연동 (선택)
-
-제3조 (이용자의 의무)
-이용자는 다음 행위를 금지합니다.
-- 타인의 개인정보 무단 수집·이용
-- 서비스를 이용한 불법 행위
-- 허위 정보 기재
-
-제4조 (서비스 이용)
-가입 완료 시 'applicant(지원자)' 등급으로 시작합니다.
-디스코드 연동 및 관리자 승인 완료 후 정회원 활동이 가능합니다.`;
 
 // ── 3. 내장 아이디/비밀번호 인증 폼 컴포넌트 ─────────────────────────────────
 const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
@@ -78,22 +47,22 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
   const termsAccepted = useWatch({ control, name: 'termsAccepted' });
 
   // 유효성 판정 메커니즘 가동
-  const isAccountIdValid = checkAccountIdValidity(accountId);
-  const isNicknameValid = checkNicknameValidity(nickname);
+  const isAccountIdValid = formId(accountId);
+  const isNicknameValid = formNick(nickname);
 
   const loading = signInMutation.isPending || signUpMutation.isPending;
   const discordLoading = oauthMutation.isPending && oauthMutation.variables === 'discord';
   const googleLoading = oauthMutation.isPending && oauthMutation.variables === 'google';
-  
+
   // 에러 메시지 통합 처리 센터
-  const error = 
-    errors.accountId?.message || 
-    errors.nickname?.message || 
-    errors.password?.message || 
-    errors.confirmPassword?.message || 
-    errors.termsAccepted?.message || 
-    signInMutation.error?.message || 
-    signUpMutation.error?.message || 
+  const error =
+    errors.accountId?.message ||
+    errors.nickname?.message ||
+    errors.password?.message ||
+    errors.confirmPassword?.message ||
+    errors.termsAccepted?.message ||
+    signInMutation.error?.message ||
+    signUpMutation.error?.message ||
     null;
 
   /**
@@ -106,10 +75,10 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
 
     if (isSignUp) {
       // 회원가입 프로세스 작동 (가짜 시스템 이메일 변환은 usePasswordSignUp 훅 내부 혹은 껍데기에서 처리됩니다)
-      await signUpMutation.mutateAsync({ 
-        accountId: data.accountId, 
-        nickname: data.nickname, 
-        password: data.password 
+      await signUpMutation.mutateAsync({
+        accountId: data.accountId,
+        nickname: data.nickname,
+        password: data.password
       });
       alert('ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.');
       setIsSignUp(false);
@@ -134,32 +103,26 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
       {error && <ErrorMessage message={error} />}
 
       <form onSubmit={handleSubmit(handleAuth)} className="space-y-5">
-        
+
         {/* ── 계정 ID 입력 칸 ── */}
         <div>
-          <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Login ID</label>
-          <div className={`flex items-center bg-gray-900 border rounded-2xl overflow-hidden transition-all mt-1 ${
-            isSignUp && accountId && !isAccountIdValid ? 'border-red-500' : 'border-gray-700 focus-within:border-yellow-500'
-          }`}>
-            {isSignUp && <span className="px-4 text-yellow-500 font-black text-sm bg-gray-800/50 h-full flex items-center border-r border-gray-700">ID</span>}
+          <label className="text-[10px] font-black text-gray-500 uppercase ml-1">계정 ID</label>
+          <div className={`flex items-center bg-gray-900 border rounded-2xl overflow-hidden transition-all mt-1 ${isSignUp && accountId && !isAccountIdValid ? 'border-red-500' : 'border-gray-700 focus-within:border-yellow-500'
+            }`}>
             <input
               type="text"
-              placeholder={isSignUp ? "계정ID (영문 시작, 2~20자)" : "아이디 또는 기존 이메일"}
+              placeholder="계정 ID (영문 시작, 2~20자)"
               className="w-full p-3.5 bg-transparent text-white focus:outline-none font-bold"
               maxLength={20}
               {...register('accountId', {
                 required: '계정ID를 입력해 주세요.',
-                validate: (val) => !isSignUp || isAccountIdValid || '형식에 맞지 않는 계정ID입니다.',
-                onChange: (e) => {
-                  // 실시간으로 대문자를 소문자로 세탁하고 특수문자를 차단하는 스마트 UX 필터
-                  e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '');
-                }
+                validate: (val) => isAccountIdValid || '형식에 맞지 않는 계정ID입니다.',
               })}
             />
           </div>
-          {isSignUp && accountId && !isAccountIdValid && (
+          {accountId && !isAccountIdValid && (
             <p className="text-[11px] text-red-400 mt-2 ml-1 font-bold animate-pulse">
-              ❌ 첫 글자는 영문만 가능하며, 영문+숫자 조합의 2~20자여야 합니다.
+              영문 시작, 영문+숫자 조합의 2~20자여야 합니다.
             </p>
           )}
         </div>
@@ -167,10 +130,9 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
         {/* ── 클랜 닉네임 입력 칸 (가입 시에만 등장) ── */}
         {isSignUp && (
           <div>
-            <label className="text-[10px] font-black text-gray-500 uppercase ml-1">By_ Nickname</label>
-            <div className={`flex items-center bg-gray-900 border rounded-2xl overflow-hidden transition-all mt-1 ${
-              nickname && !isNicknameValid ? 'border-red-500' : 'border-gray-700 focus-within:border-yellow-500'
-            }`}>
+            <label className="text-[10px] font-black text-gray-500 uppercase ml-1">By_닉네임</label>
+            <div className={`flex items-center bg-gray-900 border rounded-2xl overflow-hidden transition-all mt-1 ${nickname && !isNicknameValid ? 'border-red-500' : 'border-gray-700 focus-within:border-yellow-500'
+              }`}>
               <span className="px-4 text-yellow-500 font-black text-sm bg-gray-800/50 h-full flex items-center border-r border-gray-700">By_</span>
               <input
                 type="text"
@@ -179,13 +141,13 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
                 maxLength={20}
                 {...register('nickname', {
                   required: isSignUp ? '닉네임을 입력해 주세요.' : false,
-                  validate: (val) => !isSignUp || isNicknameValid || '형식에 맞지 않는 닉네임입니다.',
+                  validate: (val) => isNicknameValid || '형식에 맞지 않는 닉네임입니다.',
                 })}
               />
             </div>
             {nickname && !isNicknameValid && (
               <p className="text-[11px] text-red-400 mt-2 ml-1 font-bold animate-pulse">
-                ❌ 특수문자 및 공백 없이 영문과 숫자만 사용하여 2~20자만 허용됩니다.
+                영문+숫자, 2~20자로 작성해주세요.
               </p>
             )}
           </div>
@@ -200,9 +162,8 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
             className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:outline-none focus:border-yellow-500"
             {...register('password', {
               required: '비밀번호를 입력해 주세요.',
-              minLength: { value: isSignUp ? 8 : 1, message: '비밀번호는 최소 8자 이상이어야 합니다.' },
+              minLength: { value: 8, message: '비밀번호는 최소 8자 이상이어야 합니다.' },
               validate: (val) => {
-                if (!isSignUp) return true;
                 if (!/[a-zA-Z]/.test(val)) return '비밀번호에 영문자가 포함되어야 합니다.';
                 if (!/[0-9]/.test(val)) return '비밀번호에 숫자가 포함되어야 합니다.';
                 return true;
@@ -260,11 +221,11 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
               </button>
             </div>
 
-            {/* 숨겨진 톱니바퀴 스위치(showTerms)가 켜지면 짠 하고 내려오는 우아한 인라인 약관 뷰어 */}
+            {/* 숨겨진 톱니바퀴 스위치(showTerms)가 켜지면 나타나는 약관 뷰어 */}
             {showTerms && (
               <div className="mt-2 rounded-xl bg-gray-950 p-3 border border-gray-800 text-[11px] text-gray-400 max-h-32 overflow-y-auto whitespace-pre-line leading-relaxed relative">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setShowTerms(false)}
                   className="absolute right-2 top-2 text-gray-500 hover:text-white font-bold"
                 >
@@ -339,7 +300,7 @@ export default function ImprovedAuthForm({ onSuccess }: { onSuccess: (user: any)
 
       <div className="relative overflow-hidden rounded-3xl border border-gray-700 bg-gray-900/90 shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
         <div className="grid lg:grid-cols-[1.1fr_1fr]">
-          
+
           {/* 사이드 대문 비주얼 영역 */}
           <section className="hidden lg:flex flex-col justify-between p-12 border-r border-gray-800 bg-[linear-gradient(145deg,rgba(17,24,39,0.6)_0%,rgba(3,7,18,0.95)_100%)]">
             <div>
@@ -347,14 +308,8 @@ export default function ImprovedAuthForm({ onSuccess }: { onSuccess: (user: any)
                 BYCLAN <span className="text-yellow-500">NET</span>
               </h1>
               <p className="text-gray-500 text-xs mt-3 uppercase tracking-[0.2em] font-bold">
-                스타크래프트 빠른무한 클랜 관리 시스템
+                스타크래프트 No.1 빠른무한 클랜
               </p>
-            </div>
-
-            <div className="space-y-3 text-xs text-gray-400 font-medium">
-              <p className="flex items-center gap-2">⏱️ 래더 운영, 전적, 포인트를 실시간 관리</p>
-              <p className="flex items-center gap-2">📱 모바일/데스크톱 반응형 완벽 지원</p>
-              <p className="flex items-center gap-2">🔒 가입 시 applicant(지원자) 등급 즉시 부여</p>
             </div>
           </section>
 
@@ -366,14 +321,14 @@ export default function ImprovedAuthForm({ onSuccess }: { onSuccess: (user: any)
                   BYCLAN <span className="text-yellow-500">NET</span>
                 </h1>
                 <p className="text-gray-500 text-[10px] mt-2 uppercase tracking-[0.18em] font-bold">
-                  스타크래프트 빠른무한 클랜 관리 시스템
+                  스타크래프트 No.1 빠른무한 클랜
                 </p>
               </div>
 
               <EmailLoginForm onSuccess={onSuccess} />
             </div>
           </section>
-          
+
         </div>
       </div>
     </div>

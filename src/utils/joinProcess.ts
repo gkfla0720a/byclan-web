@@ -19,6 +19,15 @@
 import { supabase } from '@/supabase';
 import type { Database } from '@/types/supabase';
 
+
+export const formId = (accountId: string): boolean => {
+  return /^[^0-9]/.test(accountId) && /^[a-zA-Z0-9]{2,20}$/.test(accountId);
+};
+
+export const formNick = (nickname: string): boolean => {
+  return /^[a-zA-Z0-9]{2,20}$/.test(nickname);
+};
+
 /**
 * joinProcess 함수의 반환 타입을 정의합니다.
 * 성공 여부와 메시지, 그리고 오류 발생 시 오류 객체를 포함합니다.
