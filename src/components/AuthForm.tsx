@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/supabase';
-import { buildInternalAuthEmail, getLoginEmailFromInput, normalizeAccountId } from '@/utils/accountId';
+import { buildInternalAuthEmail, getLoginEmailFromInput } from '@/utils/accountId';
 
 export default function AuthForm() {
   const [loading, setLoading] = useState(false);
@@ -79,7 +79,7 @@ export default function AuthForm() {
       if (!isAccountIdChecked) return alert("계정ID 중복 확인을 먼저 해 주세요.");
       if (!isNicknameChecked) return alert("By_닉네임 중복 확인을 먼저 해 주세요.");
       if (password !== confirmPassword) return alert("비밀번호가 서로 일치하지 않습니다.");
-      if (password.length <= 8) return alert("비밀번호는 최소 8자 이상이어야 합니다.");
+      if (password.length < 8) return alert("비밀번호는 최소 8자 이상이어야 합니다.");
       if (!/[a-zA-Z]/.test(password)) return alert("비밀번호에 영문자가 포함되어야 합니다.");
       if (!/[0-9]/.test(password)) return alert("비밀번호에 숫자가 포함되어야 합니다.");
       if (!agreed) return alert("이용약관 및 개인정보처리 방침에 동의해 주세요.");
