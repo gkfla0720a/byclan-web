@@ -1073,6 +1073,7 @@ export type Database = {
       profiles: {
         Row: {
           by_id: string | null
+          account_id: string | null
           clan_point: number | null
           created_at: string
           id: string
@@ -1084,6 +1085,7 @@ export type Database = {
         }
         Insert: {
           by_id?: string | null
+          account_id?: string | null
           clan_point?: number | null
           created_at?: string
           id: string
@@ -1095,6 +1097,7 @@ export type Database = {
         }
         Update: {
           by_id?: string | null
+          account_id?: string | null
           clan_point?: number | null
           created_at?: string
           id?: string

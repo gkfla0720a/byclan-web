@@ -75,24 +75,35 @@ export default function AuthForm() {
     e.preventDefault();
 
     if (isSignUp) {
-      if (!isAccountIdChecked) return alert("계정ID 중복 확인을 먼저해 주세요.");
-      if (!isNicknameChecked) return alert("By_닉네임 중복 확인을 먼저해 주세요.");
+      // 1. 회원가입 가드 조항들
+      if (!isAccountIdChecked) return alert("계정ID 중복 확인을 먼저 해 주세요.");
+      if (!isNicknameChecked) return alert("By_닉네임 중복 확인을 먼저 해 주세요.");
       if (password !== confirmPassword) return alert("비밀번호가 서로 일치하지 않습니다.");
-      if (password.length < 8) return alert("비밀번호는 최소 8자 이상이어야 합니다.");
+      if (password.length <= 8) return alert("비밀번호는 최소 8자 이상이어야 합니다.");
       if (!/[a-zA-Z]/.test(password)) return alert("비밀번호에 영문자가 포함되어야 합니다.");
       if (!/[0-9]/.test(password)) return alert("비밀번호에 숫자가 포함되어야 합니다.");
       if (!agreed) return alert("이용약관 및 개인정보처리 방침에 동의해 주세요.");
 
       setLoading(true);
+
+      // 💡 유틸 함수를 사용해 Supabase가 통과시켜줄 가짜 시스템 이메일을 임시로 만듭니다.
+      const systemEmail = buildInternalAuthEmail(accountId);
+
       const { data, error } = await supabase.auth.signUp({
-        account_id: // buildInternalAuthEmail(accountId),
-          password,
-        options: { data: { login_id: accountId, By_Nickname: nickname } }
+        email: systemEmail, // 👈 생성된 가짜 이메일을 서버에 전달합니다.
+        password,
+        options: {
+          data: {
+            login_id: accountId,
+            By_Nickname: nickname
+          }
+        }
       });
 
       if (error) {
         alert("가입 실패: " + error.message);
       } else if (data.user) {
+        // 💡 프로필 DB에는 유저가 입력한 순수한 일반 아이디(accountId)를 저장합니다!
         const { error: pError } = await supabase.from('profiles').insert({
           id: data.user.id,
           account_id: accountId,
@@ -106,12 +117,23 @@ export default function AuthForm() {
         toggleMode();
       }
     } else {
+      // 2. 로그인 로직 구역
       setLoading(true);
+
+      // 💡 로그인창에 입력한 일반 아이디 뒤에 자동으로 시스템 도메인을 붙여서 로그인 요청을 보냅니다.
+      const systemLoginEmail = getLoginEmailFromInput(accountId);
+
       const { error } = await supabase.auth.signInWithPassword({
-        account_id: // getLoginEmailFromInput(accountId),
-          password
+        email: systemLoginEmail, // 👈 가공된 이메일로 Supabase 문을 두드립니다.
+        password
       });
-      if (error) alert("로그인 정보가 정확하지 않습니다.");
+
+      if (error) {
+        alert("로그인 정보가 정확하지 않습니다.");
+      } else {
+        alert("전장에 접속했습니다!");
+        // 여기에 메인 페이지나 대시보드로 이동하는 코드를 추후 작성하시면 됩니다.
+      }
     }
     setLoading(false);
   };
