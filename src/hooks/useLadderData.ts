@@ -15,7 +15,7 @@ interface QueuePlayer {
   by_id: string;
   role: UserRole | string | null;
   race: RaceCode | string | null;
-  total_mmr: number | null;
+  total_mmr: number;
   queue_joined_at: string | null;
 }
 
@@ -73,7 +73,7 @@ export function useLadderData() {
 
           return {
             id: r.user_id,
-            by_id: r.profiles?.by_id?? 'undefined',
+            by_id: r.profiles?.by_id ?? 'undefined',
             role: r.profiles?.role ?? 'guest',
             race: r.profiles?.race ?? null,
             total_mmr: typeof rankData?.total_mmr === 'number' ? rankData.total_mmr : 0, // 0으로 비정상 상태 마킹

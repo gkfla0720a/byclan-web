@@ -16,8 +16,8 @@ export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue
 export const USER_ROLES = {
   BANNED: 'banned',
   GUEST: 'guest',
-  APPLICANT: 'applicant',
   GHOST: 'ghost',
+  APPLICANT: 'applicant',
   ROOKIE: 'rookie',
   MEMBER: 'member',
   VETERAN: 'veteran',

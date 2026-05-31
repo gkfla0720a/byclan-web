@@ -15,6 +15,7 @@ export default function AuthForm() {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const isInvalid = /^[0-9]/.test(nickname) || /[^a-zA-Z0-9]/.test(nickname);
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
@@ -25,6 +26,7 @@ export default function AuthForm() {
   const checkNicknameDuplicate = async () => {
     if (!nickname) return alert("닉네임을 입력해주세요.");
     if (nickname.length < 2) return alert("닉네임은 최소 2글자 이상이어야 합니다.");
+    if (isInvalid) return alert("형식에 맞지 않는 닉네임입니다. 첫 글자 숫자 및 특수문자를 제거해 주세요.");
 
     const fullID = `By_${nickname}`;
     const { count, error } = await supabase
@@ -98,33 +100,44 @@ export default function AuthForm() {
         {isSignUp && (
           <div>
             <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Clan Nickname</label>
+
             <div className="flex gap-2 mt-1">
-              <div className="flex-1 flex items-center bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden focus-within:border-yellow-500">
+              {/* 아이디 양식에 맞지 않으면 부모 상자의 테두리 색상을 변동시켜 시각적 경고를 줍니다! */}
+              <div className={`flex-1 flex items-center bg-gray-900 border rounded-2xl overflow-hidden transition-all ${isInvalid
+                ? 'border-red-500 focus-within:border-red-500'
+                : 'border-gray-700 focus-within:border-yellow-500'
+                }`}>
                 <span className="px-4 text-yellow-500 font-black text-sm bg-gray-800/50 h-full flex items-center border-r border-gray-700">By_</span>
                 <input
-                  type="text" value={nickname}
+                  type="text"
+                  value={nickname}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    // 1. 유저가 입력한 값에서 영문 대소문자와 숫자가 아닌 것(특수문자, 공백, 한글 등)을 실시간으로 지웁니다.
-                    let cleanValue = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
-
-                    // 2. 만약 첫 글자가 숫자로 시작한다면, 첫 글자를 강제로 지워버립니다.
-                    if (/^[0-9]/.test(cleanValue)) {
-                      cleanValue = cleanValue.slice(1);
-                    }
-
-                    setNickname(cleanValue);
+                    setNickname(e.target.value);
                     setIsNicknameChecked(false);
                   }}
-                  required className="w-full p-3.5 bg-transparent text-white focus:outline-none font-bold" placeholder="닉네임"
+                  required
+                  className="w-full p-3.5 bg-transparent text-white focus:outline-none font-bold"
+                  placeholder="닉네임"
                 />
               </div>
+              {/* 아이디 양식에 맞지 않으면 중복확인 버튼을 잠가버려서 유저가 규칙을 인지하게 만듭니다. */}
               <button
-                type="button" onClick={checkNicknameDuplicate}
-                className={`px-5 rounded-2xl text-[10px] font-black transition-all ${isNicknameChecked ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                type="button"
+                onClick={checkNicknameDuplicate}
+                disabled={isInvalid}
+                className={`px-5 rounded-2xl text-[10px] font-black transition-all ${isInvalid
+                   ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                   : isNicknameChecked ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300'
+                }`}
               >
-                {isNicknameChecked ? 'OK' : '중복확인'}
+              {isNicknameChecked ? 'OK' : '중복확인'}
               </button>
             </div>
+            {isInvalid && (
+              <p className="text-[11px] text-red-400 mt-2 ml-1 font-bold animate-pulse">
+                형식에 맞지 않는 닉네임입니다. 첫 글자 숫자 및 특수문자를 제거해 주세요.
+              </p>
+            )}
           </div>
         )}
 

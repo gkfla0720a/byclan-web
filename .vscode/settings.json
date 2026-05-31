@@ -24,9 +24,7 @@
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 1000,
   "editor.formatOnSave": true,
-  "terminal.integrated.windowsUseConptyDll": true,
   "editor.smoothScrolling": false,
   "editor.cursorBlinking": "solid",
-  "editor.codeLens": false,
-  "git.autofetch": false
+  "editor.codeLens": false
 }

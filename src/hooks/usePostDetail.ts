@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { useAuthContext } from '@/context/AuthContext';
 import { useParams, useRouter } from 'next/navigation';
-import { hasPermission, normalizeRole, isInGroup } from '@/utils/permissions';
+import { hasPermission, normalizeRole, isInGroup } from '@/types/permissions';
 import type { Database } from '@/types';
 
 type PostsRow = Database['public']['Tables']['posts']['Row'];

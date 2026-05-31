@@ -9,25 +9,26 @@ export const DELEGATION_RULES = {
 } as const;
 
 export const ROLE_CHANGE_RULES = {
-  promotion_paths: {
+  promotion_paths: { // 승급
+    banned: ['ghost'],
+    ghost: ['applicant', 'rookie'],
     applicant: ['rookie'],
-    ghost: ['member'],
     rookie: ['member'],
     member: ['veteran'],
     veteran: ['admin'],
     admin: ['master'],
     master: [],
   },
-  demotion_paths: {
+  demotion_paths: { // 강등
     master: ['admin'],
-    admin: ['veteran', 'member', 'ghost'],
-    veteran: ['member', 'ghost'],
-    member: ['rookie', 'ghost'],
-    rookie: ['applicant'],
-    applicant: [],
+    admin: ['veteran', 'member', 'rookie', 'applicant', 'ghost'],
+    veteran: ['member', 'rookie', 'applicant', 'ghost', 'banned'],
+    member: ['rookie', 'applicant', 'ghost', 'banned'],
+    rookie: ['applicant', 'ghost', 'banned'],
+    applicant: ['ghost', 'banned'],
     developer: [],
   },
-  requirements: {
+  requirements: { // 승급하기에 필요한 요건
     applicant_to_rookie: { days_in_clan: 7, ladder_games: 10, community_posts: 5 },
     rookie_to_member: { days_in_clan: 14 },
     member_to_veteran: { days_in_clan: 30, ladder_games: 50, tournament_participation: 1 },
