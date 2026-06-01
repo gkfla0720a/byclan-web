@@ -1,4 +1,4 @@
-// 파일명: src/hooks/useAuthSession.ts
+// 파일명: src/hooks/auth/useAuthSession.ts
 
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';

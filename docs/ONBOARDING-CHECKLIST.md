@@ -94,7 +94,7 @@
   - [ ] `src/supabase.ts` - Supabase 클라이언트
   - [ ] `src/utils/matchMaking.ts` - 팀 빌딩 로직
   - [ ] `src/utils/pointSystem.ts` - 포인트 시스템
-  - [ ] `src/hooks/useAuth.ts` - 인증 훅
+  - [ ] `src/hooks/auth/useAuth.ts` - 인증 훅
 
 ### 데이터베이스 이해
 - [ ] **Supabase 프로젝트 접속**

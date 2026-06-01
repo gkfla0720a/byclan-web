@@ -1,6 +1,6 @@
 // 파일명: src/hooks/index.ts
-export * from './useAuth';
-export * from './useAuthSession';
+export * from './auth/useAuth';
+export * from './auth/useAuthSession';
 export * from './useGuildMembers';
 export * from './useHomeGate';
 export * from './useLadderData';

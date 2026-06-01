@@ -57,7 +57,7 @@ const RACE_ICONS = {
 };
 
 /** MMR 수치를 받아 티어 이름 반환 */
-function getTier(mmr) {
+function getTier(mmr: number) {
   if (mmr >= 2400) return 'Challenger';
   if (mmr >= 2200) return 'Master';
   if (mmr >= 1900) return 'Diamond';
@@ -68,7 +68,7 @@ function getTier(mmr) {
 }
 
 /** 승률 문자열 반환, 전적 없으면 '-' */
-function getWinRate(wins, losses) {
+function getWinRate(wins: number, losses: number) {
   const total = (wins || 0) + (losses || 0);
   if (total === 0) return '-';
   return `${Math.round(((wins || 0) / total) * 100)}%`;
@@ -264,8 +264,8 @@ function HomeContent() {
               onClick={() => navigateTo('BY래더')}
               disabled={isVisitor || isApplicant}
               className={`px-5 py-2 rounded-lg font-bold text-sm relative transition-all ${isVisitor || isApplicant
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
-                  : 'bg-cyan-400/10 border border-cyan-300/30 text-cyan-200 hover:bg-cyan-400/18 shadow-[0_0_18px_rgba(34,211,238,0.08)]'
+                ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
+                : 'bg-cyan-400/10 border border-cyan-300/30 text-cyan-200 hover:bg-cyan-400/18 shadow-[0_0_18px_rgba(34,211,238,0.08)]'
                 }`}
               title={isVisitor ? '클랜원 전용 기능입니다' : isApplicant ? '테스트 대기 중에는 이용할 수 없습니다' : '래더 시스템'}
             >

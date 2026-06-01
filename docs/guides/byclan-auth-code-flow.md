@@ -146,7 +146,7 @@ src/supabase.ts (라인 53-58)
 ### 로그인 후 앱에서 어떻게 인식할까?
 
 ```
-📍 위치: src/hooks/useAuthSession.ts (라인 26)
+📍 위치: src/hooks/auth/useAuthSession.ts (라인 26)
 
 supabase.auth.onAuthStateChange() 리스너 설정
   ↓
@@ -162,7 +162,7 @@ setUser(session?.user) → 사용자 정보 저장
 **코드:**
 
 ```javascript
-// src/hooks/useAuthSession.ts (라인 26-34)
+// src/hooks/auth/useAuthSession.ts (라인 26-34)
 const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
   if (!isMounted) return;
   
@@ -585,7 +585,7 @@ handleDiscordUnlink() 함수 (라인 194)
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ 1️⃣ useAuthSession() 훅에서 user 객체 획득                    │
-│    위치: src/hooks/useAuthSession.ts (라인 6)               │
+│    위치: src/hooks/auth/useAuthSession.ts (라인 6)               │
 │                                                              │
 │    역할: Supabase 인증 상태 감시                            │
 │    결과: user = 로그인된 사용자 정보                         │

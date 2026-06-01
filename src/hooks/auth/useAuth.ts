@@ -1,11 +1,11 @@
-// 파일명: src/hooks/useAuth.ts
+// 파일명: src/hooks/auth/useAuth.ts
 
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import type { AuthProfile as UserProfile } from '@/types';
 import { ROLE_PERMISSIONS, normalizeRole, hasPermission, hasLevel, isInGroup, canAccessMenu } from '@/types/permissions';
-import { useAuthSession } from './useAuthSession';
-import { useProfileData } from './useProfileData';
+import { useAuthSession } from '@/hooks/auth/useAuthSession';
+import { useProfileData } from '@/hooks/useProfileData';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { MenuName } from '@/hooks/useNavigate';
 

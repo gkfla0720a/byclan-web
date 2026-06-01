@@ -685,7 +685,7 @@ DB = 편의점 창고 (사용자 정보 저장)
   → src/components/MyProfile.tsx
 
 인증 상태 관리 (핵심 로직)
-  → src/hooks/useAuth.ts
+  → src/hooks/auth/useAuth.ts
   → src/hooks/useProfileData.ts
 
 Supabase 연결 설정

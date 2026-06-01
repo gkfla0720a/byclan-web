@@ -4,10 +4,11 @@
 
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import { useToast } from '@/context/ToastContext';
 import { isLegacyEmailLogin } from '@/utils/accountId';
 import { TERMS_OF_SERVICE } from '@/utils/docsData';
 import { formId, formNick } from '@/utils/joinProcess';
-import { AuthChecker } from '@/features/auth/useAuthMutations';
+import { usePasswordSignIn, usePasswordSignUp, useOAuthSignIn } from '@/hooks/auth/useAuthMutations';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
 
@@ -67,36 +68,37 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
     oauthMutation.error?.message ||
     null;
 
-  const { addToast } = useToast();
-
   /**
    * 최종 양식 제출 처리기 (Submit Handler)
    */
-  const handleAuth = async (data: any) => {
+
+  const handleAuth = async (data: AuthFormData) => {
+    const toast = useToast();
+
     signInMutation.reset();
     signUpMutation.reset();
-    oauthMutation.reset();
 
-    if (isSignUp) {
-      // 회원가입 프로세스 작동 (가짜 시스템 이메일 변환은 usePasswordSignUp 훅 내부 혹은 껍데기에서 처리됩니다)
-      await signUpMutation.mutateAsync({
-        accountId: data.accountId,
-        nickname: data.nickname,
-        password: data.password
+    try {
+      if (isSignUp) {
+        await signUpMutation.mutateAsync({
+          accountId: data.accountId,
+          nickname: data.nickname,
+          password: data.password
+        });
+        toast.success('ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.');
+        setIsSignUp(false);
+        reset();
+        return;
+      }
+      const user = await signInMutation.mutateAsync({
+        userId: data.accountId, // 훅 스펙에 따라 맵핑
+        password: data.password,
       });
-      addToast({ type: 'success', message: 'ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.', duration: 3000 });
-
-      setIsSignUp(false);
-      reset();
-      return;
+      onSuccess(user);
+    } catch {
+      // mutation.error에 이미 담기므로 여기선 별도 처리 불필요
+      // ErrorMessage 컴포넌트가 자동으로 표시
     }
-
-    // 로그인 프로세스 작동
-    const user = await signInMutation.mutateAsync({
-      userId: data.accountId, // 훅 스펙에 따라 맵핑
-      password: data.password,
-    });
-    onSuccess(user);
   };
 
   return (
@@ -121,7 +123,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
               maxLength={20}
               {...register('accountId', {
                 required: '계정ID를 입력해 주세요.',
-                validate: (val) => !isAccountIdValid && '형식에 맞지 않는 계정ID입니다.',
+                validate: (val) => !isAccountIdValid || '형식에 맞지 않는 계정ID입니다.',
               })}
             />
           </div>
@@ -146,7 +148,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
                 maxLength={20}
                 {...register('nickname', {
                   required: isSignUp ? '닉네임을 입력해 주세요.' : false,
-                  validate: (val) => !isNicknameValid && '형식에 맞지 않는 닉네임입니다.',
+                  validate: (val) => !isSignUp || !isNicknameValid || '형식에 맞지 않는 닉네임입니다.',
                 })}
               />
             </div>
