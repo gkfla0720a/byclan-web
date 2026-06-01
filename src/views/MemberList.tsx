@@ -88,7 +88,7 @@ const normalizeMemberRole = (member: typeof user) => {
  * profiles 조회를 시도하고, streamer 컬럼이 없으면 해당 컬럼을 제외해 재시도합니다.
  * @returns {{ data: object[]|null, error: object|null }}
  */
-async function fetchMembersWithSchemaFallback() {
+const fetchMembersWithSchemaFallback = async () => {
   // discord_id는 UI에 표시하지 않으므로 select에서 제외합니다.
   // ladder_rankings(MMR)과 profile_meta(스트리머)를 함께 조인합니다.
   const joinedResult = await supabase
