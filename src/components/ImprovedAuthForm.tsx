@@ -5,20 +5,22 @@
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useToast } from '@/context/ToastContext';
-import { isLegacyEmailLogin } from '@/utils/accountId';
+import { isLegacyEmailLogin } from '@/utils/accountId'; // 'isLegacyEmailLogin'이(가) 선언은 되었지만 해당 값이 읽히지는 않았습니다.
 import { TERMS_OF_SERVICE } from '@/utils/docsData';
 import { formId, formNick } from '@/utils/joinProcess';
 import { usePasswordSignIn, usePasswordSignUp, useOAuthSignIn } from '@/hooks/auth/useAuthMutations';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 import { SkeletonLoader } from './UIStates';
+import { AuthFormData } from 'src/types/accountForm';
 
 
 
 // ── 3. 내장 아이디/비밀번호 인증 폼 컴포넌트 ─────────────────────────────────
 const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // 'setShowPassword'이(가) 선언은 되었지만 해당 값이 읽히지는 않았습니다.
 
   // 백엔드 mutation 훅들 연동
   const signInMutation = usePasswordSignIn();
@@ -57,7 +59,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
   const discordLoading = oauthMutation.isPending && oauthMutation.variables === 'discord';
   const googleLoading = oauthMutation.isPending && oauthMutation.variables === 'google';
 
-  // 에러 메시지 통합 처리 센터
+  // 에러 메시지 통합 처리 센터('error'은 선언 되었으나 해당 값이 읽히지는 않았습니다.)
   const error =
     errors.accountId?.message ||
     errors.nickname?.message ||
@@ -73,9 +75,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
    * 최종 양식 제출 처리기 (Submit Handler)
    */
 
-  const handleAuth = async (data: AuthFormData) => {
-    const toast = useToast();
-
+  const handleAuth = async (data: AuthFormData) => { // 'AuthFormData' 이름을 찾을 수 없습니다.
     signInMutation.reset();
     signUpMutation.reset();
 
@@ -86,7 +86,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
           nickname: data.nickname,
           password: data.password
         });
-        toast.success('ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.');
+        toastSuccess('ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.');
         setIsSignUp(false);
         reset();
         return;
@@ -125,7 +125,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
               maxLength={20}
               {...register('accountId', {
                 required: '계정ID를 입력해 주세요.',
-                validate: (val) => !isAccountIdValid || '형식에 맞지 않는 계정ID입니다.',
+                validate: (val) => isAccountIdValid || '형식에 맞지 않는 계정ID입니다.',
               })}
             />
           </div>
@@ -150,7 +150,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
                 maxLength={20}
                 {...register('nickname', {
                   required: isSignUp ? '닉네임을 입력해 주세요.' : false,
-                  validate: (val) => !isSignUp || !isNicknameValid || '형식에 맞지 않는 닉네임입니다.',
+                  validate: (val) => !isSignUp || isNicknameValid || '형식에 맞지 않는 닉네임입니다.',
                 })}
               />
             </div>
