@@ -19,11 +19,11 @@
 
 'use client';
 
+import { useAuthContext } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import type { Database } from '@/types';
-import { useAuthContext } from '@/context/AuthContext';
-import { ROLE_PERMISSIONS, hasPermission, normalizeRole } from '@/types/permissions';
+import type { Database, ProfilesRow, MetaData } from '@/types';
+import { ROLE_PERMISSIONS, hasPermission } from '@/types/permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
 
@@ -37,15 +37,7 @@ const ROLE_SECTIONS = [
 
 const PLAYABLE_LADDER_MEMBER_ROLES = ['developer', 'master', 'admin', 'veteran', 'member', 'rookie'];
 
-const INLINE_ROLE_OPTIONS = [
-  { value: 'admin', label: '관리자' },
-  { value: 'veteran', label: '베테랑 클랜원' },
-  { value: 'member', label: '일반 클랜원' },
-  { value: 'rookie', label: '신입 클랜원' },
-  { value: 'applicant', label: '신규 가입자' },
-];
-
-const normalizeUrl = (url) => {
+const normalizeUrl = (url: string) => {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
@@ -75,20 +67,27 @@ const applyDemoStreamers = (memberList) => {
  * @param {object} member - profiles 레코드
  * @returns {object|null}
  */
-const normalizeMemberRole = (member: typeof user) => {
+const checkUserRole = (member: ProfilesRow) => {
   if (!member) return null;
-  const normalizedRole = member?.role;
+  const checkUserRole = member?.role;
   return {
     ...member,
-    role: normalizedRole || member?.role || '',
+    role: checkUserRole || member?.role || '',
   };
 }
+
+
+
+
+
+
+
 
 /**
  * profiles 조회를 시도하고, streamer 컬럼이 없으면 해당 컬럼을 제외해 재시도합니다.
  * @returns {{ data: object[]|null, error: object|null }}
  */
-const fetchMembersWithSchemaFallback = async () => {
+const fetchMetaData = async (data: MetaData) => {
   // discord_id는 UI에 표시하지 않으므로 select에서 제외합니다.
   // ladder_rankings(MMR)과 profile_meta(스트리머)를 함께 조인합니다.
   const joinedResult = await supabase
@@ -169,7 +168,7 @@ const fetchMembersWithSchemaFallback = async () => {
  * @returns {JSX.Element} 클랜원 명단 UI
  */
 export default function MemberList() {
-  const { user, profile } = useAuthContex();
+  const { user, profile } = useAuthContext();
   /** DB에서 불러온 멤버 배열 */
   const [members, setMembers] = useState([]);
   /** 데이터 로딩 여부 */
@@ -211,13 +210,13 @@ export default function MemberList() {
       }
 
       try {
-        const { data, error } = await fetchMembersWithSchemaFallback();
+        const { data, error } = await fetchMetaData();
 
         if (error) throw error;
 
         const processed = applyDemoStreamers(
           (data || [])
-            .map(normalizeMemberRole)
+            .map(checkUserRole)
             .filter((member) => member && member.id && member.role && PLAYABLE_LADDER_MEMBER_ROLES.includes(member.role))
         );
         setCached(CACHE_KEY, processed);

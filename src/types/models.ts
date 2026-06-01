@@ -28,6 +28,29 @@ export interface AuthProfile extends ProfilesRow,
   [key: string]: unknown;
 }
 
+export interface MetaData {
+  by_id: string | null;
+  account_id: string | null;
+  clan_point: number | null;
+  created_at: string;
+  id: string;
+  intro: string | null;
+  is_active: boolean | null;
+  race: string | null;
+  role: string | null;
+  rookie_since: string | null;
+  personal_mmr: number | null;
+  total_mmr: number | null;
+  is_streamer: string | null;
+  streamer_platform: string | null;
+  streamer_url: string | null;
+  is_test_account: boolean;
+  is_test_account_active: boolean;
+  ladder_rankings: string | null;
+  profile_meta: string | null;
+}
+
+
 // 🚨 ProfileSummary: 런타임 계산의 안전성을 위한 핵심 모델
 export interface ProfileSummary {
   id: UUID;
