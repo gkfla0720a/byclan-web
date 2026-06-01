@@ -9,7 +9,8 @@ import { isLegacyEmailLogin } from '@/utils/accountId';
 import { TERMS_OF_SERVICE } from '@/utils/docsData';
 import { formId, formNick } from '@/utils/joinProcess';
 import { usePasswordSignIn, usePasswordSignUp, useOAuthSignIn } from '@/hooks/auth/useAuthMutations';
-import { ErrorMessage, SkeletonLoader } from './UIStates';
+import { SectionErrorBoundary } from '@/components/ErrorBoundary';
+import { SkeletonLoader } from './UIStates';
 
 
 
@@ -103,11 +104,12 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
 
   return (
     <div className="w-full max-w-md bg-gray-800 p-8 rounded-[2.5rem] border border-gray-700 shadow-2xl relative overflow-hidden">
-      <h2 className="text-3xl font-black text-white mb-8 text-center italic tracking-tighter">
-        {isSignUp ? 'JOIN BYCLAN' : 'BATTLE-NET LOGIN'}
-      </h2>
 
-      {error && <ErrorMessage message={error} />}
+      <SectionErrorBoundary name="로그인">
+        <h2 className="text-3xl font-black text-white mb-8 text-center italic tracking-tighter">
+          {isSignUp ? 'JOIN BYCLAN' : 'BATTLE-NET LOGIN'}
+        </h2>
+      </SectionErrorBoundary>
 
       <form onSubmit={handleSubmit(handleAuth)} className="space-y-5">
 

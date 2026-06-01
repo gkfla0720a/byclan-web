@@ -1,4 +1,4 @@
-// 파일명: src/features/auth/useAuthMutations.ts
+// 파일명: src/hooks/auth/useAuthMutations.ts
 
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/supabase';
