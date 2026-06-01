@@ -16,6 +16,7 @@ import { ErrorMessage, SkeletonLoader } from './UIStates';
 const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showTerms, setShowTerms] = useState(false); // 💡 약관 보기 토글 스위치
+  const [showPassword, setShowPassword] = useState(false);
 
   // 백엔드 mutation 훅들 연동
   const signInMutation = usePasswordSignIn();
@@ -63,7 +64,10 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
     errors.termsAccepted?.message ||
     signInMutation.error?.message ||
     signUpMutation.error?.message ||
+    oauthMutation.error?.message ||
     null;
+    
+  const { addToast } = useToast();
 
   /**
    * 최종 양식 제출 처리기 (Submit Handler)
@@ -80,7 +84,8 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
         nickname: data.nickname,
         password: data.password
       });
-      alert('ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.');
+      addToast({ type: 'success', message: 'ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.', duration: 3000 });
+      
       setIsSignUp(false);
       reset();
       return;
@@ -116,7 +121,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
               maxLength={20}
               {...register('accountId', {
                 required: '계정ID를 입력해 주세요.',
-                validate: (val) => isAccountIdValid || '형식에 맞지 않는 계정ID입니다.',
+                validate: (val) => !isAccountIdValid && '형식에 맞지 않는 계정ID입니다.',
               })}
             />
           </div>
@@ -141,7 +146,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
                 maxLength={20}
                 {...register('nickname', {
                   required: isSignUp ? '닉네임을 입력해 주세요.' : false,
-                  validate: (val) => isNicknameValid || '형식에 맞지 않는 닉네임입니다.',
+                  validate: (val) => !isNicknameValid && '형식에 맞지 않는 닉네임입니다.',
                 })}
               />
             </div>
@@ -157,7 +162,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
         <div>
           <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Password</label>
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="비밀번호"
             className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:outline-none focus:border-yellow-500"
             {...register('password', {
