@@ -1,4 +1,5 @@
 // 파일명: src/services/memberService.ts
+
 import { supabase } from '@/supabase';
 import { grantRankPromotionBonus } from '@/utils/pointSystem';
 import type { Database } from '@/types';
@@ -66,7 +67,7 @@ export async function updateMemberRole(
   }
 }
 
-export async function expelMember(memberId: string) {
+export async function bannedMember(memberId: string) {
   const { data, error } = await supabase.rpc('rpc_update_profile_role', {
     p_target_id: memberId,
     p_new_role: 'banned',

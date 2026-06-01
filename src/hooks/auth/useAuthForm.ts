@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useToast } from '@/context/ToastContext';
 import { formId, formNick } from '@/utils/joinProcess';
-// 💡 기존에 작성해두신 백엔드 연동 Mutation 훅들을 그대로 가져옵니다.
 import { usePasswordSignIn, usePasswordSignUp, useOAuthSignIn } from '@/hooks/auth/useAuthMutations';
 import { AuthFormData } from '@/types';
 
@@ -36,7 +35,7 @@ export const useAuthForm = (onSuccess: (user: any) => void) => {
       confirmPassword: '',
       termsAccepted: false,
     },
-    mode: 'onSubmit', // 첫 제출 전엔 에러 안 띄움 (필요시 'onChange'로 변경 가능)
+    mode: 'onChange',
   });
 
   // 3. 실시간 값 감시 및 유효성 검사 결과 도출
@@ -115,6 +114,7 @@ export const useAuthForm = (onSuccess: (user: any) => void) => {
 
   return {
     isSignUp,
+    setIsSignUp,
     showTerms,
     setShowTerms,
     showPassword,
@@ -123,20 +123,16 @@ export const useAuthForm = (onSuccess: (user: any) => void) => {
     handleSubmit,
     handleAuth,
     toggleAuthMode,
-    // 실시간 상태 값
     accountId,
     nickname,
     password,
     termsAccepted,
-    // 유효성 flag
     isAccountIdValid,
     isNicknameValid,
-    // 로딩 및 에러
     loading,
     discordLoading,
     googleLoading,
     error,
-    // 소셜 로그인 트리거용 mutation 매핑
     oauthMutation,
   };
 };

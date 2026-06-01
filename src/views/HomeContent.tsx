@@ -186,7 +186,7 @@ function HomeContent() {
         .select('user_id, total_mmr, personal_mmr, team_mmr, profiles!inner(by_id, role)')
         .neq('profiles.role', 'visitor')
         .neq('profiles.role', 'applicant')
-        .neq('profiles.role', 'expelled')
+        .neq('profiles.role', 'banned')
         .order('total_mmr', { ascending: false })
         .limit(3);
 

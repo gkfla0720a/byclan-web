@@ -7,7 +7,7 @@ import { isInternalAuthEmail } from '@/utils/accountId';
 import {
   fetchMembers,
   updateMemberRole,
-  expelMember,
+  bannedMember,
   forcePromoteToMember,
   checkAndSendRookieNotifications,
 } from '@/services/memberService';
@@ -18,7 +18,7 @@ type MemberType = Awaited<ReturnType<typeof fetchMembers>>[0];
 export function useGuildMembers() {
   const [members, setMembers] = useState<MemberType[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // 객체 프로퍼티의 초기값을 명확히 잡아줍니다.
   const [currentManager, setCurrentManager] = useState<{
     id: string | null; role: string | null; email: string; authEmail: string; phone: string;
@@ -99,7 +99,7 @@ export function useGuildMembers() {
 
   const handleRemoveMember = useCallback(async (memberId: string) => {
     try {
-      await expelMember(memberId);
+      await bannedMember(memberId);
       await loadMembers();
       return true;
     } catch (error: any) {
