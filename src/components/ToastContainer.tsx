@@ -36,7 +36,8 @@ import { useToast } from '@/context/ToastContext';
  * @returns {string} Tailwind CSS 클래스 문자열
  */
 /** @param {{ type: import('@/context/ToastContext').ToastType }} props */
-function toastStyles(type) {
+
+const toastStyles = (type) => {
   switch (type) {
     case 'success':
       return 'bg-emerald-900/90 border-emerald-600/60 text-emerald-200';
@@ -55,7 +56,8 @@ function toastStyles(type) {
  * @param {'success'|'warning'|'error'|'info'} type - 토스트 종류
  * @returns {string} 아이콘 문자 (예: '✓', '⚠', '✕', 'ℹ')
  */
-function toastIcon(type) {
+ 
+const toastIcon = (type) => {
   switch (type) {
     case 'success': return '✓';
     case 'warning': return '⚠';
@@ -74,7 +76,8 @@ function toastIcon(type) {
  * @param {object} props.toast - 표시할 토스트 객체 (id, type, message, duration 포함)
  * @param {function} props.onRemove - 토스트를 목록에서 제거하는 콜백 함수
  */
-function ToastItem({ toast, onRemove }) {
+ 
+const ToastItem = ({ toast, onRemove }) => {
   /** 토스트의 표시 여부 (true: 보임/페이드인, false: 숨김/페이드아웃) */
   const [visible, setVisible] = useState(false);
   /** 자동 사라짐 타이머 ID를 저장하는 ref (컴포넌트 언마운트 시 정리용) */
@@ -86,6 +89,7 @@ function ToastItem({ toast, onRemove }) {
    * CSS 트랜지션 기반의 페이드인 애니메이션이 올바르게 작동하도록 합니다.
    */
   // Fade-in on mount
+  
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(id);
@@ -108,6 +112,7 @@ function ToastItem({ toast, onRemove }) {
    * 컴포넌트 언마운트 시 타이머를 정리합니다.
    */
   // Allow external removal to trigger fade-out
+  
   useEffect(() => {
     if (toast.duration > 0) {
       // Warn 300 ms before auto-removal so the fade-out animation fires
@@ -156,6 +161,7 @@ function ToastItem({ toast, onRemove }) {
  * Renders all active toasts in the bottom-right corner of the viewport.
  * Mount once in the root layout.
  */
+ 
 export default function ToastContainer() {
   const { toasts, removeToast } = useToast();
 

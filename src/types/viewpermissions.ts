@@ -3,7 +3,7 @@
 import { USER_ROLES, USER_ROLE_LIST, type UserRole } from './primitives';
 
 export const isActiveRole = (value: string): value is UserRole => {
-  return USER_ROLE_LIST.includes(value as any);
+  return (USER_ROLE_LIST as readonly string[]).includes(value);
 }
 
 export type PermissionAction = (typeof VIEW_PERMISSIONS)[number];

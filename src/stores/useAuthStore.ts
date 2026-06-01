@@ -1,4 +1,4 @@
-// 파일명: src/stores/useAuthStore.ts
+// 파일명: src/stores/auth/useAuthStore.ts
 
 import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';

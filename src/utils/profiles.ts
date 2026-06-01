@@ -34,10 +34,10 @@ export function getRaceIcon(race: Race): RaceIcon {
   return icons[race] ?? '?'; // Nullish Coalescing Operator 사용 (undefined 또는 null인 경우에만 '?')
 }
 
-interface Player { // `total_mmr`은 필수이며 number 타입입니다.
-  total_mmr: number;
+interface Player { // `total_mmr`은 rookie등급부터는 필수이며 number 타입입니다.
+  total_mmr: number | null;
 }
 
-export function getPlayerMmr(player: Player): number {
+export function getPlayerMmr(player: Player): number | null {
   return player.total_mmr; // total_mmr이 필수로 존재하므로 직접 접근
 }

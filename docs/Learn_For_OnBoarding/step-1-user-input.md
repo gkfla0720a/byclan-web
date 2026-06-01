@@ -80,11 +80,11 @@ JavaScript가 그 값을 받아서 처리
 
 ### HTML 코드의 구조
 
-파일: `src/components/AuthForm.tsx` (라인 154-249)
+파일: `src/components/AuthForm.tsx` 
 
 ```html
 <form onSubmit={handleSubmit}>
-  <!-- 1️⃣ 아이디 입력 필드 -->
+  <!-- 1️⃣ 아이디 입력 필드 (라인 120-128)-->
   <div>
     <label>Login ID</label>
     <input 
@@ -96,7 +96,7 @@ JavaScript가 그 값을 받아서 처리
   </div>
 .
 
-  <!-- 2️⃣ 비밀번호 입력 필드 -->
+  <!-- 2️⃣ 비밀번호 입력 필드 (라인 130-136)-->
   <div>
     <label>Password</label>
     <input 
@@ -107,7 +107,7 @@ JavaScript가 그 값을 받아서 처리
     />
   </div>
 
-  <!-- 3️⃣ 로그인 버튼 -->
+  <!-- 3️⃣ 로그인 버튼 (라인 161-167)-->
   <button type="submit">
     LOGIN SYSTEM
   </button>

@@ -1,16 +1,30 @@
 // 파일명: @/types/permissions/checker.ts
 
+import logger from '@/utils/errorLogger';
 import { type UserRole, PermissionAction, isActiveRole, RoleGroup } from '@/types';
 import { ROLE_PERMISSIONS } from './role-permissions';
 import { loadDevSettings } from './dev-settings';
 
-// 1. 역할 데이터 정상화 및 검증 함수
+// 엄격한 버전 - 보안 검사용 (서버/관리자 로직에서 사용)
+export const normalizeRoleStrict = (role: string | null | undefined): UserRole => {
+  if (!role) return 'guest';
+  const lowered = role.toLowerCase();
+  if (!isActiveRole(lowered)) {
+    throw new Error(`[Security Error] 정의되지 않은 역할: "${role}"`);
+  }
+  return lowered as UserRole;
+};
+
+// 안전한 버전 - UI 렌더링용 (컴포넌트/훅에서 사용)
 export const normalizeRole = (role: string | null | undefined): UserRole => {
   if (!role) return 'guest';
   const lowered = role.toLowerCase();
-
   if (!isActiveRole(lowered)) {
-    throw new Error(`[Security Error] 정의되지 않은 불법 역할 데이터가 감지되었습니다: "${role}"`);
+    logger.captureException(
+      new Error(`[normalizeRole] 알 수 없는 역할: "${role}"`),
+      { severity: 'error' }
+    );
+    return 'guest'; // UI는 죽이지 않고 기록만
   }
   return lowered as UserRole;
 };
