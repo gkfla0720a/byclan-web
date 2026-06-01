@@ -10,3 +10,4 @@ export * from './viewpermissions';
 export * from './primitives';
 export * from './rows';
 export * from './supabase';
+export * from './accountForm';

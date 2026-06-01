@@ -1,115 +1,41 @@
 // 파일명: src/components/ImprovedAuthForm.tsx
 
+/* 인증 과정 청사진
+[ 🎨 ImprovedAuthForm ] (오직 디자인 마크업만 담당)
+       │
+       ▼ (Form 제어 및 UI 트리거 바인딩 요청)
+[ ⚡ useAuthForm ] (회원가입/로그인 상태 조율 커스텀 훅)
+       │
+       ├─► [ ⚔️ useAuthMutations ] (Supabase 데이터 인서트 및 인증 API 통신)
+       │
+       ▼ (인증 성공 시 onSuccess 유저 객체 발송)
+[ 🎛️ useAuth ] (ByClan 통합 제어 센터 - 세션 및 권한 갱신)
+*/
+
 'use client';
 
-import { useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { useToast } from '@/context/ToastContext';
-import { isLegacyEmailLogin } from '@/utils/accountId'; // 'isLegacyEmailLogin'이(가) 선언은 되었지만 해당 값이 읽히지는 않았습니다.
+import { useAuthForm } from 'src/hooks/auth/useAuthForm';
+import { Eye, EyeOff } from 'lucide-react';
 import { TERMS_OF_SERVICE } from '@/utils/docsData';
-import { formId, formNick } from '@/utils/joinProcess';
-import { usePasswordSignIn, usePasswordSignUp, useOAuthSignIn } from '@/hooks/auth/useAuthMutations';
-import { SectionErrorBoundary } from '@/components/ErrorBoundary';
-import { SkeletonLoader } from './UIStates';
-import { AuthFormData } from 'src/types/accountForm';
+import { SkeletonLoader } from 'src/components/UIStates';
 
-
-
-// ── 3. 내장 아이디/비밀번호 인증 폼 컴포넌트 ─────────────────────────────────
 const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
-  const { success: toastSuccess, error: toastError } = useToast();
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 'setShowPassword'이(가) 선언은 되었지만 해당 값이 읽히지는 않았습니다.
-
-  // 백엔드 mutation 훅들 연동
-  const signInMutation = usePasswordSignIn();
-  const signUpMutation = usePasswordSignUp();
-  const oauthMutation = useOAuthSignIn();
-
-  // 리액트 훅 폼의 세련된 수첩 관리 기술 도입
   const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      accountId: '',
-      nickname: '',
-      password: '',
-      confirmPassword: '',
-      termsAccepted: false,
-    },
-    mode: 'onSubmit',
-  });
-
-  // 실시간 타이핑 감시 스파이 장착
-  const accountId = useWatch({ control, name: 'accountId' });
-  const nickname = useWatch({ control, name: 'nickname' });
-  const password = useWatch({ control, name: 'password' });
-  const termsAccepted = useWatch({ control, name: 'termsAccepted' });
-
-  // 유효성 판정 메커니즘 가동
-  const isAccountIdValid = formId(accountId);
-  const isNicknameValid = formNick(nickname);
-
-  const loading = signInMutation.isPending || signUpMutation.isPending;
-  const discordLoading = oauthMutation.isPending && oauthMutation.variables === 'discord';
-  const googleLoading = oauthMutation.isPending && oauthMutation.variables === 'google';
-
-  // 에러 메시지 통합 처리 센터('error'은 선언 되었으나 해당 값이 읽히지는 않았습니다.)
-  const error =
-    errors.accountId?.message ||
-    errors.nickname?.message ||
-    errors.password?.message ||
-    errors.confirmPassword?.message ||
-    errors.termsAccepted?.message ||
-    signInMutation.error?.message ||
-    signUpMutation.error?.message ||
-    oauthMutation.error?.message ||
-    null;
-
-  /**
-   * 최종 양식 제출 처리기 (Submit Handler)
-   */
-
-  const handleAuth = async (data: AuthFormData) => { // 'AuthFormData' 이름을 찾을 수 없습니다.
-    signInMutation.reset();
-    signUpMutation.reset();
-
-    try {
-      if (isSignUp) {
-        await signUpMutation.mutateAsync({
-          accountId: data.accountId,
-          nickname: data.nickname,
-          password: data.password
-        });
-        toastSuccess('ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.');
-        setIsSignUp(false);
-        reset();
-        return;
-      }
-      const user = await signInMutation.mutateAsync({
-        userId: data.accountId, // 훅 스펙에 따라 맵핑
-        password: data.password,
-      });
-      onSuccess(user);
-    } catch {
-      // mutation.error에 이미 담기므로 여기선 별도 처리 불필요
-      // ErrorMessage 컴포넌트가 자동으로 표시
-    }
-  };
+    isSignUp, setIsSignUp,
+    showTerms, setShowTerms,
+    showPassword, setShowPassword,
+    register, handleSubmit, handleAuth,
+    accountId, nickname, password, termsAccepted,
+    isAccountIdValid, isNicknameValid,
+    loading, error,
+    oauthMutation
+  } = useAuthForm(onSuccess);
 
   return (
     <div className="w-full max-w-md bg-gray-800 p-8 rounded-[2.5rem] border border-gray-700 shadow-2xl relative overflow-hidden">
-
-      <SectionErrorBoundary name="로그인">
-        <h2 className="text-3xl font-black text-white mb-8 text-center italic tracking-tighter">
-          {isSignUp ? 'JOIN BYCLAN' : 'BATTLE-NET LOGIN'}
-        </h2>
-      </SectionErrorBoundary>
+      <h2 className="text-3xl font-black text-white mb-8 text-center italic tracking-tighter">
+        {isSignUp ? 'JOIN BYCLAN' : 'BATTLE-NET LOGIN'}
+      </h2>
 
       <form onSubmit={handleSubmit(handleAuth)} className="space-y-5">
 
@@ -179,6 +105,13 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
               }
             })}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="px-4 text-gray-400 hover:text-white text-sm font-bold focus:outline-none"
+          >
+            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
           {isSignUp && password && (
             <div className="mt-2 flex gap-3 text-[11px] ml-1">
               <span className={password.length >= 8 ? 'text-emerald-400 font-bold' : 'text-gray-600'}>✓ 8자 이상</span>
@@ -195,6 +128,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
             <input
               type="password"
               placeholder="비밀번호 확인"
+              autoComplete="new-password"
               className="w-full p-4 mt-1 bg-gray-900 border border-gray-700 rounded-2xl text-white focus:outline-none focus:border-yellow-500"
               {...register('confirmPassword', {
                 required: isSignUp ? '비밀번호 확인을 입력해 주세요.' : false,
@@ -243,6 +177,12 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
                 {TERMS_OF_SERVICE}
               </div>
             )}
+          </div>
+        )}
+
+        {error && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
+            <p className="text-xs text-red-400 font-bold">{error}</p>
           </div>
         )}
 

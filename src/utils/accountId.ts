@@ -22,7 +22,7 @@ export function normalizeAccountId(value: string = ''): string {
   return value.replace(/[^a-z0-9]/g, '');
 }
 
-export function isLegacyEmailLogin(value: string = ''): boolean {
+export function isLegacyEmailLogin(value: string = ''): boolean { // 현재 사용 여부 확인 필요
   return /@/.test(value);
 }
 
