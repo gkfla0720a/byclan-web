@@ -7,7 +7,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { isLegacyEmailLogin } from '@/utils/accountId';
 import { TERMS_OF_SERVICE } from '@/utils/docsData';
 import { formId, formNick } from '@/utils/joinProcess';
-import { useOAuthSignIn, usePasswordSignIn, usePasswordSignUp } from '@/features/auth/useAuthMutations';
+import { AuthChecker } from '@/features/auth/useAuthMutations';
 import { ErrorMessage, SkeletonLoader } from './UIStates';
 
 
@@ -15,7 +15,7 @@ import { ErrorMessage, SkeletonLoader } from './UIStates';
 // ── 3. 내장 아이디/비밀번호 인증 폼 컴포넌트 ─────────────────────────────────
 const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [showTerms, setShowTerms] = useState(false); // 💡 약관 보기 토글 스위치
+  const [showTerms, setShowTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // 백엔드 mutation 훅들 연동
@@ -66,7 +66,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
     signUpMutation.error?.message ||
     oauthMutation.error?.message ||
     null;
-    
+
   const { addToast } = useToast();
 
   /**
@@ -85,7 +85,7 @@ const EmailLoginForm = ({ onSuccess }: { onSuccess: (user: any) => void }) => {
         password: data.password
       });
       addToast({ type: 'success', message: 'ByClan에 오신 것을 환영합니다! 로그인을 진행하세요.', duration: 3000 });
-      
+
       setIsSignUp(false);
       reset();
       return;

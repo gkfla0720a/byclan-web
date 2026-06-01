@@ -29,7 +29,7 @@ export default function AuthForm() {
     setAgreed(false);
   };
 
-  const checkAccountIdDuplicate = async () => {
+  const checkAccountDupl = async () => {
     if (!accountId) return alert("계정ID를 입력해 주세요.");
     if (!isAccountIdValid) return alert("형식에 맞지 않는 계정ID입니다. 영문으로 시작하고 영문과 숫자만 사용하여 2~20자로 작성해 주세요.");
 
@@ -49,7 +49,7 @@ export default function AuthForm() {
     }
   };
 
-  const checkNicknameDuplicate = async () => {
+  const checkNickDupl = async () => {
     if (!nickname) return alert("닉네임을 입력해 주세요.");
     if (!isNicknameValid) return alert("형식에 맞지 않는 By_닉네임입니다. 영문과 숫자만 사용하여 2~20자로 작성해 주세요.");
 
@@ -175,7 +175,7 @@ export default function AuthForm() {
                 {/* 계정ID 양식에 맞지 않으면 중복확인 버튼을 잠가버려서 유저가 규칙을 인지하게 만듭니다. */}
                 <button
                   type="button"
-                  onClick={checkAccountIdDuplicate}
+                  onClick={checkAccountDupl}
                   disabled={!isAccountIdValid}
                   className={`px-5 rounded-2xl text-[10px] font-black transition-all ${!isAccountIdValid
                     ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
@@ -220,7 +220,7 @@ export default function AuthForm() {
                 {/* By_닉네임 양식에 맞지 않으면 중복확인 버튼을 잠가버려서 유저가 규칙을 인지하게 만듭니다. */}
                 <button
                   type="button"
-                  onClick={checkNicknameDuplicate}
+                  onClick={checkNickDupl}
                   disabled={!isNicknameValid}
                   className={`px-5 rounded-2xl text-[10px] font-black transition-all ${!isNicknameValid
                     ? 'bg-gray-800 text-gray-600 cursor-not-allowed'

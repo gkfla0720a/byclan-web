@@ -1,97 +1,80 @@
 // 파일명: src/features/auth/useAuthMutations.ts
 
 import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { supabase } from '@/supabase';
 import { buildInternalAuthEmail, getLoginEmailFromInput } from '@/utils/accountId';
 import type { Provider, User } from '@supabase/supabase-js';
+import type { AccountTypes } from 'src/types/account';
 
-interface SignInParams {
-  userId: string;
-  password?: string;
-}
+const AuthChecker = () => {
+  const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [nickname, setNickname] = useState('');
+  const [isNicknameChecked, setIsNicknameChecked] = useState(false);
+  const isNicknameValid = /^[a-zA-Z0-9]{2,20}$/.test(nickname);
+  const [accountId, setAccountId] = useState('');
+  const [isAccountIdChecked, setIsAccountIdChecked] = useState(false);
+  const isAccountIdValid = /^[^0-9]/.test(accountId) && /^[a-zA-Z0-9]{2,20}$/.test(accountId);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreed, setAgreed] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
-interface SignUpParams {
-  normalizedUserId: string;
-  password?: string;
-}
+  const checkAccountDupl = async () => {
+    if (!accountId) return alert("계정ID를 입력해 주세요.");
+    if (!isAccountIdValid) return alert("형식에 맞지 않는 계정ID입니다. 영문으로 시작하고 영문과 숫자만 사용하여 2~20자로 작성해 주세요.");
 
-export function usePasswordSignIn() {
-  return useMutation({
-    mutationFn: async ({ userId, password }: SignInParams): Promise<User> => {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: getLoginEmailFromInput(userId),
-        password: password || '',
-      });
+    const { count, error } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('account_id', accountId);
 
-      if (error) throw error;
-      if (!data.user) throw new Error('인증 결과에 사용자 정보가 없습니다.');
-      return data.user;
-    },
-  });
-}
+    if (error) {
+      alert("오류 발생: " + error.message);
+    } else if (count && count > 0) {
+      alert("이미 존재하는 계정ID입니다.");
+      setIsAccountIdChecked(false);
+    } else {
+      alert("사용 가능한 계정ID입니다!");
+      setIsAccountIdChecked(true);
+    }
+  };
 
-export function usePasswordSignUp() {
-  return useMutation({
-    mutationFn: async ({ normalizedUserId, password }: SignUpParams): Promise<User> => {
-      const byId = `By_${normalizedUserId}`;
-      const internalEmail = buildInternalAuthEmail(normalizedUserId);
+  const checkNickDupl = async () => {
+    if (!nickname) return alert("닉네임을 입력해 주세요.");
+    if (!isNicknameValid) return alert("형식에 맞지 않는 By_닉네임입니다. 영문과 숫자만 사용하여 2~20자로 작성해 주세요.");
 
-      // 이미 있는 By_ID인지 체크
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('by_id', byId)
-        .maybeSingle();
+    const fullID = `By_${nickname}`;
+    const { count, error } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('by_id', fullID);
 
-      if (existing) {
-        throw new Error('이미 사용 중인 아이디입니다. 다른 아이디를 선택하세요.');
-      }
+    if (error) {
+      alert("오류 발생: " + error.message);
+    } else if (count && count > 0) {
+      alert("이미 전장에 참여 중인 닉네임입니다.");
+      setIsNicknameChecked(false);
+    } else {
+      alert("사용 가능한 닉네임입니다!");
+      setIsNicknameChecked(true);
+    }
+  };
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: internalEmail,
-        password: password || '',
-        options: {
-          data: {
-            login_id: normalizedUserId,
-            by_id: byId,
-            role: 'applicant', // 👈 새로 바뀐 직급 체계
+  const useOAuthSignIn = () => {
+    return useMutation({
+      mutationFn: async (provider: Provider) => {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
           },
-        },
-      });
-
-      if (signUpError) throw signUpError;
-      if (!data.user) throw new Error('회원가입 실패: 사용자 정보가 반환되지 않았습니다.');
-
-      // 회원가입 직후 프로필 데이터 생성 (동기화)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          by_id: byId,
-          role: 'applicant',
-          clan_point: 0,
-          race: 'Terran', // 또는 미지정
-          intro: '새로운 클랜원입니다.',
         });
 
-      if (profileError) throw profileError;
-
-      return data.user;
-    },
-  });
-}
-
-export function useOAuthSignIn() {
-  return useMutation({
-    mutationFn: async (provider: Provider) => {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
-    },
-  });
-}
+        if (error) throw error;
+      },
+    });
+  }
+};
+export default AuthChecker;
