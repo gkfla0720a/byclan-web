@@ -1,4 +1,4 @@
-// 파일명: src/hooks/useGuildMembers.ts
+// 파일명: src/hooks/useMemberManagement.ts
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -15,7 +15,7 @@ import {
 // fetchMembers의 리턴 타입을 추론하여 완벽한 타이핑 적용
 type MemberType = Awaited<ReturnType<typeof fetchMembers>>[0];
 
-export function useGuildMembers() {
+export function useMemberManagement() {
   const [members, setMembers] = useState<MemberType[]>([]);
   const [loading, setLoading] = useState(true);
 

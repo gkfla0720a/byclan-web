@@ -3,7 +3,7 @@ export * from './auth/useAuth';
 export * from './auth/useAuthForm';
 export * from './auth/useAuthMutations';
 export * from './auth/useAuthSession';
-export * from './useGuildMembers';
+export * from './useMemberManagement';
 export * from './useHomeGate';
 export * from './useLadderData';
 export * from './useMasterDelegation';

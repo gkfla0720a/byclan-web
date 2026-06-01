@@ -1,4 +1,4 @@
-// 파일명: @/views/ClanMembers.tsx
+// 파일명: @/views/MemberList.tsx
 
 /**
 * 역할:
@@ -13,8 +13,8 @@
 *   - 총 인원·베테랑·스트리머 수를 StatCard로 요약합니다.
 *
 * 사용 방법:
-*   import ClanMembers from './ClanMembers';
-*   <ClanMembers />
+*   import MemberList from './MemberList';
+*   <MemberList />
 */
 
 'use client';
@@ -26,8 +26,6 @@ import { useAuthContext } from '@/context/AuthContext';
 import { ROLE_PERMISSIONS, hasPermission, normalizeRole } from '@/types/permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
 import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
-
-const { user, profile } = useAuthContext();
 
 const CACHE_KEY = 'members_list';
 
@@ -47,13 +45,13 @@ const INLINE_ROLE_OPTIONS = [
   { value: 'applicant', label: '신규 가입자' },
 ];
 
-function normalizeUrl(url) {
+const normalizeUrl = (url) => {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
 }
 
-function applyDemoStreamers(memberList) {
+const applyDemoStreamers = (memberList) => {
   if (memberList.some((member) => member.is_streamer)) {
     return memberList;
   }
@@ -77,7 +75,7 @@ function applyDemoStreamers(memberList) {
  * @param {object} member - profiles 레코드
  * @returns {object|null}
  */
-function normalizeMemberRole(member: typeof user) {
+const normalizeMemberRole = (member: typeof user) => {
   if (!member) return null;
   const normalizedRole = member?.role;
   return {
@@ -163,14 +161,15 @@ async function fetchMembersWithSchemaFallback() {
 }
 
 /**
- * ClanMembers 컴포넌트
+ * MemberList 컴포넌트
  *
  * 클랜원 명단을 직책별로 분류하여 테이블로 렌더링합니다.
  * 관리 권한이 있으면 인라인 드롭다운으로 등급을 변경할 수 있습니다.
  *
  * @returns {JSX.Element} 클랜원 명단 UI
  */
-export default function ClanMembers() {
+export default function MemberList() {
+  const { user, profile } = useAuthContex();
   /** DB에서 불러온 멤버 배열 */
   const [members, setMembers] = useState([]);
   /** 데이터 로딩 여부 */

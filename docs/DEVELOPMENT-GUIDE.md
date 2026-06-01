@@ -106,7 +106,7 @@ byclan-web/
 │   │
 │   ├── views/            # 페이지 레벨 컴포넌트
 │   │   ├── HomeContent.tsx
-│   │   ├── ClanMembers.tsx
+│   │   ├── MemberList.tsx
 │   │   ├── MatchRecords.tsx
 │   │   └── ...
 │   │

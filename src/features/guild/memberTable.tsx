@@ -2,7 +2,7 @@
 
 'use client';
 
-import { ROLE_PERMISSIONS } from '@/utils/permissions/role-permissions';
+import { hasPermission, ROLE_PERMISSIONS } from '@/types/permissions';
 import { isMarkedTestAccount } from '@/utils/testData';
 
 const getRoleColor = (role) => ROLE_PERMISSIONS[role]?.color || '#C7CEEA';

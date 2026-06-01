@@ -11,7 +11,7 @@
 
 'use client';
 
-import GuildManagement from '@/components/GuildManagement';
+import MemberManagement from '@/components/MemberManagement';
 import PagePlaceHolder from '@/views/PagePlaceHolder';
 import { useAuthContext } from '@/context/AuthContext';
 
@@ -27,7 +27,7 @@ export default function GuildPage() {
     <main className="grow w-full relative z-10 flex flex-col items-start justify-start px-2 sm:px-6 mb-10 max-w-6xl mx-auto">
       <div className="w-full mt-4">
         {user
-          ? <GuildManagement />
+          ? <MemberManagement />
           : <PagePlaceHolder title="로그인이 필요합니다." />}
       </div>
     </main>

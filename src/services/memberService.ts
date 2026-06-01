@@ -15,7 +15,7 @@ type JoinedMember = ProfileRow & {
   profile_meta: ProfileMeta | ProfileMeta[] | null;
 };
 
-export async function fetchMembers() {
+export const fetchMembers = async () => {
   const { data, error } = await supabase
     .from('profiles')
     .select('*, profile_oauth(discord_id), profile_meta(is_test_account, is_test_account_active)')
@@ -42,12 +42,12 @@ export async function fetchMembers() {
   });
 }
 
-export async function updateMemberRole(
+export const updateMemberRole = async (
   memberId: string,
   newRole: string,
   previousRole: string,
   isTestAccount: boolean = false
-) {
+) => {
   if (newRole === 'master') throw new Error('마스터 지정은 위임 절차로만 처리할 수 있습니다.');
 
   const { data, error } = await supabase.rpc('rpc_update_profile_role', {
@@ -67,7 +67,7 @@ export async function updateMemberRole(
   }
 }
 
-export async function bannedMember(memberId: string) {
+export const bannedMember = async (memberId: string) => {
   const { data, error } = await supabase.rpc('rpc_update_profile_role', {
     p_target_id: memberId,
     p_new_role: 'banned',
@@ -79,7 +79,7 @@ export async function bannedMember(memberId: string) {
   if (!result.ok) throw new Error(result.error || '제명 처리 실패');
 }
 
-export async function forcePromoteToMember(memberId: string, isTestAccount: boolean = false) {
+export const forcePromoteToMember = async (memberId: string, isTestAccount: boolean = false) => {
   const { data, error } = await supabase.rpc('rpc_update_profile_role', {
     p_target_id: memberId,
     p_new_role: 'member',
@@ -99,7 +99,7 @@ export async function forcePromoteToMember(memberId: string, isTestAccount: bool
   });
 }
 
-export async function delegateMaster(currentMasterId: string | null, targetId: string) {
+export const delegateMaster = async (currentMasterId: string | null, targetId: string) => {
   if (currentMasterId) {
     await supabase.rpc('rpc_update_profile_role', {
       p_target_id: currentMasterId,
@@ -116,7 +116,7 @@ export async function delegateMaster(currentMasterId: string | null, targetId: s
   if (error) throw error;
 }
 
-export async function checkAndSendRookieNotifications(currentUserId: string) {
+export const checkAndSendRookieNotifications= async (currentUserId: string) => {
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: rookies } = await supabase

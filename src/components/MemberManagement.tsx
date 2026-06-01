@@ -1,20 +1,20 @@
-// 파일명: src/components/GuildManagement.tsx
+// 파일명: src/components/MemberManagement.tsx
 
 'use client';
 
 import { useState } from 'react';
-import { hasPermission } from '@/utils/permissions';
-import { useGuildMembers } from '@/hooks/useGuildMembers';
+import { hasPermission, ROLE_PERMISSIONS } from '@/types/permissions';
+import { useMemberManagement } from '@/hooks/useMemberManagement';
 import { useMasterDelegation } from '@/hooks/useMasterDelegation';
 import MemberTable from '@/features/guild/memberTable';
 import ActionModal from '@/features/guild/actionModal';
 import MasterDelegationModal from '@/features/guild/masterDelegationModal';
 
-export default function GuildManagement() {
+export default function MemberManagement() {
   const {
     members, loading, currentManager,
     loadMembers, handleRoleChange, handleRemoveMember, handleForcePromote,
-  } = useGuildMembers();
+  } = useMemberManagement();
 
   const {
     masterDelegation, delegationVerification, isDelegationVerified, canDelegateMaster,
