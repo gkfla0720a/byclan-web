@@ -1,34 +1,16 @@
-// 파일명: @/views/MemberList.tsx
-
-/**
-* 역할:
-*   클랜원 명단 views 컴포넌트입니다.
-*   운영진·베테랑 클랜원·일반 클랜원 세 섹션으로 멤버를 분류하여 테이블로 보여줍니다.
-*
-* 주요 기능:
-*   - profiles 테이블에서 guest·applicant·banned를 제외한 멤버를 불러옵니다.
-*   - streamer 관련 컬럼이 없는 경우 자동으로 폴백(fallback) 쿼리를 실행합니다.
-*   - 관리 권한(member.manage)이 있는 사용자에게만 인라인 등급 변경 드롭다운을 표시합니다.
-*   - 스트리머 멤버는 방송 플랫폼 링크 버튼을 표시하며, 실제 스트리머가 없으면 데모 데이터를 적용합니다.
-*   - 총 인원·베테랑·스트리머 수를 StatCard로 요약합니다.
-*
-* 사용 방법:
-*   import MemberList from './MemberList';
-*   <MemberList />
-*/
+// 파일명: src/view/MemberList.tsx
 
 'use client';
 
-import { useAuthContext } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
-import type { Database, ProfilesRow, MetaData } from '@/types';
-import { ROLE_PERMISSIONS, hasPermission } from '@/types/permissions';
+import { ROLE_PERMISSIONS } from '@/types/permissions';
 import { isCurrentViewerTestAccount, isMarkedTestAccount } from '@/utils/testData';
-import { getCached, setCached, invalidateCache } from '@/utils/queryCache';
+import { getCached, setCached } from '@/utils/queryCache';
 
 const CACHE_KEY = 'members_list';
 
+// 1. 명단을 나눌 기준 바구니를 정의합니다.
 const ROLE_SECTIONS = [
   { key: 'leadership', title: '운영진', roles: ['developer', 'master', 'admin'] },
   { key: 'veteran', title: '베테랑 클랜원', roles: ['veteran'] },
@@ -41,16 +23,14 @@ const normalizeUrl = (url: string) => {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
-}
+};
 
-const applyDemoStreamers = (memberList) => {
+const applyDemoStreamers = (memberList: any[]) => {
   if (memberList.some((member) => member.is_streamer)) {
     return memberList;
   }
-
   return memberList.map((member, index) => {
     if (index > 2) return member;
-
     return {
       ...member,
       is_streamer: true,
@@ -59,48 +39,21 @@ const applyDemoStreamers = (memberList) => {
       demo_streamer: true,
     };
   });
-}
+};
 
-/**
- * 역할 문자열을 UI/권한 체크에 맞는 소문자 형식으로 정규화합니다.
- * member 자체가 null이면 null을 반환합니다.
- * @param {object} member - profiles 레코드
- * @returns {object|null}
- */
-const checkUserRole = (member: ProfilesRow) => {
-  if (!member) return null;
-  const checkUserRole = member?.role;
-  return {
-    ...member,
-    role: checkUserRole || member?.role || '',
-  };
-}
-
-
-
-
-
-
-
-
-/**
- * profiles 조회를 시도하고, streamer 컬럼이 없으면 해당 컬럼을 제외해 재시도합니다.
- * @returns {{ data: object[]|null, error: object|null }}
- */
+// Supabase에서 데이터를 가져오는 독립적인 순수 함수
 const fetchMetaData = async () => {
-  // discord_id는 UI에 표시하지 않으므로 select에서 제외합니다.
-  // ladder_rankings(MMR)과 profile_meta(스트리머)를 함께 조인합니다.
   const joinedResult = await supabase
     .from('profiles')
     .select(`
-      id, by_id, role, race, intro, clan_point,
+      id, by_id, role, race,
       ladder_rankings(personal_mmr, total_mmr),
       profile_meta(is_streamer, streamer_platform, streamer_url, is_test_account, is_test_account_active)
     `)
     .neq('role', 'guest')
+    .neq('role', 'ghost')
     .neq('role', 'applicant')
-    .neq('role', 'banned')
-    .order('clan_point', { ascending: false });
+    .neq('role', 'banned');
 
   if (!joinedResult.error) {
     const isTestViewer = isCurrentViewerTestAccount();
@@ -109,15 +62,13 @@ const fetchMetaData = async () => {
       data: (joinedResult.data || [])
         .map(m => ({
           ...m,
-          personal_mmr: m.ladder_rankings?.personal_mmr ?? 0,
-          total_mmr: m.ladder_rankings?.total_mmr ?? 0,
-          is_streamer: m.profile_meta?.is_streamer ?? false,
-          streamer_platform: m.profile_meta?.streamer_platform ?? null,
-          streamer_url: m.profile_meta?.streamer_url ?? null,
-          is_test_account: m.profile_meta?.is_test_account ?? false,
-          is_test_account_active: m.profile_meta?.is_test_account_active ?? true,
-          ladder_rankings: undefined,
-          profile_meta: undefined,
+          personal_mmr: (m.ladder_rankings as any)?.personal_mmr ?? 0,
+          total_mmr: (m.ladder_rankings as any)?.total_mmr ?? 0,
+          is_streamer: (m.profile_meta as any)?.is_streamer ?? false,
+          streamer_platform: (m.profile_meta as any)?.streamer_platform ?? null,
+          streamer_url: (m.profile_meta as any)?.streamer_url ?? null,
+          is_test_account: (m.profile_meta as any)?.is_test_account ?? false,
+          is_test_account_active: (m.profile_meta as any)?.is_test_account_active ?? true,
         }))
         .filter(m => isTestViewer
           ? (m.is_test_account === true && m.is_test_account_active === true)
@@ -125,83 +76,20 @@ const fetchMetaData = async () => {
         ),
     };
   }
+  return { data: null, error: new Error('profiles 테이블 조회 실패') };
+};
 
-  // 조인 실패 시 기본 컬럼만으로 폴백
-  const candidates = [
-    'id, by_id, role, race, intro, clan_point',
-  ];
-
-  for (const columns of candidates) {
-    const result = await supabase
-      .from('profiles')
-      .select(columns)
-      .neq('role', 'guest')
-      .neq('role', 'applicant')
-      .neq('role', 'banned')
-      .order('clan_point', { ascending: false });
-
-    if (!result.error) {
-      return result;
-    }
-
-    const message = `${result.error?.message || ''} ${result.error?.details || ''} ${result.error?.hint || ''}`;
-    const isMissingColumn =
-      result.error?.code === '42703' ||
-      result.error?.code === 'PGRST204' ||
-      message.includes('does not exist') ||
-      message.includes('could not find');
-
-    if (!isMissingColumn) {
-      return result;
-    }
-  }
-
-  return { data: null, error: new Error('profiles 테이블 조회 실패: clan_point 컬럼을 찾지 못했습니다. CLAN-POINT-COLUMN-RENAME.sql을 실행했는지 확인하세요.') };
-}
-
-/**
- * MemberList 컴포넌트
- *
- * 클랜원 명단을 직책별로 분류하여 테이블로 렌더링합니다.
- * 관리 권한이 있으면 인라인 드롭다운으로 등급을 변경할 수 있습니다.
- *
- * @returns {JSX.Element} 클랜원 명단 UI
- */
 export default function MemberList() {
-  const { user, profile } = useAuthContext();
-  /** DB에서 불러온 멤버 배열 */
-  const [members, setMembers] = useState([]);
-  /** 데이터 로딩 여부 */
+  const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  /** 데이터 로딩 에러 상태 */
-  const [error, setError] = useState(null);
-  /** 현재 로그인한 사용자의 역할(role) */
-  const [currentRole, setCurrentRole] = useState(null);
-  /** 현재 등급 변경 처리 중인 멤버의 id (처리 완료 시 null) */
-  const [updatingMemberId, setUpdatingMemberId] = useState(null);
-  /** 현재 로그인한 사용자의 ID */
-  const [currentUserId, setCurrentUserId] = useState(null);
+  const [error, setError] = useState<any>(null);
 
-  /**
-   * 컴포넌트 마운트 시 현재 로그인 사용자 역할과 멤버 목록을 병렬로 불러옵니다.
-   * streamer 컬럼이 없을 경우 해당 컬럼을 제외하고 재시도합니다.
-   */
+  // [교정] 깔끔하게 하나로 정리된 데이터 로드 로직
   useEffect(() => {
-    const loadCurrentUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      // 현재 사용자 ID와 역할을 상태로 저장합니다.
-      setCurrentUserId(user.id);
-      setCurrentRole(profile?.role || null);
-    };
-
-    const fetchMembers = async () => {
+    const loadData = async () => {
+      setLoading(true);
+      
+      // 1. 캐시 확인
       const cached = getCached(CACHE_KEY);
       if (cached) {
         setMembers(cached);
@@ -209,112 +97,107 @@ export default function MemberList() {
         return;
       }
 
+      // 2. 캐시 없으면 DB 요청
       try {
         const { data, error } = await fetchMetaData();
-
         if (error) throw error;
 
         const processed = applyDemoStreamers(
-          (data || [])
-            .map(checkUserRole)
-            .filter((member) => member && member.id && member.role && PLAYABLE_LADDER_MEMBER_ROLES.includes(member.role))
+          (data || []).filter((member) => member && member.id && member.role && PLAYABLE_LADDER_MEMBER_ROLES.includes(member.role))
         );
+        
         setCached(CACHE_KEY, processed);
         setMembers(processed);
-      } catch (error) {
-        console.error('클랜원 목록 로드 실패:', error);
-        setError(error);
-        setMembers([]);
+      } catch (err) {
+        console.error('클랜원 목록 로드 실패:', err);
+        setError(err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadCurrentUserRole();
-    fetchMembers();
+    loadData();
   }, []);
 
-  /** 멤버 총 인원 수 */
+  // [교정] 사라졌던 실시간 계산 변수들을 다시 안전하게 배치합니다.
   const totalMembers = members.length;
-  /** 베테랑 클랜원(veteran) 수 */
-  const veteranCount = members.filter((member) => member.role === 'veteran').length;
-  /** BJ/스트리머로 등록된 멤버 수 */
   const streamerCount = members.filter((member) => Boolean(member.is_streamer)).length;
-  /** ROLE_SECTIONS 정의에 따라 멤버를 직책별로 묶은 배열 (멤버 없는 섹션은 제거) */
+
+  // [교정] 전체 멤버를 운영진/베테랑/일반 그룹으로 자동 분류해주는 로직입니다.
   const groupedMembers = ROLE_SECTIONS.map((section) => ({
     ...section,
     members: members.filter((member) => section.roles.includes(member.role)),
   })).filter((section) => section.members.length > 0);
 
-  const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role || '알 수 없음', color: '#C7CEEA', icon: '👤' };
+  const getRoleMeta = (role: string) => ROLE_PERMISSIONS[role] || { name: role || '알 수 없음', color: '#C7CEEA' };
 
+  if (loading) return <div className="text-center py-12 text-cyan-400 font-mono">[ LOADING CLAN MEMBERS... ]</div>;
+  if (error) return <div className="text-center py-12 text-red-400 font-bold">클랜원 목록을 불러오지 못했습니다.</div>;
 
   return (
-    <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
-      <div className="relative neon-panel rounded-3xl overflow-hidden px-6 py-4 sm:px-8 sm:py-5 text-center">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_38%)] pointer-events-none" />
-        <h2 className="relative text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-100 via-cyan-300 to-blue-400 drop-shadow-lg">
+    <div className="w-full max-w-5xl mx-auto mt-4 sm:mt-8 space-y-6 sm:space-y-8">
+      {/* 상단 레이아웃 */}
+      <div className="relative neon-panel rounded-3xl overflow-hidden px-6 py-4 text-center">
+        <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-100 to-blue-400">
           클랜원 명단
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* 요약 통계 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard label="총 인원" value={`${totalMembers}명`} accent="text-white" />
-        <StatCard label="베테랑 클랜원" value={`${veteranCount}명`} accent="text-cyan-400" />
         <StatCard label="BJ / 스트리머" value={`${streamerCount}명`} accent="text-pink-400" />
       </div>
 
+      {/* 직책별 명단 테이블 */}
       <div className="space-y-6">
         {groupedMembers.map((section) => (
           <section key={section.key} className="neon-panel rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-cyan-400/15 bg-slate-950/60">
-              <h4 className="text-lg font-bold text-white tracking-wide">{section.title}</h4>
+            <div className="flex items-center justify-between px-5 py-4 bg-slate-950/60 border-b border-cyan-400/15">
+              <h4 className="text-lg font-bold text-white">{section.title}</h4>
               <span className="text-sm text-cyan-200/80">{section.members.length}명</span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="neon-table min-w-full table-fixed text-sm">
+              <table className="min-w-full table-fixed text-sm">
                 <colgroup>
-                  <col className='w-[30%]'/>
-                  <col className='w-[28%]' />
-                  <col className='w-[16%]'/>
-                  <col className= 'w-[16%]' />
-                  <col className= 'w-[10%]' />
-                  
+                  <col className="w-[30%]" />
+                  <col className="w-[28%]" />
+                  <col className="w-[16%]" />
+                  <col className="w-[16%]" />
+                  <col className="w-[10%]" />
                 </colgroup>
                 <thead>
-                  <tr>
-                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">닉네임</th>
-                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">등급</th>
-                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">종족</th>
-                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">MMR</th>
-                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">BJ</th>
-                    
+                  <tr className="text-slate-400 border-b border-cyan-400/15">
+                    <th className="px-4 py-3 text-left font-bold">닉네임</th>
+                    <th className="px-4 py-3 text-left font-bold">등급</th>
+                    <th className="px-4 py-3 text-left font-bold">종족</th>
+                    <th className="px-4 py-3 text-left font-bold">MMR</th>
+                    <th className="px-4 py-3 text-left font-bold">BJ</th>
                   </tr>
                 </thead>
                 <tbody>
+                  {/* [교정] 사라졌던 유저별 반복문(.map)을 다시 복구했습니다. */}
                   {section.members.map((member) => {
                     const roleMeta = getRoleMeta(member.role);
                     const roleColor = roleMeta.color || '#C7CEEA';
                     const streamerUrl = normalizeUrl(member.streamer_url);
-                    const isMe = member.id === currentUserId; // 현재 행이 로그인한 사용자 자신의 정보인지 여부
 
                     return (
-                      <tr key={member.id} className="hover:bg-cyan-400/4 transition-colors">
-                        <td className="px-4 py-3 text-white font-semibold align-middle">
-                          <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="truncate">{member.by_id || <span className="text-red-400 text-xs">[by_id 없음]</span>}</span>
-                            {isMe && (
-                              <span className="text-[10px] bg-cyan-500 text-slate-950 px-1.5 py-0.5 rounded font-black animate-pulse">
-                                나
-                              </span>
+                      <tr key={member.id} className="hover:bg-cyan-400/5 transition-colors border-b border-slate-900">
+                        {/* 닉네임 */}
+                        <td className="px-4 py-3 text-white font-semibold">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate">{member.by_id || '[닉네임 없음]'}</span>
+                            {isMarkedTestAccount(member) && (
+                              <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>
                             )}
-                            {isMarkedTestAccount(member) && <span className="text-[10px] text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">TEST</span>}
                           </div>
                         </td>
-                        <td className="px-4 py-3 align-middle">
+                        {/* 등급 배지 */}
+                        <td className="px-4 py-3">
                           <span
-                            className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap"
+                            className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold"
                             style={{
                               backgroundColor: `${roleColor}18`,
                               color: roleColor,
@@ -324,11 +207,14 @@ export default function MemberList() {
                             {roleMeta.name}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-slate-300 align-middle whitespace-nowrap">{member.race || 'Terran'}</td>
-                        <td className="px-4 py-3 text-cyan-300 font-bold align-middle whitespace-nowrap">
+                        {/* 종족 */}
+                        <td className="px-4 py-3 text-slate-300">{member.race || 'Terran'}</td>
+                        {/* MMR */}
+                        <td className="px-4 py-3 text-cyan-300 font-bold">
                           {(member.total_mmr ?? member.personal_mmr ?? 0)}점
                         </td>
-                        <td className="px-4 py-3 text-slate-200 align-middle whitespace-nowrap">
+                        {/* BJ 링크 */}
+                        <td className="px-4 py-3">
                           {member.is_streamer ? (
                             <div className="flex items-center gap-2">
                               <span className="text-pink-300 font-semibold">BJ</span>
@@ -336,23 +222,15 @@ export default function MemberList() {
                                 href={streamerUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-pink-400/35 bg-pink-400/10 text-pink-200 hover:bg-pink-400/20 hover:text-white transition-colors"
-                                title={`${member.streamer_platform || 'SOOP'} 링크 열기`}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-pink-400/35 bg-pink-400/10 text-pink-200 hover:bg-pink-400/20"
                               >
                                 ▶
                               </a>
-                              {member.demo_streamer && <span className="text-[10px] text-slate-400">임시</span>}
                             </div>
                           ) : (
                             <span className="text-slate-500">-</span>
                           )}
                         </td>
-                        
-                          <td className="px-4 py-3 align-middle">
-                            <span className="text-xs text-slate-500">고정</span>
-                            
-                          </td>
-                        )}
                       </tr>
                     );
                   })}
@@ -362,23 +240,11 @@ export default function MemberList() {
           </section>
         ))}
       </div>
-
-      {!loading && !error && members.length === 0 && <div className="text-center py-12 text-gray-500">클랜원이 없습니다.</div>}
     </div>
   );
 }
 
-/**
- * StatCard 컴포넌트
- *
- * 레이블과 숫자 값을 강조 색상으로 표시하는 통계 카드입니다.
- *
- * @param {string} label - 카드 상단에 표시할 레이블 텍스트
- * @param {string} value - 카드 중앙에 크게 표시할 값 (예: "12명")
- * @param {string} accent - 값 텍스트에 적용할 Tailwind 색상 클래스 (예: "text-cyan-400")
- * @returns {JSX.Element} 통계 카드 UI
- */
-function StatCard({ label, value, accent }) {
+function StatCard({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
     <div className="neon-panel rounded-2xl p-4">
       <div className="text-xs text-cyan-100/55 uppercase tracking-[0.25em]">{label}</div>
