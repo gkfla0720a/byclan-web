@@ -23,7 +23,9 @@ interface MemberRow {
   is_test_account_active: boolean;
 }
 
-const CACHE_KEY = 'members_list';
+const cacheKey = isCurrentViewerTestAccount()
+  ? 'members_list:test'
+  : 'members_list:normal';
 
 /**
  * Supabase의 3개 분리 테이블을 개별 fetch 후 유기적으로 병합(Join)합니다.
@@ -93,9 +95,9 @@ export default function MemberList() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      
-      const cached = getCached(CACHE_KEY);
-      if (cached) {
+
+      const cached = getCached(cacheKey);
+      if (cached && Array.isArray(cached)) {
         setMembers(cached);
         setLoading(false);
         return;
@@ -110,7 +112,7 @@ export default function MemberList() {
           (member) => member && member.user_id && member.role && LADDER_MEMBER_ROLES.includes(member.role as any)
         );
 
-        setCached(CACHE_KEY, processed);
+        setCached(cacheKey, processed);
         setMembers(processed);
       } catch (err: any) {
         console.error('클랜원 목록 로드 실패:', err);
@@ -166,7 +168,7 @@ export default function MemberList() {
         <div className="flex items-center justify-between px-5 py-4 bg-slate-950/60 border-b border-cyan-400/15">
           <h4 className="text-lg font-bold text-white">클랜원 목록</h4>
           <span className="text-sm text-cyan-200/80">
-            {searchTerm ? `검색 결과 ${filteredMembers.length}명` : `총 {totalMembers}명`}
+            {searchTerm ? `검색 결과 ${filteredMembers.length}명` : `총 ${totalMembers}명`}
           </span>
         </div>
 
