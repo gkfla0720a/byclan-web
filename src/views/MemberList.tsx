@@ -6,61 +6,94 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
 import { isCurrentViewerTestAccount } from '@/utils/testData';
 import { getCached, setCached } from '@/utils/queryCache';
-import { LADDER_MEMBER_ROLES } from '@/types'
+import { LADDER_MEMBER_ROLES } from '@/types';
 import type { RaceCode } from '@/types/primitives';
+
+
+interface MemberRow {
+  user_id: string;
+  by_id: string | null;
+  role: string | null;
+  race: RaceCode | null;
+  tier: string | null;
+  total_mmr: number;
+  personal_mmr: number;
+  team_mmr: number;
+  is_test_account: boolean;
+  is_test_account_active: boolean;
+}
 
 const CACHE_KEY = 'members_list';
 
 /**
- * Supabase에서 순수 클랜원 정보를 가져옵니다.
- * [변경] 티어, 개인MMR, 팀MMR, 총MMR을 모두 가져오도록 쿼리를 정비합니다.
+ * Supabase의 3개 분리 테이블을 개별 fetch 후 유기적으로 병합(Join)합니다.
  */
-const fetchMetaData = async () => {
-  const joinedResult = await supabase
+const fetchMemberData = async () => {
+  // 1. 기본 프로필 로드 (제명/비회원 차단)
+  const ProfilesData = await supabase
     .from('profiles')
-    .select(`
-      id, by_id, role, race, tier,
-      ladder_rankings(personal_mmr, team_mmr, total_mmr),
-      profile_meta(is_test_account, is_test_account_active)
-    `)
+    .select('user_id, by_id, role, race')
     .neq('role', 'guest')
     .neq('role', 'ghost')
     .neq('role', 'applicant')
     .neq('role', 'banned');
 
-  if (!joinedResult.error) {
-    const isTestViewer = isCurrentViewerTestAccount();
-    return {
-      ...joinedResult,
-      data: (joinedResult.data || [])
-        .map(m => ({
-          ...m,
-          personal_mmr: (m.ladder_rankings as any)?.personal_mmr ?? 0,
-          team_mmr: (m.ladder_rankings as any)?.team_mmr ?? 0,
-          total_mmr: (m.ladder_rankings as any)?.total_mmr ?? 0,
-          is_test_account: (m.profile_meta as any)?.is_test_account ?? false,
-          is_test_account_active: (m.profile_meta as any)?.is_test_account_active ?? true,
-        }))
-        .filter(m => isTestViewer
-          ? (m.is_test_account === true && m.is_test_account_active === true)
-          : !m.is_test_account
-        ),
-    };
+  // 2. 래더 점수 정보 전체 로드
+  const LadderRankingsData = await supabase
+    .from('ladder_rankings')
+    .select('user_id, tier, personal_mmr, team_mmr, total_mmr');
+
+  // 3. 테스트 계정 여부 메타데이터 로드
+  const profileMetaData = await supabase
+    .from('profile_meta')
+    .select('user_id, is_test_account, is_test_account_active');
+
+  // 에러 통합 체크
+  const hasError = ProfilesData.error || LadderRankingsData.error || profileMetaData.error;
+  if (hasError) {
+    return { data: null, error: hasError };
   }
-  return { data: null, error: new Error('profiles 테이블 조회 실패') };
+
+  // [교정] 데이터가 유실되지 않도록 완벽하게 인메모리 매핑 처리를 수행합니다.
+  const joinedData = (ProfilesData.data || []).map((profile) => {
+    const ladder = LadderRankingsData.data?.find((l) => l.user_id === profile.user_id);
+    const meta = profileMetaData.data?.find((m) => m.user_id === profile.user_id);
+
+    return {
+      user_id: profile.user_id,
+      by_id: profile.by_id,
+      role: profile.role,
+      race: profile.race as RaceCode | null,
+      tier: ladder?.tier ?? 'Unranked',
+      personal_mmr: ladder?.personal_mmr ?? 0,
+      team_mmr: ladder?.team_mmr ?? 0,
+      total_mmr: ladder?.total_mmr ?? 0,
+      is_test_account: meta?.is_test_account ?? false,
+      is_test_account_active: meta?.is_test_account_active ?? true,
+    };
+  });
+
+  // 테스트 계정 필터링 처리
+  const isTestViewer = isCurrentViewerTestAccount();
+  const filteredData = joinedData.filter((m) =>
+    isTestViewer
+      ? m.is_test_account === true && m.is_test_account_active === true
+      : !m.is_test_account
+  );
+
+  return { data: filteredData, error: null };
 };
 
 export default function MemberList() {
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
-  
-  /** [추가] 사용자가 입력한 검색어를 저장할 상태 공간 */
+  const [error, setError] = useState<Error | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
+      
       const cached = getCached(CACHE_KEY);
       if (cached) {
         setMembers(cached);
@@ -69,15 +102,17 @@ export default function MemberList() {
       }
 
       try {
-        const { data, error } = await fetchMetaData();
+        const { data, error } = await fetchMemberData();
         if (error) throw error;
 
-        // 등급 제한 필터링만 거친 순수 데이터 저장
-        const processed = (data || []).filter((member) => member && member.id && member.role && LADDER_MEMBER_ROLES.includes(member.role));
-        
+        // [교정] 부모로부터 온 명확한 정식 역할 리스트(LADDER_MEMBER_ROLES)를 매핑 기준으로 사용
+        const processed = (data || []).filter(
+          (member) => member && member.user_id && member.role && LADDER_MEMBER_ROLES.includes(member.role as any)
+        );
+
         setCached(CACHE_KEY, processed);
         setMembers(processed);
-      } catch (err) {
+      } catch (err: any) {
         console.error('클랜원 목록 로드 실패:', err);
         setError(err);
       } finally {
@@ -88,10 +123,9 @@ export default function MemberList() {
     loadData();
   }, []);
 
-  /** [추가] 검색어에 맞게 실시간으로 필터링된 멤버 리스트 계산 */
+  // 검색어 필터링 계산 연산
   const filteredMembers = members.filter((member) => {
     const nickname = member.by_id || '';
-    // 소문자 대문자 구별 없이 검색이 잘 되도록 처리합니다.
     return nickname.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -109,13 +143,12 @@ export default function MemberList() {
         </h2>
       </div>
 
-      {/* 요약 통계와 검색창 레이아웃 */}
+      {/* 대시보드 스탯 및 검색창 바 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
         <div className="md:col-span-1">
           <StatCard label="총 인원" value={`${totalMembers}명`} accent="text-white" />
         </div>
-        
-        {/* [추가] 닉네임 검색 인풋창 */}
+
         <div className="md:col-span-2 neon-panel rounded-2xl p-4 flex flex-col justify-center h-full">
           <label className="text-xs text-cyan-100/55 uppercase tracking-[0.25em] mb-2 block">클랜원 검색</label>
           <input
@@ -128,25 +161,24 @@ export default function MemberList() {
         </div>
       </div>
 
-      {/* 단일화된 테이블 */}
+      {/* 정렬된 단일 명단 그리드 테이블 */}
       <div className="neon-panel rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 bg-slate-950/60 border-b border-cyan-400/15">
           <h4 className="text-lg font-bold text-white">클랜원 목록</h4>
           <span className="text-sm text-cyan-200/80">
-            {searchTerm ? `검색 결과 ${filteredMembers.length}명` : `총 ${totalMembers}명`}
+            {searchTerm ? `검색 결과 ${filteredMembers.length}명` : `총 {totalMembers}명`}
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full table-fixed text-sm">
-            {/* [변경] 지정해주신 새로운 컬럼 비율에 맞게 조정 */}
             <colgroup>
-              <col className="w-[24%]" /> {/* 닉네임 */}
-              <col className="w-[16%]" /> {/* 티어 */}
-              <col className="w-[15%]" /> {/* 총 MMR */}
-              <col className="w-[15%]" /> {/* 개인 MMR */}
-              <col className="w-[15%]" /> {/* 팀 MMR */}
-              <col className="w-[15%]" /> {/* 주종 */}
+              <col className="w-[24%]" />
+              <col className="w-[16%]" />
+              <col className="w-[15%]" />
+              <col className="w-[15%]" />
+              <col className="w-[15%]" />
+              <col className="w-[15%]" />
             </colgroup>
             <thead>
               <tr className="text-slate-400 border-b border-cyan-400/15 bg-slate-900/30">
@@ -159,39 +191,18 @@ export default function MemberList() {
               </tr>
             </thead>
             <tbody>
-              {/* [변경] 원본 members 대신 필터링된 리스트를 반복문으로 돌립니다. */}
-              {filteredMembers.map((member) => {
-                return (
-                  <tr key={member.id} className="hover:bg-cyan-400/5 transition-colors border-b border-slate-900">
-                    {/* 닉네임 */}
-                    <td className="px-4 py-3 text-white font-semibold">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate">{member.by_id || '[닉네임 없음]'}</span>
-                      </div>
-                    </td>
-                    {/* 티어 */}
-                    <td className="px-4 py-3 text-slate-300 font-medium">
-                      {member.tier || 'Unranked'}
-                    </td>
-                    {/* 총 MMR */}
-                    <td className="px-4 py-3 text-cyan-300 font-bold">
-                      {member.total_mmr}점
-                    </td>
-                    {/* 개인 MMR */}
-                    <td className="px-4 py-3 text-slate-300">
-                      {member.personal_mmr}점
-                    </td>
-                    {/* 팀 MMR */}
-                    <td className="px-4 py-3 text-slate-300">
-                      {member.team_mmr}점
-                    </td>
-                    {/* 주종족 */}
-                    <td className="px-4 py-3 text-slate-400 font-mono">
-                      {(member.race as RaceCode) || 'Terran'}
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredMembers.map((member) => (
+                <tr key={member.user_id} className="hover:bg-cyan-400/5 transition-colors border-b border-slate-900">
+                  <td className="px-4 py-3 text-white font-semibold">
+                    <span className="truncate block">{member.by_id || '[닉네임 없음]'}</span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-300 font-medium">{member.tier}</td>
+                  <td className="px-4 py-3 text-cyan-300 font-bold">{member.total_mmr}점</td>
+                  <td className="px-4 py-3 text-slate-300">{member.personal_mmr}점</td>
+                  <td className="px-4 py-3 text-slate-300">{member.team_mmr}점</td>
+                  <td className="px-4 py-3 text-slate-400 font-mono">{member.race || 'Random'}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

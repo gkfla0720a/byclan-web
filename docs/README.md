@@ -8,6 +8,24 @@
 
 ByClan 클랜 공식 홈페이지 — Next.js + React + Supabase
 
+### 📌 프로젝트 구조
+- `src/`: 소스 코드 디렉토리
+  - `components/`: 재사용 가능한 UI 컴포넌트
+  - `pages/`: Next.js 페이지 컴포넌트
+  - `supabase.ts`: Supabase 클라이언트 설정 파일
+  - `types/`: 타입스크립트 타입 정의 파일 (예: Supabase 자동 생성 타입)
+
+
+### 🛠️ 기술 스택
+- Next.js
+- React
+- TypeScript
+- Supabase
+- Tailwind CSS
+
+
+
+
 ### 🗄️ Supabase 데이터베이스 연동 및 타입스크립트 지원
 
 이 프로젝트는 데이터베이스와의 통신을 위해 `@supabase/supabase-js` 클라이언트를 사용하며, **자동 생성된 정적 타입(`Database`)을 적용하여 안전하게 개발할 수 있도록 구성**되어 있습니다.

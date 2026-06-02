@@ -24,17 +24,15 @@ export type Database = {
           actor_role: string | null
           after_data: Json | null
           before_data: Json | null
+          category: string | null
           created_at: string
           id: number
+          ip_address: string | null
           is_test_data: boolean | null
           note: string | null
+          severity: string | null
           target_id: string | null
           target_table: string
-          category: string | null
-          severity: string | null
-          ip_address: string | null
-          target_user_id: string | null
-          summary: string | null
         }
         Insert: {
           action_type: string
@@ -43,17 +41,15 @@ export type Database = {
           actor_role?: string | null
           after_data?: Json | null
           before_data?: Json | null
+          category?: string | null
           created_at?: string
           id?: never
+          ip_address?: string | null
           is_test_data?: boolean | null
           note?: string | null
+          severity?: string | null
           target_id?: string | null
           target_table: string
-          category?: string | null
-          severity?: string | null
-          ip_address?: string | null
-          target_user_id?: string | null
-          summary?: string | null
         }
         Update: {
           action_type?: string
@@ -62,17 +58,15 @@ export type Database = {
           actor_role?: string | null
           after_data?: Json | null
           before_data?: Json | null
+          category?: string | null
           created_at?: string
           id?: never
+          ip_address?: string | null
           is_test_data?: boolean | null
           note?: string | null
+          severity?: string | null
           target_id?: string | null
           target_table?: string
-          category?: string | null
-          severity?: string | null
-          ip_address?: string | null
-          target_user_id?: string | null
-          summary?: string | null
         }
         Relationships: [
           {
@@ -80,7 +74,7 @@ export type Database = {
             columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "admin_audit_logs_actor_id_fkey"
@@ -88,7 +82,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       admin_posts: {
@@ -125,7 +119,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "admin_posts_user_id_fkey"
@@ -145,7 +139,9 @@ export type Database = {
           is_streamer: boolean | null
           is_test_data: boolean | null
           is_test_data_active: boolean | null
+          motivation: string | null
           phone: string | null
+          playtime: string | null
           race: string | null
           review_note_summary: string | null
           reviewed_at: string | null
@@ -157,8 +153,6 @@ export type Database = {
           tester_id: string | null
           tier: string | null
           user_id: string | null
-          motivation: string | null
-          playtime: string | null
         }
         Insert: {
           created_at?: string
@@ -168,7 +162,9 @@ export type Database = {
           is_streamer?: boolean | null
           is_test_data?: boolean | null
           is_test_data_active?: boolean | null
+          motivation?: string | null
           phone?: string | null
+          playtime?: string | null
           race?: string | null
           review_note_summary?: string | null
           reviewed_at?: string | null
@@ -180,8 +176,6 @@ export type Database = {
           tester_id?: string | null
           tier?: string | null
           user_id?: string | null
-          motivation?: string | null
-          playtime?: string | null
         }
         Update: {
           created_at?: string
@@ -191,7 +185,9 @@ export type Database = {
           is_streamer?: boolean | null
           is_test_data?: boolean | null
           is_test_data_active?: boolean | null
+          motivation?: string | null
           phone?: string | null
+          playtime?: string | null
           race?: string | null
           review_note_summary?: string | null
           reviewed_at?: string | null
@@ -203,8 +199,6 @@ export type Database = {
           tester_id?: string | null
           tier?: string | null
           user_id?: string | null
-          motivation?: string | null
-          playtime?: string | null
         }
         Relationships: [
           {
@@ -212,7 +206,7 @@ export type Database = {
             columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "applications_reviewed_by_fkey"
@@ -226,7 +220,7 @@ export type Database = {
             columns: ["tester_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "fk_applications_tester_id"
@@ -283,7 +277,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "point_logs_user_id_fkey"
@@ -329,7 +323,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "comments_user_id_fkey"
@@ -469,7 +463,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "ladder_queue_user_id_fkey"
@@ -484,11 +478,12 @@ export type Database = {
         Row: {
           favorite_race: string | null
           id: string
-          personal_mmr: number | null
           losses: number | null
+          personal_mmr: number | null
           race_combo_stats: Json | null
           recent_total_delta: number
           team_mmr: number
+          tier: string | null
           total_mmr: number | null
           updated_at: string | null
           user_id: string | null
@@ -498,11 +493,12 @@ export type Database = {
         Insert: {
           favorite_race?: string | null
           id?: string
-          personal_mmr?: number | null
           losses?: number | null
+          personal_mmr?: number | null
           race_combo_stats?: Json | null
           recent_total_delta?: number
           team_mmr?: number
+          tier?: string | null
           total_mmr?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -512,11 +508,12 @@ export type Database = {
         Update: {
           favorite_race?: string | null
           id?: string
-          personal_mmr?: number | null
           losses?: number | null
+          personal_mmr?: number | null
           race_combo_stats?: Json | null
           recent_total_delta?: number
           team_mmr?: number
+          tier?: string | null
           total_mmr?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -529,7 +526,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "ladder_rankings_user_id_fkey"
@@ -626,7 +623,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "fk_settlement_user"
@@ -680,7 +677,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "match_bets_user_id_fkey"
@@ -752,7 +749,7 @@ export type Database = {
             columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "activity_logs_actor_id_fkey"
@@ -766,7 +763,7 @@ export type Database = {
             columns: ["target_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "activity_logs_target_user_id_fkey"
@@ -811,7 +808,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "notice_posts_user_id_fkey"
@@ -871,7 +868,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "notifications_user_id_fkey"
@@ -963,7 +960,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "posts_user_id_fkey"
@@ -1014,7 +1011,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "profile_meta_user_id_fkey"
@@ -1059,7 +1056,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "profile_oauth_user_id_fkey"
@@ -1072,40 +1069,40 @@ export type Database = {
       }
       profiles: {
         Row: {
-          by_id: string | null
           account_id: string | null
+          by_id: string | null
           clan_point: number | null
           created_at: string
-          id: string
           intro: string | null
           is_active: boolean | null
           race: string | null
           role: string | null
           rookie_since: string | null
+          user_id: string
         }
         Insert: {
-          by_id?: string | null
           account_id?: string | null
+          by_id?: string | null
           clan_point?: number | null
           created_at?: string
-          id: string
           intro?: string | null
           is_active?: boolean | null
           race?: string | null
           role?: string | null
           rookie_since?: string | null
+          user_id: string
         }
         Update: {
-          by_id?: string | null
           account_id?: string | null
+          by_id?: string | null
           clan_point?: number | null
           created_at?: string
-          id?: string
           intro?: string | null
           is_active?: boolean | null
           race?: string | null
           role?: string | null
           rookie_since?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1166,7 +1163,7 @@ export type Database = {
             columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "activity_logs_actor_id_fkey"
@@ -1180,7 +1177,7 @@ export type Database = {
             columns: ["target_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "activity_logs_target_user_id_fkey"
@@ -1208,7 +1205,7 @@ export type Database = {
           is_streamer: boolean | null
           is_test_account: boolean | null
           is_test_account_active: boolean | null
-          personal_mmr: number | null
+          ladder_mmr: number | null
           last_daily_bonus_at: string | null
           last_discord_checkin_at: string | null
           last_login_at: string | null
@@ -1424,4 +1421,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
