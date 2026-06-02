@@ -16,9 +16,9 @@ interface MemberRow {
   role: string | null;
   race: RaceCode | null;
   tier: string | null;
-  total_mmr: number;
-  personal_mmr: number;
-  team_mmr: number;
+  total_mmr: number | null;
+  personal_mmr: number | null;
+  team_mmr: number | null;
   is_test_account: boolean;
   is_test_account_active: boolean;
 }
@@ -44,20 +44,20 @@ const fetchMemberData = async () => {
     .select('user_id, tier, personal_mmr, team_mmr, total_mmr');
 
   // 3. 테스트 계정 여부 메타데이터 로드
-  const profileMetaData = await supabase
+  const ProfileMetaData = await supabase
     .from('profile_meta')
     .select('user_id, is_test_account, is_test_account_active');
 
   // 에러 통합 체크
-  const hasError = ProfilesData.error || LadderRankingsData.error || profileMetaData.error;
+  const hasError = ProfilesData.error || LadderRankingsData.error || ProfileMetaData.error;
   if (hasError) {
     return { data: null, error: hasError };
   }
 
   // [교정] 데이터가 유실되지 않도록 완벽하게 인메모리 매핑 처리를 수행합니다.
-  const joinedData = (ProfilesData.data || []).map((profile) => {
+  const JoinedData = (ProfilesData.data || []).map((profile) => {
     const ladder = LadderRankingsData.data?.find((l) => l.user_id === profile.user_id);
-    const meta = profileMetaData.data?.find((m) => m.user_id === profile.user_id);
+    const meta = ProfileMetaData.data?.find((m) => m.user_id === profile.user_id);
 
     return {
       user_id: profile.user_id,
@@ -75,7 +75,7 @@ const fetchMemberData = async () => {
 
   // 테스트 계정 필터링 처리
   const isTestViewer = isCurrentViewerTestAccount();
-  const filteredData = joinedData.filter((m) =>
+  const filteredData = JoinedData.filter((m) =>
     isTestViewer
       ? m.is_test_account === true && m.is_test_account_active === true
       : !m.is_test_account
