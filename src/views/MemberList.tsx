@@ -87,7 +87,7 @@ const checkUserRole = (member: ProfilesRow) => {
  * profiles 조회를 시도하고, streamer 컬럼이 없으면 해당 컬럼을 제외해 재시도합니다.
  * @returns {{ data: object[]|null, error: object|null }}
  */
-const fetchMetaData = async (data: MetaData) => {
+const fetchMetaData = async () => {
   // discord_id는 UI에 표시하지 않으므로 select에서 제외합니다.
   // ladder_rankings(MMR)과 profile_meta(스트리머)를 함께 조인합니다.
   const joinedResult = await supabase
@@ -247,61 +247,7 @@ export default function MemberList() {
   })).filter((section) => section.members.length > 0);
 
   const getRoleMeta = (role) => ROLE_PERMISSIONS[role] || { name: role || '알 수 없음', color: '#C7CEEA', icon: '👤' };
-  const canManageMembers = hasPermission(normalizeRole(currentRole), 'member.manage');
 
-  const handleInlineRoleChange = async (member, nextRole) => {
-    if (!canManageMembers || !nextRole || nextRole === member.role) return;
-
-    if (member.role === 'developer') {
-      alert('개발자 등급은 이 화면에서 변경할 수 없습니다.');
-      return;
-    }
-
-    if (member.role === 'master' || nextRole === 'master') {
-      alert('마스터 변경은 클랜원 관리 화면에서 진행하세요.');
-      return;
-    }
-
-    const confirmed = window.confirm(`${member.by_id || '[by_id 없음]'}의 등급을 ${ROLE_PERMISSIONS[nextRole]?.name || nextRole}(으)로 변경하시겠습니까?`);
-    if (!confirmed) return;
-
-    try {
-      setUpdatingMemberId(member.id);
-      // 역할 변경은 RPC를 통해서만 허용
-      const { data, error } = await supabase.rpc('rpc_update_profile_role', {
-        p_target_id: member.id,
-        p_new_role: nextRole,
-        p_note: `클랜원 목록에서 등급 변경: ${member.role} → ${nextRole}`,
-      });
-
-      if (error) throw error;
-      if (!data?.ok) throw new Error(data?.error || '역할 변경 실패');
-
-      setMembers((prev) => {
-        const updated = prev.map((item) => item.id === member.id ? { ...item, role: nextRole } : item);
-        invalidateCache(CACHE_KEY);
-        return updated;
-      });
-    } catch (error) {
-      alert(`등급 변경 실패: ${error.message}`);
-    } finally {
-      setUpdatingMemberId(null);
-    }
-  };
-
-
-  if (loading) {
-    return <div className="text-center py-12 text-cyan-400 font-mono">[ LOADING CLAN MEMBERS... ]</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12 space-y-2">
-        <p className="text-red-400 font-bold">클랜원 목록을 불러오지 못했습니다.</p>
-        <p className="text-slate-400 text-sm font-mono">{error?.message || String(error)}</p>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-down mt-4 sm:mt-8 space-y-6 sm:space-y-8">
@@ -329,21 +275,21 @@ export default function MemberList() {
             <div className="overflow-x-auto">
               <table className="neon-table min-w-full table-fixed text-sm">
                 <colgroup>
-                  <col className={canManageMembers ? 'w-[26%]' : 'w-[30%]'} />
-                  <col className={canManageMembers ? 'w-[22%]' : 'w-[28%]'} />
-                  <col className={canManageMembers ? 'w-[14%]' : 'w-[16%]'} />
-                  <col className={canManageMembers ? 'w-[14%]' : 'w-[16%]'} />
-                  <col className={canManageMembers ? 'w-[10%]' : 'w-[10%]'} />
-                  {canManageMembers && <col className="w-[14%]" />}
+                  <col className='w-[30%]'/>
+                  <col className='w-[28%]' />
+                  <col className='w-[16%]'/>
+                  <col className= 'w-[16%]' />
+                  <col className= 'w-[10%]' />
+                  
                 </colgroup>
                 <thead>
                   <tr>
                     <th className="px-4 py-3 text-left font-bold whitespace-nowrap">닉네임</th>
-                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">직책</th>
+                    <th className="px-4 py-3 text-left font-bold whitespace-nowrap">등급</th>
                     <th className="px-4 py-3 text-left font-bold whitespace-nowrap">종족</th>
                     <th className="px-4 py-3 text-left font-bold whitespace-nowrap">MMR</th>
                     <th className="px-4 py-3 text-left font-bold whitespace-nowrap">BJ</th>
-                    {canManageMembers && <th className="px-4 py-3 text-left font-bold whitespace-nowrap">관리</th>}
+                    
                   </tr>
                 </thead>
                 <tbody>
@@ -401,22 +347,10 @@ export default function MemberList() {
                             <span className="text-slate-500">-</span>
                           )}
                         </td>
-                        {canManageMembers && (
+                        
                           <td className="px-4 py-3 align-middle">
-                            {member.role === 'developer' || member.role === 'master' ? (
-                              <span className="text-xs text-slate-500">고정</span>
-                            ) : (
-                              <select
-                                value={member.role}
-                                disabled={updatingMemberId === member.id}
-                                onChange={(event) => handleInlineRoleChange(member, event.target.value)}
-                                className="w-full rounded-lg border border-cyan-400/15 bg-slate-950/70 px-2 py-2 text-xs text-slate-100 outline-none focus:border-cyan-300"
-                              >
-                                {INLINE_ROLE_OPTIONS.map((option) => (
-                                  <option key={option.value} value={option.value}>{option.label}</option>
-                                ))}
-                              </select>
-                            )}
+                            <span className="text-xs text-slate-500">고정</span>
+                            
                           </td>
                         )}
                       </tr>
