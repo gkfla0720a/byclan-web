@@ -23,6 +23,23 @@ interface MemberRow {
   is_test_account_active: boolean;
 }
 
+interface JoinedMemberRow {
+  user_id: string;
+  by_id: string | null;
+  role: string | null;
+  race: string | null;
+  ladder_rankings: {
+    tier: string | null;
+    personal_mmr: number | null;
+    team_mmr: number | null;
+    total_mmr: number | null;
+  } | null; // 데이터가 없을 수도 있으므로 null 허용
+  profile_meta: {
+    is_test_account: boolean;
+    is_test_account_active: boolean;
+  } | null;
+}
+
 const cacheKey = isCurrentViewerTestAccount()
   ? 'members_list:test'
   : 'members_list:normal';
@@ -32,55 +49,41 @@ const cacheKey = isCurrentViewerTestAccount()
  */
 const fetchMemberData = async () => {
   // 1. 기본 프로필 로드 (제명/비회원 차단)
-  const ProfilesData = await supabase
+  const { data, error } = await supabase
     .from('profiles')
-    .select('user_id, by_id, role, race')
+    .select(`
+    user_id, by_id, role, race,
+    ladder_rankings(tier, personal_mmr, team_mmr, total_mmr),
+    profile_meta(is_test_account, is_test_account_active)
+  `)
     .neq('role', 'guest')
     .neq('role', 'ghost')
     .neq('role', 'applicant')
     .neq('role', 'banned');
 
-  // 2. 래더 점수 정보 전체 로드
-  const LadderRankingsData = await supabase
-    .from('ladder_rankings')
-    .select('user_id, tier, personal_mmr, team_mmr, total_mmr');
+  if (error) throw error;
 
-  // 3. 테스트 계정 여부 메타데이터 로드
-  const ProfileMetaData = await supabase
-    .from('profile_meta')
-    .select('user_id, is_test_account, is_test_account_active');
+  // [💡 학습 포인트] 조인되어 깊숙이 들어있는 자식 객체들을 밖으로 꺼내어 구조를 단순하게 만듭니다.
 
-  // 에러 통합 체크
-  const hasError = ProfilesData.error || LadderRankingsData.error || ProfileMetaData.error;
-  if (hasError) {
-    return { data: null, error: hasError };
-  }
-
-  // [교정] 데이터가 유실되지 않도록 완벽하게 인메모리 매핑 처리를 수행합니다.
-  const JoinedData = (ProfilesData.data || []).map((profile) => {
-    const ladder = LadderRankingsData.data?.find((l) => l.user_id === profile.user_id);
-    const meta = ProfileMetaData.data?.find((m) => m.user_id === profile.user_id);
-
-    return {
-      user_id: profile.user_id,
-      by_id: profile.by_id,
-      role: profile.role,
-      race: profile.race as RaceCode | null,
-      tier: ladder?.tier ?? 'Unranked',
-      personal_mmr: ladder?.personal_mmr ?? 0,
-      team_mmr: ladder?.team_mmr ?? 0,
-      total_mmr: ladder?.total_mmr ?? 0,
-      is_test_account: meta?.is_test_account ?? false,
-      is_test_account_active: meta?.is_test_account_active ?? true,
-    };
-  });
+  const flattenedData = (data || []).map((m: JoinedMemberRow) => ({
+    user_id: m.user_id,
+    by_id: m.by_id,
+    role: m.role,
+    race: m.race as RaceCode | null,
+    tier: m.ladder_rankings?.tier ?? 'Unranked',
+    personal_mmr: m.ladder_rankings?.personal_mmr ?? 0,
+    team_mmr: m.ladder_rankings?.team_mmr ?? 0,
+    total_mmr: m.ladder_rankings?.total_mmr ?? 0,
+    is_test_account: m.profile_meta?.is_test_account ?? false,
+    is_test_account_active: m.profile_meta?.is_test_account_active ?? false,
+  }));
 
   // 테스트 계정 필터링 처리
   const isTestViewer = isCurrentViewerTestAccount();
-  const filteredData = JoinedData.filter((m) =>
+  const filteredData = flattenedData.filter((l) =>
     isTestViewer
-      ? m.is_test_account === true && m.is_test_account_active === true
-      : !m.is_test_account
+      ? l.is_test_account === true && l.is_test_account_active === true
+      : !l.is_test_account
   );
 
   return { data: filteredData, error: null };
