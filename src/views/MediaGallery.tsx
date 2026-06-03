@@ -31,7 +31,7 @@ const MEDIA_BACKGROUNDS = {
   매치: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=600&auto=format&fit=crop',
 };
 
-function formatDate(dateString) {
+function formatDate(dateString: string | undefined) {
   if (!dateString) return '';
   return new Date(dateString).toLocaleDateString('ko-KR', {
     year: 'numeric',

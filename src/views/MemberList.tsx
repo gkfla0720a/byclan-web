@@ -9,20 +9,6 @@ import { getCached, setCached } from '@/utils/queryCache';
 import { LADDER_MEMBER_ROLES } from '@/types';
 import type { RaceCode } from '@/types/primitives';
 
-
-interface MemberRow {
-  user_id: string;
-  by_id: string | null;
-  role: string | null;
-  race: RaceCode | null;
-  tier: string | null;
-  total_mmr: number | null;
-  personal_mmr: number | null;
-  team_mmr: number | null;
-  is_test_account: boolean;
-  is_test_account_active: boolean;
-}
-
 interface JoinedMemberRow {
   user_id: string;
   by_id: string | null;
@@ -38,6 +24,19 @@ interface JoinedMemberRow {
     is_test_account: boolean;
     is_test_account_active: boolean;
   } | null;
+}
+
+interface MemberRow {
+  user_id: string;
+  by_id: string | null;
+  role: string | null;
+  race: RaceCode | null;
+  tier: string | null;
+  total_mmr: number | null;
+  personal_mmr: number | null;
+  team_mmr: number | null;
+  is_test_account: boolean;
+  is_test_account_active: boolean;
 }
 
 const cacheKey = isCurrentViewerTestAccount()
