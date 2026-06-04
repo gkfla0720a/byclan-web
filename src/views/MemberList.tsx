@@ -4,27 +4,11 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase';
+import type { QueryData } from '@supabase/supabase-js';
 import { isCurrentViewerTestAccount } from '@/utils/testData';
 import { getCached, setCached } from '@/utils/queryCache';
 import { LADDER_MEMBER_ROLES } from '@/types';
-import type { RaceCode } from '@/types/primitives';
-
-interface JoinedMemberRow {
-  user_id: string;
-  by_id: string | null;
-  role: string | null;
-  race: string | null;
-  ladder_rankings: {
-    tier: string | null;
-    personal_mmr: number | null;
-    team_mmr: number | null;
-    total_mmr: number | null;
-  } | null; // 데이터가 없을 수도 있으므로 null 허용
-  profile_meta: {
-    is_test_account: boolean;
-    is_test_account_active: boolean;
-  } | null;
-}
+import { RACE_CODES, type RaceCode, type UserRole } from '@/types/primitives';
 
 interface MemberRow {
   user_id: string;
@@ -39,53 +23,79 @@ interface MemberRow {
   is_test_account_active: boolean;
 }
 
-const cacheKey = isCurrentViewerTestAccount()
-  ? 'members_list:test'
-  : 'members_list:normal';
+const MEMBER_LIST_CACHE_KEY = 'members_list';
 
-/**
- * Supabase의 3개 분리 테이블을 개별 fetch 후 유기적으로 병합(Join)합니다.
- */
-const fetchMemberData = async () => {
-  // 1. 기본 프로필 로드 (제명/비회원 차단)
-  const { data, error } = await supabase
+const getMemberListCacheKey = () => {
+  return isCurrentViewerTestAccount()
+    ? `${MEMBER_LIST_CACHE_KEY}:test`
+    : `${MEMBER_LIST_CACHE_KEY}:normal`;
+};
+
+const isRaceCode = (value: string | null): value is RaceCode => {
+  return value !== null && (RACE_CODES as readonly string[]).includes(value);
+};
+
+const isLadderMemberRole = (value: string | null): value is UserRole => {
+  return value !== null && LADDER_MEMBER_ROLES.includes(value as UserRole);
+};
+
+const memberListQuery = () =>
+  supabase
     .from('profiles')
     .select(`
-    user_id, by_id, role, race,
-    ladder_rankings(tier, personal_mmr, team_mmr, total_mmr),
-    profile_meta(is_test_account, is_test_account_active)
-  `)
+      user_id,
+      by_id,
+      role,
+      race,
+      ladder_rankings(tier, personal_mmr, team_mmr, total_mmr),
+      profile_meta(is_test_account, is_test_account_active)
+    `)
     .neq('role', 'guest')
     .neq('role', 'ghost')
     .neq('role', 'applicant')
     .neq('role', 'banned');
 
-  if (error) throw error;
+type MemberListQueryRow = QueryData<ReturnType<typeof memberListQuery>>[number];
 
-  // [💡 학습 포인트] 조인되어 깊숙이 들어있는 자식 객체들을 밖으로 꺼내어 구조를 단순하게 만듭니다.
+const firstOrNull = <T,>(value: T | T[] | null | undefined): T | null => {
+  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+};
 
-  const flattenedData = (data || []).map((m: JoinedMemberRow) => ({
-    user_id: m.user_id,
-    by_id: m.by_id,
-    role: m.role,
-    race: m.race as RaceCode | null,
-    tier: m.ladder_rankings?.tier ?? 'Unranked',
-    personal_mmr: m.ladder_rankings?.personal_mmr ?? 0,
-    team_mmr: m.ladder_rankings?.team_mmr ?? 0,
-    total_mmr: m.ladder_rankings?.total_mmr ?? 0,
-    is_test_account: m.profile_meta?.is_test_account ?? false,
-    is_test_account_active: m.profile_meta?.is_test_account_active ?? false,
-  }));
+const toMemberRow = (row: MemberListQueryRow): MemberRow => {
+  const ladder = firstOrNull(row.ladder_rankings);
+  const meta = firstOrNull(row.profile_meta);
 
-  // 테스트 계정 필터링 처리
+  return {
+    user_id: row.user_id,
+    by_id: row.by_id,
+    role: row.role,
+    race: isRaceCode(row.race) ? row.race : null,
+    tier: ladder?.tier ?? 'Unranked',
+    personal_mmr: ladder?.personal_mmr ?? 0,
+    team_mmr: ladder?.team_mmr ?? 0,
+    total_mmr: ladder?.total_mmr ?? 0,
+    is_test_account: meta?.is_test_account ?? false,
+    is_test_account_active: meta?.is_test_account_active ?? false,
+  };
+};
+
+const fetchMemberData = async (): Promise<MemberRow[]> => {
+  const { data, error } = await memberListQuery();
+
+  if (error) {
+    throw error;
+  }
+
   const isTestViewer = isCurrentViewerTestAccount();
-  const filteredData = flattenedData.filter((l) =>
-    isTestViewer
-      ? l.is_test_account === true && l.is_test_account_active === true
-      : !l.is_test_account
-  );
 
-  return { data: filteredData, error: null };
+  return (data ?? [])
+    .map(toMemberRow)
+    .filter((member) =>
+      isTestViewer
+        ? member.is_test_account && member.is_test_account_active
+        : !member.is_test_account
+    )
+    .filter((member) => isLadderMemberRole(member.role));
 };
 
 export default function MemberList() {
@@ -97,33 +107,26 @@ export default function MemberList() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
+      setError(null);
 
-      const cached = getCached(cacheKey);
-      if (cached && Array.isArray(cached)) {
-        setMembers(cached);
+      if (Array.isArray(cached)) {
+        setMembers(cached as MemberRow[]);
         setLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await fetchMemberData();
-        if (error) throw error;
+        const members = await fetchMemberData();
 
-        // [교정] 부모로부터 온 명확한 정식 역할 리스트(LADDER_MEMBER_ROLES)를 매핑 기준으로 사용
-        const processed = (data || []).filter(
-          (member) => member && member.user_id && member.role && LADDER_MEMBER_ROLES.includes(member.role as any)
-        );
-
-        setCached(cacheKey, processed);
-        setMembers(processed);
-      } catch (err: any) {
+        setCached(cacheKey, members);
+        setMembers(members);
+      } catch (err) {
         console.error('클랜원 목록 로드 실패:', err);
-        setError(err);
+        setError(err instanceof Error ? err : new Error('클랜원 목록 로드 실패'));
       } finally {
         setLoading(false);
       }
     };
-
     loadData();
   }, []);
 
@@ -154,8 +157,11 @@ export default function MemberList() {
         </div>
 
         <div className="md:col-span-2 neon-panel rounded-2xl p-4 flex flex-col justify-center h-full">
-          <label className="text-xs text-cyan-100/55 uppercase tracking-[0.25em] mb-2 block">클랜원 검색</label>
+          <label htmlFor="member-search" className="text-xs text-cyan-100/55 uppercase tracking-[0.25em] mb-2 block">
+            클랜원 검색
+          </label>
           <input
+            id="member-search"
             type="text"
             placeholder="닉네임을 입력하세요..."
             value={searchTerm}
