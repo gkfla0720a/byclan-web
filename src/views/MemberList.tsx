@@ -71,9 +71,9 @@ const toMemberRow = (row: MemberListQueryRow): MemberRow => {
     role: row.role,
     race: isRaceCode(row.race) ? row.race : null,
     tier: ladder?.tier ?? 'Unranked',
-    personal_mmr: ladder?.personal_mmr ?? 0,
-    team_mmr: ladder?.team_mmr ?? 0,
-    total_mmr: ladder?.total_mmr ?? 0,
+    personal_mmr: ladder?.personal_mmr ?? null,
+    team_mmr: ladder?.team_mmr ?? null,
+    total_mmr: ladder?.total_mmr ?? null,
     is_test_account: meta?.is_test_account ?? false,
     is_test_account_active: meta?.is_test_account_active ?? false,
   };
@@ -108,6 +108,9 @@ export default function MemberList() {
     const loadData = async () => {
       setLoading(true);
       setError(null);
+
+      const cacheKey = getMemberListCacheKey();       // ✅ 캐시 키 생성
+      const cached = getCached<MemberRow[]>(cacheKey); // ✅ 캐시 조회
 
       if (Array.isArray(cached)) {
         setMembers(cached as MemberRow[]);
@@ -207,10 +210,10 @@ export default function MemberList() {
                     <span className="truncate block">{member.by_id || '[닉네임 없음]'}</span>
                   </td>
                   <td className="px-4 py-3 text-slate-300 font-medium">{member.tier}</td>
-                  <td className="px-4 py-3 text-cyan-300 font-bold">{member.total_mmr}점</td>
-                  <td className="px-4 py-3 text-slate-300">{member.personal_mmr}점</td>
-                  <td className="px-4 py-3 text-slate-300">{member.team_mmr}점</td>
-                  <td className="px-4 py-3 text-slate-400 font-mono">{member.race || 'Random'}</td>
+                  <td className="px-4 py-3 text-cyan-300 font-bold">{member.total_mmr ?? '-'}점</td>
+                  <td className="px-4 py-3 text-slate-300">{member.personal_mmr ?? '-'}점</td>
+                  <td className="px-4 py-3 text-slate-300">{member.team_mmr ?? '-'}점</td>
+                  <td className="px-4 py-3 text-slate-400 font-mono">{member.race || '-'}</td>
                 </tr>
               ))}
             </tbody>
