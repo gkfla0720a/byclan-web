@@ -101,44 +101,53 @@ export const forcePromoteToMember = async (memberId: string, isTestAccount: bool
 
 export const delegateMaster = async (currentMasterId: string | null, targetId: string) => {
   if (currentMasterId) {
-    await supabase.rpc('rpc_update_profile_role', {
+    const { data, error } = await supabase.rpc('rpc_update_profile_role', {
       p_target_id: currentMasterId,
       p_new_role: 'admin',
       p_note: '마스터 위임 — 전임 마스터 admin 강등',
     });
+    if (error) throw error;
+    const result = data as { ok: boolean; error?: string };
+    if (!result.ok) throw new Error(result.error || '강등 실패')
   }
 
   const { error } = await supabase
     .from('profiles')
     .update({ role: 'master' })
-    .eq('id', targetId);
+    .eq('user_id', targetId);
 
   if (error) throw error;
 }
 
-export const checkAndSendRookieNotifications= async (currentUserId: string) => {
+export const checkAndSendRookieNotifications = async (currentUserId: string) => {
+  // 1. 정확히 14일 전 시간을 ISO 문자열로 계산
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
+  // 2. 수습 기간(2주)이 지난 신입(rookie)들 로드
   const { data: rookies } = await supabase
     .from('profiles')
-    .select('id, by_id, rookie_since')
+    .select('user_id, by_id, rookie_since')
     .eq('role', 'rookie')
     .not('rookie_since', 'is', null)
     .lte('rookie_since', twoWeeksAgo);
 
   if (!rookies?.length) return;
 
+  // 3. 알림을 받아야 할 모든 운영진(admin, master, developer) 로드
   const { data: admins } = await supabase
     .from('profiles')
-    .select('id')
+    .select('user_id')
     .in('role', ['admin', 'master', 'developer']);
 
   if (!admins?.length) return;
 
+  // 4. 수습 완료된 신입들을 한 명씩 돌면서 처리
   for (const rookie of rookies) {
-    const notifTitle = `🔔 수습기간완료:${rookie.id}`;
+    const notifTitle = `🔔 수습기간완료:${rookie.user_id}`;
 
-    // 중복 발송 방지
+    // [💡 교정 및 타입 안정화] 
+    // 중복 발송을 확인할 때는, 배열 전체(admins)가 아니라 
+    // 이 함수를 실행하고 있는 현재 운영진 본인('currentUserId')의 알림함을 기준으로 검사합니다.
     const { data: existing } = await supabase
       .from('notifications')
       .select('id')
@@ -146,14 +155,17 @@ export const checkAndSendRookieNotifications= async (currentUserId: string) => {
       .eq('title', notifTitle)
       .limit(1);
 
+    // 이미 알림이 존재한다면 다음 신입 유저로 건너뜁니다.
     if (existing?.length) continue;
 
+    // 5. 모든 운영진에게 발송할 알림 데이터 배열(행들) 생성
     const notifRows = admins.map((admin) => ({
-      user_id: admin.id,
+      user_id: admin.user_id,
       title: notifTitle,
       message: `신입 클랜원 ${rookie.by_id}님의 2주 수습 기간이 완료되었습니다.\n클랜 생활 지속 여부를 결정해주세요.\n\n• 승인 → 클랜원 관리에서 등급 변경\n• 거부 → 클랜원 관리에서 제명 처리`,
     }));
 
+    // 6. DB에 한 번에 여러 행을 일괄 추가(Bulk Insert)
     await supabase.from('notifications').insert(notifRows);
   }
-}
+};

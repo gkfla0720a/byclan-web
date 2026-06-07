@@ -5,15 +5,16 @@ import type { Database } from '@/types';
 type ApplicationInsert = Database['public']['Tables']['applications']['Insert'];
 
 export interface JoinApplicationForm {
-  race: string;
-  tier: string;
-  intro: string;
-  motivation: string;
-  playtime: string;
-  phone: string;
+  user_id: string;
+  race: string | null;
+  tier: string | null;
+  intro: string | null;
+  motivation: string | null;
+  playtime: string | null;
+  phone: string | null;
   isStreamer: boolean;
-  streamerPlatform?: string;
-  streamerUrl?: string;
+  streamerPlatform?: string | null;
+  streamerUrl?: string | null;
 }
 
 function normalizeUrl(url: string | null | undefined): string {
@@ -24,17 +25,19 @@ function normalizeUrl(url: string | null | undefined): string {
 
 /**
  * 필드의 최대 글자 수를 검증합니다.
+ * 개선: text가 없는 경우(null, undefined)를 안전하게 방지합니다.
  */
-function validateLength(text: string, fieldName: string, max: number): void {
-  if (text && text.length > max) {
+function validateLength(text: string | null | undefined, fieldName: string, max: number): void {
+  if (!text) return; // 검사할 텍스트가 없으면 통과
+  if (text.length > max) {
     throw new Error(`${fieldName}은(는) 최대 ${max}자까지 입력할 수 있습니다. (현재 ${text.length}자)`);
   }
 }
 
 /**
- * 휴대폰 번호 형식을 정규식으로 검증합니다. (예: 010-1234-5678 또는 01012345678)
+ * 휴대폰 번호 형식을 정규식으로 검증합니다.
  */
-function validatePhone(phone: string): void {
+function validatePhone(phone: string | null): void {
   const phoneRegex = /^01([0|1|6|7|8|9])-?([0-9]{3,4})-?([0-9]{4})$/;
   if (!phone || !phoneRegex.test(phone)) {
     throw new Error('올바른 휴대폰 번호 형식을 입력해주세요. (예: 010-1234-5678)');
@@ -66,21 +69,23 @@ export async function submitApplication(userId: string, data: JoinApplicationFor
       streamer_url: data.isStreamer ? normalizeUrl(data.streamerUrl) : null,
     };
 
-    // 정제된 타입 기반 저장 체계 실행
+    // 1. 신청서 데이터 저장
     const { error } = await supabase.from('applications').insert([payload]);
     if (error) throw error;
 
-    // 프로필 역할 업데이트
+    // 2. 프로필 역할 업데이트
     const { error: profileError } = await supabase
       .from('profiles')
       .update({ role: 'applicant' })
-      .eq('id', userId);
+      .eq('user_id', userId);
 
     if (profileError) throw profileError;
 
     return { success: true };
   } catch (error: any) {
-    console.error('[applicationService] submitApplication 실패:', error.message);
-    return { success: false, error: error.message };
+    // 개선: error가 객체이고 message 속성이 있는지 안전하게 확인합니다.
+    const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+    console.error('[applicationService] submitApplication 실패:', errorMessage);
+    return { success: false, error: errorMessage };
   }
 }

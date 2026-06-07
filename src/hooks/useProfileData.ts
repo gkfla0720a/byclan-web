@@ -48,11 +48,11 @@ async function resolveUniqueById(seed: string, currentUserId?: string): Promise<
   const base = `By_${sanitizeByIdSeed(seed)}`;
   const candidates = Array.from({ length: 30 }, (_, i) => (i === 0 ? base : `${base}${i + 1}`));
 
-  const { data, error } = await supabase.from('profiles').select('id, by_id').in('by_id', candidates);
+  const { data, error } = await supabase.from('profiles').select('user_id, by_id').in('by_id', candidates);
   if (error) return base;
 
   const taken = new Map<string, string>();
-  (data || []).forEach((row) => taken.set(row.by_id || '', row.id));
+  (data || []).forEach((row) => taken.set(row.by_id || '', row.user_id));
 
   for (const candidate of candidates) {
     if (!taken.has(candidate) || taken.get(candidate) === currentUserId) return candidate;
@@ -62,7 +62,7 @@ async function resolveUniqueById(seed: string, currentUserId?: string): Promise<
 
 async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Promise<UserProfile> {
   const [{ data: oauthData }, { data: metaData }, { data: rankData }] = await Promise.all([
-    supabase.from('profile_oauth').select('discord_id, google_email, google_name').eq('user_id', userId).maybeSingle(),
+    supabase.from('profile_oauth').select('discord_id, google_email, google_name, google_sub, google_avatar_url, auth_provider').eq('user_id', userId).maybeSingle(),
     supabase.from('profile_meta').select('is_test_account_active').eq('user_id', userId).maybeSingle(),
     supabase.from('ladder_rankings').select('personal_mmr, wins, losses, total_mmr').eq('user_id', userId).maybeSingle(),
   ]);
@@ -73,7 +73,6 @@ async function mergeOAuthIntoProfile(profile: UserProfile, userId: string): Prom
 async function syncSocialProfileData(authUser: User, currentProfile: UserProfile): Promise<UserProfile> {
   const { isDiscordProvider, isGoogleProvider, discordId, discordName, googleSub, googleEmail, googleName, googleAvatarUrl, authProvider } = getSocialIdentity(authUser);
 
-  // 타입을 강제하여 오염된 데이터가 들어가지 않도록 보호합니다.
   const profileUpdates: Partial<ProfileRow> = {};
   const oauthUpdates: Record<string, string | null> = {};
 
@@ -94,14 +93,23 @@ async function syncSocialProfileData(authUser: User, currentProfile: UserProfile
   }
 
   let updatedProfile = { ...currentProfile };
+  let needRemerge = false;
 
+  // 수정: .eq('by_id', authUser.id) -> .eq('user_id', authUser.id)
   if (Object.keys(profileUpdates).length > 0) {
-    const { data } = await supabase.from('profiles').update(profileUpdates).eq('id', authUser.id).select('*').single();
-    if (data) updatedProfile = { ...updatedProfile, ...normalizeProfileRow(data) };
+    const { data } = await supabase.from('profiles').update(profileUpdates).eq('user_id', authUser.id).select('*').single();
+    if (data) {
+      updatedProfile = { ...updatedProfile, ...normalizeProfileRow(data) };
+    }
   }
   if (Object.keys(oauthUpdates).length > 0) {
     await supabase.from('profile_oauth').upsert({ user_id: authUser.id, ...oauthUpdates }, { onConflict: 'user_id' });
-    updatedProfile = { ...updatedProfile, ...oauthUpdates };
+    needRemerge = true;
+  }
+
+  // 소셜 테이블이 업데이트되었다면 다시 병합하여 프론트엔드 데이터 싱크를 맞춥니다.
+  if (needRemerge) {
+    updatedProfile = await mergeOAuthIntoProfile(updatedProfile, authUser.id);
   }
 
   return updatedProfile;
@@ -118,22 +126,27 @@ export function useProfileData(user: User | null) {
     profileRequestIdRef.current = requestId;
     setProfileLoading(true);
 
-    try {
-      let { data: p, error: profileError } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
+    // 학습용 설명 보충을 위한 다이어그램 위치
+    // 
 
-      if (profileError && profileError.code === 'PGRST116') {
+    try {
+      // 수정: .eq('by_id', authUser.id) -> .eq('user_id', authUser.id)
+      let { data: p, error: profileError } = await supabase.from('profiles').select('*').eq('user_id', authUser.id).maybeSingle();
+
+      // 수정: 기존의 PGRST116(single() 에러) 대신 maybeSingle()을 사용해 데이터가 없는 경우(null)로 체크
+      if (!p && (!profileError || profileError.code === 'PGRST116')) {
         const seed = authUser.email?.split('@')[0] || 'User';
         const uniqueById = await resolveUniqueById(seed, authUser.id);
 
         const { error: insertError } = await supabase.from('profiles').insert({
-          id: authUser.id,
+          user_id: authUser.id,
           by_id: uniqueById,
           role: 'guest',
         });
 
         if (insertError) throw insertError;
 
-        const result = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
+        const result = await supabase.from('profiles').select('*').eq('user_id', authUser.id).single();
         p = result.data;
         profileError = result.error;
       }
@@ -156,7 +169,7 @@ export function useProfileData(user: User | null) {
       }
     } catch (error) {
       if (profileRequestIdRef.current !== requestId) return;
-      logger.captureException(error, { userId: authUser.id, severity: 'ERROR' }); // logger 타입에 맞게 수정
+      logger.captureException(error, { userId: authUser.id, severity: 'ERROR' });
       setProfile(null);
       if (typeof window !== 'undefined') clearCurrentViewerTestAccountFlag();
     } finally {
@@ -166,15 +179,13 @@ export function useProfileData(user: User | null) {
 
   useEffect(() => {
     if (user) {
-      queueMicrotask(() => fetchAndSetProfile(user));
+      fetchAndSetProfile(user);
       return;
     }
     profileRequestIdRef.current += 1;
-    queueMicrotask(() => {
-      setProfile(null);
-      setProfileLoading(false);
-      if (typeof window !== 'undefined') clearCurrentViewerTestAccountFlag();
-    });
+    setProfile(null);
+    setProfileLoading(false);
+    if (typeof window !== 'undefined') clearCurrentViewerTestAccountFlag();
   }, [user, fetchAndSetProfile]);
 
   return {
