@@ -3,19 +3,19 @@
 'use client';
 
 
-import { useMatchCenter } from '@/hooks/useMatchCenter'; 
+import { useMatchCenter } from '@/hooks/useMatchCenter';
 import { isCompletedSetStatus, isPendingReviewSetStatus, BET_AMOUNTS, RACE_COMBOS, RACE_ICONS, formatTime, getRaceCards } from '@/utils/matchCenter';
 
 export default function MatchCenter({ matchId, onExit }) {
   const {
-    match, currentSet, betTimer, betTimerActive, myTeam, isRevealed, managementMode, 
-    settlementStatus, settlementError, selectedEntryByTeam, betTeam, betAmount, bettingDone, 
-    bettingLoading, betOdds, myClanPoint, raceCombo, showRaceSelector, isManagementRole, 
-    canReportSetResult, perspectiveTeam, editingTeam, selectedEntry, remainingRequiredCombos, 
-    matchEnded, isLadderMatch, matchFormat, canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId, vetoTimeLeft, 
+    match, currentSet, betTimer, betTimerActive, myTeam, isRevealed, managementMode,
+    settlementStatus, settlementError, selectedEntryByTeam, betTeam, betAmount, bettingDone,
+    bettingLoading, betOdds, myClanPoint, raceCombo, showRaceSelector, isManagementRole,
+    canReportSetResult, perspectiveTeam, editingTeam, selectedEntry, remainingRequiredCombos,
+    matchEnded, isLadderMatch, matchFormat, canBetOnA, canBetOnB, teamACaptainId, teamBCaptainId, vetoTimeLeft,
     setBetTeam, setBetAmount, setShowRaceSelector, setRaceCombo, handleVeto,
-    toggleManagementMode, handleSelect, submitEntry, requestWithdraw, approveWithdraw, 
-    forceRetract, handleSetWin, handleBet, handleSettlement, 
+    toggleManagementMode, handleSelect, submitEntry, requestWithdraw, approveWithdraw,
+    forceRetract, handleSetWin, handleBet, handleSettlement,
     getTeamMembersByLetter, currentTeamEntry, currentTeamReady, getRestStatus
   } = useMatchCenter(matchId);
 
@@ -49,11 +49,10 @@ export default function MatchCenter({ matchId, onExit }) {
       </div>
 
       {/* 2. 배팅 구역 */}
-      <div className={`rounded-2xl border p-5 transition-all ${
-        betTimerActive
+      <div className={`rounded-2xl border p-5 transition-all ${betTimerActive
           ? 'bg-[#0d0a00] border-yellow-600/40 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
           : 'bg-gray-900/40 border-gray-800'
-      }`}>
+        }`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             {betTimerActive && <div className="w-2 h-2 bg-red-500 rounded-full animate-ping shrink-0"></div>}
@@ -102,8 +101,7 @@ export default function MatchCenter({ matchId, onExit }) {
                     key={team}
                     onClick={() => canBet && setBetTeam(team)}
                     disabled={!canBet}
-                    className={`p-4 rounded-xl border-2 font-black text-sm transition-all ${
-                      selected
+                    className={`p-4 rounded-xl border-2 font-black text-sm transition-all ${selected
                         ? team === 'A'
                           ? 'border-blue-500 bg-blue-950/40 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.3)]'
                           : 'border-red-500 bg-red-950/40 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.3)]'
@@ -112,7 +110,7 @@ export default function MatchCenter({ matchId, onExit }) {
                             ? 'border-blue-800/40 bg-blue-950/10 text-blue-600 hover:border-blue-600 hover:text-blue-400'
                             : 'border-red-800/40 bg-red-950/10 text-red-600 hover:border-red-600 hover:text-red-400'
                           : 'border-gray-800 bg-gray-900/20 text-gray-700 cursor-not-allowed opacity-40'
-                    }`}
+                      }`}
                   >
                     {team === 'A' ? '🔵 TEAM A' : '🔴 TEAM B'}
                     {teamOdds > 0 && <div className="text-[10px] font-normal mt-0.5 opacity-70">{teamOdds.toFixed(2)}x 배당</div>}
@@ -129,13 +127,12 @@ export default function MatchCenter({ matchId, onExit }) {
                   key={amt}
                   onClick={() => setBetAmount(betAmount === amt ? null : amt)}
                   disabled={amt > myClanPoint}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    betAmount === amt
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${betAmount === amt
                       ? 'bg-yellow-600 text-white shadow-[0_0_8px_rgba(245,158,11,0.4)]'
                       : amt > myClanPoint
                         ? 'bg-gray-900 text-gray-700 border border-gray-800 cursor-not-allowed opacity-40'
                         : 'bg-gray-900 border border-gray-700 text-gray-400 hover:border-yellow-600 hover:text-yellow-400'
-                  }`}
+                    }`}
                 >
                   {amt.toLocaleString()}P
                 </button>
@@ -196,8 +193,8 @@ export default function MatchCenter({ matchId, onExit }) {
             {perspectiveTeam === 'D'
               ? '운영진(D팀) — 양 팀 동시 열람·수정'
               : perspectiveTeam === 'A' ? 'A팀 엔트리 화면'
-              : perspectiveTeam === 'B' ? 'B팀 엔트리 화면'
-              : '관전자(C팀) 화면'}
+                : perspectiveTeam === 'B' ? 'B팀 엔트리 화면'
+                  : '관전자(C팀) 화면'}
             {!isRevealed && perspectiveTeam !== 'D' && <span className="ml-2 text-gray-600">(공개 전 상대 엔트리는 보이지 않습니다)</span>}
           </div>
 
@@ -232,15 +229,13 @@ export default function MatchCenter({ matchId, onExit }) {
                   key={combo.id}
                   disabled={remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(combo.id)}
                   onClick={() => { setRaceCombo(combo.id); setShowRaceSelector(false); }}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
-                    raceCombo === combo.id
+                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${raceCombo === combo.id
                       ? 'border-cyan-500 bg-cyan-950/30 text-cyan-300'
                       : 'border-gray-700 text-gray-400 hover:border-gray-500'
-                  } ${
-                    remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(combo.id)
+                    } ${remainingRequiredCombos.length > 0 && !remainingRequiredCombos.includes(combo.id)
                       ? 'opacity-35 cursor-not-allowed hover:border-gray-700'
                       : ''
-                  }`}
+                    }`}
                 >
                   {combo.label}
                 </button>
@@ -263,9 +258,8 @@ export default function MatchCenter({ matchId, onExit }) {
             const canWithdraw = ready && !currentSet?.winner_team;
 
             return (
-              <div key={t} className={`p-4 rounded-xl border-2 border-dashed transition-all ${
-                t === 'A' ? 'border-blue-900/60 bg-blue-900/5' : 'border-red-900/60 bg-red-900/5'
-              }`}>
+              <div key={t} className={`p-4 rounded-xl border-2 border-dashed transition-all ${t === 'A' ? 'border-blue-900/60 bg-blue-900/5' : 'border-red-900/60 bg-red-900/5'
+                }`}>
                 <div className="flex justify-between items-center mb-3">
                   <p className={`font-black text-xs tracking-widest ${t === 'A' ? 'text-blue-500' : 'text-red-500'}`}>
                     TEAM {t}
@@ -280,15 +274,14 @@ export default function MatchCenter({ matchId, onExit }) {
                     {teamEntry.length > 0 ? teamEntry.map((p, i) => {
                       // 💡 [추가] 이 선수가 양 팀의 캡틴(최고 MMR) 중 한 명인지 확인합니다.
                       const isCaptain = p.id === teamACaptainId || p.id === teamBCaptainId;
-                      
+
                       return (
-                        <div 
-                          key={i} 
-                          className={`p-2.5 rounded-lg border text-xs text-center font-bold relative transition-all ${
-                            isCaptain 
+                        <div
+                          key={i}
+                          className={`p-2.5 rounded-lg border text-xs text-center font-bold relative transition-all ${isCaptain
                               ? 'bg-yellow-900/30 border-yellow-500/50 text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.2)]' // 👑 팀장 특별 스타일
                               : 'bg-gray-900/60 border-gray-800 text-white' // 일반 팀원 스타일
-                          }`}
+                            }`}
                         >
                           {/* 👑 팀장 뱃지 (왼쪽 위에 통통 튀는 왕관) */}
                           {isCaptain && (
@@ -296,12 +289,12 @@ export default function MatchCenter({ matchId, onExit }) {
                               👑
                             </span>
                           )}
-                          
+
                           {p.by_id}
                           <span className={isCaptain ? "text-yellow-500 ml-2" : "text-cyan-400 ml-2"}>
                             ({RACE_ICONS[p.race] || p.race})
                           </span>
-                          
+
                           {/* 👑 본인이 팀장일 때만 보이는 특별한 메시지 */}
                           {isCaptain && p.id === myUserId && (
                             <p className="text-[9px] text-yellow-500/80 mt-1 font-normal tracking-tighter">
@@ -507,7 +500,7 @@ export default function MatchCenter({ matchId, onExit }) {
                 </p>
               </div>
             )}
-            
+
             {/* 완전히 끝난 세트(completed)일 때 보여줄 깔끔한 문구 (선택 사항) */}
             {isCompletedSetStatus(currentSet?.status) && !matchEnded && (
               <div className="text-center py-3 bg-gray-900/40 rounded-xl border border-gray-800 mt-2">
@@ -516,8 +509,8 @@ export default function MatchCenter({ matchId, onExit }) {
                 </p>
               </div>
             )}
-  
-            
+
+
             {/* 최종 정산 버튼 영역 */}
             {matchEnded && (
               <div className="mt-6 pt-4 border-t border-yellow-500/30">
@@ -540,7 +533,7 @@ export default function MatchCenter({ matchId, onExit }) {
                     {settlementStatus === 'success' && '정산 완료 ✅'}
                     {settlementStatus === 'error' && '정산 실패 (재시도 ↻)'}
                   </button>
-                  
+
                   {settlementStatus === 'error' && (
                     <span className="text-rose-400 text-xs mt-2 font-mono break-all text-center">
                       실패 원인: {settlementError}

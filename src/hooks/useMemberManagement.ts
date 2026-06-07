@@ -21,8 +21,8 @@ export function useMemberManagement() {
 
   // 객체 프로퍼티의 초기값을 명확히 잡아줍니다.
   const [currentManager, setCurrentManager] = useState<{
-    id: string | null; role: string | null; email: string; authEmail: string; phone: string;
-  }>({ id: null, role: null, email: '', authEmail: '', phone: '' });
+    user_id: string; role: string | null; email: string | null; authEmail: string | null; phone: string | null;
+  }>({ user_id: '', role: null, email: null, authEmail: null, phone: null });
 
   const loadMembers = useCallback(async (isMountedRef?: { current: boolean }) => {
     try {
@@ -44,8 +44,8 @@ export function useMemberManagement() {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('id, role')
-        .eq('id', user.id)
+        .select('user_id, role')
+        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
@@ -56,7 +56,7 @@ export function useMemberManagement() {
 
       if (isMountedRef && !isMountedRef.current) return;
       setCurrentManager({
-        id: user.id,
+        user_id: user.id,
         role,
         email: hasPublicEmail ? authEmail : '',
         authEmail,
@@ -111,7 +111,7 @@ export function useMemberManagement() {
   const handleForcePromote = useCallback(async (member: MemberType) => {
     if (!window.confirm(`${member.by_id}님을 수습 기간에 관계없이 즉시 정회원으로 승급하시겠습니까?`)) return false;
     try {
-      await forcePromoteToMember(member.id, Boolean(member.is_test_account));
+      await forcePromoteToMember(member.user_id, Boolean(member.is_test_account));
       await loadMembers();
       alert(`${member.by_id}님이 정회원으로 승급되었습니다.`);
       return true;

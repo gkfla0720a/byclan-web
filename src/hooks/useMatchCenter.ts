@@ -31,24 +31,24 @@ interface MatchData extends MatchSetRow {
   team_a_ids: string[];
   team_b_ids: string[];
   profiles: ProfileRow[];
-  score_a: number;
-  score_b: number;
-  match_type: number;
+  score_a: number | null;
+  score_b: number | null;
+  match_type: string | null;
 }
 
 interface EntryPlayer {
-  id: string;
-  by_id: string;
-  race: string;
+  user_id: string;
+  by_id: string | null;
+  race: string | null;
 }
 
 interface BetOdds {
-  total_a: number;
-  total_b: number;
-  count_a: number;
-  count_b: number;
-  odds_a: number;
-  odds_b: number;
+  total_a: number | null;
+  total_b: number | null;
+  count_a: number | null;
+  count_b: number | null;
+  odds_a: number | null;
+  odds_b: number | null;
 }
 
 // ─── 메인 훅 (Main Hook) ───
@@ -67,8 +67,8 @@ export function useMatchCenter(matchId: string) {
   const [settlementError, setSettlementError] = useState('');
 
   const [selectedEntryByTeam, setSelectedEntryByTeam] = useState<{ A: EntryPlayer[]; B: EntryPlayer[] }>({
-    A: [{ id: '', by_id: '', race: '' }, { id: '', by_id: '', race: '' }, { id: '', by_id: '', race: '' }],
-    B: [{ id: '', by_id: '', race: '' }, { id: '', by_id: '', race: '' }, { id: '', by_id: '', race: '' }],
+    A: [{ user_id: '', by_id: '', race: '' }, { user_id: '', by_id: '', race: '' }, { user_id: '', by_id: '', race: '' }],
+    B: [{ user_id: '', by_id: '', race: '' }, { user_id: '', by_id: '', race: '' }, { user_id: '', by_id: '', race: '' }],
   });
 
   const [betTeam, setBetTeam] = useState<'A' | 'B' | null>(null);
@@ -87,13 +87,13 @@ export function useMatchCenter(matchId: string) {
 
     try {
       const { data: sets } = await supabase.from('ladder_match_sets').select('*').eq('match_id', matchId).order('set_number', { ascending: true });
-      const { data: records } = await supabase.from('ladder_record').select('*, profiles(*)').eq('match_id', matchId);
+      const { data: records } = await supabase.from('ladder_record').select('*, profiles(*)').eq('id', matchId);
 
       if (!sets || sets.length === 0 || !records) return;
 
       const scoreA = sets.filter((s) => normalizeWinningTeam(s.winner_team) === 'A').length;
       const scoreB = sets.filter((s) => normalizeWinningTeam(s.winner_team) === 'B').length;
-      const matchType = records.filter((r) => r.team === 'A').length;
+      const matchType = records.filter((r) => r.team_a_ids[] === 'A').length;
 
       // 조인된 프로필 배열을 안전하게 1차원 배열로 평탄화(Flatten)
       const extractedProfiles = records.flatMap((r) => Array.isArray(r.profiles) ? r.profiles : r.profiles ? [r.profiles] : []) as ProfileRow[];
@@ -101,8 +101,8 @@ export function useMatchCenter(matchId: string) {
       const m: MatchData = {
         ...sets[0],
         match_sets: sets,
-        team_a_ids: records.filter((r) => r.team === 'A').map((r) => r.user_id),
-        team_b_ids: records.filter((r) => r.team === 'B').map((r) => r.user_id),
+        team_a_ids: records.filter((r) => r.team_a_ids[] === 'A').map((r) => r.id),
+        team_b_ids: records.filter((r) => r.team_a_ids[] === 'B').map((r) => r.id),
         profiles: extractedProfiles,
         score_a: scoreA,
         score_b: scoreB,
@@ -174,12 +174,12 @@ export function useMatchCenter(matchId: string) {
 
   const getCaptainId = (teamIds?: string[]) => {
     if (!teamIds || teamIds.length === 0 || !match?.profiles) return null;
-    const teamMembers = match.profiles.filter(p => teamIds.includes(p.id));
+    const teamMembers = match.profiles.filter(p => teamIds.includes(p.user_id));
 
     if (teamMembers.length !== teamIds.length) return null;
 
     const captain = [...teamMembers].sort((a, b) => (b.total_mmr ?? 0) - (a.total_mmr ?? 0))[0];
-    return captain?.id || null;
+    return captain?.user_id || null;
   };
 
   const teamACaptainId = getCaptainId(match?.team_a_ids);
@@ -208,7 +208,7 @@ export function useMatchCenter(matchId: string) {
   // ─── 헬퍼 함수들 ───
   const getTeamMembersByLetter = (teamLetter: 'A' | 'B') => {
     const teamIds = teamLetter === 'A' ? (match?.team_a_ids || []) : (match?.team_b_ids || []);
-    return (match?.profiles || []).filter((p) => teamIds.includes(p.id));
+    return (match?.profiles || []).filter((p) => teamIds.includes(p.user_id));
   };
 
   const currentTeamEntry = (teamLetter: 'A' | 'B') => {
@@ -224,7 +224,7 @@ export function useMatchCenter(matchId: string) {
     const completedSets = match.match_sets.filter((s) => isCompletedSetStatus(s.status));
 
     const restCount = completedSets.filter(s => {
-      const entry: any[] = s[teamLetter === 'A' ? 'team_a_entry' : 'team_b_entry'] || [];
+      const entry: string | number | true | { [key: string]: Json | undefined; } | Json[] = s[teamLetter === 'A' ? 'team_a_entry' : 'team_b_entry'] || [];
       return !entry.some(e => e.id === playerId);
     }).length;
 
@@ -245,7 +245,7 @@ export function useMatchCenter(matchId: string) {
   };
 
   const handleSelect = (teamLetter: 'A' | 'B', idx: number, playerId: string, race: string) => {
-    const player = getTeamMembersByLetter(teamLetter).find((m) => m.id === playerId);
+    const player = getTeamMembersByLetter(teamLetter).find((m) => m.user_id === playerId);
     if (player && player.race && player.race !== 'Random' && player.race !== race) {
       const raceLabel: Record<string, string> = { Terran: '테란', Protoss: '프로토스', Zerg: '저그' };
       alert(`이 슬롯은 ${raceLabel[race] || race} 선수만 배치할 수 있습니다.\n${player.by_id}님의 주종은 ${raceLabel[player.race] || player.race}입니다.`);
@@ -253,7 +253,7 @@ export function useMatchCenter(matchId: string) {
     }
     setSelectedEntryByTeam((prev) => {
       const nextEntry = [...prev[teamLetter]];
-      nextEntry[idx] = { id: playerId, by_id: player?.by_id || '', race };
+      nextEntry[idx] = { user_id: playerId, by_id: player?.by_id || '', race };
       return { ...prev, [teamLetter]: nextEntry };
     });
   };
@@ -331,7 +331,7 @@ export function useMatchCenter(matchId: string) {
       }
 
       const { error } = await supabase.rpc('fn_declare_set_winner', {
-        p_set_id: currentSet?.id,
+        p_set_id: currentSet.id,
         p_match_id: matchId,
         p_winner_team: winnerTeam,
         p_next_combo_id: nextCombo

@@ -11,8 +11,8 @@ const COOLDOWN_STEPS = [0, 10, 30, 180];
 const BALANCE_THRESHOLD = 200;
 
 interface QueuePlayer {
-  id: string;
-  by_id: string;
+  user_id: string;
+  by_id: string | null;
   role: UserRole | string | null;
   race: RaceCode | string | null;
   total_mmr: number;
@@ -52,7 +52,7 @@ export function useLadderData() {
       const isTestViewer = typeof window !== 'undefined' && window.localStorage.getItem('byclan_current_is_test_account') === 'true';
       const { data: queueRaw } = await supabase
         .from('ladder_queue')
-        .select(`user_id, queue_joined_at, profiles!inner (id, by_id, race, role, profile_meta(is_test_account, is_test_account_active), ladder_rankings(total_mmr))`)
+        .select(`user_id, queue_joined_at, profiles!inner (user_id, by_id, race, role, profile_meta(is_test_account, is_test_account_active), ladder_rankings(total_mmr))`)
         .eq('is_in_queue', true)
         .order('queue_joined_at', { ascending: true });
 
@@ -72,7 +72,7 @@ export function useLadderData() {
             : r.profiles?.ladder_rankings;
 
           return {
-            id: r.user_id,
+            user_id: r.user_id,
             by_id: r.profiles?.by_id ?? 'undefined',
             role: r.profiles?.role ?? 'guest',
             race: r.profiles?.race ?? null,
@@ -83,7 +83,7 @@ export function useLadderData() {
 
       setQueuePlayers(qPlayers);
 
-      const newKey = qPlayers.map(p => p.id).sort().join(',');
+      const newKey = qPlayers.map(p => p.user_id).sort().join(',');
       if (lastQueueKeyRef.current && lastQueueKeyRef.current !== newKey) {
         setProposalAttempts(0);
         setProposalCooldown(0);
@@ -199,8 +199,8 @@ export function useLadderData() {
         id: matchId,
         match_type: `${typeStr}v${typeStr}`,
         status: 'proposed',
-        team_a_ids: teamA.map(p => p.id),
-        team_b_ids: teamB.map(p => p.id),
+        team_a_ids: teamA.map(p => p.user_id),
+        team_b_ids: teamB.map(p => p.user_id),
       });
       if (recordError) throw recordError;
 

@@ -40,7 +40,7 @@ export const usePasswordSignUp = () => {
       if (!data.user) throw new Error('회원가입에 실패했습니다.');
 
       const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
+        user_id: data.user.id,
         account_id: accountId,
         by_id: `By_${nickname}`,
         role: 'applicant',

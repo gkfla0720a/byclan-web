@@ -29,11 +29,11 @@ export interface AuthProfile extends ProfilesRow,
 }
 
 export interface MetaData {
+  user_id: string;
   by_id: string | null;
   account_id: string | null;
   clan_point: number | null;
   created_at: string;
-  id: string;
   intro: string | null;
   is_active: boolean | null;
   race: string | null;
@@ -53,13 +53,13 @@ export interface MetaData {
 
 // 🚨 ProfileSummary: 런타임 계산의 안전성을 위한 핵심 모델
 export interface ProfileSummary {
-  id: UUID;
-  by_id: string;
+  user_id: string;
+  by_id: string | null;
   role: UserRole | string | null;
   race?: RaceCode | string | null;
 
   // 🚨 합의안 반영: total_mmr은 무조건 존재해야 하는 number 타입! (옵셔널 ? 및 null 제거)
-  total_mmr: number;
+  total_mmr: number | null;
   personal_mmr?: number | null;
   team_mmr?: number | null;
 
@@ -73,13 +73,13 @@ export interface ApplicationListItem extends ApplicationRow {
 }
 
 export interface MemberListItem extends ProfilesRow {
-  pending_notifications?: number;
-  active_match_id?: UUID | null;
+  pending_notifications?: number | null;
+  active_match_id?: string | null;
 }
 
 export interface LadderBoardItem {
   id: string; // 랭킹 row id
-  user_id: UUID;
+  user_id: string;
   rank: number | null;
   personal_mmr: number | null;
   wins: number | null;
@@ -92,8 +92,8 @@ export interface LadderMatchCard extends LadderMatchSetRow {
   host?: ProfileSummary | null;
   team_a_profiles?: ProfileSummary[];
   team_b_profiles?: ProfileSummary[];
-  set_count?: number;
-  bet_count?: number;
+  set_count?: number | null;
+  bet_count?: number | null;
 }
 
 export interface LadderMatchDetail extends LadderMatchCard {
@@ -123,10 +123,10 @@ export interface PointLogListItem extends ClanPointLogRow {
 }
 
 export interface AdminDashboardSnapshot {
-  pendingApplicationCount: number;
-  unreadNotificationCount: number;
-  activeMatchCount: number;
-  rookieReviewDueCount: number;
+  pendingApplicationCount: number | null;
+  unreadNotificationCount: number | null;
+  activeMatchCount: number | null;
+  rookieReviewDueCount: number | null;
   latestAdminPosts: AdminPostListItem[];
 }
 
