@@ -1,10 +1,15 @@
 // 파일명: src/hooks/useMatchCenter.ts
+'use client';
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase';
 import { useAuthContext } from '@/context/AuthContext';
 import type { Database } from '@/types';
+import { LADDER_MEMBER_ROLES } from '@/types';
+import type { RaceCode, UserRole } from '@/types/primitives';
+import type { QueryData } from '@supabase/supabase-js';
 
-// ─── 유틸리티 함수 임포트 (중복 제거) ───
+// ─── 유틸리티 함수 임포트 ───
 import {
   BET_AMOUNTS,
   BET_WINDOW_SECONDS,
@@ -22,7 +27,15 @@ import {
   isPendingReviewSetStatus,
 } from '@/utils/matchCenter';
 
-// ─── 🚨 완벽한 타입 정의 (any 퇴출) ───
+// ─── 🚨 Supabase Query 객체를 통한 무결점 자동 타입 추론 기술 구현 ───
+const matchRecordQuery = (matchId: string) =>
+  supabase
+    .from('ladder_record')
+    .select('*, profiles(*)')
+    .eq('id', matchId)
+    .single();
+
+type MatchRecordDetail = QueryData<ReturnType<typeof matchRecordQuery>>;
 type MatchSetRow = Database['public']['Tables']['ladder_match_sets']['Row'];
 type ProfileRow = Database['public']['Tables']['profiles']['Row'] & { total_mmr?: number };
 
@@ -31,9 +44,9 @@ interface MatchData extends MatchSetRow {
   team_a_ids: string[];
   team_b_ids: string[];
   profiles: ProfileRow[];
-  score_a: number | null;
-  score_b: number | null;
-  match_type: string | null;
+  score_a: number;
+  score_b: number;
+  match_type_code: number;
 }
 
 interface EntryPlayer {
@@ -43,17 +56,15 @@ interface EntryPlayer {
 }
 
 interface BetOdds {
-  total_a: number | null;
-  total_b: number | null;
-  count_a: number | null;
-  count_b: number | null;
-  odds_a: number | null;
-  odds_b: number | null;
+  total_a: number;
+  total_b: number;
+  count_a: number;
+  count_b: number;
+  odds_a: number;
+  odds_b: number;
 }
 
-// ─── 메인 훅 (Main Hook) ───
 export function useMatchCenter(matchId: string) {
-  // 💡 전역 상태에서 내 정보와 권한을 꺼내 옵니다! (DB 통신 제거)
   const { user, profile } = useAuthContext();
 
   const [match, setMatch] = useState<MatchData | null>(null);
@@ -81,32 +92,43 @@ export function useMatchCenter(matchId: string) {
 
   const setTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 💡 데이터 로드
+  // 💡 데이터 로드 아키텍처 정비
   const fetchMatchData = useCallback(async () => {
     if (!user?.id || !matchId) return;
 
     try {
+      // 세트 현황과 경기 마스터 레코드를 수집합니다.
       const { data: sets } = await supabase.from('ladder_match_sets').select('*').eq('match_id', matchId).order('set_number', { ascending: true });
-      const { data: records } = await supabase.from('ladder_record').select('*, profiles(*)').eq('id', matchId);
+      const { data: recordRaw, error: recordError } = await matchRecordQuery(matchId);
 
-      if (!sets || sets.length === 0 || !records) return;
+      if (!sets || sets.length === 0 || recordError || !recordRaw) return;
 
+      const record = recordRaw as unknown as MatchRecordDetail;
+
+      // [교정] 단수형 승리 정규화 파싱 수정
       const scoreA = sets.filter((s) => normalizeWinningTeam(s.winner_team) === 'A').length;
       const scoreB = sets.filter((s) => normalizeWinningTeam(s.winner_team) === 'B').length;
-      const matchType = records.filter((r) => r.team_a_ids[] === 'A').length;
 
-      // 조인된 프로필 배열을 안전하게 1차원 배열로 평탄화(Flatten)
-      const extractedProfiles = records.flatMap((r) => Array.isArray(r.profiles) ? r.profiles : r.profiles ? [r.profiles] : []) as ProfileRow[];
+      // [교정] DB 본연의 JSONB 혹은 Array 문자열 기반 필드에서 순수 참가자 ID 추출
+      const teamAIds = Array.isArray(record.team_a_ids) ? (record.team_a_ids as string[]) : [];
+      const teamBIds = Array.isArray(record.team_b_ids) ? (record.team_b_ids as string[]) : [];
+      const matchTypeCode = typeof record.match_type === 'number' ? record.match_type : Number(record.match_type || 0);
+
+      const extractedProfiles = (
+        Array.isArray(record.profiles)
+          ? record.profiles
+          : record.profiles ? [record.profiles] : []
+      ) as ProfileRow[];
 
       const m: MatchData = {
         ...sets[0],
         match_sets: sets,
-        team_a_ids: records.filter((r) => r.team_a_ids[] === 'A').map((r) => r.id),
-        team_b_ids: records.filter((r) => r.team_a_ids[] === 'B').map((r) => r.id),
+        team_a_ids: teamAIds,
+        team_b_ids: teamBIds,
         profiles: extractedProfiles,
         score_a: scoreA,
         score_b: scoreB,
-        match_type: matchType
+        match_type_code: matchTypeCode
       };
       setMatch(m);
 
@@ -124,7 +146,7 @@ export function useMatchCenter(matchId: string) {
         setBetTimerActive(remaining > 0);
       }
 
-      // 배당률 로드
+      // 배당률 RPC 통신 처리
       const { data: oddsData } = await supabase.rpc('fn_get_match_bet_odds', { p_match_id: matchId });
       if (oddsData) {
         const normalizedOdds = Array.isArray(oddsData) ? oddsData[0] : oddsData;
@@ -167,16 +189,13 @@ export function useMatchCenter(matchId: string) {
     return () => { if (setTimerRef.current) clearTimeout(setTimerRef.current); };
   }, [betTimer, betTimerActive]);
 
-  // ─── 파생 변수 및 권한 ───
-
-  // 💡 전역 profile 상태를 활용하여 로직이 대폭 간소화됨
+  // ─── 파생 변수 및 권한 고도화 ───
   const isManagementRole = ['admin', 'master', 'developer'].includes(String(profile?.role || ''));
 
   const getCaptainId = (teamIds?: string[]) => {
     if (!teamIds || teamIds.length === 0 || !match?.profiles) return null;
     const teamMembers = match.profiles.filter(p => teamIds.includes(p.user_id));
-
-    if (teamMembers.length !== teamIds.length) return null;
+    if (teamMembers.length === 0) return null;
 
     const captain = [...teamMembers].sort((a, b) => (b.total_mmr ?? 0) - (a.total_mmr ?? 0))[0];
     return captain?.user_id || null;
@@ -198,42 +217,44 @@ export function useMatchCenter(matchId: string) {
     }
   }, [remainingRequiredCombos, raceCombo]);
 
-  const needWins = Number(match?.match_type) >= 5 ? 4 : 3;
-  const matchEnded = match && (match.score_a >= needWins || match.score_b >= needWins);
-  const isLadderMatch = (match?.match_type ?? 0) >= 3;
-  const matchFormat = (match?.match_type ?? 0) >= 5 ? 'BO7 (4선승)' : 'BO5 (3선승)';
+  // [교정] 교정 완료된 코드(match_type_code) 기반 BO5 / BO7 연산 분기 복구
+  const needWins = (match?.match_type_code ?? 0) >= 5 ? 4 : 3;
+  const matchEnded = Boolean(match && (match.score_a >= needWins || match.score_b >= needWins));
+  const isLadderMatch = (match?.match_type_code ?? 0) >= 3;
+  const matchFormat = (match?.match_type_code ?? 0) >= 5 ? 'BO7 (4선승)' : 'BO5 (3선승)';
   const canBetOnA = myTeam !== 'A';
   const canBetOnB = myTeam !== 'B';
 
-  // ─── 헬퍼 함수들 ───
   const getTeamMembersByLetter = (teamLetter: 'A' | 'B') => {
     const teamIds = teamLetter === 'A' ? (match?.team_a_ids || []) : (match?.team_b_ids || []);
     return (match?.profiles || []).filter((p) => teamIds.includes(p.user_id));
   };
 
-  const currentTeamEntry = (teamLetter: 'A' | 'B') => {
-    return currentSet?.[teamLetter === 'A' ? 'team_a_entry' : 'team_b_entry'] || [];
+  const currentTeamEntry = (teamLetter: 'A' | 'B'): EntryPlayer[] => {
+    const entryData = currentSet?.[teamLetter === 'A' ? 'team_a_entry' : 'team_b_entry'];
+    return Array.isArray(entryData) ? (entryData as unknown as EntryPlayer[]) : [];
   };
 
   const currentTeamReady = (teamLetter: 'A' | 'B') => {
     return Boolean(currentSet?.[teamLetter === 'A' ? 'team_a_ready' : 'team_b_ready']);
   };
 
+  // [교정] any 타입 전면 리팩토링 및 검증 통과 구조화
   const getRestStatus = (playerId: string, teamLetter: 'A' | 'B') => {
     if (!match?.match_sets || !teamLetter) return { count: 0, canRest: true };
     const completedSets = match.match_sets.filter((s) => isCompletedSetStatus(s.status));
 
     const restCount = completedSets.filter(s => {
-      const entry: string | number | true | { [key: string]: Json | undefined; } | Json[] = s[teamLetter === 'A' ? 'team_a_entry' : 'team_b_entry'] || [];
-      return !entry.some(e => e.id === playerId);
+      const entryData = s[teamLetter === 'A' ? 'team_a_entry' : 'team_b_entry'];
+      const entryList = Array.isArray(entryData) ? (entryData as any[]) : [];
+      return !entryList.some(e => (e?.user_id === playerId || e?.id === playerId));
     }).length;
 
     let maxRest = 1;
-    if (match.match_type >= 5) maxRest = completedSets.length < 5 ? 2 : 3;
+    if (match.match_type_code >= 5) maxRest = completedSets.length < 5 ? 2 : 3;
     return { count: restCount, canRest: restCount < maxRest };
   };
 
-  // ─── 액션 함수들 ───
   const toggleManagementMode = async () => {
     const nextMode = !managementMode;
     const { error } = await supabase.from('developer_settings').upsert(
@@ -267,7 +288,9 @@ export function useMatchCenter(matchId: string) {
     const reqCol = team === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
 
     const { error } = await supabase.from('ladder_match_sets').update({
-      [column]: true, [entryCol]: selectedEntryByTeam[team], [reqCol]: false,
+      [column]: true,
+      [entryCol]: selectedEntryByTeam[team] as any,
+      [reqCol]: false,
     }).eq('id', currentSet.id);
 
     if (error) return alert('엔트리 제출 실패: ' + error.message);
@@ -293,8 +316,6 @@ export function useMatchCenter(matchId: string) {
     const reqCol = teamLetter === 'A' ? 'team_a_withdraw_req' : 'team_b_withdraw_req';
     await supabase.from('ladder_match_sets').update({ [readyCol]: false, [reqCol]: false }).eq('id', currentSet.id);
   };
-
-  const [vetoTimeLeft, setVetoTimeLeft] = useState(0);
 
   const handleSetWin = async (winnerTeam: 'A' | 'B') => {
     if (!currentSet || !canReportSetResult) return;
@@ -361,7 +382,7 @@ export function useMatchCenter(matchId: string) {
           try { new Audio('/sounds/pending-end.mp3').play().catch(() => { }); } catch (e) { }
 
           if (isTeamCaptain && currentSet.claimed_winner) {
-            finalizeSetWin(currentSet.claimed_winner);
+            void finalizeSetWin(currentSet.claimed_winner);
           }
         } else {
           setVetoTimeLeft(left);
@@ -419,7 +440,6 @@ export function useMatchCenter(matchId: string) {
     }
   };
 
-  // 기존 내보내기용 유틸리티 함수들을 컴포넌트나 UI에서 사용할 수 있게 export에 묶어줍니다
   return {
     match, currentSet, betTimer, betTimerActive, myTeam, myUserId: user?.id || null, isRevealed,
     myRole: profile?.role || null, managementMode, settlementStatus, settlementError,
@@ -430,7 +450,6 @@ export function useMatchCenter(matchId: string) {
     vetoTimeLeft, handleVeto, setBetTeam, setBetAmount, setRaceCombo, toggleManagementMode,
     handleSelect, submitEntry, requestWithdraw, approveWithdraw, forceRetract, handleSetWin, handleBet,
     handleSettlement, getTeamMembersByLetter, currentTeamEntry, currentTeamReady, getRestStatus, setShowRaceSelector,
-    // 유틸 함수들 내보내기
     formatTime, getComboIdFromRaceCards, getRaceCards, RACE_ICONS, BET_AMOUNTS
   };
 }

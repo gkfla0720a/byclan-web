@@ -14,7 +14,7 @@ export const banUser = async ( // MemberList.tsx에서 적용되어야 할 것 �
   const { error } = await supabase
     .from('profiles')
     .update({ role: 'banned', is_active: false })
-    .eq('id', targetUserId);
+    .eq('user_id', targetUserId);
 
   if (error) throw new Error('유저 추방에 실패했습니다.');
 
@@ -56,7 +56,7 @@ export const approveApplicant = async (
   const { error: profileError } = await supabase
     .from('profiles')
     .update({ role: 'rookie', rookie_since: new Date().toISOString() })
-    .eq('id', targetUserId);
+    .eq('user_id', targetUserId);
 
   if (profileError) throw new Error('유저 권한 승급 실패');
 

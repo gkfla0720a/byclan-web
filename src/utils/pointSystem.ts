@@ -29,14 +29,14 @@ export async function grantPoints(
     const { data: prof, error: profErr } = await sb
       .from('profiles')
       .select('clan_point')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single();
 
     if (profErr) throw profErr;
 
     const newBalance = (prof?.clan_point ?? 0) + amount;
 
-    await sb.from('profiles').update({ clan_point: newBalance }).eq('id', userId);
+    await sb.from('profiles').update({ clan_point: newBalance }).eq('user_id', userId);
 
     await sb.from('clanpoint_logs').insert({
       user_id: userId,
@@ -78,7 +78,7 @@ export async function deductPoints(
     const { data: prof, error: profErr } = await sb
       .from('profiles')
       .select('clan_point')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single();
 
     if (profErr) throw profErr;
@@ -90,7 +90,7 @@ export async function deductPoints(
 
     const newBalance = current - amount;
 
-    await sb.from('profiles').update({ clan_point: newBalance }).eq('id', userId);
+    await sb.from('profiles').update({ clan_point: newBalance }).eq('user_id', userId);
 
     await sb.from('clanpoint_logs').insert({
       user_id: userId,
