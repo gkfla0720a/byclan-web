@@ -26,19 +26,17 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
 import type { ProfilesRow, NotificationsRow } from '@/types/rows';
+import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate } from '@/hooks/useNavigate';
 
-export interface NotificationAuth extends NotificationsRow {
-  role: string | null;
-}
-
+// 수정안: profile용 타입을 별도로 정의
 interface NotificationCenterProps {
-  profile: NotificationAuth | null; // 프로필이 아직 로딩 중이거나 없을 때는 null일 수 있음
+  profile: Pick<ProfilesRow, 'role'> | null;  // 실제로 role만 사용
 }
 
 export default function NotificationCenter({ profile }: NotificationCenterProps) {
   const navigateTo = useNavigate();
-  const [notifications, setNotifications] = useState<NotificationAuth[]>([]);
+  const [notifications, setNotifications] = useState<NotificationsRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   /** 현재 사용자가 가입 신청자(applicant) 역할인지 여부. true이면 심사 안내 배너를 표시. */
   const isApplicant = profile?.role === 'applicant';
@@ -52,26 +50,22 @@ export default function NotificationCenter({ profile }: NotificationCenterProps)
   useEffect(() => {
     const loadAndReadNotifications = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { profile } = useAuthContext(); // 또는 profile?.user_id 활용
 
         if (!user) {
           setLoading(false);
           return;
         }
 
-        await supabase
+        const { error: updateError } = await supabase
           .from('notifications')
           .update({ is_read: true })
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .eq('is_read', false);
 
-        const { data, error } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
+        if (updateError) {
+          console.error('읽음 처리 실패:', updateError);
+        }
 
         setNotifications(data || []);
       } catch (error) {
@@ -82,6 +76,19 @@ export default function NotificationCenter({ profile }: NotificationCenterProps)
     };
 
     void loadAndReadNotifications();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      // ...
+      if (!cancelled) setNotifications(data || []);
+      if (!cancelled) setLoading(false);
+    };
+
+    void load();
+    return () => { cancelled = true; };
   }, []);
 
   if (loading) return <div className="text-center py-20 text-gray-500">LOADING NOTIFICATIONS...</div>;
@@ -120,7 +127,9 @@ export default function NotificationCenter({ profile }: NotificationCenterProps)
           <div key={noti.id} className={`p-6 rounded-2xl border ${noti.is_read ? 'bg-gray-800/40 border-gray-700/50' : 'bg-gray-800 border-yellow-700/50 shadow-lg'}`}>
             <div className="flex justify-between items-start mb-2">
               <h4 className={`font-bold ${noti.is_read ? 'text-gray-400' : 'text-yellow-400'}`}>{noti.title}</h4>
-              <span className="text-xs text-gray-500 font-mono">{new Date(noti.created_at).toLocaleDateString()}</span>
+              <span className="text-xs text-gray-500 font-mono">{
+                new Date(noti.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+              }</span>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">{noti.message}</p>
           </div>
