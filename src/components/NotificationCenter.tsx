@@ -25,25 +25,21 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/supabase';
+import type { ProfilesRow, NotificationsRow } from '@/types/rows';
 import { useNavigate } from '@/hooks/useNavigate';
 
-/**
- * NotificationCenter 컴포넌트
- *
- * 로그인한 사용자의 알림 목록(알림함)을 표시하는 컴포넌트입니다.
- *
- * @param {{ profile: object|null }} props
- * @param {object|null} props.profile - 현재 로그인 유저의 프로필 (role 필드 사용)
- * @returns {JSX.Element} 알림함 UI
- */
-export default function NotificationCenter({ profile }) {
-  /** 페이지 이동 함수 */
-  const navigateTo = useNavigate();
-  /** 불러온 알림 목록 배열. 초기값은 빈 배열. */
-  const [notifications, setNotifications] = useState([]);
-  /** 알림 데이터 로딩 중 여부. true이면 로딩 메시지를 표시. */
-  const [loading, setLoading] = useState(true);
+export interface NotificationAuth extends NotificationsRow {
+  role: string | null;
+}
 
+interface NotificationCenterProps {
+  profile: NotificationAuth | null; // 프로필이 아직 로딩 중이거나 없을 때는 null일 수 있음
+}
+
+export default function NotificationCenter({ profile }: NotificationCenterProps) {
+  const navigateTo = useNavigate();
+  const [notifications, setNotifications] = useState<NotificationAuth[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   /** 현재 사용자가 가입 신청자(applicant) 역할인지 여부. true이면 심사 안내 배너를 표시. */
   const isApplicant = profile?.role === 'applicant';
 
@@ -51,26 +47,41 @@ export default function NotificationCenter({ profile }) {
    * 컴포넌트가 처음 화면에 나타날 때(마운트 시) 한 번 실행됩니다.
    * 1. 현재 로그인한 유저의 ID를 가져옵니다.
    * 2. notifications 테이블에서 해당 유저의 알림을 최신순으로 불러옵니다.
-   * 3. 페이지 접속 즉시 모든 알림을 읽음(is_read: true) 처리합니다.
    */
+
   useEffect(() => {
-    const loadNotifications = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
+    const loadAndReadNotifications = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false);
+
+        const { data, error } = await supabase
           .from('notifications')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
-        setNotifications(data || []);
 
-        // 페이지 접속 시 모든 알림 읽음 처리
-        await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id);
+        if (error) throw error;
+
+        setNotifications(data || []);
+      } catch (error) {
+        console.error('알림을 불러오는 중 오류 발생:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    void loadNotifications();
+    void loadAndReadNotifications();
   }, []);
 
   if (loading) return <div className="text-center py-20 text-gray-500">LOADING NOTIFICATIONS...</div>;
